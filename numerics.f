@@ -161,22 +161,42 @@
             endif
 
             !******************************************
+            ! Mass flux contribution term to the turbulent kinetic energy budget: Kawai & Oikawa 2018 ETMM
+            if (modMktau.eq.1) then   
+                ! Mktau=mu_t/(0.15 rho^2) [drho/dr d(tau_rr+tau_rx)/dr +drho/dx d(tau_xx+tau_xr)/dx]
+
+                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
+     &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)      
+                Mktau(i,k)= ((rho(i,k)-rho(im,k))/(Ru(i)-Ru(im)))*d(tau_rr+tau_rx)/dr
+                Mktau(i,k)= Mktau(i,k)+((rho(i,k)-rho(i,km))/dz)*d(tau_xx+tau_xr)/dx
+                Mktau(i,k)= ekmt(i,k)/(0.15*rho(i,k)**2.0)*Mktau(i,k)
+            else
+                Mktau(i,k) = 0.0
+            endif
+
+
+
+            !******************************************
             ! Source term for turbulence models
             
             if (scl.eq.0) then
                !k-equation for MK and V2F
                putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
+               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)         ! note, rho*epsilon/(rho*k), set implicit and divided by density
 
             elseif (scl.eq.1) then
                !epsilon-equation for MK and V2F
                putout(i,k) = putout(i,k) +(ce1*f1(i,k)*( Pk(i,k) + Gk(i,k) )/Tt(i,k))/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
+               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)            ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
 
             elseif (scl.eq.2) then
                !v'2 equation for V2F
-               putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
-               dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
+               putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)        ! note, source is rho*k*f/rho
+               dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)     ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
 
             elseif (turbmod.eq.4) then
                !Spalart Allmaras

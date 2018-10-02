@@ -1,0 +1,19 @@
+call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);    at numerics.f, for updating the thermodynamic state (ekm: viscosity/Re, ekh: (lambda/cp)/(Re*pR)
+call readTable(rank);                                   at fileio.f
+nTab                                                    user define at param.txt: for generating the spline from the table to later interpolate
+subroutine spline(x, y, n, y2)                          at math.f, input: x, y, n and output y2
+subroutine splint(xa,ya,y2a,n,x,y,khi,klo)              at math.f, input: xa, ya, y2a, n, x 
+                                                                   output: y, khi, klo
+subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)              
+                                                        at numerics.f, input:  putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion 
+                                                                       output: putout
+
+Nomenclature of diffusivity and other stuff                                              
+ekh = lambda/cp
+eka = lambda/cp/rho = ekh/rho 
+ekat= lambda_t /cp/rho                                                                       
+ekht= lambda_t /cp  = ekat*rho   
+
+
+alpha_t= lambda_t/cp/rho = ekht/rho 
+ekht = lambda_t/cp       = mu_t/Prt

@@ -3,28 +3,32 @@
 
 ### C++ ###
 # Prerequisites
+*.eps
 *.d
 *.csv
-/0/profX*
-/0/tecp*
-/LS/profX*
-/LS/tecp*
-/SA/profX*
-/SA/tecp*
-/SA/heat*
-/SA/Restart/*
-/OM/profX*
-/OM/tecp*
-/OM/heat*
-/OM/Restart/*
-/MK/profX*
-/MK/tecp*
-/MK/heat*
-/MK/Restart*
-/VF/profX*
-/VF/tecp*
-/VF/heat*
-/VF/Restart*
+0/profX*
+0/tecp*
+LS/profX*
+LS/tecp*
+SA/profX*
+SA/tecp*
+SA/heat*
+SA/Restart/*
+OM/profX*
+OM/tecp*
+OM/heat*
+OM/Restart/*
+MK/profX*
+MK/tecp*
+MK/heat*
+MK/Restart*
+VF/profX*
+VF/tecp*
+VF/heat*
+VF/Restart*
+Results/
+Results_dTdx_dHdx/
+Gambit/
 # Compiled Object files
 *.slo
 *.lo

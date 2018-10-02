@@ -39,8 +39,8 @@ c     ****************
       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),ekht(0:i1,0:k1),
      1                temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1),
      1                ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1),
-     1                Pkt(0:i1,0:k1)
-      common /energy/ ekm,ekmt,ekme,ekh,cp,ekht,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Pkt
+     1                Pkt(0:i1,0:k1),Mktau(0:i1,0:k1)
+      common /energy/ ekm,ekmt,ekme,ekh,cp,ekht,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Pkt,Mktau
       save   /energy/
       
       
