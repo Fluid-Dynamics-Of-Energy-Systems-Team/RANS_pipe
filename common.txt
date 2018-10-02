@@ -17,11 +17,11 @@ c     ****************
 
 
 c     ****************
-      real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),
-     1                ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax),
+      real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),Reeps(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),
+     1                ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax),flambda(0:i1,0:k1),
      1                            at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1),
      1                bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax)
-      common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae,
+      common /turb/   fmu,f1,f2,ReT,Reeps,yp,ypt,dterm,eterm,fv2,Lh,flambda,at,Lht,sigmat,sigmak,sigmae,
      !                cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
       save   /turb/
 
@@ -36,10 +36,11 @@ c     ****************
 
 
 c     ****************
-      real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),
+      real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),ekht(0:i1,0:k1),
      1                temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1),
-     1                ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1)
-      common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk
+     1                ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1),
+     1                Pkt(0:i1,0:k1)
+      common /energy/ ekm,ekmt,ekme,ekh,cp,ekht,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Pkt
       save   /energy/
       
       
@@ -55,18 +56,18 @@ c     ****************
 
 c     ****************
       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1),
-     1                Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
-      common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+     1                Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1),
+     1                ktnew(0:i1,0:k1),etnew(0:i1,0:k1)
+      common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew,ktnew,etnew
       save   /new/
-
-
 
 
 
 c     ****************
       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1),
-     1                Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
-      common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+     1                Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1),
+     1                ktold(0:i1,0:k1),etold(0:i1,0:k1)
+      common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld,ktold,etold
       save   /old/
 
 

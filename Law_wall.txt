@@ -1,0 +1,12 @@
+set logscale x
+plot 'profile' u ((0.5-$1)*360):3 w p 
+replot 'profileSA' u ((0.5-$1)*360):3 w p
+replot 'profileVF' u ((0.5-$1)*360):3 w p
+
+set title "Wall " font ",14"
+set xlabel "y plus"
+set ylabel "u plus"
+set grid
+
+replot                                                                                                                                                                            
+pause -1

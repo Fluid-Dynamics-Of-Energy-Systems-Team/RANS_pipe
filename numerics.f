@@ -3,19 +3,20 @@
 !*************************************************************************************
       !> prodis subroutine which calculates the production term of the turbulent scalar equation
       !! 
-      subroutine prodis(putout,dimpl,putink,putine,putinv2,nuSAtmp,putinf,U,W,T,rho,scl)
+      subroutine prodis(putout,dimpl,putink,putine,putinv2,nuSAtmp,putinf,U,W,T,rho,C,scl)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
       integer im,ip,jm,jp,km,kp,ib,ie,jb,je,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,putinv2,Tt,Srsq,nuSAtmp,dimpl
+      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,C,div,putink,putine,putinv2,Tt,Srsq,nuSAtmp,dimpl
       real*8, dimension(imax,kmax) :: putinf,putinftmp
       real*8  scl,mut,a11,a12,a21,a22,a33,A,A2,A3,A2t,epsihh,tscl
       real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
-
-
+      real*8  uudtdx,uTdudx,betagT,auT,Ttemp,Tmix,fd1,fd2,feps,d2Tdxdr  !modTemp
+      real*8  Q
+      character*5 cha
       ib = 1
       ie = i1-1
 
@@ -29,6 +30,14 @@
             ip=i+1
             im=i-1
 
+
+            if (rank.eq.0.and.k.lt.K_start_heat) then
+               Q=0.0
+            else
+               Q=Qwall
+            endif
+            
+            !******************************************
             ! Production of turbulent kinetic energy
             Pk(i,k) = ekmt(i,k)*(
      &         2.*(((W(i,k)-W(i,km))/dz)**2. +
@@ -44,24 +53,13 @@
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
-            ! Bouyancy prodution
-            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
-     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
-     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                              (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
-     &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &           )
-
-
-!!! RENE: change to turbulent time scale here!
-            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-
-            Tt(i,k)=putink(i,k)/putine(i,k)
-
-                
+            !******************************************
+            !defining the time scale
+            Tt(i,k)   = putink(i,k)/putine(i,k) 
+            
             if (turbmod.eq.3) then
             ! time scale for v2f model
+            
                 StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
      &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
      &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
@@ -71,35 +69,112 @@
 !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
                Srsq(i,k) = Str*rho(i,k)*0.5
                Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
-               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-               Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
                
+               if (modVF.eq.1) then
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+                  Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+                  Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+               endif
+
+            elseif (turbmod .eq. 4) then
+            ! time scale for SA  
+                         
+               Tt(i,k)   = 0.0
                
-               ! Bouyancy prodution with a different time scale
-               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
-     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
-     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &                  )
-
-
-               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
+            elseif (turbmod .eq. 5) then
+            ! time scale for k-omega SST               
+               Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega   
+                           
             endif
 
+            !******************************************
+            ! Bouyancy prodution
+            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
+     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+     &                                                                              (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+     &           )
+
+            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+            
+
+            if (tempturbmod.GT.1) then   !modTemp
+
+                ! Bouyancy production with Algebraix Flux model (2012 Zhang et al)
+                ! Four terms come into play:
+                ! 1) uudtdx= <u'i*u'j>*dT/dxj, 
+                ! 2) uTdudx= <u'j*T'>*dui/dxj, 
+                ! 3) betagT=beta*g_i*<T'2>, 
+                ! 4) auT =aij * <u'j*T'> , where aij=<u'i*u'j>/k - 2/3 rho*delta_ij
+                ! where <  > is favre averaged
+                if (modGk.GT.0) then
+                !1)-----------------
+                ! <u'i*u'j>*dT/dxj   OK!!!  
+                uudtdx= (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+     &                                                                              (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)           )
+                uudtdx= uudtdx + 2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+
+                !2)-----------------
+                ! <u'j*T'>*dui/dxj, OK!  rho <u'j T'> [kgK/(m2 s)]=(lambda/cp)/cp dCdx
+                uTdudx = ekht(i,k)/cp(i,k)*((C(ip,k)-C(im,k))/(Rp(ip)-Rp(im))
+     &          *((U(ip,k)-U(im,k))/(Rp(ip)-Rp(im)) + ((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))   )
+     &                  +(C(i,kp)-C(i,km))/(2.*dz)        
+     &          *(((W(i,k)-W(i,km))/dz)             + ((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)             ))
+
+                !3)-----------------
+                ! beta*g_i*<T'2>   OK!!! is the density included in the Fr_1?
+                betagT= rho(i,k)*beta(i,k)*Fr_1*ktnew(i,k) 
+
+                !4)-----------------
+                ! aij * <u'j*T'> , where aij=<u'i*u'j>/k - 2/3 rho delta_ij
+                auT = ekmt(i,k)/putink(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )
+     &                                                                             *ekht(i,k)/cp(i,k)*(C(ip,k)-C(im,k))/(Rp(ip)-Rp(im))  
+     &                         +(2.*ekmt(i,k)/putink(i,k)*((W(i,k)-W(i,km)))/dz- 2./3.*ekmt(i,k)/putink(i,k)*div(i,k))
+     &                                                                             *ekht(i,k)/cp(i,k)*(C(i,kp)-C(i,km))/(2.*dz) 
+
+
+                Gk(i,k)=beta(i,k)*Fr_1*(-ctheta0*Tt(i,k)*(ctheta1*uudtdx+(1-ctheta2)*uTdudx+(1-ctheta3)*betagT)+ctheta4*auT)
+                
+                endif
+
+                !******************************************
+                ! Production of temperature fluctuations  Pkt= <u'j T'> dTdxj= (lambda_t/cp)/cp dCdxj dTdxj = = (lambda_t/cp)dTdxj^2
+                Pkt(i,k) = ekht(i,k)/cp(i,k)*(((C(i,k)-C(i,km))/dz)            *((T(i,k)-T(i,km))/dz) 
+     &                                      + ((C(i,k)-C(im,k))/(Ru(i)-Ru(im)))*((T(i,k)-T(im,k))/(Ru(i)-Ru(im))))
+!                Pkt(i,k) = ekht(i,k)*(((T(i,k)-T(i,km))/dz)**2.0+ ((T(i,k)-T(im,k))/(Ru(i)-Ru(im)))**2.0)
+
+!                Checking the value of each term 
+!                if (mod(istep,1000 ).eq.0) then 
+!                   if (rank.eq.0)  then
+!                      if (kmax*0.75.eq.k)  write(*,*) 'Values of B_k', (k+rank*kmax)*dz,ctheta0*Tt(i,k)*(ctheta1*uudtdx),
+!     &                     ctheta0*Tt(i,k)*((1-ctheta2)*uTdudx), ctheta0*Tt(i,k)*((1-ctheta3)*betagT),ctheta4*auT,Gk(i,k)/(beta(i,k)*Fr_1),Pkt(i,k)
+!                   endif
+!                endif
+
+
+            else
+                Pkt(i,k) = 0.0
+            endif
+
+            !******************************************
+            ! Source term for turbulence models
+            
             if (scl.eq.0) then
-               !k equation
+               !k-equation for MK and V2F
                putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
                dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
 
             elseif (scl.eq.1) then
-               !epsilon equation
-               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
+               !epsilon-equation for MK and V2F
+               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*( Pk(i,k) + Gk(i,k) )/Tt(i,k))/rho(i,k)
                dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
 
             elseif (scl.eq.2) then
-               !v'2 equation
+               !v'2 equation for V2F
                putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
                dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
 
@@ -157,20 +232,6 @@
 
             elseif (turbmod .eq. 5) then
 
-               ! k-omega SST               
-               Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega
-               
-               ! Bouyancy prodution with a different time scale
-               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
-     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
-     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &                  )
-
-
-               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
                if (scl.eq.10) then
                   ! k- equation of SST model
                   putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)          ! Gk(i,k)   ! Does not take into account the bouyancy term...
@@ -215,6 +276,55 @@
                endif
 
             endif
+            
+            !******************************************
+            ! Source term for temperature turbulence models
+            
+            if (tempturbmod.GT.1) then   
+
+               if (scl.eq.20) then
+               ! source for the kt-equation (T'2)
+                  putout(i,k) = putout(i,k) + 2.0*Pkt(i,k)/rho(i,k) !2.0*Pkt(i,k)/rho(i,k)
+                  dimpl(i,k)  = dimpl(i,k)  + 2.0*etnew(i,k)/(ktnew(i,k)+1.0e-20) !2.0*etnew(i,k)/ktnew(i,k)            ! note, rho*epst/(rho*kt), set implicit and divided by density
+               
+               elseif (scl.eq.21) then
+                ! source for the epst-equation (et)
+                 
+                  if (tempturbmod.eq.2) then
+                  !-------------------------
+                  ! Nagano and Kim model 1988
+                    
+                     d2Tdxdr = (1-flambda(i,k))*rho(i,k)*ekht(i,k)*ekh(i,k)
+     &                                         *((((T(i,k)-T(i,km))/dz)-((T(im,k)-T(im,km))/dz) )/(Ru(i)-Ru(im)))**2
+                     putout(i,k) = putout(i,k) + (1.80*etnew(i,k)/(ktnew(i,k)+1.0e-20)*Pkt(i,k)
+     &                                          + 0.72*etnew(i,k)/ knew(i,k)* Pk(i,k) + d2Tdxdr)     /rho(i,k)
+                     dimpl(i,k)  = dimpl(i,k)  + 2.20*etnew(i,k)/(ktnew(i,k)+1.0e-20) + 0.8*enew(i,k)/knew(i,k)           
+                                            ! note, CD1*rho*et^2/kt/(rho*et)+CD2 rho e et/k/(rho*et), set implicit and divided by density
+                  
+                  elseif ((tempturbmod.eq.3).or.(tempturbmod.eq.4).or.(tempturbmod.eq.5)) then
+                  !-------------------------
+                  ! Deng, Wu and Xi model 2001 
+                  
+                     !time scales: temperature and mix
+                     Ttemp  = (ktnew(i,k)+1.0e-20)/(etnew(i,k)+1.0e-20)
+                     Tmix   = (Tt(i,k)*Ttemp)**0.5
+                     !functions
+                     fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0
+                     feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   
+                     fd2  = (1/0.9)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
+
+                     putout(i,k) = putout(i,k) + (2.34*Pkt(i,k)/Tmix)/rho(i,k)
+                     
+                     ! original CD1=2.0, changed to 1.5   (cdiss1 defined in param.txt)
+                     dimpl(i,k)  = dimpl(i,k)  + cdiss1*fd1/Ttemp + 0.9*fd2/Tt(i,k)    
+                            ! note, (CD1*fd1/Ttemp + CD2*fd2/Tmomentum)*rho*et/(rho*et) set implicit and divided by density
+
+                  endif
+               endif
+            
+            endif
+
+
          enddo
       enddo
 
@@ -366,6 +476,7 @@
       real*8 rho(0:i1,0:k1)
       real*8 mu (0:i1,0:k1)
       real*8 lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
+      real*8 lamcp(0:i1,0:k1) !gustavo
       real*8 con (0:i1,0:k1)
       real*8 cpp (0:i1,0:k1)
       real enthface,cpface,conface,muface,beface
@@ -379,11 +490,11 @@
             call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
             call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
             call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
-            call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+            call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)   !! lambda/cp 
             call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
             call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
             mu(i,k)  = mu(i,k)/Re
-            lam(i,k) = lam(i,k)/(Re*Pr)
+            lam(i,k) = lam(i,k)/(Re*Pr)                                                       !! (lambda/cp)/(Re*Pr) 
          enddo
       enddo
       
@@ -395,7 +506,7 @@
             call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
             call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
             call splint(enthTab,betaTab,beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
-            ekhi(i,k) = conface/cpface/(Re*Pr)
+            ekhi(i,k) = conface/cpface/(Re*Pr)                                              !! can calculate lambda_i/RePr=ekhi*Cpi
             Cpi(i,k)=cpface
 !            betai(i,k)=beface
             call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
@@ -406,7 +517,7 @@
             call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
             call splint(enthTab,betaTab,  beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
             ekhk(i,k) = conface/cpface/(Re*Pr)
-            Cpk(i,k)=cpface
+            Cpk(i,k)=cpface                                                                 !! can calculate lambda_k/RePr=ekhk*Cpk
 !            betak(i,k)=beface
             call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
             ekmk(i,k)  = muface/Re
@@ -480,19 +591,23 @@ c
             ! time scale for v2f model
             Tt(i,k)   = max(knew(i,k)/enew(i,k), 6.0*(ekm(i,k)/(rnew(i,k)*enew(i,k)))**0.5)
              
-            !extras
-            Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-            Tt(i,k)   = min(Tt(i,k),0.6*knew(i,k)/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-
             ! lenght scale for v2f model
             Lh(i,k)=0.23*max(knew(i,k)**1.5/enew(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
             
-            !extras
-            Lh(i,k)=min(knew(i,k)**1.5/enew(i,k),knew(i,k)**1.5/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-            Lh(i,k)=0.23*max(Lh(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
-            
+            if (modVF.eq.1) then
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+               Tt(i,k)   = min(Tt(i,k),0.6*knew(i,k)/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+
+               Lh(i,k)=min(knew(i,k)**1.5/enew(i,k),knew(i,k)**1.5/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+               Lh(i,k)=0.23*max(Lh(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
+            endif
+
+!            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
+!     &                - 0.3*(Pk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
+            ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
             fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
-     &                - 0.3*(Pk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
+     &                - 0.3*(Pk(i,k)+Gk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
             fv2(i,k) = fv2(i,k)/Lh(i,k)**2.0
          enddo
       enddo
@@ -774,7 +889,6 @@ c
             enddo
          endif
       end
-
 
       !>********************************************************************
       !!  diffusion term for SA model: in the z-direction as, plus extra for Aupoix modifications...

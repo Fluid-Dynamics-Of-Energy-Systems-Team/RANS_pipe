@@ -17,8 +17,8 @@
       real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
       real*8       newTemp,newRho,newMu,newLam,newCP,newEnth,
      &     newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot 
-      real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
-      real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1)
+      real*8       resC,resK,resE,resV2,resOm,resSA,resKt,resEt  ! Residuals for energy, kine, eps, v2, omega, nuSA
+      real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1),ekhtin(0:i1),ktin(0:i1),etin(0:i1)
 
       call cpu_time(time1)
       call mpi_init(ierr)
@@ -31,6 +31,7 @@
       ! generating the table for thermodynamic quantities...
       call readTable(rank)
 
+      ! generating the spline from the table
       call spline(enthTab, rhoTab,    nTab, rho2Tab)
       call spline(enthTab, muTab,     nTab, mu2Tab)
       call spline(enthTab, lamTab,    nTab, lam2Tab)
@@ -63,37 +64,46 @@
          if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
          if (turbmod.eq.4) open(29,file = 'SA/Inflow',form='unformatted')
          if (turbmod.eq.5) open(29,file = 'OM/Inflow',form='unformatted')
-         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+!         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0),ekhtin(:),Pkt(:,0),ktin(:),etin(:)   !modtemp
          close(29)
       endif
 
+      
+
+      if (((turbmod.eq.0).OR.(turbmod.eq.4).OR.(turbmod.eq.5)).AND.(tempturbmod.GT.1)) then
+         if (rank.eq.0) then
+            write(*,*) "The combination of turbulence models for momentum and energy is not correct"
+            stop
+         endif
+      endif 
 
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
-      call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
+      call bound_h(kin,ein,v2in,omIn,nuSAin,ktin,etin,rank)  !modtemp
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);   ! necessary to call it twice
       rold = rnew
 
-      call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
+      call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,ekht,ekhtin,rank,istep)  ! modtemp
       call bound_v(Unew,Wnew,Win,rank)
-
-
+      
       call chkdt(rank,istep)
 
 
       ! simulation loop 
       do istep=istart,nstep
-
+         
          ! calculating turbulent viscosity
-         call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
+         call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,ekht,ekhtin,rank,istep)
 
+         
          if (turbmod.eq.3)  then
             call fillhm(rank)
             call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh)
          endif
- 		 
-         call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
+ 		  		 
+         call advanceScalar(resC,resK,resE,resV2,resOm,resSA,resKt,resEt,Unew,Wnew,Rnew,Cnew,fv2,rank)
 
-         call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
+         call bound_h(kin,ein,v2in,omIn,nuSAin,ktin,etin,rank)            !modtemp
          call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
       	
 
@@ -112,6 +122,7 @@
          if (mod(istep,1000 ).eq.0)     call outputProfile(rank)
          if (mod(istep,1000 ).eq.0)     call outputX_h(rank,istep)
          if (mod(istep,1000 ).eq.0)     call output2d(rank,istep)
+         if (mod(istep,1000 ).eq.0)     call storeQs(Rnew,rank)
          if (mod(istep,5000 ).eq.0)     call saveRestart(rank)
 
          if ((periodic.eq.1) .and. mod(istep,5000).eq.0) then
@@ -121,11 +132,11 @@
          noutput = 100
          if (rank.eq.0) then
             if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
-                write(6,'(A7,9A14)') 'istep','dt','bulk',
-     1           'stress','cResid','kineResid','epsResid','v2Resid','omResid','nuSAresid'
+                write(6,'(A7,11A14)') 'istep','dt','bulk','stress','cResid',
+     1           'kineResid','epsResid','v2Resid','omResid','nuSAresid','thetaResid','epstResid'
             endif
             if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
-                write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA
+                write(6,'(i7,11e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA,resKt,resEt
             endif
          end if
 
@@ -134,6 +145,7 @@
 
       call outputProfile(rank)
       call output2d(rank,istep)
+      call storeQs(Rnew,rank)
       call mpi_finalize(ierr)
       stop
       end
@@ -143,47 +155,57 @@
 
 
 !>******************************************************************************************
-!!      turbprop routine to estimate the eddy viscosity
+!!      turbprop routine to estimate the eddy viscosity and diffusivity
 !!******************************************************************************************
-      subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+      subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,ekhttmp,ekhtin,rank,step)
 
       implicit none
       include 'param.txt'
       include 'common.txt'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
-      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,kd,Tt,Srsq
-      real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
+      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,ekhttmp,kd,Tt,Srsq
+      real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin,ekhtb,ekhtf,ekhtin
       real*8  cv1_3,chi,fv1SA,sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
+      real*8  utau,cfi,sti,Q,PeT,Prandlt,gam,Agam,PrtInf    !modTemp
 
-
-
-      sigmat = 0.9
-
+      sigmat = 0.9   !to approximate the turbulent heat flux Prt
+      
 
       do k=1,kmax
          km=k-1
          kp=k+1
 
          tauw(k) = ekmi(imax,k)*0.5*(W(imax,km)+W(imax,k))/(0.5-Rp(imax))
-
+         utau    = (tauw(k)/rNew(imax,k))*0.5
          do i=1,imax
             im=i-1
             ip=i+1
 
-            yp(i,k) = sqrt(rNew(i,k))/ekm(i,k)*(0.5-Rp(i))*tauw(k)**0.5           ! ystar
+            ! Dimensionaless wall distance
+            if (modifDiffTerm == 1) then
+               yp(i,k) = sqrt(rNew(i,k))/ekm(i,k)*(0.5-Rp(i))*tauw(k)**0.5          ! ystar
+            else
+               yp(i,k) = sqrt(rNew(imax,k))/ekm(imax,k)*(0.5-Rp(i))*tauw(k)**0.5    ! yplus
+            endif   
   !          yp(i,k) = sqrt(rNew(imax,k))/ekm(imax,k)*(0.5-Rp(i))*tauw(k)**0.5    ! yplus
   !          yp(i,:)=(0.5-Rp(i))*Re*(1/Re*(Win(imax)/(0.5-Rp(imax))))**0.5        ! yplus
+  
+            ! Reynolds numbers
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
-            Ret(i,k)=rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
+            Ret(i,k)=rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        
+            Reeps(i,k)= (0.5-Rp(i))*((ekm(i,k)*eNew(i,k)/rNew(i,k))**0.25)*rNew(i,k)/ekm(i,k)   !modTemp
 
 
+            !!====================================================================================
+            !!              eddy viscosity
+            !!====================================================================================
             if (turbmod.eq.0) then
-
+               ! laminar
                ekmttmp(i,k) = 0.
 
             elseif (turbmod.eq.1) then
-
+               ! MK
                sigmak       = 1.4
                sigmae       = 1.3
                cmu          = 0.09
@@ -197,7 +219,7 @@
                ekmttmp(i,k) = min(1.,rNew(i,k)*cmu*fmu(i,k)*kNew(i,k)**2./(eNew(i,k)))
 
             elseif (turbmod.eq.2) then
-
+               ! LS
                sigmak = 1.0
                sigmae = 1.3
                cmu    = 0.09
@@ -223,13 +245,13 @@
                   dterm(i,k)=2.*ekm(i,k)/rNew(i,k)*((kd(im,k)**0.5-kd(ip,k)**0.5)/(Rp(ip)-Rp(im))+
      &                 (kd(i,kp)**0.5-kd(i,km)**0.5)/(2.*dz))**2.
                endif
-                   eterm(i,k)=2.*ekm(i,k)*ekmt(i,k)/rNew(i,k)**2.*(((((U(i,kp)+U(im,kp))/2-(U(i,k)+U(im,k))/2)
+               eterm(i,k)=2.*ekm(i,k)*ekmt(i,k)/rNew(i,k)**2.*(((((U(i,kp)+U(im,kp))/2-(U(i,k)+U(im,k))/2)
      &              /dz-((U(i,k)+U(im,k))/2-(U(i,km)+U(im,km))/2)/dz)/dz)**2
      &              +((((W(im,k)+W(im,km))/2-(W(i,k)+W(i,km))/2)/(Rp(i)-Rp(im))-((W(i,k)+W(i,km))/2-
      &              (W(ip,k)+W(ip,km))/2)/(Rp(ip)-Rp(i)))/(Ru(i)-Ru(im)))**2)
 
             elseif (turbmod.eq.3) then
-
+               ! V2F
                sigmak = 1.0
                sigmae = 1.3
                cmu    = 0.22
@@ -248,9 +270,11 @@
                Srsq(i,k) = Str*rNew(i,k)*0.5
                Tt(i,k)   = max(kNew(i,k)/eNew(i,k),6.0*(ekm(i,k)/(rNew(i,k)*eNew(i,k)))**0.5)
 
-               !extras
-               !Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-               !Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+               if (modVF.eq.1) then
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+                  Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+                  Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+               endif
 
                fmu(i,k) = v2New(i,k)*Tt(i,k)/(kNew(i,k)**2./eNew(i,k))
                f1(i,k)  = 1.0 + 0.045*(kNew(i,k)/v2New(i,k))**0.5
@@ -261,15 +285,14 @@
 !               ekmttmp(i,k) = min(max(ekmttmp(i,k),1.0e-8), 1.0)
 
             elseif (turbmod .eq. 4) then
-
+               ! SA
                cv1_3        = (7.1)**3.0
                chi          = nuSAnew(i,k)/(ekm(i,k)/rNew(i,k))
                fv1SA        = (chi**3.0)/(chi**3.0 + cv1_3);
                ekmttmp(i,k) = min(100.0,max(0.0,rNew(i,k)*nuSAnew(i,k)*fv1SA))
 
             elseif (turbmod.eq.5) then
-
-           
+              ! SST
               !constants
                sigma_om2 = 0.856
                betaStar  = 0.09
@@ -282,7 +305,7 @@
               StR = StR**0.5
                
               gradkom  =   ((kNew(ip,k) - kNew(im,k))/(Rp(ip)-Rp(im))) * ((omnew(ip,k) - omnew(im,k))/(Rp(ip)-Rp(im)))
-     &                    + ((kNew(i,kp) - kNew(i,km))/(2.0*dz))        * ((omnew(i,kp) - omnew(i,km))/(2.0*dz))
+     &                   + ((kNew(i,kp) - kNew(i,km))/(2.0*dz))        * ((omnew(i,kp) - omnew(i,km))/(2.0*dz))
 
               cdKOM(i,k) = 2.0*sigma_om2*rNew(i,k)/omnew(i,k)*gradkom;
               
@@ -300,7 +323,86 @@
               ekmttmp(i,k) = rNew(i,k)*kNew(i,k)/omNew(i,k)
 
             endif
+            
+            
+            !!====================================================================================
+            !!              eddy diffusivity
+            !!====================================================================================
+            ! standard approximation of the eddy diffusivity: alpha_t= lambda_t/cp/rho = ekht/rho 
+            !                                                   ekht = lambda_t/cp     = mu_t/Prt 
+            
+            if ((rank.eq.0).and.(k.lt.K_start_heat)) then
+              Q=0.0
+            else
+              Q=Qwall
+            endif 
+            
+            
+           ! if (periodic.eq.1) then
+           !    ekhttmp(i,k) = 0 
+           ! else
+            
+               if (tempturbmod.eq.0) then !standard Prt constant model
+               
+                 sigmat = 0.9
+                 ekhttmp(i,k) = ekmttmp(i,k)/sigmat
+                 
+               elseif (tempturbmod.eq.1) then  !Prt
+            
+                 ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
+                 sigmat       = 1/(0.5882+0.228*(ekmttmp(i,k)/ekm(i,k))-0.0441*((ekmttmp(i,k)/ekm(i,k))**2.0)*(1-exp(-5.165/(ekmttmp(i,k)/ekm(i,k)))))
 
+                 if (modPrt.GT.0) then
+                    ! Approximation of the turbulent Prandlt number (C. Irrenfried, H. Steiner IJHFF 2017)
+                    PrtInf = 1.0            ! turbulent Prandlt number at infinity
+                    Prandlt= ekm(i,k)/ekh(i,k)
+                    PeT    = ekmttmp(i,k)/ekm(i,k)*Prandlt
+
+                    gam    = 1.0/(PrtInf+0.1*(Prandlt**0.83))
+                    Agam   = ((2/PrtInf)-2*gam)**0.5
+
+                    sigmat = (gam+3.0*PeT*Agam-((3.0*PeT)**2.0)*(1-exp(-Agam/(3.0*PeT))))**(-1.0)
+                 endif
+
+                 ekhttmp(i,k) = ekmttmp(i,k)/sigmat  
+              
+               elseif ((tempturbmod.eq.2).and.(Q.gt.0)) then  !Nagano and Kim  
+           
+                 
+                 ! maybe cfi and sti needs be calculated only at the wall then i needs to be imax
+                 cfi =  2*tauw(k)/rnew(imax,k)/utau                         !  skin frinction: Cf=tau_w/(rho*uref/2) (but uref=utau and utau=sqrt(tauw/rhow))
+                 sti =  Q/(rnew(imax,k)*cp(imax,k)*utau*temp(imax,k))       !  stanton number: St=qw/(rho Cp Uref (Tw-Tref))
+                 flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0
+                 ekhttmp(i,k) = rnew(i,k)*0.11*flambda(i,k)*knew(i,k)*((knew(i,k)*ktnew(i,k)/enew(i,k)/(etnew(i,k)+1.0e-20))**0.5)
+                 !alpha * rho = lambda/cp
+
+                 if (isnan(ekhttmp(i,k))) then 
+                    write(*,*) "eddy diffusivity is nan!", ekhttmp(i,k), "becasue: flam ", flambda(i,k), " or kt: " ,ktnew(i,k), " or et: " ,etnew(i,k)
+                    stop
+                 endif
+
+               elseif ((tempturbmod.eq.3).or.(tempturbmod.eq.4).or.(tempturbmod.eq.5)) then  !Deng Wu Xi
+                   
+                 
+                 flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))
+                 ekhttmp(i,k) = rnew(i,k)*0.1*flambda(i,k)*(knew(i,k)*knew(i,k)/enew(i,k))*((ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**0.5)
+                 !alpha * rho = lambda/cp
+
+                 if (isnan(ekhttmp(i,k))) then 
+                    write(*,*) "eddy diffusivity is nan!", ekhttmp(i,k), "becasue: flam ", flambda(i,k), " or kt: " ,ktnew(i,k), " or et: " ,etnew(i,k)
+                    stop
+                 endif
+            
+               
+                 
+               else                          
+               
+                 ekhttmp(i,k) = 0
+               
+              endif
+              sigmat=1.0
+            !endif
+      
          enddo
       enddo
 
@@ -326,17 +428,19 @@
 
 
 
-
+      ! Boundary condition for eddy viscosity
+      !   radial direction
       ekmttmp(i1,:) = -ekmttmp(imax,:)
       ekmttmp(0,:)  =  ekmttmp(1,:)
 
+      !   axial direction
       call shiftf(ekmttmp,ekmtf,rank)
       call shiftb(ekmttmp,ekmtb,rank)
       ekmttmp(:,0)  = ekmtf(:)
       ekmttmp(:,k1) = ekmtb(:)
-
+      
       if ((periodic.ne.1).and.(rank.eq.0)) then
-         ekmttmp(:,0)=ekttin(:)
+         ekmttmp(:,0)=ekmtin(:)
       endif
 
       if ((periodic.ne.1).and.(rank.eq.px-1)) then
@@ -344,10 +448,186 @@
       endif
 
       ekmetmp = ekm + ekmttmp
+      
+      
+      ! Boundary condition for eddy diffusivity     
+      !   radial direction
+      ekhttmp(i1,:) = -ekhttmp(imax,:)   
+      ekhttmp(0,:)  =  ekhttmp(1,:)      
+      
+      !   axial direction
+      call shiftf(ekhttmp,ekmtf,rank)    
+      call shiftb(ekhttmp,ekmtb,rank)    
+      ekhttmp(:,0)  = ekmtf(:)           
+      ekhttmp(:,k1) = ekmtb(:)
+     
+      if ((periodic.ne.1).and.(rank.eq.0)) then
+         ekhttmp(:,0)=ekhtin(:)
+      endif
+
+      if ((periodic.ne.1).and.(rank.eq.px-1)) then
+         ekhttmp(:,k1) = 2.*ekht(:,kmax)-ekht(:,kmax-1)
+      endif
+
 
       end
 
+!>************************************************************************************
+!!
+!!    Calculates dqrdr and dqxdx using 
+!!                          qr= lambda dTdr = lambda/cp dCdr
+!!                          qx= lambda dTdx = lambda/cp dCdx
+!!
+!!************************************************************************************
+      subroutine storeQs(Rtmp,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      include 'mpif.h'
+      character*5 cha
+      real*8     a  (imax)
+      real*8     b  (imax)
+      real*8     c  (imax)
+      real*8 Rtmp(0:i1,0:k1)
+      real*8 ekTk(0:i1,0:k1),ekTi(0:i1,0:k1),ekT(0:i1,0:k1),ekmtT(0:i1,0:k1),dqTdr(0:i1,0:k1),dqCdr(0:i1,0:k1),dqTdx(0:i1,0:k1),dqCdx(0:i1,0:k1)
+      integer   im,ip            
+      real*8 qtotx, qtotr, diffx, diffr
+      
+      write(cha,'(I5.5)')rank
+      ! ------------------------------------------------------------------------
+      !    with TEMPERATURE qi=lambda dTdxi
+      ! ------------------------------------------------------------------------      
+      do k=0,k1
+         do i=0,i1
+             !! lambda (ekh= lambda/cp)
+             ekT(i,k)  = ekh(i,k)*cp(i,k)        
+             ekTi(i,k) = ekhi(i,k)*cpi(i,k)
+             ekTk(i,k) = ekhk(i,k)*cpk(i,k)
+             !! lambda_t (ekmt=lambda_t/cp)
+             ekmtT(i,k)= ekmt(i,k)*cp(i,k)       
+         enddo
+      enddo
 
+      !calculating dqTdx (using temperature and lambda)
+      
+      call diffc(dqTdx,temp,ekTk,ekTi,ekTk,ekmtT,sigmat,Rtmp,Ru,Rp,dr,dz,rank,0)
+      !inside the function dqTdx is divided by rho
+      do k=1,kmax
+         do i=1,imax
+             dqTdx(i,k)=dqTdx(i,k)*Rtmp(i,k)
+         enddo
+      enddo
+     
+     
+      !calculating dqTdr
+!!      do k=1,k1-1
+!!         do i=1,i1-1
+!!            im=i-1
+!!            ip=i+1
+!!            dqTdr(i,k) = ((Ru(im)*( (ekTi(im,k ) + (0.5*(ekmtT(i ,k)+ekmtT(im,k))/sigmat))*(temp(i ,k)-temp(im,k ))/(Rp(i )-Rp(im)) ))
+!!     &                   -(Ru(i) *( (ekTi(i ,k ) + (0.5*(ekmtT(ip,k)+ekmtT(i ,k))/sigmat))*(temp(ip,k)-temp(i ,k ))/(Rp(ip)-Rp(i )) ))  )/(Rp(i)*dr(i))                              
+!!         enddo
+!!      enddo
+      !-----------------------------------------------------------------------------------------------------------------
+      do k=1,kmax
+         do i=1,imax-1
+            a(i) = -Ru(i-1)*(ekTi(i-1,k)+0.5*(ekmtT(i,k)+ekmtT(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            c(i) = -Ru(i  )*(ekTi(i  ,k)+0.5*(ekmtT(i,k)+ekmtT(i+1,k))/sigmat)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
+            b(i) = (-a(i)-c(i))
+         enddo
+
+         b(1)=b(1)+a(1)
+         i=imax
+            a(i)   = -Ru(i-1)*(ekTi(i-1,k)+0.5*(ekmtT(i,k)+ekmtT(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            c(i)   =  0.0
+            b(i)   =  (-a(i)-c(i))
+
+         do i=1,imax
+            dqCdr(i,k)=a(i)*temp(i-1,k)+b(i)*temp(i,k)+c(i)*temp(i+1,k)
+         enddo
+      enddo
+      !-----------------------------------------------------------------------------------------------------------------
+
+      ! ------------------------------------------------------------------------
+      !    with ENTHAPLY qi=lambda/cp dCdxi
+      ! ------------------------------------------------------------------------ 
+      
+      !calculating dqHdx (using temperature and lambda)
+      dqCdx=0.0; 
+      call diffc(dqCdx,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dr,dz,rank,0)
+      
+      !calculating dqCdr
+!!      do k=1,k1-1
+!!         do i=1,i1-1
+!!            im=i-1
+!!            ip=i+1
+!!            dqCdr(i,k) = ((Ru(im)*( (ekhi(im,k ) + (0.5*(ekmt(i ,k)+ekmt(im,k))/sigmat))*(cnew(i ,k)-cnew(im,k ))/(Rp(i )-Rp(im)) ))
+!!     &                   -(Ru(i) *( (ekhi(i ,k ) + (0.5*(ekmt(ip,k)+ekmt(i ,k))/sigmat))*(cnew(ip,k)-cnew(i ,k ))/(Rp(ip)-Rp(i )) )))/(Rp(i)*dr(i))                              
+!!         enddo
+!!      enddo  
+      !-----------------------------------------------------------------------------------------------------------------
+      do k=1,kmax
+         do i=1,imax-1
+            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
+            b(i) = (-a(i)-c(i))
+         enddo
+
+         b(1)=b(1)+a(1)
+         i=imax
+            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            c(i)   =  0.0
+            b(i)   =  (-a(i)-c(i))
+
+         do i=1,imax
+            dqCdr(i,k)=a(i)*cnew(i-1,k)+b(i)*cnew(i,k)+c(i)*cnew(i+1,k)
+         enddo
+      enddo
+      !-----------------------------------------------------------------------------------------------------------------
+            
+            
+            
+      qtotx=0.0; qtotr=0.0; diffx=0.0; diffr=0.0;
+      do k=0,k1
+         do i=0,i1
+            diffx=diffx+ abs(dqTdx(i,k)-dqCdx(i,k))
+            diffr=diffr+ abs(dqTdr(i,k)-dqCdr(i,k))
+            
+            qtotx=qtotx+ dqCdx(i,k)
+            qtotr=qtotr+ dqCdr(i,k)
+         enddo
+      enddo
+      
+      
+      ! ------------------------------------------------------------------------
+      !    writing to a file
+      ! ------------------------------------------------------------------------ 
+      
+      if (turbmod.eq.0) open(15,file='0/heat.'//cha)
+      if (turbmod.eq.1) open(15,file='MK/heat.'//cha)
+      if (turbmod.eq.2) open(15,file='LS/heat.'//cha)
+      if (turbmod.eq.3) open(15,file='VF/heat.'//cha)
+      if (turbmod.eq.4) open(15,file='SA/heat.'//cha)
+      if (turbmod.eq.5) open(15,file='OM/heat.'//cha)
+
+
+
+
+      if (rank.eq.0) then
+         write(15,*) 'VARIABLES ="X","Y","U","W","C","T","RHO","mu","mut","lamcp","cp","dqTdx","dqHdx","dqTdr","dqHdr","diff_x","diff_r","Reldiff_x","Reldiff_r"'
+         write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
+      endif
+
+
+      do k=0,k1
+         do i=0,i1
+            write(15,'(19ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),
+     &           rnew(i,k),ekm(i,k),ekmt(i,k),ekh(i,k),cp(i,k),dqTdx(i,k),dqCdx(i,k),dqTdr(i,k),dqCdr(i,k),dqTdx(i,k)-dqCdx(i,k),dqTdr(i,k)-dqCdr(i,k),diffx/qtotx,diffr/qtotr
+         enddo
+      enddo
+
+      close(15)      
+      end
 
 
 !>************************************************************************************
@@ -368,13 +648,15 @@
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-      subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
+      subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,resKt,resEt,Utmp,Wtmp,Rtmp,Ctmp,ftmp,rank)
       implicit none
       include 'param.txt'
       include 'common.txt'
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
-      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
+      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),Ctmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
       real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
+      real*8 ekal(0:i1,0:k1),ekali(0:i1,0:k1),ekalk(0:i1,0:k1),ekalt(0:i1,0:k1)
+      real*8 rhocp(0:i1,0:k1)
       real*8 cb3,Q
       integer ierr
       real*8     a  (imax)
@@ -384,17 +666,17 @@
 
       real*8 t1,t2,t3,t4,bc,scl
       real*8 term, adiffm, adiffp
-      real*8 resC, resK, resE, resV2, resOm, resSA
-
+      real*8 resC, resK, resE, resV2, resOm, resSA, resKt, resEt
 
 ! ------------------------------------------------------------------------
 !     ENTHAPLY ENTHAPLY ENTHAPLY ENTHAPLY
 ! ------------------------------------------------------------------------
       resC  = 0.0
       dnew=0.0; dimpl = 0.0;
+             
       call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-      call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dr,dz,rank,0)
-
+      call diffc(dnew,cnew,ekh,ekhi,ekhk,ekht,1.0,Rtmp,Ru,Rp,dr,dz,rank,0)     ! sigmat is already divided in ekht
+      
       do k=1,kmax
          if (rank.eq.0.and.k.lt.K_start_heat) then
             Q=0.0
@@ -403,15 +685,15 @@
          endif
 
          do i=1,imax-1
-            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
-            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
+            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)       !modTemp (ekht divided by sigmat in function "turbprop"!!!
+            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
             b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac
             rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)
          enddo
 
          b(1)=b(1)+a(1)
          i=imax
-            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)     !modTemp (ekht divided by sigmat in function "turbprop"!!!
             c(i)   =  0.0
             b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
             rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dr(i)) + (1-alphac)*b(i)*cnew(i,k)
@@ -424,9 +706,11 @@
             cnew(i,k) = max(rhs(i), 0.0)
          enddo
       enddo
-
-
+  
       if (periodic.eq.1) cnew = 0.0
+      
+          
+      
 
 ! ------------------------------------------------------------------------
 !     TURBULENCE MODELING
@@ -437,6 +721,8 @@
       resV2 = 0.0
       resOm = 0.0
       resSA = 0.0
+      resKt = 0.0
+      resEt = 0.0
 
       ! modified turb. model
       !    modifDiffTerm = 1, our modification
@@ -461,7 +747,7 @@
           call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
           !if (modifDiffTerm == 1) call advecrho(dnew,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl=1.0
-          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
           call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
 
           do k=1,kmax
@@ -502,7 +788,7 @@
           call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
           !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl=0.0
-          call prodis(dnew,dimpl,kNew,eNew,v2new,nuSAnew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+          call prodis(dnew,dimpl,kNew,eNew,v2new,nuSAnew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
           call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
 
           do k=1,kmax
@@ -554,7 +840,7 @@
              call advecc(dnew,dimpl,v2New,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
              !if (modifDiffTerm == 1) call advecrho(dnew,v2New,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
              scl=2.0
-             call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+             call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
              call diffc(dnew,v2New,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
 
              do k=1,kmax
@@ -608,7 +894,7 @@
           call advecc(dnew,dimpl,nuSANew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
           !if (modifDiffTerm == 1) call advecrho(dnew,nuSANew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl = 4.0
-          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
 
           do k=0,kmax+1
              do i=0,imax+1
@@ -676,7 +962,7 @@
           call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
           !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl = 10.0
-          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
 
           ! calculating constant with blending function factor
           sigmakSST = 0.85*bF1 + 1.0*(1.0 - bF1)
@@ -728,7 +1014,7 @@
           call advecc(dnew,dimpl,omNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
           !if (modifDiffTerm == 1) call advecrho(dnew,omNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl = 11.0
-          call prodis(dnew,dimpl,omNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+          call prodis(dnew,dimpl,omNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
 
           ! calculating constant with blending function factor
           sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
@@ -763,13 +1049,261 @@
 
 
       endif
+! ------------------------------------------------------------------------
+!     TURBULENCE MODEL FOR THE TURBULENT HEAT FLUX
+! ------------------------------------------------------------------------ 
+      if ((tempturbmod.eq.2).or.(tempturbmod.eq.3)) then
+! ------------------------------------------------------------------------
+!     et et et et et et et et et
+! ------------------------------------------------------------------------ 
+         resEt  = 0.0
+         dnew=0.0; dimpl = 0.0;
+         scl = 21.0
+         call advecc(dnew,dimpl,etnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+         call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+         call diffc(dnew,etnew,ekh,ekhi,ekhk,ekht,1.0,Rtmp,Ru,Rp,dr,dz,rank,0) 
+   
+      
+         do k=1,kmax
+         
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)       
+               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphaet
+               rhs(i) = dnew(i,k) + (1-alphaet)*b(i)*etnew(i,k)
+            enddo
 
+            b(1) = b(1)+a(1)
+             i=imax
+             b(i) = b(i) - (c(i) /alphaet)
+             rhs(i) = dnew(i,k)  - c(i)*etNew(i1,k) + (1-alphaet)*b(i)*etNew(i,k)
+
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               resEt = resKt + ((etnew(i,k) - rhs(i))/(etnew(i,k)+1.0e-20))**2.0
+               etnew(i,k) = max(rhs(i), 1.0e-8)
+            enddo
+            
+         enddo
+
+! ------------------------------------------------------------------------
+!     kt kt kt kt kt kt kt kt kt
+! ------------------------------------------------------------------------ 
+         resKt  = 0.0
+         dnew=0.0; dimpl = 0.0;
+         scl = 20.0
+         call advecc(dnew,dimpl,ktnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+         call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+         call diffc(dnew,ktnew,ekh,ekhi,ekhk,ekht,1.0,Rtmp,Ru,Rp,dr,dz,rank,0)     
+      
+         do k=1,kmax                 
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)       
+               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphakt
+               rhs(i) = dnew(i,k) + (1-alphakt)*b(i)*ktnew(i,k)
+            enddo
+
+            b(1) = b(1)+a(1)
+             i=imax
+             b(i) = b(i) - (c(i) /alphakt)
+             rhs(i) = dnew(i,k)  + (1-alphakt)*b(i)*ktNew(i,k)
+
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               resKt = resKt + ((ktnew(i,k) - rhs(i))/(ktnew(i,k)+1.0e-20))**2.0
+               ktnew(i,k) = max(rhs(i), 0.0)
+            enddo
+         enddo
+
+
+      elseif (tempturbmod.eq.4) then
+        ! main difference: cp is included inside the diffusion term
+!        solving with lambda= diffusivity * rho * cp ; ekh = lambda/cp => lambda = cp * ekh
+!        !alpha * rho = lambda/cp 
+         do k=0,kmax+1
+             do i=0,imax+1
+                 rhocp(i,k)  = Rtmp(i,k)*cp(i,k)
+                  ekal(i,k)  =  ekh(i,k)*cp(i,k)
+                 ekalt(i,k)  = ekht(i,k)*cp(i,k)
+             enddo
+          enddo
+          do k=0,kmax+1
+             do i=0,imax
+                 ekali(i,k)  = ekhi(i,k)*cpi(i,k)
+             enddo
+          enddo
+          do k=0,kmax
+             do i=0,imax+1
+                 ekalk(i,k)  = ekhk(i,k)*cpk(i,k)
+             enddo
+          enddo
+
+
+! ------------------------------------------------------------------------
+!     et et et et et et et et et
+! ------------------------------------------------------------------------ 
+         resEt  = 0.0
+         dnew=0.0; dimpl = 0.0;
+         scl = 21.0
+         call advecc(dnew,dimpl,etnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+         call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+         call diffc(dnew,etnew,ekal,ekali,ekalk,ekalt,1.0,rhocp,Ru,Rp,dr,dz,rank,0)   
+      
+         do k=1,kmax
+         
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekali(i-1,k)+0.5*(ekalt(i,k)+ekalt(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rhocp(i,k)       
+               c(i) = -Ru(i  )*(ekali(i  ,k)+0.5*(ekalt(i,k)+ekalt(i+1,k)))/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rhocp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphaet
+               rhs(i) = dnew(i,k) + (1-alphaet)*b(i)*etnew(i,k)
+            enddo
+
+            b(1) = b(1)+a(1)
+             i=imax
+             b(i) = b(i) - (c(i) /alphaet)
+             rhs(i) = dnew(i,k)  - c(i)*etNew(i1,k) + (1-alphaet)*b(i)*etNew(i,k)
+
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               resEt = resKt + ((etnew(i,k) - rhs(i))/(etnew(i,k)+1.0e-20))**2.0
+               etnew(i,k) = max(rhs(i), 1.0e-8)
+            enddo
+            
+         enddo
+
+! ------------------------------------------------------------------------
+!     kt kt kt kt kt kt kt kt kt
+! ------------------------------------------------------------------------ 
+         resKt  = 0.0
+         dnew=0.0; dimpl = 0.0;
+         scl = 20.0
+         call advecc(dnew,dimpl,ktnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+         call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+         call diffc(dnew,ktnew,ekal,ekali,ekalk,ekalt,1.0,rhocp,Ru,Rp,dr,dz,rank,0) 
+            
+      
+         do k=1,kmax                 
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekali(i-1,k)+0.5*(ekalt(i,k)+ekalt(i-1,k)))/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rhocp(i,k)       
+               c(i) = -Ru(i  )*(ekali(i  ,k)+0.5*(ekalt(i,k)+ekalt(i+1,k)))/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rhocp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphakt
+               rhs(i) = dnew(i,k) + (1-alphakt)*b(i)*ktnew(i,k)
+            enddo
+
+            b(1) = b(1)+a(1)
+             i=imax
+             b(i) = b(i) - (c(i) /alphakt)
+             rhs(i) = dnew(i,k)  + (1-alphakt)*b(i)*ktNew(i,k)
+
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               resKt = resKt + ((ktnew(i,k) - rhs(i))/(ktnew(i,k)+1.0e-20))**2.0
+               ktnew(i,k) = max(rhs(i), 0.0)
+            enddo
+         enddo
+
+      elseif (tempturbmod.eq.5) then
+      ! DWX with density corrections!!!!! DWX with density corrections!!!!
+      ! DWX with density corrections!!!!! DWX with density corrections!!!!
+      ! DWX with density corrections!!!!! DWX with density corrections!!!!
+      ! DWX with density corrections!!!!! DWX with density corrections!!!!
+! ------------------------------------------------------------------------
+!     et et et et et et et et et
+! ------------------------------------------------------------------------ 
+          resEt  = 0.0
+          dnew=0.0; dimpl = 0.0;
+          scl = 21.0
+          call advecc(dnew,dimpl,etNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+          call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+          call diffEPS(dnew,etNew,ekh,ekhi,ekhk,ekht,1.0,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+
+          do k=1,kmax
+             do i=1,imax
+                
+                a(i) = (ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
+                a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)
+
+                c(i) = (ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
+                c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)
+
+                b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphaet
+
+                a(i) = a(i)*(rho3(i-1,k)**1.5)
+                c(i) = c(i)*(rho3(i+1,k)**1.5)
+
+                rhs(i) = dnew(i,k) + (1-alphaet)*b(i)*etNew(i,k)
+             enddo
+
+             b(1)=b(1)+a(1)
+             i=imax
+             rhs(i) = dnew(i,k) - c(i)*etNew(i1,k) + (1-alphaet)*b(i)*etNew(i,k)
+
+
+             call matrixIdir(imax,a,b,c,rhs)
+
+             do i=1,imax
+                resEt = resEt + ((etNew(i,k) - rhs(i))/(etNew(i,k)+1.0e-20))**2.0
+                etNew(i,k) = max(rhs(i), 1.0e-8)
+             enddo
+          enddo
+
+
+! ------------------------------------------------------------------------
+!     kt kt kt kt kt kt kt kt kt
+! ------------------------------------------------------------------------ 
+          resKt  = 0.0
+          dnew=0.0; dimpl = 0.0;
+          scl = 20.0
+          call advecc(dnew,dimpl,ktNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
+          call prodis(dnew,dimpl,kNew,eNew,v2new,nuSAnew,ftmp,Utmp,Wtmp,temp,Rtmp,Ctmp,scl)
+          call diffc(dnew,ktNew,ekh,ekhi,ekhk,ekht,1.0,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+
+          do k=1,kmax
+             do i=1,imax
+                if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
+                   a(i) = (ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
+                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                   c(i) = (ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
+                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                else if (modifDiffTerm == 2) then
+                   a(i) = (ekhi(i-1,k)+0.5*(ekht(i,k)+ekht(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))
+                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)
+                   c(i) = (ekhi(i  ,k)+0.5*(ekht(i,k)+ekht(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))
+                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)
+                endif
+
+                b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphakt
+                a(i) = a(i)*rho3(i-1,k)
+                c(i) = c(i)*rho3(i+1,k)
+
+                rhs(i) = dnew(i,k) + (1-alphakt)*b(i)*ktNew(i,k)
+             enddo
+
+             b(1) = b(1) + a(1)
+             
+             i=imax
+             b(i) = b(i) - (c(i) /alphakt)
+             !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
+             !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
+             rhs(i) = dnew(i,k) + (1-alphakt)*b(i)*ktNew(i,k)
+
+             call matrixIdir(imax,a,b,c,rhs)
+
+             do i=1,imax
+                resKt = resKt + ((ktNew(i,k) - rhs(i))/(ktNew(i,k)+1.0e-20))**2.0
+                ktNew(i,k) = max(rhs(i), 1.0e-8)
+             enddo
+          enddo
+
+
+      endif
 
       end
-
-
-
-
 
 
 
@@ -935,7 +1469,7 @@
 !!  bound_h equation
 !!
 !!*************************************************************************************
-      subroutine bound_h(kin,ein,v2in,omin,nuSAin,rank)
+      subroutine bound_h(kin,ein,v2in,omin,nuSAin,ktin,etin,rank)
       implicit none
 c     
       include 'param.txt'
@@ -943,7 +1477,7 @@ c
       include 'mpif.h'
 
       real*8 unin,flux,Ub,BCvalue(0:k1)
-      real*8 Sk(0:k1),kin(0:i1),ein(0:i1),v2in(0:i1),omin(0:i1),nuSAin(0:i1)
+      real*8 Sk(0:k1),kin(0:i1),ein(0:i1),v2in(0:i1),omin(0:i1),nuSAin(0:i1),ktin(0:i1),etin(0:i1)
       real*8 tmpShift(0:i1)
 
 
@@ -957,9 +1491,10 @@ c
       enddo
 
 
-!     Radial boundary condition
-      if (turbmod.eq.1) then
+!     Radial boundary condition for turbulent scalars
 
+      if (turbmod.eq.1) then
+         !MK model
          knew(i1,:) = -knew(imax,:)
          BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/(0.5-Rp(imax))**2
          enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
@@ -970,33 +1505,42 @@ c
          enew(i1,:) =  -enew(imax,:)
 
       elseif (turbmod.eq.3) then
-
+        !V2F model
          knew(i1,:)  = -knew(imax,:)
          v2new(i1,:) = -v2new(imax,:)
-         BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/(0.5-Rp(imax))**2
+         BCvalue(:)  = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/(0.5-Rp(imax))**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
       elseif (turbmod.eq.4) then
-
+        !SA model
          nuSAnew(i1,:) = -nuSAnew(imax,:)
 
       elseif (turbmod.eq.5) then
-
+        !SST model
          knew(i1,:)  = -knew(imax,:)
          BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/((0.5-Rp(imax))**2)
-!         omNew(i1,:) = 50205072.858428769
          omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
 
       endif
 
+      if (tempturbmod.GT.1) then
+        !Heat transfer turb model
+        ktnew(i1,:) = -ktnew(imax,:)                                                           
+        BCvalue(:)  = 2.0*ekh(imax,:)/rNew(imax,:)*(ktnew(imax,:)**(0.5)/(0.5-Rp(imax)))**2        
+        etnew(i1,:) = 2.0*BCvalue(:) - etnew(imax,:)                                           
+      
+      endif
 
-!     center line BC
+
+!     center line boundary condition
       cnew(0,:)    = cnew(1,:)
       knew(0,:)    = knew(1,:)
       enew(0,:)    = enew(1,:)
       v2new(0,:)   = v2new(1,:)
       omNew(0,:)   = omNew(1,:)
       nuSAnew(0,:) = nuSAnew(1,:)
+      ktnew(0,:)   = ktnew(1,:)   
+      etnew(0,:)   = etnew(1,:)   
 
 !     ghost cells between CPU
       call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
@@ -1005,6 +1549,8 @@ c
       call shiftf(v2new,  tmpShift,rank);      v2new(:,0) = tmpShift(:);
       call shiftf(omNew,  tmpShift,rank);      omNew(:,0) = tmpShift(:);
       call shiftf(nuSAnew,tmpShift,rank);    nuSAnew(:,0) = tmpShift(:);
+      call shiftf(ktnew,  tmpShift,rank);      ktnew(:,0) = tmpShift(:);   
+      call shiftf(etnew,  tmpShift,rank);      etnew(:,0) = tmpShift(:);   
 
       call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
       call shiftb(knew,   tmpShift,rank);      knew(:,k1) = tmpShift(:);
@@ -1012,6 +1558,8 @@ c
       call shiftb(v2new,  tmpShift,rank);     v2new(:,k1) = tmpShift(:);
       call shiftb(omNew,  tmpShift,rank);     omNew(:,k1) = tmpShift(:);
       call shiftb(nuSAnew,tmpShift,rank);   nuSAnew(:,k1) = tmpShift(:);
+      call shiftb(ktnew,  tmpShift,rank);     ktnew(:,k1) = tmpShift(:);   
+      call shiftb(etnew,  tmpShift,rank);     etnew(:,k1) = tmpShift(:);   
       
       if (periodic.eq.1) return
 
@@ -1024,6 +1572,8 @@ c
          v2new(:,0) = v2in(:)
          omNew(:,0) = omin(:)
        nuSAnew(:,0) = nuSAin(:)
+         ktnew(:,0) = ktin(:)   
+         etnew(:,0) = etin(:)   
       endif
 
       if (rank.eq.px-1) then
@@ -1033,6 +1583,8 @@ c
          v2new(:,k1) = 2.0*  v2new(:,kmax) -   v2new(:,kmax-1)
          omNew(:,k1) = 2.0*  omNew(:,kmax) -   omNew(:,kmax-1)
        nuSAnew(:,k1) = 2.0*nuSAnew(:,kmax) - nuSAnew(:,kmax-1)
+         ktnew(:,k1) = 2.0*  ktnew(:,kmax) -   ktnew(:,kmax-1)  
+         etnew(:,k1) = 2.0*  etnew(:,kmax) -   etnew(:,kmax-1)  
       endif
 
       end
@@ -1290,20 +1842,27 @@ c
               if (turbmod.eq.3) open(29,file= 'VF/Inflow',form='unformatted')
               if (turbmod.eq.4) open(29,file= 'SA/Inflow',form='unformatted')
               if (turbmod.eq.5) open(29,file= 'OM/Inflow',form='unformatted')
-              read(29) Wnew(:,k),knew(:,k),enew(:,k),v2new(:,k),omNew(:,k),nuSAnew(:,k),ekmt(:,k),Pk(:,k)
-              close(29)
+              if (turbmod.eq.6) open(29,file ='MK_TEMP/Inflow',form='unformatted')
+              read(29) Wnew(:,k),knew(:,k),enew(:,k),v2new(:,k),omNew(:,k),nuSAnew(:,k),ekmt(:,k),Pk(:,k),ekht(:,k),Pkt(:,k),ktnew(:,k),etnew(:,k)   
+              close(29)              
             enddo
         else
             !initialized from scratch values
             if (rank.eq.0)  write(*,*) 'Initializing flow with scratch = ', select_init
 
             do i=1,imax
+
               Wnew(i,:)  = Re/6*3/2.*(1-(rp(i)/0.5)**2)
+
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0
               omnew(i,:) = 0.001
               v2new(i,:) = 2./3.*knew(i,:)
               nuSAnew(i,:) = 0.001
+
+              ktnew(i,:)  = 0.0001     
+              etnew(i,:)  = 0.0010     
+              
             enddo
         endif
 

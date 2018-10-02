@@ -16,7 +16,7 @@ LIBS = -lmpi
 RM = rm -f
 
 
-PROGRAM = forced_real_VF
+PROGRAM = forced_real
 SRCS    = parpipe.f numerics.f fileio.f math.f mpistuff.f vfft.f
 OBJS    = parpipe.o numerics.o fileio.o math.o mpistuff.o vfft.o
 

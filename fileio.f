@@ -16,7 +16,9 @@ c********************************************************************
              if (turbmod.eq.3) open(29,file='VF/Inflow',form='unformatted')
              if (turbmod.eq.4) open(29,file='SA/Inflow',form='unformatted')
              if (turbmod.eq.5) open(29,file='OM/Inflow',form='unformatted')
-             write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)       
+             !write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)
+             write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2),
+     &                ekht(:,kmax/2),Pkt(:,kmax/2),ktnew(:,kmax/2),etnew(:,kmax/2)          ! modTemp
              close(29)
           endif
 
@@ -148,7 +150,10 @@ c*******************************************************************************
       real*8    V2NEWR(0:i1,0:k1old)
       real*8  NUSANEWR(0:i1,0:k1old)
       real*8    omNEWR(0:i1,0:k1old)
-	  real*8    PKR(0:i1,0:k1old)
+	  real*8       PKR(0:i1,0:k1old)
+	  real*8    KTNEWR(0:i1,0:k1old)   ! modTemp
+      real*8    ETNEWR(0:i1,0:k1old)   ! modTemp
+	  real*8      PKTR(0:i1,0:k1old)   ! modTemp
 
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
@@ -158,7 +163,7 @@ c*******************************************************************************
       if (turbmod.eq.4) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.5) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
          read(19) startStep
-         read(19) UNEWR,UOLDR,WNEWR,WOLDR,CNEWR,KNEWR,ENEWR,V2NEWR,omNEWR,nuSANEWR, PKR
+         read(19) UNEWR,UOLDR,WNEWR,WOLDR,CNEWR,KNEWR,ENEWR,V2NEWR,omNEWR,nuSANEWR,PKR,KTNEWR,ETNEWR,PKTR   ! modTemp
          close(19)
 
       do i=0,i1
@@ -174,6 +179,9 @@ c*******************************************************************************
          nuSAnew(i,k) = nuSAnewR(i,k1old*k/k1)
            omNew(i,k) =   omNewR(i,k1old*k/k1)
 		      Pk(i,k) =      PKR(i,k1old*k/k1)
+		   ktnew(i,k) =   KTNEWR(i,k1old*k/k1)
+		   etnew(i,k) =   ETNEWR(i,k1old*k/k1)
+		     Pkt(i,k) =     PKTR(i,k1old*k/k1)
         enddo
       enddo
 
@@ -195,8 +203,8 @@ c*******************************************************************************
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.4) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.5) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
-         write(19) istep
-         write(19) UNEW,UOLD,WNEW,WOLD,CNEW,KNEW,ENEW,V2NEW,omNEW,nuSANEW,Pk
+         write(19) istep  
+         write(19) UNEW,UOLD,WNEW,WOLD,CNEW,KNEW,ENEW,V2NEW,omNEW,nuSANEW,Pk,ktNEW,etNEW,Pkt       ! modTemp
          close(19)
       end
 
@@ -217,8 +225,9 @@ c*******************************************************************************
         open(19,file='profile')
           k = 1
           do i=1,imax
-            write(19,'(11E18.6)') rp(i),unew(i,k),Wnew(i,k),cnew(i,k),
-     &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),nuSAnew(i,k),ekmt(i,k)
+            write(19,'(15E18.6)') rp(i),unew(i,k),Wnew(i,k),cnew(i,k),
+     &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),nuSAnew(i,k),ekmt(i,k),
+     &             ekht(i,k),Pkt(i,k),ktnew(i,k),etnew(i,k)          ! modTemp
           enddo
         close(19)
       endif
@@ -305,6 +314,7 @@ c*******************************************************************************
       include 'mpif.h'
       character*5 cha
       real*8 pecletx,peclety,pecletz
+      real*8     THF(0:i1,0:k1),ReSS(0:i1,0:k1)
       real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),
      &     massfl,w_c,ndt
       integer istap,jstart,ktabhi,ktablo
@@ -324,6 +334,8 @@ c*******************************************************************************
             massflow(k) = massflow(k) + massfl
 
             enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
+            
+            
 
          enddo
       enddo
@@ -345,14 +357,16 @@ c*******************************************************************************
       if (turbmod.eq.5) open(15,file='OM/tecp.'//cha)
 
       if (rank.eq.0) then
-         write(15,*) 'VARIABLES ="X","Y","U","W","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
+         write(15,*) 'VARIABLES ="X","Y","U","W","C","T","k","eps","v2","omega","nuSA","yplus","RHO","Pe","mu",
+     &               "mut","lamcp","cp","alphat","kt","epst","Pk","Gk" '        ! modTemp
          write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
       endif
 
       do k=0,k1
          do i=0,i1
-            write(15,'(16ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),
-     &           knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
+            write(15,'(23ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),                                              ! modTemp
+     &           knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k),ekh(i,k),cp(i,k),              ! modTemp
+     &           ekht(i,k),ktnew(i,k),etnew(i,k),Pk(i,k),Gk(i,k)                                                                                                            ! modTemp
          enddo
       enddo
 
@@ -372,7 +386,7 @@ c*******************************************************************************
 !      enddo
 !      close(16)
 !
-!      if (turbmod.eq.0)  open(17,file='0/temp.'//cha)
+!      if (turbmod.eq.0) open(17,file='0/temp.'//cha)
 !      if (turbmod.eq.1) open(17,file='MK/temp.'//cha)
 !      if (turbmod.eq.2) open(17,file='LS/temp.'//cha)
 !      if (turbmod.eq.3) open(17,file='VF/temp.'//cha)
