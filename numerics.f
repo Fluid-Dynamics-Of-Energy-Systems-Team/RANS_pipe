@@ -15,7 +15,7 @@
       real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
       real*8  uudtdx,uTdudx,betagT,auT,Ttemp,Tmix,fd1,fd2,feps,d2Tdxdr  !modTemp
-      real*8  Q
+      real*8  Q,TauRm,diverg,TauRp,TauZm,TauZp
       character*5 cha
       ib = 1
       ie = i1-1
@@ -163,16 +163,76 @@
             !******************************************
             ! Mass flux contribution term to the turbulent kinetic energy budget: Kawai & Oikawa 2018 ETMM
             if (modMktau.eq.1) then   
+
+c                   kp=k+1,km=k-1, ip=i+1, im=i-1
+c                    __________________________________
+c                   |  i+1,k-1 |  i+1,k   | i+1,k+1  |
+c                   |__________|__________|__________| 
+c                   |          |          |          |
+c                   |  i,k-1   |   i,k    |   i,k+1  |
+c                   |__________|__________|__________| 
+c                   |          |          |          |
+c                   | i-1,k-1  |  i-1,k   |  i-1,k+1 |
+c                   |          |          |          |
+c                   |__________|__________|__________| 
+c
+
                 ! Mktau=mu_t/(0.15 rho^2) [drho/dr d(tau_rr+tau_rx)/dr +drho/dx d(tau_xx+tau_xr)/dx]
 
-                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
-     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)      
-                Mktau(i,k)= ((rho(i,k)-rho(im,k))/(Ru(i)-Ru(im)))*d(tau_rr+tau_rx)/dr
-                Mktau(i,k)= Mktau(i,k)+((rho(i,k)-rho(i,km))/dz)*d(tau_xx+tau_xr)/dx
+                ! Calculating dTau_ri/dr
+                TauRm =  ekmi(im,k)*Ru(im)*(
+     &                   (2*((U(i,k)-U(im,k))/(Rp(i)-Rp(im)))**2.)                                                !dudr
+     &                  +((W(i,k)-W(im,k))/(Rp(i)-Rp(im))                                                         !dwdr
+     &                  +((U(i,kp)+U(i,k)+U(im,kp)+U(im,k))/4.
+     &                  - (U(i,k)+U(i,km)+U(im,k)+U(im,km))/4.)/(dz)  )**2.                                       !dudz
+     &                                                       )**0.5                      
+                diverg=  1/Ru(im)*((Rp(i)*U(i,k)-Rp(im)*U(im,k))/(Rp(i)-Rp(im)))                                  !1/r drudr
+     &                   +((W(i,kp)+W(i,k)+W(im,kp)+W(im,k))/4.
+     &                   - (W(i,k)+W(i,km)+W(im,k)+W(im,km))/4.)/(dz)                                             !dwdz
+                TauRm = TauRm - 2/3 * ekmi(im,k)*Ru(im)*(diverg*diverg)**0.5
+
+                TauRp =  ekmi(i,k)*Ru(i)*(
+     &                   (2*((U(ip,k)-U(i,k))/(Rp(ip)-Rp(i)))**2.)                                                !dudr
+     &                  +((W(ip,k)-W(i,k))/(Rp(ip)-Rp(i))                                                         !dwdr
+     &                  +((U(ip,kp)+U(ip,k)+U(i,kp)+U(i,k))/4.
+     &                  - (U(ip,k)+U(ip,km)+U(i,k)+U(i,km))/4.)/(dz)  )**2.                                       !dudz
+     &                                                       )**0.5                      
+                diverg=  1/Ru(i)*((Rp(ip)*U(ip,k)-Rp(i)*U(i,k))/(Rp(ip)-Rp(i)))                                   !1/r drudr
+     &                   +((W(ip,kp)+W(ip,k)+W(i,kp)+W(i,k))/4.
+     &                   - (W(ip,k)+W(ip,km)+W(i,k)+W(i,km))/4.)/(dz)                                             !dwdz
+                TauRp = TauRp - 2/3 * ekmi(i,k)*Ru(i)*(diverg*diverg)**0.5
+
+                ! Calculating dTau_zi/dz
+                TauZm =  ekmk(i,km)*(
+     &                   (2.*((W(i,k)-W(i,km))/dz)**2.)
+     &                  +(((U(i,k)-U(i,km))/dz)
+     &                  +((W(ip,k)+W(ip,km)+W(i,k)+W(i,km))/4.
+     &                  -(W(i,k)+W(i,km)+W(im,k)+W(im,km))/4.)/(Ru(i)-Ru(im)))**2.
+     &                                                       )**0.5
+
+                diverg=  1/Rp(i)*(
+     &                     (Rp(ip)*(U(ip,k)+U(ip,km))+Rp(i) *(U(i,k) +U(i, km)))/4
+     &                    -(Rp(i) *(U(i,k) +U(i,km)) +Rp(im)*(U(im,k)+U(im,km)))/4
+     &                     )/(Ru(i)-Ru(im))            
+     &                   +(W(i,k)-W(i,km))/dz         
+                TauZm = TauZm - 2/3 * ekmk(im,km)*(diverg*diverg)**0.5
+
+                TauZp =  ekmk(i,k)*(
+     &                   (2.*((W(i,kp)-W(i,k))/dz)**2.)                        
+     &                  +(((U(i,kp)-U(i,k))/dz)
+     &                  +((W(ip,kp)+W(ip,k)+W(i,kp)+W(i,k))/4.
+     &                  -(W(i,kp)+W(i,k)+W(im,kp)+W(im,k))/4.)/(Ru(ip)-Ru(i)))**2.
+     &                                                       )**0.5
+
+                diverg=  1/Rp(i)*(
+     &                     (Rp(ip)*(U(ip,kp)+U(ip,k))+Rp(i) *(U(i,kp) +U(i, k)))/4
+     &                    -(Rp(i) *(U(i,kp) +U(i,k)) +Rp(im)*(U(im,kp)+U(im,k)))/4
+     &                     )/(Ru(i)-Ru(im))                                  !1/r drudr
+     &                   +(W(i,kp)-W(i,k))/dz       !dwdz  
+                TauZm = TauZm - 2/3 * ekmk(im,k)*(diverg*diverg)**0.5
+                
+                Mktau(i,k)=  ((rho(i,k)-rho(im,k))/(Ru(i)-Ru(im)))*((TauRp-TauRm)/(Ru(i)-Rp(im)))
+     &                       +((rho(i,k)-rho(i,km))/dz)*((TauZp-TauZm)/(dz))
                 Mktau(i,k)= ekmt(i,k)/(0.15*rho(i,k)**2.0)*Mktau(i,k)
             else
                 Mktau(i,k) = 0.0
@@ -185,7 +245,7 @@
             
             if (scl.eq.0) then
                !k-equation for MK and V2F
-               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
+               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) + Mktau(i,k))/rho(i,k)
                dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)         ! note, rho*epsilon/(rho*k), set implicit and divided by density
 
             elseif (scl.eq.1) then
@@ -254,7 +314,7 @@
 
                if (scl.eq.10) then
                   ! k- equation of SST model
-                  putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)          ! Gk(i,k)   ! Does not take into account the bouyancy term...
+                  putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) + Mktau(i,k))/rho(i,k)          ! Gk(i,k)   ! Does not take into account the bouyancy term...
                   dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density
 
                elseif (scl.eq.11) then
