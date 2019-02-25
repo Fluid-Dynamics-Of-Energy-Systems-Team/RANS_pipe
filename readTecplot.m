@@ -10,7 +10,7 @@ function [ data ] = readTecplot(folder,ncpu, imax,kmax,nvar)
 
     data=[];
     if nargin<5
-       nvar= 21; 
+       nvar= 24; 
     end
     
     for i=0:ncpu-1

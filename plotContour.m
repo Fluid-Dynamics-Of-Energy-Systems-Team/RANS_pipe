@@ -7,27 +7,37 @@ clc
 %             "RHO","Pe","mu","mut",           (13-16)
 %             "lamcp","cp","alphat","kt",      (17-20)
 %             "epst"'                          (21)
-plot_var = 19; 
+
+%'VARIABLES ="X","Y","U","W",                    (1-4)
+%            "C","T","k","eps",                  (5-8)
+%            "v2","omega","nuSA","yplus",        (9-12)
+%            "RHO","Pe","mu","mut",              (13-16)
+%            "lamcp","cp","alphat","kt",         (17-20)
+%            "epst","Pk","Gk", Mktau '           (21-24)
+     
+plot_var = 22; 
 ncore = 4;
 imax = 96; kmax=96;
 
 rmax = 0.50005; rmin = 0.0;
 
 %% plotted case:
-cas  = 'caseA';   % cAL,      cBL,   cCL, cDL, CEL
-mod  = 'MK';      % MK,        VF,    OM,  SA, 
+cas  = 'caseB';   % cAL,      cBL,   cCL, cDL, CEL
+mod  = 'VF';      % MK,        VF,    OM,  SA, 
 vers = 'm';       % noMod, modNew, Aupoix
 Tmod = 'DWX';     % const, Prt, DWX, NK
 
 
 %% reading data:
-if(vers=='m')
-    filename  = sprintf('Results/%s_%s_%s/',mod,cas,Tmod);
-else
-    filename  = sprintf('Results/%s%s_%s_%s/',mod,vers,cas,Tmod);
-end
+filename  = sprintf('%s/',mod);
 
-filename  = sprintf('Results/MK/',mod,cas,Tmod);
+% if(vers=='m')
+%     filename  = sprintf('Results/%s_%s_%s/',mod,cas,Tmod);
+% else
+%     filename  = sprintf('Results/%s%s_%s_%s/',mod,vers,cas,Tmod);
+% end
+
+%filename  = sprintf('Results/MK/',mod,cas,Tmod);
 filename2 = sprintf(filename);
 data = readTecplot(filename2,ncore, imax, kmax);
 
@@ -41,15 +51,27 @@ colorbar
 %caxis([0. 0.01])        
 axis([0 60 rmin rmax])  % 0 x/L and 0 r
 
+%return
 %%+z=data(:,:,1);
 z=data(:,:,1);              r=data(:,:,2);
 T=1.0*(data(:,:,6)-1)+1;    H=data(:,:,5);
 Uz=data(:,:,4);             Ur=data(:,:,3);
 k=data(:,:,7);              eps=data(:,:,8);
 kt=data(:,:,20);            epst=data(:,:,21);
+Pk=data(:,:,22);            Mktau=data(:,:,24);
 alphat=data(:,:,19);
 n= size(z,1);
-%return
+
+
+i=i+1;
+figure(i); 
+plot(z(n-2,:),Pk(n-2,:),'rx'); hold on;
+plot(z(n-2,:),Mktau(n-2,:),'bo'); 
+xlabel('Axial direction'); 
+ylabel('Wall value'); 
+legend('Pk', 'Mk')
+
+return
 
 i=i+1;
 figure(i); 

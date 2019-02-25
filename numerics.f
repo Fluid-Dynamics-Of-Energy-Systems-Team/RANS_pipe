@@ -162,6 +162,7 @@
 
             !******************************************
             ! Mass flux contribution term to the turbulent kinetic energy budget: Kawai & Oikawa 2018 ETMM
+            Mktau(i,k) = 0.0
             if (modMktau.eq.1) then   
 
 c                   kp=k+1,km=k-1, ip=i+1, im=i-1
@@ -181,26 +182,26 @@ c
 
                 ! Calculating dTau_ri/dr
                 TauRm =  ekmi(im,k)*Ru(im)*(
-     &                   (2*((U(i,k)-U(im,k))/(Rp(i)-Rp(im)))**2.)                                                !dudr
+     &                   (2.*((U(i,k)-U(im,k))/(Rp(i)-Rp(im)))**2.)                                                !dudr
      &                  +((W(i,k)-W(im,k))/(Rp(i)-Rp(im))                                                         !dwdr
      &                  +((U(i,kp)+U(i,k)+U(im,kp)+U(im,k))/4.
      &                  - (U(i,k)+U(i,km)+U(im,k)+U(im,km))/4.)/(dz)  )**2.                                       !dudz
      &                                                       )**0.5                      
-                diverg=  1/Ru(im)*((Rp(i)*U(i,k)-Rp(im)*U(im,k))/(Rp(i)-Rp(im)))                                  !1/r drudr
+                diverg=  1./(Ru(im)+0.000000001)*((Rp(i)*U(i,k)-Rp(im)*U(im,k))/(Rp(i)-Rp(im)))                                  !1/r drudr
      &                   +((W(i,kp)+W(i,k)+W(im,kp)+W(im,k))/4.
      &                   - (W(i,k)+W(i,km)+W(im,k)+W(im,km))/4.)/(dz)                                             !dwdz
-                TauRm = TauRm - 2/3 * ekmi(im,k)*Ru(im)*(diverg*diverg)**0.5
+                TauRm = TauRm - 2./3. * ekmi(im,k)*Ru(im)*(diverg*diverg)**0.5
 
                 TauRp =  ekmi(i,k)*Ru(i)*(
-     &                   (2*((U(ip,k)-U(i,k))/(Rp(ip)-Rp(i)))**2.)                                                !dudr
+     &                   (2.*((U(ip,k)-U(i,k))/(Rp(ip)-Rp(i)))**2.)                                                !dudr
      &                  +((W(ip,k)-W(i,k))/(Rp(ip)-Rp(i))                                                         !dwdr
      &                  +((U(ip,kp)+U(ip,k)+U(i,kp)+U(i,k))/4.
      &                  - (U(ip,k)+U(ip,km)+U(i,k)+U(i,km))/4.)/(dz)  )**2.                                       !dudz
      &                                                       )**0.5                      
-                diverg=  1/Ru(i)*((Rp(ip)*U(ip,k)-Rp(i)*U(i,k))/(Rp(ip)-Rp(i)))                                   !1/r drudr
+                diverg=  1./Ru(i)*((Rp(ip)*U(ip,k)-Rp(i)*U(i,k))/(Rp(ip)-Rp(i)))                                   !1/r drudr
      &                   +((W(ip,kp)+W(ip,k)+W(i,kp)+W(i,k))/4.
      &                   - (W(ip,k)+W(ip,km)+W(i,k)+W(i,km))/4.)/(dz)                                             !dwdz
-                TauRp = TauRp - 2/3 * ekmi(i,k)*Ru(i)*(diverg*diverg)**0.5
+                TauRp = TauRp - 2./3. * ekmi(i,k)*Ru(i)*(diverg*diverg)**0.5
 
                 ! Calculating dTau_zi/dz
                 TauZm =  ekmk(i,km)*(
@@ -210,12 +211,12 @@ c
      &                  -(W(i,k)+W(i,km)+W(im,k)+W(im,km))/4.)/(Ru(i)-Ru(im)))**2.
      &                                                       )**0.5
 
-                diverg=  1/Rp(i)*(
+                diverg=  1./Rp(i)*(
      &                     (Rp(ip)*(U(ip,k)+U(ip,km))+Rp(i) *(U(i,k) +U(i, km)))/4
      &                    -(Rp(i) *(U(i,k) +U(i,km)) +Rp(im)*(U(im,k)+U(im,km)))/4
      &                     )/(Ru(i)-Ru(im))            
      &                   +(W(i,k)-W(i,km))/dz         
-                TauZm = TauZm - 2/3 * ekmk(im,km)*(diverg*diverg)**0.5
+                TauZm = TauZm - 2./3. * ekmk(im,km)*(diverg*diverg)**0.5
 
                 TauZp =  ekmk(i,k)*(
      &                   (2.*((W(i,kp)-W(i,k))/dz)**2.)                        
@@ -224,18 +225,17 @@ c
      &                  -(W(i,kp)+W(i,k)+W(im,kp)+W(im,k))/4.)/(Ru(ip)-Ru(i)))**2.
      &                                                       )**0.5
 
-                diverg=  1/Rp(i)*(
+                diverg=  1./Rp(i)*(
      &                     (Rp(ip)*(U(ip,kp)+U(ip,k))+Rp(i) *(U(i,kp) +U(i, k)))/4
      &                    -(Rp(i) *(U(i,kp) +U(i,k)) +Rp(im)*(U(im,kp)+U(im,k)))/4
      &                     )/(Ru(i)-Ru(im))                                  !1/r drudr
      &                   +(W(i,kp)-W(i,k))/dz       !dwdz  
-                TauZm = TauZm - 2/3 * ekmk(im,k)*(diverg*diverg)**0.5
+                TauZm = TauZm - 2./3. * ekmk(im,k)*(diverg*diverg)**0.5
                 
                 Mktau(i,k)=  ((rho(i,k)-rho(im,k))/(Ru(i)-Ru(im)))*((TauRp-TauRm)/(Ru(i)-Rp(im)))
      &                       +((rho(i,k)-rho(i,km))/dz)*((TauZp-TauZm)/(dz))
                 Mktau(i,k)= ekmt(i,k)/(0.15*rho(i,k)**2.0)*Mktau(i,k)
-            else
-                Mktau(i,k) = 0.0
+                
             endif
 
 
@@ -374,12 +374,30 @@ c
                   !-------------------------
                   ! Nagano and Kim model 1988
                     
-                     d2Tdxdr = (1-flambda(i,k))*rho(i,k)*ekht(i,k)*ekh(i,k)
-     &                                         *((((T(i,k)-T(i,km))/dz)-((T(im,k)-T(im,km))/dz) )/(Ru(i)-Ru(im)))**2
-                     putout(i,k) = putout(i,k) + (1.80*etnew(i,k)/(ktnew(i,k)+1.0e-20)*Pkt(i,k)
-     &                                          + 0.72*etnew(i,k)/ knew(i,k)* Pk(i,k) + d2Tdxdr)     /rho(i,k)
-                     dimpl(i,k)  = dimpl(i,k)  + 2.20*etnew(i,k)/(ktnew(i,k)+1.0e-20) + 0.8*enew(i,k)/knew(i,k)           
+!                     d2Tdxdr = (1-flambda(i,k))*rho(i,k)*ekht(i,k)*ekh(i,k)
+!     &                                         *((((T(i,k)-T(i,km))/dz)-((T(im,k)-T(im,km))/dz) )/(Ru(i)-Ru(im)))**2
+!                     putout(i,k) = putout(i,k) + (1.80*etnew(i,k)/(ktnew(i,k)+1.0e-20)*Pkt(i,k)
+!     &                                          + 0.72*etnew(i,k)/ knew(i,k)* Pk(i,k) + d2Tdxdr)     /rho(i,k)
+!                     dimpl(i,k)  = dimpl(i,k)  + 2.20*etnew(i,k)/(ktnew(i,k)+1.0e-20) + 0.8*enew(i,k)/knew(i,k)           
                                             ! note, CD1*rho*et^2/kt/(rho*et)+CD2 rho e et/k/(rho*et), set implicit and divided by density
+                                            
+                  !-------------------------
+                  ! Youseff, Nagano and Tagawa model 1992                        
+                   !functions
+                     fd1  = (1 - exp(-yp(i,k)/5.8))**2.0
+                     feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   
+                     fd2  = (1/0.9)*(1.9*feps-1.0)*(1 - (exp(-yp(i,k)/6.0))**2.0)   !ce2=1.9
+
+                     if (isnan(fd2)) then 
+                        write(*,*) "fd2 is nan!", fd2, "becasue: feps ", feps, " and fd1 ", fd1
+                        stop
+                     endif
+                     putout(i,k) = putout(i,k) + (1.70*etnew(i,k)/(ktnew(i,k)+1.0e-20)*Pkt(i,k)
+     &                                          + 0.64*etnew(i,k)/(knew(i,k) +1.0e-20)* Pk(i,k))     /rho(i,k)
+                     
+                     ! original CD1=2.0, changed to 1.5   (cdiss1 defined in param.txt)
+                     dimpl(i,k)  = dimpl(i,k)  + cdiss1*fd1/Ttemp + 0.9*fd2/Tt(i,k)                             
+                  
                   
                   elseif ((tempturbmod.eq.3).or.(tempturbmod.eq.4).or.(tempturbmod.eq.5)) then
                   !-------------------------
@@ -387,7 +405,7 @@ c
                   
                      !time scales: temperature and mix
                      Ttemp  = (ktnew(i,k)+1.0e-20)/(etnew(i,k)+1.0e-20)
-                     Tmix   = (Tt(i,k)*Ttemp)**0.5
+                     Tmix   = (Tt(i,k)*2.0*Ttemp)**0.5
                      !functions
                      fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0
                      feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   

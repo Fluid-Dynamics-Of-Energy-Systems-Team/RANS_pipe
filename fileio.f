@@ -358,15 +358,15 @@ c*******************************************************************************
 
       if (rank.eq.0) then
          write(15,*) 'VARIABLES ="X","Y","U","W","C","T","k","eps","v2","omega","nuSA","yplus","RHO","Pe","mu",
-     &               "mut","lamcp","cp","alphat","kt","epst","Pk","Gk" '        ! modTemp
+     &               "mut","lamcp","cp","alphat","kt","epst","Pk","Gk", Mktau '        ! modTemp
          write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
       endif
 
       do k=0,k1
          do i=0,i1
-            write(15,'(23ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),                                              ! modTemp
+            write(15,'(24ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),                                              ! modTemp
      &           knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k),ekh(i,k),cp(i,k),              ! modTemp
-     &           ekht(i,k),ktnew(i,k),etnew(i,k),Pk(i,k),Gk(i,k)                                                                                                            ! modTemp
+     &           ekht(i,k),ktnew(i,k),etnew(i,k),Pk(i,k),Gk(i,k),Mktau(i,k)                                                                                                            ! modTemp
          enddo
       enddo
 

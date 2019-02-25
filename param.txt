@@ -20,7 +20,7 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)
-      parameter (nstep             = 500000)
+      parameter (nstep             = 600000)
 
       parameter (LoD               = 60)
       parameter (periodic          = 2)               ! 1..periodic, 2..developing 
@@ -46,9 +46,9 @@ c      /(beta_o*T_o*Re**2.*Qwall))
       parameter (turbmod           = 3)            ! 0..laminar, 1..MK, 2..LS, 3..V2F, 4..SA, 5..SST
       parameter (tempturbmod       = 3)            ! 0..CPrt, 1..Prt, 2..NK, 3..DWX, 4..DWX2 (cp in dif.Term) 5..DWX_modNew       
       parameter (modVF             = 0)            ! 0..Original 1..LienKalitzin Time/Length scale VF model
-      parameter (modGk             = 0)            ! 0..Original 1..AFM (only for when tempturbmod>1)
+      parameter (modGk             = 0)            ! 0..Original 1..AFM (only for when tempturbmod>=2)
       parameter (modPrt            = 0)            ! 0..Keys Prt Model 1.. Irrefried/Steiner Prt model (only for when tempturbmod=1)
-      parameter (modMktau          = 0)            ! 0..Standard Mktau=0  1.. Kawai ETMM12 Mktau=mu_t/rho^2 drho/dx dtau_ij/dx 
+      parameter (modMktau          = 0)            ! 0..Standard Mktau=0  1.. Kawai ETMM12 Mktau=mu_t/rho^2 drho/dx_i dtau_ij/dx_i 
 
       ! constants of the bouyancy production
       parameter (ctheta            = 0.3)          !
@@ -67,5 +67,5 @@ c      /(beta_o*T_o*Re**2.*Qwall))
       parameter (alphakt           = 0.1) !0.05)
       parameter (alphaet           = 0.1) !0.05)
       
-      parameter (modifDiffTerm     = 1)              ! 0..Standard, 1..invSLS, 2..Aupoix
+      parameter (modifDiffTerm     = 0)              ! 0..Standard, 1..invSLS, 2..Aupoix
       

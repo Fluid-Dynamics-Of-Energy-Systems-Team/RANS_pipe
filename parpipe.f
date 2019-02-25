@@ -167,7 +167,7 @@
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,ekhttmp,kd,Tt,Srsq
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin,ekhtb,ekhtf,ekhtin
       real*8  cv1_3,chi,fv1SA,sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
-      real*8  utau,cfi,sti,Q,PeT,Prandlt,gam,Agam,PrtInf    !modTemp
+      real*8  utau,cfi,sti,Q,PeT,Prandlt,gam,Agam,PrtInf, clambda    !modTemp
 
       sigmat = 0.9   !to approximate the turbulent heat flux Prt
       
@@ -366,14 +366,26 @@
 
                  ekhttmp(i,k) = ekmttmp(i,k)/sigmat  
               
-               elseif ((tempturbmod.eq.2).and.(Q.gt.0)) then  !Nagano and Kim  
-           
-                 
+               elseif ((tempturbmod.eq.2).and.(Q.gt.0)) then  !Nagano
+                 !-------------------------
+                 !Nagano and Kim  1998
                  ! maybe cfi and sti needs be calculated only at the wall then i needs to be imax
-                 cfi =  2*tauw(k)/rnew(imax,k)/utau                         !  skin frinction: Cf=tau_w/(rho*uref/2) (but uref=utau and utau=sqrt(tauw/rhow))
-                 sti =  Q/(rnew(imax,k)*cp(imax,k)*utau*temp(imax,k))       !  stanton number: St=qw/(rho Cp Uref (Tw-Tref))
-                 flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0
-                 ekhttmp(i,k) = rnew(i,k)*0.11*flambda(i,k)*knew(i,k)*((knew(i,k)*ktnew(i,k)/enew(i,k)/(etnew(i,k)+1.0e-20))**0.5)
+                 !cfi =  2*tauw(k)/rnew(imax,k)/utau                         !  skin frinction: Cf=tau_w/(rho*uref/2) (but uref=utau and utau=sqrt(tauw/rhow))
+                 !sti =  Q/(rnew(imax,k)*cp(imax,k)*utau*temp(imax,k))       !  stanton number: St=qw/(rho Cp Uref (Tw-Tref))
+                 !flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0
+                 !ekhttmp(i,k) = rnew(i,k)*0.11*flambda(i,k)*knew(i,k)*((knew(i,k)*ktnew(i,k)/enew(i,k)/(etnew(i,k)+1.0e-20))**0.5)
+                 
+                 !-------------------------
+                 ! Youseff, Nagano and Tagawa model 1992       
+                 !((2.0*ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**2.0) ! (2.0*R)**2
+                 !cfi =   !B_lambda =3.4
+                 
+                 ! the 0.9 below is due to: Prt=0.9 (maybe better to be 1)
+                 clambda = 0.09/0.9/((2.0*ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**2.0)
+                 sti = Ret(i,k)*((2.0*ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**2.0)   !R_h
+                 flambda(i,k) =((1 - exp(-yp(i,k)/((Pr**0.5)/26.0)))**2.0)*(1.0+3.4/(sti**0.75))
+                 
+                 ekhttmp(i,k) = rnew(i,k)*clambda*flambda(i,k)*knew(i,k)**2/enew(i,k)*((2.0*ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**2.0)
                  !alpha * rho = lambda/cp
 
                  if (isnan(ekhttmp(i,k))) then 
@@ -382,14 +394,14 @@
                  endif
 
                elseif ((tempturbmod.eq.3).or.(tempturbmod.eq.4).or.(tempturbmod.eq.5)) then  !Deng Wu Xi
-                   
-                 
+
                  flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))
-                 ekhttmp(i,k) = rnew(i,k)*0.1*flambda(i,k)*(knew(i,k)*knew(i,k)/enew(i,k))*((ktnew(i,k)/(etnew(i,k)+1.0e-20)/(knew(i,k)/enew(i,k)))**0.5)
+                 ekhttmp(i,k) = rnew(i,k)*0.1*flambda(i,k)*(knew(i,k)*knew(i,k)/enew(i,k))*((2.0*ktnew(i,k)/(etnew(i,k)+1.0e-20)/((knew(i,k)+1.0e-20)/enew(i,k)))**0.5)
                  !alpha * rho = lambda/cp
 
                  if (isnan(ekhttmp(i,k))) then 
-                    write(*,*) "eddy diffusivity is nan!", ekhttmp(i,k), "becasue: flam ", flambda(i,k), " or kt: " ,ktnew(i,k), " or et: " ,etnew(i,k)
+                    write(*,*) "eddy diffusivity is nan!", ekhttmp(i,k), "becasue: flam ", flambda(i,k), " or kt: " ,ktnew(i,k), " or et: " ,etnew(i,k),
+     &                          " or Reeps: " ,Reeps(i,k), " or Ret: " ,Ret(i,k), " or knew: " ,knew(i,k), " or ekm: " ,ekm(i,k)
                     stop
                  endif
             
