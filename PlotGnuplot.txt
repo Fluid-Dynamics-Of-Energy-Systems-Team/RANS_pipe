@@ -1,0 +1,19 @@
+#'VARIABLES ="X","Y","U","W","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut","lamcp","cp","alphat","kt","epst"'     
+#             1 , 2 , 3 , 4 , 5 , 6 , 7 , 8   ,  9  ,   10  ,  11  ,   12  ,  13 , 14 , 15 ,  16 ,  17   , 18 ,  19    , 20 ,  21  .....
+
+var =6
+splot '0/tecp.00000' u 1:2:var w p
+replot '0/tecp.00001' u 1:2:var w p
+replot '0/tecp.00002' u 1:2:var w p
+replot '0/tecp.00003' u 1:2:var w p
+
+#set title "Simulations Residuals" font ",14"
+#set xlabel "Num. Steps"
+#set ylabel "Residual"
+#set grid
+
+
+
+
+#replot                                                                                                                                                                            
+pause -1

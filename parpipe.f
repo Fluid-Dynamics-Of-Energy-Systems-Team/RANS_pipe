@@ -336,7 +336,7 @@
       ekmttmp(:,k1) = ekmtb(:)
 
       if ((periodic.ne.1).and.(rank.eq.0)) then
-         ekmttmp(:,0)=ekttin(:)
+         ekmttmp(:,0)=ekmtin(:)
       endif
 
       if ((periodic.ne.1).and.(rank.eq.px-1)) then
@@ -459,7 +459,7 @@
 ! ------------------------------------------------------------------------
           dnew=0.0; dimpl = 0.0;
           call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          !if (modifDiffTerm == 1) call advecrho(dnew,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          if (modifDiffTerm == 1) call advecrho(dnew,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
           scl=1.0
           call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
           call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
