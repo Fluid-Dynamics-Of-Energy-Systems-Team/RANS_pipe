@@ -8,7 +8,7 @@
 
       parameter (px                = 4)        ! number of cores
       parameter (imax              = 96)       ! radial direction
-      parameter (kmax              = 192/px)   ! 384/px)   ! axial direction
+      parameter (kmax              = 96/px)   ! 384/px)   ! axial direction
       parameter (kmaxper           = kmax*px/2)
       parameter (i1                = imax + 1)
       parameter (k1                = kmax + 1)
@@ -22,15 +22,15 @@
       parameter (nTab              = 2000)
       parameter (nstep             = 500000)
 
-      parameter (LoD               = 60)
-      parameter (periodic          = 2)               ! 1..periodic, 2..developing 
+      parameter (LoD               = 6)
+      parameter (periodic          = 1)               ! 1..periodic, 2..developing 
 
 
       parameter (Re                = 360)
       parameter (Pr                = 3.19457)
 
 c     Q+=Qwall=(qw*D/(k0*T0))        
-      parameter (Qwall             = 2.4)     !0.0) !2.4)
+      parameter (Qwall             = 0.0)     !0.0) !2.4)
 
 !     1/Fr = Gr/(beta_o*T_o*Re**2.*Qwall)
       parameter (Fr_1              =  -9.96) 
@@ -42,8 +42,8 @@ c      /(beta_o*T_o*Re**2.*Qwall))
 
       parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2
 
-      parameter (select_init       = 1)            ! 0..std initialization, 1..read inflow , 2..read restart file
-      parameter (turbmod           = 5)            ! 0..laminar, 1..MK, 2..LS, 3..V2F, 4..SA, 5..SST
+      parameter (select_init       = 0)            ! 0..std initialization, 1..read inflow , 2..read restart file
+      parameter (turbmod           = 0)            ! 0..laminar, 1..MK, 2..LS, 3..V2F, 4..SA, 5..SST
       parameter (ctheta            = 0.3) 
 
       !MK: alphac=0.3, alphak=0.1 and alphae=0.1

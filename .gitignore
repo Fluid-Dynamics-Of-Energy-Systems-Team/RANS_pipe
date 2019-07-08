@@ -2,6 +2,11 @@
 
 ### C++ ###
 # Prerequisites
+Gambit/*
+Results/*
+Results_dTdx_dHdx/*
+forced_real_VF
+*.eps
 *.d
 *.csv
 /0/profX*
@@ -30,7 +35,7 @@
 */*.lo
 */*.o
 */*.obj
-
+*.o
 # Precompiled Headers
 *.gch
 *.pch
