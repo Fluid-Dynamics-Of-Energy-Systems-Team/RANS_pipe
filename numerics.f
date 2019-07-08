@@ -39,7 +39,7 @@
      &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
      &              )**2.)
 
-            div(i,k)=(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dr(i))
+            div(i,k)=(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
      &              +(      W(i,k) -      W(i,km))/dz
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
@@ -440,12 +440,13 @@ c
       do  k=1,kmax
          do i=1,imax
             p(i,k)  = (
-     1           ( Ru(i)*dUdt(i,k) - Ru(i-1)*dUdt(i-1,k) )/( Rp(i)*dr(i))
-     3           + (     dWdt(i,k) -         dWdt(i,k-1) )/( dz         ) )/dt
+     1     ( Ru(i)*dUdt(i,k) - Ru(i-1)*dUdt(i-1,k) )/( Rp(i)*dru(i))
+     3     + (     dWdt(i,k) -         dWdt(i,k-1) )/( dz         ) )/dt
      &           +      (rnew(i,k)-rold(i,k))/(dt*dt)
+
             qcrit(i,k) = p(i,k)*dt
 
-            sumps = sumps + p(i,k)*dr(i)*dz
+            sumps = sumps + p(i,k)*dru(i)*dz
          enddo
       enddo
 
@@ -576,25 +577,25 @@ c
       include 'common.txt'
       include 'mpif.h'
       integer ierr,istap
-      real*8  dr2,dz2,df,df2,kcoeff,tmp1,tmp2,tmp3,Courant,dtmp
-      dt = dtmax
-      Courant = 10.5
+      real*8  tmp,Courant,dtmp
+
+      dt = 100.0
+
+      Courant = 1
+
       do k=1,kmax
          do i=1,imax
-            dr2 = dr(i) * dr(i)
-            dz2 = dz    * dz
-            kcoeff =ekm(i,k)
-            tmp1 = ( abs(Unew(i,k)) / ( Rp(i+1)-Rp(i) ) ) +
-     &           ( abs(Wnew(i,k)) /         dz        )
-            tmp2 = (1.0/dr2 + 1.0/dz2)
-            tmp3 = 1.0 / ( 1.0 * tmp2 * kcoeff + tmp1 )
-            tmp3 = Courant*tmp3 
-            dt = min( dt , tmp3 )
+            tmp = ( abs(Unew(i,k)) / ( Rp(i+1)-Rp(i) ) ) +
+     &            ( abs(Wnew(i,k)) /         dz        )
+            tmp = Courant/tmp
+            dt  = min(dt, tmp)
          enddo
       enddo
+
       dtmp = dt
+
       call mpi_allreduce(dtmp,dt,1,mpi_real8,mpi_min,mpi_comm_world,ierr)
-      return
+
       end
 
 
@@ -624,8 +625,8 @@ c
 
             div =
      &           (Ru(i)*Unew(i,k)*rhoip-Ru(i-1)*Unew(i-1,k)*rhoim)*dz/Rp(i)+
-     &           (Wnew(i,k)*rhokp-Wnew(i,k-1)*rhokm)*dr(i)+
-     &           (rNew(i,k)-rold(i,k))/dt*dr(i)*dz
+     &           (Wnew(i,k)*rhokp-Wnew(i,k-1)*rhokm)*dru(i)+
+     &           (rNew(i,k)-rold(i,k))/dt*dru(i)*dz
 
 !     if (abs(div).gt.10e-6) write(6,*) i,k+kmax*rank,div
 
@@ -660,7 +661,7 @@ c
       real*8  pii,y,y1,y2,fA,fB,fC,fact, const
 
 !     const = 0.25
-      const = 0.65
+!      const = 0.65
 !     const = 0.50
 c******************************************************************
       pi    = 4.0*atan(1.0)
@@ -670,6 +671,10 @@ c******************************************************************
 
       fA = 0.12
       fB = 2.4
+
+!      fA = 0.0001
+!      fB = 0.0001
+
 
       do i = 1,imax
          fact = (i-0.)/(imax-0.)
@@ -683,22 +688,30 @@ c******************************************************************
       enddo
 
       do i = 1 , imax
-         Rp(i) = (Ru(i)+Ru(i-1))/2.0
-         dr(i) = (Ru(i)-Ru(i-1))
+         Rp(i)  = (Ru(i)+Ru(i-1))/2.0
+         dru(i) = (Ru(i)-Ru(i-1))
       enddo
 
-      dr(i1) = dr(imax)
-      Ru(i1) = Ru(imax) + dr(i1)
-      Rp(i1) = Ru(imax) + dr(i1)/2.0
-      dr(0)  = dr(1)
-      Rp(0)  = Ru(0) - dr(0)/2.0
+      dru(i1) = dru(imax)
+      Ru(i1) = Ru(imax) + dru(i1)
+      Rp(i1) = Ru(imax) + dru(i1)/2.0
+      dru(0)  = dru(1)
+      Rp(0)  = Ru(0) - dru(0)/2.0
+
+      do i = 0,imax
+         drp(i) = Rp(i+1) - Rp(i)
+      enddo
+
+      do i = 1,imax
+         wallDist(i) = 0.5 - rp(i)
+      enddo
 
       if (rank.eq.0) then
          open(11,file = 'grid.txt')
          write(11,*) Re, imax
-         do i=1,imax
+         do i=0,imax
             Yplus = (0.5-Rp(i))*Re
-            write(11,'(i5,4F12.6)') i,yplus,Ru(i),Rp(i),delta(i)
+            write(11,'(i5,4F12.6)') i,yplus,Ru(i),Rp(i),delta(max(1,i))
          enddo
          close(11)
       endif
@@ -731,13 +744,13 @@ c******************************************************************
 !>********************************************************************
 !!     diffusion term in the z-direction, set as a source term...
 !!********************************************************************
-      subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)
+      subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
       include 'param.txt'
       integer   km,kp,rank1,diffVersion
       real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
      &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
+     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
 c
 c
          if (diffVersion == 1) then       ! Inverse SLS
@@ -779,13 +792,13 @@ c
       !>********************************************************************
       !!  diffusion term for SA model: in the z-direction as, plus extra for Aupoix modifications...
       !!********************************************************************
-      subroutine diffcSA(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)
+      subroutine diffcSA(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
       include 'param.txt'
       integer   km,kp,im,ip,rank1,diffVersion
       real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
      &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
+     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
 !          Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
          ! For, Standard, Inverse SLS and Aupoix
          ! rho=1 for standard
@@ -816,8 +829,8 @@ c
               ip=i+1
               im=i-1
               do k=1,kmax
-                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)* (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dr(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho(ip,k)-rho(i ,k)))
-     &                                                     -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dr(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho(i ,k)-rho(im,k)))  
+                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)* (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho(ip,k)-rho(i ,k)))
+     &                                                     -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho(i ,k)-rho(im,k)))
      &                                                     )
               enddo
           enddo
@@ -831,13 +844,13 @@ c
       !>********************************************************************
       !! diffusion term for kine of the SST model in the z-direction, set as a source term...
       !!********************************************************************
-      subroutine diffcSSTKine(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)
+      subroutine diffcSSTKine(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
       include 'param.txt'
       integer   km,kp,rank1,diffVersion
       real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
      &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
+     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
 c
 c
          if (diffVersion == 1) then       ! Inverse SLS
@@ -878,13 +891,13 @@ c
       !>********************************************************************
       !! diffusion term for omega of the SST model in the z-direction, set as a source term...
       !!********************************************************************
-      subroutine diffcSSTOmega(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)
+      subroutine diffcSSTOmega(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
       include 'param.txt'
       integer   km,kp,rank1,diffVersion
       real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
      &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
+     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
 c
 c
          if ((diffVersion == 1) .or. (diffVersion == 2)) then       ! Inverse SLS & Aupoix
@@ -917,13 +930,13 @@ c
       !>********************************************************************
       !! diffusion term for epsilon in the z-direction, set as a source term...
       !!********************************************************************
-      subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dr,dz,rank1,diffVersion)
+      subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
       include 'param.txt'
       integer   km,kp, rank1,diffVersion
       real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
      &      rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &      ekmt(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma, difcp, difcm
+     &      ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma, difcp, difcm
 
          if ((diffVersion == 1) .or. (diffVersion == 2)) then       ! Inverse SLS  and Aupoix
             do k=1,k1-1
@@ -960,18 +973,18 @@ c
 !!     diffu calculates the diffusion of u-velocity, which is
 !!     the velocity in the radial direction.
 !!     
-!!     
+!!
 !!     In formula:  (4 terms)
-!!     
+!!
 !!     1  d                  1  d                     d
 !!     - -- (r Sigma(r r)) + - ---- (Sigma(phi r)) + -- (Sigma(z r)) -
 !!     r dr                  r dphi                  dz
-!!     
-!!     
+!!
+!!
 !!     1
 !!     - Sigma(phi phi)
 !!     r
-!!     
+!!
 !!     r   : direction  ---> explicit (subroutine diffu)
 !!     phi : direction  ---> implicit (subroutine predic)
 !!     z   : direction  ---> explicit (subroutine diffu)
@@ -996,54 +1009,46 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dr,dz,i1,k1,dif)
+      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,dz,i1,k1,dif)
       implicit none
 
-      integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
+      integer  i,k,im,ip,km,kp,i1,k1
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     ekme(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),
-     &     epop,epom,drp,dzi,divUim,divUip,divUi,dif
-c     
-      ib = 1
-      ie = i1-1
-
-      kb = 1
-      ke = k1-1
+     &     ekme(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),
+     &     epop,epom,dzi,divUim,divUip,divUi,dif
 c     
       dzi =1./dz
-      do k=kb,ke
+      do k=1,k1-1
          kp=k+1
          km=k-1
-         do i=ib,ie
+         do i=1,i1-1
             ip=i+1
             im=i-1
-            drp = Rp(ip)-Rp(i)
 
             epop = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,kp) + ekme(i,kp))
             epom = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,km) + ekme(i,km))
 
-            divUim = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dr(i))
+            divUim = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
      &           + (        Wvel(i,k) -        Wvel(i,km))/dz
 
-            divUip = (Ru(ip)*Uvel(ip,k)-Ru(i)*Uvel(i,k))/(Rp(ip)*dr(ip))
-     &           + (         Wvel(ip,k) -       Wvel(ip, km))/dz
+            divUip = (Ru(ip)*Uvel(ip,k)-Ru(i)*Uvel(i ,k ))/(Rp(ip)*dru(ip))
+     &           + (         Wvel(ip,k)-      Wvel(ip,km))/dz
 
-            divUi = ( Rp(ip)*(Uvel(ip,k)+Uvel(i,k))
-     &           -Rp(i )*(Uvel(i ,k)+Uvel(im,k)) )/(2.*Ru(i)*(Rp(ip)-Rp(i)))
-     &           +((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
-
+            divUi = ( Rp(ip)*(Uvel(ip,k)+Uvel(i,k)) - Rp(i)*(Uvel(i,k)+Uvel(im,k))
+     &                )/(2.*Ru(i)*(Rp(ip)-Rp(i)))
+     &           + ((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
 
             putout(i,k) = putout(i,k) +
-     1           ( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i,k) )/
-     1           dr(ip)-1./3.*divUip)-Rp(i )*ekme(i,k) *(dif*(Uvel(i,k)
-     1           -Uvel(im,k))/dr(i) -1./3.*divUim))/(0.5*Ru(i)*(drp))
+     1   2.0*( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i ,k))/dru(ip) -1./3.*divUip)
+     1        -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ) -1./3.*divUim)
+     1            )/(Ru(i)*(Rp(ip)-Rp(i)))
      &           +
-     3           ( epop * (   (Uvel(i,kp)  - Uvel(i,k) ) * dzi
-     3           + (Wvel(ip,k)  - Wvel(i,k) ) / (Rp(ip) - Rp(i))
-     3           )             -
-     3           epom * (   (Uvel(i,k)   - Uvel(i,km)) * dzi
-     3           + (Wvel(ip,km) - Wvel(i,km)) / (Rp(ip) - Rp(i))
-     3           ) ) * dzi
+     3           ( epop * ( (Uvel(i,kp)-Uvel(i,k))*dzi
+     3                    + (Wvel(ip,k)-Wvel(i,k))/(Rp(ip)-Rp(i)) )
+     3             -
+     3             epom * ( (Uvel(i,k)  -Uvel(i,km))*dzi
+     3                    + (Wvel(ip,km)-Wvel(i,km))/(Rp(ip)-Rp(i)) )
+     3            )*dzi
      &           -
      4           (ekme(i,k)+ekme(ip,k))/Ru(i)*(Uvel(i,k)/Ru(i)-1./3.*divUi)
          enddo
@@ -1090,50 +1095,41 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dr,dz,i1,k1,dif,rank)
+      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,dz,i1,k1,dif,rank)
       implicit none
      
 
-      integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank
+      integer  i,k,im,ip,km,kp,i1,k1,rank
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     ekme(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1),
+     &     ekme(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),
      &     epop,emop,divUkm,divUkp,dif
-c     
-      ib = 1
-      ie = i1-1
-
-      kb = 1
-      ke = k1-1
-c     
-      do k=kb,ke
+c
+      do k=1,k1-1
          kp=k+1
          km=k-1
-
-         do i=ib,ie
+         do i=1,i1-1
             ip=i+1
             im=i-1
+
             epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) )
             emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) )
 
-            divUkm = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dr(i))
-     &           + (      Wvel(i,k) -        Wvel(i,km))/dz
+            divUkm = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
+     &             + (      Wvel(i,k) -        Wvel(i,km))/dz
 
-            divUkp = (Ru(i)*Uvel(i,kp)- Ru(im)*Uvel(im, kp))/(Rp(i)*dr(i))
-     &           + (      Wvel(i,kp)-        Wvel(i,  k ))/dz
+            divUkp = (Ru(i)*Uvel(i,kp)- Ru(im)*Uvel(im, kp))/(Rp(i)*dru(i))
+     &             + (      Wvel(i,kp)-        Wvel(i,  k ))/dz
 
-!     divUkm = 0.0
-!     divUkp = 0.0
-
-            putout(i,k) =  putout(i,k)+
-     1           (Ru(i )*epop*( (Uvel(i,kp)  - Uvel(i,k) ) / dz
-     1           +dif*(Wvel(ip,k)  - Wvel(i,k) ) / (Rp(ip)-Rp(i)))
-     1           -
-     1           Ru(im)*emop*( (Uvel(im,kp) - Uvel(im,k)) / dz
-     1           +dif*(Wvel(i,k)   - Wvel(im,k)) / (Rp(i)-Rp(im)))
-     1           ) / ( Rp(i) * dr(i) )
-     &           +
-     3           (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp)-
-     3           2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz - 1./3.*divUkm))/dz
+            putout(i,k) = putout(i,k) +
+     1         (Ru(i )*epop*(  (Uvel(i,kp) - Uvel(i,k))/dz
+     1                    +dif*(Wvel(ip,k) - Wvel(i,k))/(Rp(ip)-Rp(i)))
+     1         -
+     1          Ru(im)*emop*(  (Uvel(im,kp) - Uvel(im,k))/dz
+     1                    +dif*(Wvel(i,k)   - Wvel(im,k))/(Rp(i)-Rp(im)))
+     1         )/(Rp(i)*dru(i))
+     &         +
+     3         (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp)-
+     3          2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz - 1./3.*divUkm))/dz
          enddo
       enddo
       return
@@ -1175,13 +1171,13 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-      subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dr,dz,i1,k1,rank,periodic,flagImpl)
+      subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagImpl)
 
       implicit none
 
       integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank,periodic
       real*8 putout(0:i1,0:k1),putin(0:i1,0:k1),dimpl(0:i1,0:k1)
-      real*8 U(0:i1,0:k1),W(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1)
+      real*8 U(0:i1,0:k1),W(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
       real*8 eps,r1,rk1,re1,phi1,phik1,phie1,r2,rk2,re2,phi2,phik2,phie2,r3,rk3,re3,phi3,phik3,phie3,fak
       real*8 rhoip,rhoim,rhokp,rhokm
       real*8 dcubf(0:i1),dcwbf(0:i1)
@@ -1285,9 +1281,9 @@ c
          km=k-1
          do i=ib,ie
             im=i-1
-            putout(i,k) =     - (Ru(i)*U(i,k)*cu(i,k) - Ru(im)*U(im,k)*cu(im,k))/(Rp(i)*dr(i))
+            putout(i,k) =     - (Ru(i)*U(i,k)*cu(i,k) - Ru(im)*U(im,k)*cu(im,k))/(Rp(i)*dru(i))
      &                        - (      W(i,k)*cw(i,k) -        W(i,km)*cw(i,km))/(dz)
-     4         + putin(i,k)*(   (Ru(i)*U(i,k) - Ru(i-1)*U(i-1,k ))/(Rp(i)*dr(i))
+     4         + putin(i,k)*(   (Ru(i)*U(i,k) - Ru(i-1)*U(i-1,k ))/(Rp(i)*dru(i))
      &                        + (      W(i,k) -         W(i  ,km))/dz )
          enddo
       enddo
@@ -1336,13 +1332,13 @@ c
 !!     other parameters  : all unchanged
 !!   
 !!********************************************************************
-      subroutine advecrho(putout,putin,U,W,Ru,Rp,dr,dz,i1,k1,rank)
+      subroutine advecrho(putout,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank)
 
   
       implicit none
       integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank
       real*8 putout(0:i1,0:k1),putin(0:i1,0:k1)
-      real*8 U(0:i1,0:k1),W(0:i1,0:k1),dr(0:i1),dz,Ru(0:i1),Rp(0:i1), rnew(0:i1,0:k1)
+      real*8 U(0:i1,0:k1),W(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1), rnew(0:i1,0:k1)
       ib = 1
       ie = i1-1
       kb = 1
@@ -1391,13 +1387,13 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-      subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dr,dz,i1,k1)
+      subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,i1,k1)
       implicit none
 c     
 
       integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     dr(0:i1),dz,Ru(0:i1),Rp(0:i1)
+     &     dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
       real*8 rho(0:i1,0:k1)
       real*8 rhoip,rhoim,rhokp,rhokm
 c     
@@ -1416,11 +1412,13 @@ c
 
             rhokp=0.25*(rho(i,k)+rho(i,kp)+rho(ip,k)+rho(ip,kp))
             rhokm=0.25*(rho(i,k)+rho(i,km)+rho(ip,k)+rho(ip,km))
+
             putout(i,k) = 0.0
+
             putout(i,k) = - 0.25 * (
      1           (Rp(ip)*(Uvel(i,k)+Uvel(ip,k))*(Uvel(i,k)+Uvel(ip,k))
      1           *rho(ip,k) -
-     1           Rp(i )*(Uvel(im,k)+Uvel(i,k))*(Uvel(i,k)+Uvel(im,k))
+     1            Rp(i )*(Uvel(im,k)+Uvel(i,k))*(Uvel(i,k)+Uvel(im,k))
      1           *rho(i ,k)  )
      1           / ( Ru(i) * ( Rp(ip)-Rp(i) ) )
      &           +
@@ -1466,13 +1464,13 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-      subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dr,dz,ekm,peclet_z)
+      subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
       implicit none
       include 'param.txt'
 
       integer   im,ip,km,kp,ib,ie,kb,ke
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     dr(0:i1),dz,Ru(0:i1),Rp(0:i1)
+     &     dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
       real*8 rho(0:i1,0:k1),ekm(0:i1,0:k1),peclet_z(0:i1,0:k1)
       real*8 rhoip,rhoim,advcecw_w
 
@@ -1507,7 +1505,7 @@ c
      1           *rhoip -
      1           Ru(im)*(Uvel(im,k)+Uvel(im,kp))*(Wvel(i,k)+Wvel(im,k))
      1           *rhoim )
-     1           / ( Rp(i) * dr(i) ) +advcecw_w)
+     1           / ( Rp(i) * dru(i) ) +advcecw_w)
          enddo
       enddo
       return

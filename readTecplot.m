@@ -1,14 +1,16 @@
 
-% VARIABLES ="X", "Y", 
-% "U", "W", "C", "T", (3-6) 
-% "k", "eps", "v2",  "om", "nuSA", (7-11)
-% "yplus", "RHO","Pe", mu, mut, ReTauStar (12-16)
+% 'VARIABLES ="X","Y","U","W",                 (1-4)
+%             "C","T","k","eps",               (5-8)
+%             "v2","omega","nuSA","yplus",     (9-12)
+%             "RHO","Pe","mu","mut",           (13-16)
+%             "lamcp","cp","alphat","kt",      (17-20)
+%             "epst","Pk","Gk"                 (21)
 
 function [ data ] = readTecplot(folder,ncpu, imax,kmax,nvar)
 
     data=[];
     if nargin<5
-       nvar= 16; 
+       nvar= 21; 
     end
     
     for i=0:ncpu-1

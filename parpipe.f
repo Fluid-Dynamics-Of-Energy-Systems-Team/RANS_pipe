@@ -55,17 +55,25 @@
 
       ! periodic = 1, turb flow generator
       ! periodic = 2, heated pipe 
-      if (periodic.ne.1) then
+!      if (periodic.ne.1) then
+!         if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
+!         if (turbmod.eq.1) open(29,file = 'MK/Inflow',form='unformatted')
+!         if (turbmod.eq.2) open(29,file = 'LS/Inflow',form='unformatted')
+!         if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
+!         if (turbmod.eq.4) open(29,file = 'SA/Inflow',form='unformatted')
+!         if (turbmod.eq.5) open(29,file = 'OM/Inflow',form='unformatted')
+!         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+!         close(29)
+!      endif
 
-         if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
-         if (turbmod.eq.1) open(29,file = 'MK/Inflow',form='unformatted')
-         if (turbmod.eq.2) open(29,file = 'LS/Inflow',form='unformatted')
-         if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
-         if (turbmod.eq.4) open(29,file = 'SA/Inflow',form='unformatted')
-         if (turbmod.eq.5) open(29,file = 'OM/Inflow',form='unformatted')
-         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
-         close(29)
-      endif
+      Win(:) = 1.0
+      kin(:) = 0.0
+      ein(:) = 0.0
+      v2in(:) = 0.0
+      omIn(:) = 0.0
+      nuSAin(:) = 0.0
+      ekmtin(:) = 0.0
+      Pk(:,0) = 0.0
 
 
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
@@ -97,14 +105,14 @@
          call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
       	
 
-         call advance(bulk,rank)
+         call advance(rank)
          call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
          call fillps(rank)
          call SOLVEpois(p,Ru,Rp,dz,rank)
          call correc(rank,1)
          call bound_v(Unew,Wnew,Win,rank)
 
-         if (mod(istep,10) .eq. 0)   call chkdiv(rank)
+         if (mod(istep,10) .eq. 0)      call chkdiv(rank)
 
          call cmpinf(bulk,stress)
          call chkdt(rank,istep)
@@ -165,18 +173,17 @@
          km=k-1
          kp=k+1
 
-         tauw(k) = ekmi(imax,k)*0.5*(W(imax,km)+W(imax,k))/(0.5-Rp(imax))
+         tauw(k) = ekmi(imax,k)*0.5*(W(imax,km)+W(imax,k))/wallDist(imax)
 
          do i=1,imax
             im=i-1
             ip=i+1
 
-            yp(i,k) = sqrt(rNew(i,k))/ekm(i,k)*(0.5-Rp(i))*tauw(k)**0.5           ! ystar
+            yp(i,k) = sqrt(rNew(i,k))/ekm(i,k)*(wallDist(i))*tauw(k)**0.5           ! ystar
   !          yp(i,k) = sqrt(rNew(imax,k))/ekm(imax,k)*(0.5-Rp(i))*tauw(k)**0.5    ! yplus
   !          yp(i,:)=(0.5-Rp(i))*Re*(1/Re*(Win(imax)/(0.5-Rp(imax))))**0.5        ! yplus
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
             Ret(i,k)=rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
-
 
             if (turbmod.eq.0) then
 
@@ -217,16 +224,16 @@
                if (kd(i,km).lt.0.0) kd(i,km)=0.0
 !
                if (i.eq.imax) then
-                  dterm(i,k)=2.*ekm(i,k)/rNew(i,k)*((kd(im,k)**0.5)/(Ru(i)-Rp(im))+
+                  dterm(i,k)=2.*ekm(i,k)/rNew(i,k)*((kd(im,k)**0.5)/dru(im)/2.0+
      &                 (kd(i,kp)**0.5-kd(i,km)**0.5)/(2.*dz))**2.
                else
-                  dterm(i,k)=2.*ekm(i,k)/rNew(i,k)*((kd(im,k)**0.5-kd(ip,k)**0.5)/(Rp(ip)-Rp(im))+
+                  dterm(i,k)=2.*ekm(i,k)/rNew(i,k)*((kd(im,k)**0.5-kd(ip,k)**0.5)/(dRp(i)+dRp(im))+
      &                 (kd(i,kp)**0.5-kd(i,km)**0.5)/(2.*dz))**2.
                endif
                    eterm(i,k)=2.*ekm(i,k)*ekmt(i,k)/rNew(i,k)**2.*(((((U(i,kp)+U(im,kp))/2-(U(i,k)+U(im,k))/2)
      &              /dz-((U(i,k)+U(im,k))/2-(U(i,km)+U(im,km))/2)/dz)/dz)**2
-     &              +((((W(im,k)+W(im,km))/2-(W(i,k)+W(i,km))/2)/(Rp(i)-Rp(im))-((W(i,k)+W(i,km))/2-
-     &              (W(ip,k)+W(ip,km))/2)/(Rp(ip)-Rp(i)))/(Ru(i)-Ru(im)))**2)
+     &              +((((W(im,k)+W(im,km))/2-(W(i,k)+W(i,km))/2)/dRp(im)-((W(i,k)+W(i,km))/2-
+     &              (W(ip,k)+W(ip,km))/2)/dRp(i))/(Ru(i)-Ru(im)))**2)
 
             elseif (turbmod.eq.3) then
 
@@ -238,7 +245,7 @@
                
                StR= (2.*(((W(i,k)-W(i,km))/dz)**2. +
      &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +  ! CYLCOORD
      &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
      &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
      &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
@@ -273,7 +280,7 @@
               !constants
                sigma_om2 = 0.856
                betaStar  = 0.09
-               wallD     = 0.5-Rp(i)
+               wallD     = wallDist(i)
 
               ! Vorticity rate
               StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
@@ -281,8 +288,8 @@
 
               StR = StR**0.5
                
-              gradkom  =   ((kNew(ip,k) - kNew(im,k))/(Rp(ip)-Rp(im))) * ((omnew(ip,k) - omnew(im,k))/(Rp(ip)-Rp(im)))
-     &                    + ((kNew(i,kp) - kNew(i,km))/(2.0*dz))        * ((omnew(i,kp) - omnew(i,km))/(2.0*dz))
+              gradkom = ((kNew(ip,k) - kNew(im,k))/(dRp(i)+dRp(im))) * ((omnew(ip,k) - omnew(im,k))/(dRp(i)+dRp(im)))
+     &                 +((kNew(i,kp) - kNew(i,km))/(2.0*dz))         * ((omnew(i,kp) - omnew(i,km))/(2.0*dz))
 
               cdKOM(i,k) = 2.0*sigma_om2*rNew(i,k)/omnew(i,k)*gradkom;
               
@@ -336,7 +343,7 @@
       ekmttmp(:,k1) = ekmtb(:)
 
       if ((periodic.ne.1).and.(rank.eq.0)) then
-         ekmttmp(:,0)=ekmtin(:)
+         ekmttmp(:,0) = ekmtin(:)
       endif
 
       if ((periodic.ne.1).and.(rank.eq.px-1)) then
@@ -392,8 +399,8 @@
 ! ------------------------------------------------------------------------
       resC  = 0.0
       dnew=0.0; dimpl = 0.0;
-      call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-      call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dr,dz,rank,0)
+      call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+      call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
       do k=1,kmax
          if (rank.eq.0.and.k.lt.K_start_heat) then
@@ -403,18 +410,18 @@
          endif
 
          do i=1,imax-1
-            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
-            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/Rtmp(i,k)
-            b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac
-            rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)
+            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+            b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+            rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
          enddo
 
          b(1)=b(1)+a(1)
          i=imax
-            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/Rtmp(i,k)
+            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
             c(i)   =  0.0
             b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-            rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dr(i)) + (1-alphac)*b(i)*cnew(i,k)
+            rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
 
          call matrixIdir(imax,a,b,c,rhs)
 
@@ -458,20 +465,20 @@
 ! epsilon epsilon epsilon epsilon epsilon epsilon epsilon epsilon
 ! ------------------------------------------------------------------------
           dnew=0.0; dimpl = 0.0;
-          call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          if (modifDiffTerm == 1) call advecrho(dnew,eNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+          !if (modifDiffTerm == 1) call advecrho(dnew,eNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
           scl=1.0
           call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
-          call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+          call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,rho2,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
           do k=1,kmax
              do i=1,imax
                 
                 a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
-                a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)
 
                 c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
-                c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)
 
                 b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
 
@@ -499,24 +506,24 @@
 ! TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE  TKE
 ! ------------------------------------------------------------------------
           dnew=0.0; dimpl = 0.0;
-          call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+          !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
           scl=0.0
           call prodis(dnew,dimpl,kNew,eNew,v2new,nuSAnew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
-          call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+          call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
           do k=1,kmax
              do i=1,imax
                 if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
                    a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
-                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                   a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)/(rho3(i,k)**0.5)
                    c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
-                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                   c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)/(rho3(i,k)**0.5)
                 else if (modifDiffTerm == 2) then
                    a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
-                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)
+                   a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)
                    c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
-                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)
+                   c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)
                 endif
 
                 b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
@@ -551,25 +558,25 @@
 ! ------------------------------------------------------------------------
           if (turbmod.eq.3) then
              dnew=0.0; dimpl = 0.0;
-             call advecc(dnew,dimpl,v2New,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-             !if (modifDiffTerm == 1) call advecrho(dnew,v2New,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+             call advecc(dnew,dimpl,v2New,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+             !if (modifDiffTerm == 1) call advecrho(dnew,v2New,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
              scl=2.0
              call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
-             call diffc(dnew,v2New,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+             call diffc(dnew,v2New,ekm,ekmi,ekmk,ekmt,sigmak,rho2,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
              do k=1,kmax
                 do i=1,imax
 
                    if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
                       a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
-                      a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)/(rho3(i,k)**0.5)
                       c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
-                      c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/(rho3(i,k)**0.5)
+                      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)/(rho3(i,k)**0.5)
                    else if (modifDiffTerm == 2) then
                       a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
-                      a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)
+                      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)
                       c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
-                      c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)
+                      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)
                    endif
 
                    b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
@@ -605,8 +612,8 @@
           cb3 = 2.0/3.0
 
           dnew=0.0; dimpl = 0.0;
-          call advecc(dnew,dimpl,nuSANew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          !if (modifDiffTerm == 1) call advecrho(dnew,nuSANew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          call advecc(dnew,dimpl,nuSANew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+          !if (modifDiffTerm == 1) call advecrho(dnew,nuSANew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
           scl = 4.0
           call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
 
@@ -627,7 +634,7 @@
           enddo
 
           tempArray = 0.0
-          call diffcSA(tempArray,nuSANew,eknu,eknui,eknuk,nuSANew,1.0,rho3,Ru,Rp,dr,dz,rank,modifDiffTerm)
+          call diffcSA(tempArray,nuSANew,eknu,eknui,eknuk,nuSANew,1.0,rho3,Ru,Rp,dru,dz,rank,modifDiffTerm)
           dnew = dnew + tempArray/cb3
 
           !> diffusion term in the r-direction, set implicit!
@@ -637,9 +644,9 @@
              do i=1,imax
 
                 a(i) = (eknui(i-1,k)+0.5*(nuSANew(i,k)+nuSANew(i-1,k)))/cb3*((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
-                a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho3(i,k)
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho3(i,k)
                 c(i) = (eknui(i  ,k)+0.5*(nuSANew(i,k)+nuSANew(i+1,k)))/cb3*((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
-                c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho3(i,k)
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho3(i,k)
 
                 b(i) = ((-a(i)-c(i))*(rho3(i,k)**0.5)  +  dimpl(i,k)  )/alphak
                 a(i) = a(i)*(rho3(i-1,k)**0.5)
@@ -673,29 +680,29 @@
           ! ---------------------------- k equation ----------------------------
           ! --------------------------------------------------------------------
           dnew=0.0; dimpl = 0.0;
-          call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+          !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
           scl = 10.0
           call prodis(dnew,dimpl,kNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
 
           ! calculating constant with blending function factor
           sigmakSST = 0.85*bF1 + 1.0*(1.0 - bF1)
           sigmakSST = 1.0/sigmakSST
-          call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+          call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST,rho2,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
           do k=1,kmax
              do i=1,imax
 
                 if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
                    a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
-                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)**0.5
+                   a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)**0.5
                    c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
-                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)**0.5
+                   c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)**0.5
                 else if (modifDiffTerm == 2) then
                    a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))
-                   a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)
+                   a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)
                    c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))
-                   c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)
+                   c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)
                 endif
 
                 b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
@@ -725,22 +732,22 @@
           ! -------------------------- omega equation --------------------------
           ! --------------------------------------------------------------------
           dnew=0.0; dimpl = 0.0;
-          call advecc(dnew,dimpl,omNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank,periodic,.true.)
-          !if (modifDiffTerm == 1) call advecrho(dnew,omNew,utmp,wtmp,Ru,Rp,dr,dz,i1,k1,rank)
+          call advecc(dnew,dimpl,omNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+          !if (modifDiffTerm == 1) call advecrho(dnew,omNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
           scl = 11.0
           call prodis(dnew,dimpl,omNew,eNew,v2New,nuSANew,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
 
           ! calculating constant with blending function factor
           sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
           sigmakSST = 1.0/sigmakSST
-          call diffcSSTOmega(dnew,omNew,ekm,ekmi,ekmk,ekmt,sigmakSST,rho2,Ru,Rp,dr,dz,rank,modifDiffTerm)
+          call diffcSSTOmega(dnew,omNew,ekm,ekmi,ekmk,ekmt,sigmakSST,rho2,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
           do k=1,kmax
              do i=1,imax
                 a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5 
-                a(i) = -Ru(i-1)*a(i)/((Rp(i)-Rp(i-1))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)**0.5
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)**0.5
                 c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5 
-                c(i) = -Ru(i  )*c(i)/((Rp(i+1)-Rp(i))*Rp(i)*dr(i))/rho2(i,k)/rho3(i,k)**0.5
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho2(i,k)/rho3(i,k)**0.5
 
                 b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
                 a(i) = a(i)*rho3(i-1,k)**0.5
@@ -793,62 +800,47 @@
 !!     is necessary.
 !!     The timestep is limited (see routine chkdt)
 !!*************************************************************************************
-      subroutine advance(bulk,rank)
+      subroutine advance(rank)
       implicit none
       include 'param.txt'
       include 'common.txt'
-      real*8   dnew(0:i1,0:k1)
 
-      real*8     a  (imax),au  (imax-1)
-      real*8     b  (imax),bu  (imax-1)
-      real*8     c  (imax),cu  (imax-1)
-      real*8     rhs(imax),rhsu(imax-1)
+      real*8, dimension(imax)   :: a, b, c, rhs
+      real*8, dimension(imax-1) :: au, bu, cu, rhsu
+      real*8 dnew(0:i1,0:k1)
+      real*8 dif,alpha,rhoa,rhob,rhoc
 
-      real*8 t1,t2,t3,t4,dif,adv,alpha,bulk,rhoa,rhob,rhoc,Q,dpdz
-
-      bulk = 0.0
-
-!     bulkreq=20.
-      alpha=0.4
       dif=0.0
-      adv=1.0
 
 !>********************************************************************
 !!     CALCULATE advection, diffusion and Force in r-direction
 !!     at the old(n-1) and new(n) timelevels
 !!********************************************************************
-      dnew=0.
-      call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dr,dz,i1,k1)
-      call diffu (dnew,Unew,Wnew,ekme, Ru,Rp,dr,dz,i1,k1,dif)
-      do k=1,kmax
-         do i=1,imax
-            dUdt(i,k)=dt*dnew(i,k)
-         enddo
-      enddo
+      dnew = 0.0
+      call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,i1,k1)
+      call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,dz,i1,k1,dif)
 
-!     ekme=ekm
       do k=1,kmax
          do i=1,imax-1
-            rhoa=(rnew(i  ,k)+rnew(i-1,k))/2.
-            rhoc=(rnew(i+1,k)+rnew(i+2,k))/2.
-            rhob=(rnew(i+1,k)+rnew(i  ,k))/2.
-            au(i)=-2.*dt*Rp(i)*ekme(i,k)/((Rp(i+1)-Rp(i))*Ru(i)*dr(i)*rhoa)
-            cu(i)=-2.*dt*Rp(i+1)*ekme(i+1,k)/((Rp(i+1)-Rp(i))*Ru(i)*dr(i+1)*rhoc)
-            bu(i)=(-au(i)*rhoa-cu(i)*rhoc)/rhob + 1.
-            rhsu(i)= Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5 + dudt(i,k)
+            au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+            cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+            bu(i) = -au(i)-cu(i)
+            rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+            rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+            rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+            au(i) = au(i)/rhoa
+            bu(i) = bu(i)/rhob + 1.0
+            cu(i) = cu(i)/rhoc
          enddo
-         i=imax-1
-!     a(i)=-2.*dt*Rp(i)*ekme(i,k)/((Rp(i+1)-Rp(i))*Ru(i)*dr(i)*rhoa)
-         cu(i)=0.
-!     b(i)=-a(i)*rhoa/rhob+ 1.
-         rhsu(i)= Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5 + dudt(i,k)
 
-         bu(1)=bu(1)+au(1)*rhoa/rhob
-!     b(imax,:)=b(imax,:)-c(imax,:)
-!     rhs(imax,:)=0.
-!     a(imax,:)=0.
-!     c(imax,:)=0.
-         if (dif.eq.0.) call matrixIdir(imax-1,au,bu,cu,rhsu)
+         i = imax-1;    cu(i) = 0.0
+         i = 1;         bu(i) = bu(i) + au(i)
+
+         do i=1,imax-1
+            rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+         enddo
+
+         call matrixIdir(imax-1,au,bu,cu,rhsu)
          do i=1,imax-1
             dUdt(i,k)=rhsu(i)
          enddo
@@ -858,70 +850,43 @@
 !     CALCULATE advection, diffusion and Force in z-direction
 !     at the old(n-1) and new(n) timelevels
 !********************************************************************
-      call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dr,dz,ekm,peclet)
-      call diffw (dnew,Unew,Wnew,ekme, Ru,Rp,dr,dz,i1,k1,dif,rank)
-      if (periodic.ne.1) dpdz = 0.0
-!     if (istep.eq.1) dpdz=0.17834
-      if (periodic.eq.1) dpdz = 4.0 !0.98*dpdz-(bulk-1)*500.
-!     if (mod(istep,200).eq. 0) write(*,*) (bulk-1),dpdz
 
-!     if ((periodic.eq.1).AND.(mod(istep,10000 ).eq.0).AND.(abs(bulkreq-bulk).ge.0.05)) then
-!     if ((bulkreq-bulk).ge.0.05) then
-!     if ((bulkreq-bulk).ge.5) then
-!     dpdz=dpdz+1.5
-!     else
-!     dpdz=dpdz+0.1
-!     endif
-!     else if ((bulkreq-bulk).le.-5) then
-!     dpdz=dpdz-1.5
-!     else
-!     dpdz=dpdz-0.1
-!
-!     endif
-!     endif
+      dnew = 0.0
+      call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
+      call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,dz,i1,k1,dif,rank)
+
+      if (periodic.eq.1) dnew = dnew + dpdz
+
+      if (Qwall.ne.0) then
+         dnew(1:imax,1:kmax) = dnew(1:imax,1:kmax) + 0.5*(Rnew(1:imax,1:kmax)+Rnew(1:imax,2:kmax+1))*Fr_1
+      endif
 
       do k=1,kmax
-         if (rank.eq.0.and.k.lt.K_start_heat) then
-            Q=0.
-         else
-            Q=Qwall
-         endif
          do i=1,imax
-            if (Q.eq.0) then
-               dWdt(i,k)=dt*(dnew(i,k)+dpdz)
-            else
-               dWdt(i,k)=dt*(dnew(i,k)+dpdz + 0.5*(Rnew(i,k)+Rnew(i,k+1))*Fr_1)
-            endif
+            a(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i-1,k)+ekme(i-1,k+1))*Ru(i-1)/(dRp(i-1)*Rp(i)*dru(i))
+            c(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i+1,k)+ekme(i+1,k+1))*Ru(i  )/(dRp(i  )*Rp(i)*dru(i))
+            b(i) = -a(i)-c(i)
+            rhoa = 0.5*(rnew(i-1,k+1)+rnew(i-1,k))
+            rhoc = 0.5*(rnew(i+1,k+1)+rnew(i+1,k))
+            rhob = 0.5*(rnew(i  ,k+1)+rnew(i  ,k))
+            a(i) = a(i)/rhoa
+            b(i) = b(i)/rhob + 1.0
+            c(i) = c(i)/rhoc
          enddo
-      enddo
 
-      do k=1,kmax
+         i=imax;    b(i) = b(i) - c(i)    ! BC at wall: zero vel: subtract one c
+         i = 1;     b(i) = b(i) + a(i)    ! BC at center: Neumann: cancel coeff a
 
-         do i=1,imax-1
-            rhoa=(rnew(i-1,k+1)+rnew(i-1,k))/2.
-            rhoc=(rnew(i+1,k+1)+rnew(i+1,k))/2.
-            rhob=(rnew(i,k+1)+rnew(i,k))/2.
-            a(i)=-dt*0.25*(ekme(i,k)+ekme(i,k+1)+ekme(i-1,k)+ekme(i-1,k+1))*Ru(i-1)/(Rp(i)-Rp(i-1))/(Rp(i)*dr(i)*rhoa)
-            c(i)=-dt*0.25*(ekme(i,k)+ekme(i,k+1)+ekme(i+1,k)+ekme(i+1,k+1))*Ru(i  )/(Rp(i+1)-Rp(i))/(Rp(i)*dr(i)*rhoc)
-            b(i)=(-a(i)*rhoa-c(i)*rhoc)/rhob + 1.
-            rhs(i)= Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5 + dwdt(i,k)
+         do i=1,imax
+            rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
          enddo
-         i=imax
-         a(i)=-dt*0.25*(ekme(i,k)+ekme(i,k+1)+ekme(i-1,k)+ekme(i-1,k+1))*Ru(i-1)/(Rp(i)-Rp(i-1))/(Rp(i)*dr(i)*rhoa)
-         c(i)=-dt*0.25*(ekme(i,k)+ekme(i,k+1)+ekme(i+1,k)+ekme(i+1,k+1))*Ru(i  )/(Rp(i+1)-Rp(i))/(Rp(i)*dr(i)*rhoc)
-         b(i)=(-a(i)*rhoa-2*c(i)*rhoc)/rhob + 1.
-         rhs(i)= Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5 + dwdt(i,k)
 
-!     c(imax,:)=0.
-         b(1)=b(1)+a(1)*rhoa/rhob
-!     b(imax,:)=b(imax,:)-c(imax,:)
-!     rhs(imax,k)=rhs(imax,k)- Wnew(i1,k)*dt*ekm(imax,k)*Ru(imax)/(Rp(i1)-Rp(imax))/(Rp(imax) * dr(imax) )
-
-         if (dif.eq.0.) call matrixIdir(imax,a,b,c,rhs)
+         call matrixIdir(imax,a,b,c,rhs)
          do i=1,imax
             dWdt(i,k)=rhs(i)
          enddo
       enddo
+
 
       end
 
@@ -961,7 +926,7 @@ c
       if (turbmod.eq.1) then
 
          knew(i1,:) = -knew(imax,:)
-         BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/(0.5-Rp(imax))**2
+         BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
 
       elseif (turbmod.eq.2) then
@@ -973,7 +938,7 @@ c
 
          knew(i1,:)  = -knew(imax,:)
          v2new(i1,:) = -v2new(imax,:)
-         BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/(0.5-Rp(imax))**2
+         BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
       elseif (turbmod.eq.4) then
@@ -983,7 +948,7 @@ c
       elseif (turbmod.eq.5) then
 
          knew(i1,:)  = -knew(imax,:)
-         BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/((0.5-Rp(imax))**2)
+         BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
 !         omNew(i1,:) = 50205072.858428769
          omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
 
@@ -1141,17 +1106,13 @@ c
 
 
       do k=0,k1
-
-
          Ubound(0,k)    =   Ubound(1,k)
 
          Ubound(imax,k) =   0.0
          Ubound(i1,k)   = - Ubound(imax-1,k)
 
-
          Wbound(0,k)    =   Wbound(1,k)
          Wbound(i1,k)   = - Wbound(imax,k)
-
       enddo
 
 
@@ -1175,6 +1136,8 @@ c
 !     apply advective outflow BC
       if (periodic.eq.1) return
 
+
+
       if (rank.eq.0) then
          Rbound(:,0) = 1.0
          Ubound(:,0) = 0.0
@@ -1182,53 +1145,51 @@ c
       endif
 
 
-
       wr = 0
       Ub = 0.
       flux = 0.0
-      if (rank.eq.px-1)then
+
+      if (rank.eq.px-1) then
          Ub = 0.
-          do i=1,imax
+         do i=1,imax
             wr(i) = W_out(i,kmax)
-            Ub=max(Ub,2.0*Wbound(i,kmax)/(Rbound(i,kmax)+Rbound(i,k1)))
+            Ub = max(Ub,2.0*Wbound(i,kmax)/(Rbound(i,kmax)+Rbound(i,k1)))
          enddo
+
          do i=0,i1
-!     Wbound(i,kmax) = W_out(i,kmax) - dt*Ub*(W_out(i,kmax)-W_out(i,kmax-1))/dz
-!     Wbound(i,kmax) = Wbound(i,kmax)*0.5*(drdt(i,kmax)+drdt(i,k1))
             Wbound(i,kmax) = 2.0*W_out(i,kmax-1) - W_out(i,kmax-2)
             Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
-!     Wbound(i,kmax) =2.*Wbound(i,kmax-1) - Wbound(i,kmax-2)
          enddo
+
          Wbound(i1,kmax) = -Wbound(imax,kmax)
          Wbound(0,kmax)  =  Wbound(1,kmax)
       endif
-!     flux = 0.0
+
 c     compute drho/dt*dvol
       do k=1,kmax
-
          do i=1,imax
-            flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dr(i)*dz
+            flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
          enddo
-
       enddo
 
 c     compute mf in
       if (rank.eq.0)then
-
          do i=1,imax
-            flux = flux + Wbound(i,0)*dr(i)*rp(i)
+            flux = flux + Wbound(i,0)*dru(i)*rp(i)
          enddo
-
       endif
+
       if (rank.eq.px-1)then
          Ub = 0
          wfunc = 0
-
          do i=1,imax
-            flux = flux - Wbound(i,kmax)*dr(i)*rp(i)
-            wfunc = wfunc + wr(i)*dr(i)*rp(i) ! based on averaged outflow velocity
+            flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
+            wfunc = wfunc + wr(i)*dru(i)*rp(i) ! based on averaged outflow velocity
          enddo
       endif
+
+!      write(*,*) "delta flux: ", flux
+
 c     
       call mpi_allreduce(flux,flux_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 
@@ -1241,7 +1202,16 @@ c
          enddo
          Wbound(i1,kmax) = -Wbound(imax,kmax)
          Wbound(0,kmax)  =  Wbound(1,kmax)
+
+         flux = 0
+         do i=1,imax
+            flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
+         enddo
+!         write(*,*) "flux out: ", flux
+
       endif
+
+
 
 
       return
@@ -1295,10 +1265,10 @@ c
             enddo
         else
             !initialized from scratch values
-            if (rank.eq.0)  write(*,*) 'Initializing flow with scratch = ', select_init
+            if (rank.eq.0)  write(*,*) 'Initializing flow from scratch = ', select_init
 
             do i=1,imax
-              Wnew(i,:)  = Re/6*3/2.*(1-(rp(i)/0.5)**2)
+              Wnew(i,:)  = 1.0 !Re/6*3/2.*(1-(rp(i)/0.5)**2)
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0
               omnew(i,:) = 0.001
@@ -1349,9 +1319,9 @@ c
      
       Bulk = 0.0
       do i=1,imax
-         Bulk = Bulk + 8.*Waver(i) *Rp(i)* dr(i)
+         Bulk = Bulk + 8.*Waver(i) *Rp(i)* dru(i)
       enddo
-      Stress =  Waver(imax) /(0.5-rp(imax))/Re
+      Stress =  Waver(imax)/wallDist(imax)/Re
       return
       end
 

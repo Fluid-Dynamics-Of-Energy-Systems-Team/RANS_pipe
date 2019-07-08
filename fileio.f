@@ -251,8 +251,8 @@ c*******************************************************************************
       do k=1,kmax
 
          do i=1,imax
-            massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dr(i)
-!     Ub(k) = Ub(k)+2.*Wnew(i,k)*Rp(i)*dr(i)
+            massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
+!     Ub(k) = Ub(k)+2.*Wnew(i,k)*Rp(i)*dru(i)
 
             massflow(k) = massflow(k) + massfl
 
@@ -319,7 +319,7 @@ c*******************************************************************************
       do k=1,kmax
 
          do i=1,imax
-            massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dr(i)
+            massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
 
             massflow(k) = massflow(k) + massfl
 
@@ -345,14 +345,17 @@ c*******************************************************************************
       if (turbmod.eq.5) open(15,file='OM/tecp.'//cha)
 
       if (rank.eq.0) then
-         write(15,*) 'VARIABLES ="X","Y","U","W","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
+         write(15,*) 'VARIABLES ="X","Y","U","W","P","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
          write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
       endif
 
       do k=0,k1
          do i=0,i1
-            write(15,'(16ES24.10E3)')  (k+rank*kmax)*dz, rp(i),unew(i,k), Wnew(i,k), cnew(i,k), temp(i,k),
-     &           knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
+            write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, rp(i),
+     &          0.5*(unew(max(i-1,0),k)+unew(i,k)),
+     &          Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), temp(i,k),
+     &          knew(i,k),enew(i,k),v2new(i,k),
+     &          omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
          enddo
       enddo
 
