@@ -24,7 +24,11 @@
 
 
       sigmat = 0.9
-
+      sigmak = 1.0
+      sigmae = 1.3
+      cmu    = 0.22
+      ce1    = 1.4
+      ce2    = 1.9
 
       do k=1,kmax
          km=k-1
@@ -41,12 +45,6 @@
   !          yp(i,:)     = (wallDist(i))*Re*(1/Re*(Win(imax)/(wallDist(imax))))**0.5        ! yplus
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
             Ret(i,k)    = rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
-
-            sigmak = 1.0
-            sigmae = 1.3
-            cmu    = 0.22
-            ce1    = 1.4
-            ce2    = 1.9
            
             StR= (2.*(((W(i,k)-W(i,km))/dz)**2. +
      &                ((U(i,k)-U(im,k))/dru(i))**2. +
@@ -107,9 +105,19 @@
 
 
             ! Production of turbulent kinetic energy
-            call calculate_Pk(tmpPk, tmpDiv, U,W,T,rho,i,im,ip,k,km,kp)
-            Pk(i,k) = tmpPk
-            div(i,k)= tmpDiv
+            Pk(i,k) = ekmt(i,k)*(
+     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
+     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
+     &              )**2.)
+
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+     &              +(      W(i,k) -      W(i,km))/dz
+
+            Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
             ! time scale for v2f model
             StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +

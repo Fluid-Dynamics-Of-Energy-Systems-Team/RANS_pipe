@@ -8,215 +8,224 @@
       include 'param.txt'
       include 'common.txt'
 
-      integer im,ip,jm,jp,km,kp,ib,ie,jb,je,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,putinv2,Tt,Srsq,nuSAtmp,dimpl
+C      integer im,ip,jm,jp,km,kp,ib,ie,jb,je,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,putinv2,dimpl,nuSAtmp !,Tt,Srsq
       real*8, dimension(imax,kmax) :: putinf,putinftmp
-      real*8  scl,mut,a11,a12,a21,a22,a33,A,A2,A3,A2t,epsihh,tscl
-      real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
-      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
+      real*8  scl !,mut,a11,a12,a21,a22,a33,A,A2,A3,A2t,epsihh,tscl
+C      real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
+C      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
-
-      ib = 1
-      ie = i1-1
-
-      kb = 1
-      ke = k1-1
-
-      do k=kb,ke
-         kp=k+1
-         km=k-1
-         do i=ib,ie
-            ip=i+1
-            im=i-1
-
-            ! Production of turbulent kinetic energy
-            Pk(i,k) = ekmt(i,k)*(
-     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
-     &              )**2.)
-
-            div(i,k)=(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
-     &              +(      W(i,k) -      W(i,km))/dz
-
-            Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
-
-            ! Bouyancy prodution
-            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
-     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
-     &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &           )
-
-
-!!! RENE: change to turbulent time scale here!
-            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-
-            Tt(i,k)=putink(i,k)/putine(i,k)
-
-                
-            if (turbmod.eq.3) then
-            ! time scale for v2f model
-                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)      
-!               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
-               Srsq(i,k) = Str*rho(i,k)*0.5
-               Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
-               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-               Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-               
-               
-               ! Bouyancy prodution with a different time scale
-               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
-     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &                  )
-
-
-               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-            endif
-
-            if (scl.eq.0) then
-               !k equation
-               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
-
-            elseif (scl.eq.1) then
-               !epsilon equation
-               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
-
-            elseif (scl.eq.2) then
-               !v'2 equation
-               putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
-               dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
-
-            elseif (turbmod.eq.4) then
-               !Spalart Allmaras
-               cv1_3     = (7.1)**3.0
-               cb1       = 0.1355
-               cb2       = 0.622
-               cb3       = 2.0/3.0
-               inv_cb3   = 1.0/cb3
-               kappa_2   = (0.41)**2.0   ! von karman constant
-               cw1       = (cb1/kappa_2) + (1.0+cb2)/cb3
-               cw2       = 0.3
-               cw3_6     = (2.0)**6.0
-
-              ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
-               StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                   +( (U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)           )**2.)
-
-               StR = StR**0.5
-
-               ! calculating Shat from SA model
-               chi    = nuSAtmp(i,k)/(ekm(i,k)/rho(i,k))
-               fv1SA  = (chi**3.0)/((chi**3.0) + cv1_3);
-               fv2SA  = 1.0 - (chi/(1.0 + (chi*fv1SA)))
-               ShatSA = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0))
-
-               ! production term in SA model
-               Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
-
-               ! destruction term in SA model
-               r_SA         = min(nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0)*ShatSA), 10.0)
-               g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
-               fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
-
-               ! gustavo: i think this is not correct
-               !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/((0.5-rp(i))**2)
-               dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/((wallDist(i))**2.0)
-
-
-               ! source term
-
-               if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-               ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-                   putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
-     &               (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
-     &             + (((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
-               else
-               ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
-                   putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
-     &               ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
-               endif
-
-
-
-            elseif (turbmod .eq. 5) then
-
-               ! k-omega SST               
-               Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega
-               
-               ! Bouyancy prodution with a different time scale
-               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                                (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
-     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &                  )
-
-
-               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-               if (scl.eq.10) then
-                  ! k- equation of SST model
-                  putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)          ! Gk(i,k)   ! Does not take into account the bouyancy term...
-                  dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density
-
-               elseif (scl.eq.11) then
-                  ! omega- equation of SST model
-                  sigma_om1 = 0.5
-                  sigma_om2 = 0.856
-                  beta_1    = 0.075
-                  beta_2    = 0.0828
-                  betaStar  = 0.09
-                  alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
-                  alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
-                  alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1-bF1(i,k))
-                  betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
-
-                  StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                       ((U(i,k)-U(im,k))/dRu(i))**2. +
-     &                       ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                       -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                      +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
-
-                  ! Bouyancy prodution divided by mut 
-                  GtR=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &            *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
-     &            +(2*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &            )
-
-
-                  !!! RENE: change to turbulent time scale here!
-                  GtR = GtR + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-
-
-                  putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-bF1(i,k))*cdKOM(i,k) ) /rho(i,k)
-                  dimpl(i,k)  = dimpl(i,k)  + betaSST*omNew(i,k) ! note, beta*rho*omega^2/(rho*omega), set implicit and divided by density
-
-               endif
-
-            endif
-         enddo
-      enddo
+      if (turbmod.eq.1) then
+         call prodis_MK(putout,dimpl,putink,putine,U,W,T,rho,scl)
+      elseif (turbmod.eq.3) then
+         call prodis_VF(putout,dimpl,putink,putine,putinv2,putinf,U,W,T,rho,scl)
+c      elseif (turbmod.eq.4) then
+c         call prodis_SA(putout,dimpl,nuSAtmp,U,W,T,rho)
+c      elseif (turbmod.eq.5) then
+c         call prodis_SST(putout,dimpl,putink,U,W,T,rho,scl)
+      endif
+c
+c      ib = 1
+c      ie = i1-1
+c
+c      kb = 1
+c      ke = k1-1
+c
+c      do k=kb,ke
+c         kp=k+1
+c         km=k-1
+c         do i=ib,ie
+c            ip=i+1
+c            im=i-1
+c
+c            ! Production of turbulent kinetic energy
+c            Pk(i,k) = ekmt(i,k)*(
+c     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
+c     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+c     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+c     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+c     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
+c     &              )**2.)
+c
+c            div(i,k)=(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+c     &              +(      W(i,k) -      W(i,km))/dz
+c
+c            Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
+c
+c            ! Bouyancy prodution
+c            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
+c     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+c     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
+c     &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+c     &           )
+c
+c
+c!!! RENE: change to turbulent time scale here!
+c            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+c
+c
+c            Tt(i,k)=putink(i,k)/putine(i,k)
+c
+c                
+c            if (turbmod.eq.3) then
+c            ! time scale for v2f model
+c                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
+c     &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+c     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+c     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+c     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)      
+c!               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
+c               Srsq(i,k) = Str*rho(i,k)*0.5
+c               Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
+c               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+c               Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+c               
+c               
+c               ! Bouyancy prodution with a different time scale
+c               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
+c     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+c     &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+c     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+c     &                  )
+c
+c
+c               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+c
+c            endif
+c
+c            if (scl.eq.0) then
+c               !k equation
+c               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
+c               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
+c
+c            elseif (scl.eq.1) then
+c               !epsilon equation
+c               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
+c               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
+c
+c            elseif (scl.eq.2) then
+c               !v'2 equation
+c               putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
+c               dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
+c
+c            elseif (turbmod.eq.4) then
+c               !Spalart Allmaras
+c               cv1_3     = (7.1)**3.0
+c               cb1       = 0.1355
+c               cb2       = 0.622
+c               cb3       = 2.0/3.0
+c               inv_cb3   = 1.0/cb3
+c               kappa_2   = (0.41)**2.0   ! von karman constant
+c               cw1       = (cb1/kappa_2) + (1.0+cb2)/cb3
+c               cw2       = 0.3
+c               cw3_6     = (2.0)**6.0
+c
+c              ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
+c               StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                   +( (U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)           )**2.)
+c
+c               StR = StR**0.5
+c
+c               ! calculating Shat from SA model
+c               chi    = nuSAtmp(i,k)/(ekm(i,k)/rho(i,k))
+c               fv1SA  = (chi**3.0)/((chi**3.0) + cv1_3);
+c               fv2SA  = 1.0 - (chi/(1.0 + (chi*fv1SA)))
+c               ShatSA = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0))
+c
+c               ! production term in SA model
+c               Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
+c
+c               ! destruction term in SA model
+c               r_SA         = min(nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0)*ShatSA), 10.0)
+c               g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+c               fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+c
+c               ! gustavo: i think this is not correct
+c               !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/((0.5-rp(i))**2)
+c               dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/((wallDist(i))**2.0)
+c
+c
+c               ! source term
+c
+c               if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
+c               ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+c                   putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
+c     &               (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
+c     &             + (((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+c               else
+c               ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
+c                   putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
+c     &               ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
+c               endif
+c
+c
+c
+c            elseif (turbmod .eq. 5) then
+c
+c               ! k-omega SST               
+c               Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega
+c               
+c               ! Bouyancy prodution with a different time scale
+c               Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
+c     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+c     &                                                                                (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
+c     &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+c     &                  )
+c
+c
+c               Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+c
+c               if (scl.eq.10) then
+c                  ! k- equation of SST model
+c                  putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)          ! Gk(i,k)   ! Does not take into account the bouyancy term...
+c                  dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density
+c
+c               elseif (scl.eq.11) then
+c                  ! omega- equation of SST model
+c                  sigma_om1 = 0.5
+c                  sigma_om2 = 0.856
+c                  beta_1    = 0.075
+c                  beta_2    = 0.0828
+c                  betaStar  = 0.09
+c                  alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
+c                  alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
+c                  alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1-bF1(i,k))
+c                  betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
+c
+c                  StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
+c     &                       ((U(i,k)-U(im,k))/dRu(i)**2. +
+c     &                       ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+c     &                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+c     &                       -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                      +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
+c
+c                  ! Bouyancy prodution divided by mut 
+c                  GtR=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
+c     &            *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+c     &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+c     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
+c     &            +(2*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+c     &            )
+c
+c
+c                  !!! RENE: change to turbulent time scale here!
+c                  GtR = GtR + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+c
+c
+c
+c                  putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-bF1(i,k))*cdKOM(i,k) ) /rho(i,k)
+c                  dimpl(i,k)  = dimpl(i,k)  + betaSST*omNew(i,k) ! note, beta*rho*omega^2/(rho*omega), set implicit and divided by density
+c
+c               endif
+c
+c            endif
+c         enddo
+c      enddo
 
       end
 

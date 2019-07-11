@@ -4,8 +4,8 @@
 #F77 = mpif90 -O0 -Wall -Wno-tabs -Wno-unused-dummy-argument -Wno-unused-variable -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O0 -g -fbounds-check -finit-local-zero -fdefault-real-8 -ffixed-line-length-none
-F77 = mpif90 -O0 -g -fbounds-check -Wall -Wno-unused-variable -fdefault-real-8 -ffixed-line-length-none
-#F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
+#F77 = mpif90 -O0 -g -fbounds-check -Wall -Wno-unused-variable -fdefault-real-8 -ffixed-line-length-none
+F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O2 -r8 -132
 #F77 = /usr/mpi/intel/openmpi-1.4.2/bin/mpif90  -r8 -132 -O5 #-fpe0 -traceback
 #F77 = /opt/mvapich2/bin/mpif90 -r8 -132
@@ -18,8 +18,8 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF
-SRCS    = numerics.f mk.f vf.f sa.f sst.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f
-OBJS    = numerics.o mk.o vf.o sa.o sst.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
+SRCS    = numerics.f mk.f vf.f sst.f sa.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f
+OBJS    = numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 

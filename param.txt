@@ -1,10 +1,10 @@
       integer         i,k,imax,kmax,i1,k1,iwork,isave,px,rank,nTab,LoD
       integer         EOSmode,periodic,kmaxper,k1Old
       integer         nstep,K_start_heat,select_init
-      integer         turbmod
+      integer         turbmod,modifDiffTerm
       real*8          Re,Pr,Qwall
       real*8          dpdz,ctheta,Fr_1
-      real*8    alphac,alphak,alphae,alphav2,modif,modifDiffTerm
+      real*8    alphac,alphak,alphae,alphav2,modif
 
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 24)       ! radial direction

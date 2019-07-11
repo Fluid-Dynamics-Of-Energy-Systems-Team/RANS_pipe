@@ -170,13 +170,13 @@
             enddo
          enddo
       elseif (turbmod.eq.1) then
-         calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
+         call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.3) then
-         calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
-      elseif (turbmod.eq.4) then
-         calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
-      elseif (turbmod.eq.5) then
-         calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
+         call calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
+c      elseif (turbmod.eq.4) then
+c         call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
+c      elseif (turbmod.eq.5) then
+c         call calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
       endif
 
       ekmttmp(i1,:) = -ekmttmp(imax,:)
@@ -279,13 +279,13 @@
 
       resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;
       if (turbmod.eq.1) then
-         advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
-      elseif (turbmod.eq.3) then
-         advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
-      elseif (turbmod.eq.4) then
-         advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
-      elseif (turbmod.eq.5) then
-         advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
+         call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
+c      elseif (turbmod.eq.3) then
+c         advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
+c      elseif (turbmod.eq.4) then
+c         advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+c      elseif (turbmod.eq.5) then
+c         advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
       endif
 
 

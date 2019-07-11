@@ -1,32 +1,3 @@
-!*************************************************************************************
-!    to calculate the turbulent production
-!*************************************************************************************
-      subroutine calculate_Pk(tmpPk, tmpDiv, U,W,T,rho,i,im,ip,k,km,kp)
-      implicit none
-      include 'param.txt'
-      include 'common.txt'
-
-      integer im,ip,km,kp,ib,ie,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div
-
-      ! Production of turbulent kinetic energy
-      tmpPk = ekmt(i,k)*(
-     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
-     &              )**2.)
-
-      tmpDiv)=(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
-     &              +(      W(i,k) -      W(i,km))/dz
-
-      tmpPk = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
-
-      end
-
-
 !>************************************************************************************
 !!
 !!     Performes time integration with second order
@@ -103,7 +74,7 @@
             eNew(i,k) = max(rhs(i), 1.0e-8)
          enddo
       enddo
-
+      end
 !>************************************************************************************
 !!
 !!     Performes time integration with second order
@@ -122,28 +93,29 @@
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-      subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+      subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
       implicit none
       include 'param.txt'
       include 'common.txt'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 rho3(0:i1,0:k1)
-
+ 
       real*8     a  (imax)
       real*8     b  (imax)
       real*8     c  (imax)
       real*8     rhs(imax)
 
       real*8 scl
-      real*8 resE
+      real*8 resK
+      integer mrank
 
       resK  = 0.0
       dnew  = 0.0; dimpl = 0.0;
       scl=0.0
 
 
-      call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+      call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,mrank,periodic,.true.)
 
       if (turbmod.eq.1) then 
          call prodis_MK(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)
@@ -153,7 +125,7 @@
 !         call prodis_SST(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)   
       endif
 
-      call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
+      call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,mrank,modifDiffTerm)
 
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
          do k=1,kmax
@@ -209,8 +181,8 @@
            do i=1,imax
               resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
               kNew(i,k) = max(rhs(i), 1.0e-8)
-           end
-
+           enddo
+         enddo
       endif
 
       end

@@ -92,11 +92,6 @@
             im=i-1
 
 
-            ! Production of turbulent kinetic energy
-            call calculate_Pk(tmpPk, tmpDiv, U,W,T,rho,i,im,ip,k,km,kp)
-            Pk(i,k) = tmpPk
-            div(i,k)= tmpDiv
-
             ! Bouyancy prodution and time scale, not defined for this model
             Gk(i,k)=0
             Tt(i,k)=1
@@ -115,6 +110,9 @@
 
             ! production term in SA model
             Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
+
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+     &              +(      W(i,k) -      W(i,km))/dz
 
             ! destruction term in SA model
             r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)

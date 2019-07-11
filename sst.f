@@ -24,7 +24,8 @@
 
 
       sigmat = 0.9
-
+      sigma_om2 = 0.856
+      betaStar  = 0.09
 
       do k=1,kmax
          km=k-1
@@ -43,8 +44,7 @@
             Ret(i,k)    = rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
 
             !constants
-            sigma_om2 = 0.856
-            betaStar  = 0.09
+            
             wallD     = wallDist(i)
 
             ! Vorticity rate
@@ -134,9 +134,19 @@
 
 
             ! Production of turbulent kinetic energy
-            call calculate_Pk(tmpPk, tmpDiv, U,W,T,rho,i,im,ip,k,km,kp)
-            Pk(i,k) = tmpPk
-            div(i,k)= tmpDiv
+            Pk(i,k) = ekmt(i,k)*(
+     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
+     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
+     &              )**2.)
+
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+     &              +(      W(i,k) -      W(i,km))/dz
+
+            Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
             ! turbulent time scale
             Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega

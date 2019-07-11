@@ -68,7 +68,7 @@
 
       integer im,ip,jm,jp,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,Tt,dimpl
-      real*8  scl,tmpPk,tmpDiv
+      real*8  scl!,tmpPk,tmpDiv
 
 
       ib = 1
@@ -85,9 +85,19 @@
             im=i-1
             
             ! Production of turbulent kinetic energy
-            call calculate_Pk(tmpPk, tmpDiv, U,W,T,rho,i,im,ip,k,km,kp)
-            Pk(i,k) = tmpPk
-            div(i,k)= tmpDiv
+            Pk(i,k) = ekmt(i,k)*(
+     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
+     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
+     &              )**2.)
+
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+     &              +(      W(i,k) -      W(i,km))/dz
+
+            Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
             ! Bouyancy prodution
             Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
