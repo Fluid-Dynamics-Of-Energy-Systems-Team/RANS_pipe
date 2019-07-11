@@ -3,9 +3,9 @@
 
 var =6
 splot '0/tecp.00000' u 1:2:var w p
-replot '0/tecp.00001' u 1:2:var w p
-replot '0/tecp.00002' u 1:2:var w p
-replot '0/tecp.00003' u 1:2:var w p
+#replot '0/tecp.00001' u 1:2:var w p
+#replot '0/tecp.00002' u 1:2:var w p
+#replot '0/tecp.00003' u 1:2:var w p
 
 #set title "Simulations Residuals" font ",14"
 #set xlabel "Num. Steps"

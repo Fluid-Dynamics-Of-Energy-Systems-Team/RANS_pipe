@@ -35,7 +35,7 @@
      &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
      &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
      &              )**2.)
 
@@ -46,9 +46,9 @@
 
             ! Bouyancy prodution
             Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
-     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                              (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
      &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
      &           )
 
@@ -66,7 +66,7 @@
      &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
      &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)      
 !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
                Srsq(i,k) = Str*rho(i,k)*0.5
@@ -77,7 +77,7 @@
                
                ! Bouyancy prodution with a different time scale
                Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
      &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
      &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
@@ -116,7 +116,7 @@
                cw3_6     = (2.0)**6.0
 
               ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
-               StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+               StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                   +( (U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)           )**2.)
 
                StR = StR**0.5
@@ -125,19 +125,19 @@
                chi    = nuSAtmp(i,k)/(ekm(i,k)/rho(i,k))
                fv1SA  = (chi**3.0)/((chi**3.0) + cv1_3);
                fv2SA  = 1.0 - (chi/(1.0 + (chi*fv1SA)))
-               ShatSA = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*((0.5-rp(i))**2.0))
+               ShatSA = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0))
 
                ! production term in SA model
                Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
 
                ! destruction term in SA model
-               r_SA         = min(nuSAtmp(i,k)/(kappa_2*((0.5-rp(i))**2.0)*ShatSA), 10.0)
+               r_SA         = min(nuSAtmp(i,k)/(kappa_2*((wallDist(i))**2.0)*ShatSA), 10.0)
                g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
                fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
 
                ! gustavo: i think this is not correct
                !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/((0.5-rp(i))**2)
-               dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/((0.5-rp(i))**2.0)
+               dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/((wallDist(i))**2.0)
 
 
                ! source term
@@ -145,12 +145,12 @@
                if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
                ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
                    putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
-     &               (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(Rp(ip)-Rp(im)))**2.0
+     &               (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
      &             + (((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
                else
                ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
                    putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
-     &               ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(Rp(ip)-Rp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
+     &               ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
                endif
 
 
@@ -162,9 +162,9 @@
                
                ! Bouyancy prodution with a different time scale
                Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                             +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                                (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &                                                                                (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
      &                  +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
      &                  )
 
@@ -189,17 +189,17 @@
                   betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
 
                   StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                       ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &                       ((U(i,k)-U(im,k))/dRu(i)**2. +
      &                       ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                       -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                       -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                      +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
 
                   ! Bouyancy prodution divided by mut 
                   GtR=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &            *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &            *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                              (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
      &            +(2*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
      &            )
 
@@ -788,182 +788,6 @@ c
          endif
       end
 
-
-      !>********************************************************************
-      !!  diffusion term for SA model: in the z-direction as, plus extra for Aupoix modifications...
-      !!********************************************************************
-      subroutine diffcSA(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-      implicit none
-      include 'param.txt'
-      integer   km,kp,im,ip,rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
-!          Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
-         ! For, Standard, Inverse SLS and Aupoix
-         ! rho=1 for standard
-      do k=1,kmax
-          kp=k+1
-          km=k-1
-          do i=1,imax
-             putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3          ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*sqrt(0.5*(rho(i,k)+rho(i,kp)))*((rho(i,kp)**0.5)*putin(i,kp)-(rho(i,k )**0.5)*putin(i,k ))
-     3           -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*sqrt(0.5*(rho(i,k)+rho(i,km)))*((rho(i,k )**0.5)*putin(i,k )-(rho(i,km)**0.5)*putin(i,km))
-     &                 )/(dz*dz)   )
-          enddo
-      enddo
-        
-      if (diffVersion == 2) then       ! For Aupoix we need to substract the density gradient diffusion with molecular viscosity
-      !-1/rho d/dx[nu*nusa/2 drhodx]
-      ! in the z-direction
-          do k=1,kmax
-              kp=k+1
-              km=k-1
-              do i=1,imax
-                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)*((ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho(i,kp)-rho(i,k ))
-     &                                                     -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho(i,k )-rho(i,km)))/(dz*dz))
-              enddo
-          enddo
-      ! in the r-direction
-          do i=1,imax
-              ip=i+1
-              im=i-1
-              do k=1,kmax
-                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)* (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho(ip,k)-rho(i ,k)))
-     &                                                     -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho(i ,k)-rho(im,k)))
-     &                                                     )
-              enddo
-          enddo
-      endif
-
-
-
-
-      end
-
-      !>********************************************************************
-      !! diffusion term for kine of the SST model in the z-direction, set as a source term...
-      !!********************************************************************
-      subroutine diffcSSTKine(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-      implicit none
-      include 'param.txt'
-      integer   km,kp,rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
-c
-c
-         if (diffVersion == 1) then       ! Inverse SLS
-            do k=1,kmax
-               kp=k+1
-               km=k-1
-               do i=1,imax
-                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*(
-     3         ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))
-     3          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))
-     &                 )/(dz*dz)   )
-               enddo
-            enddo
-         elseif (diffVersion == 2) then   ! Aupoix
-            do k=1,kmax
-               kp=k+1
-               km=k-1
-               do i=1,imax
-                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3         ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))
-     3          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))
-     &                 )/(dz*dz)   )
-               enddo
-            enddo
-         else                               ! Standard
-            do k=1,kmax
-               kp=k+1
-               km=k-1
-               do i=1,imax
-                  putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3                    ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))
-     3                     -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))   )/(dz*dz)   )
-               enddo
-            enddo
-         endif
-      end
-
-      !>********************************************************************
-      !! diffusion term for omega of the SST model in the z-direction, set as a source term...
-      !!********************************************************************
-      subroutine diffcSSTOmega(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-      implicit none
-      include 'param.txt'
-      integer   km,kp,rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma(0:i1,0:k1)
-c
-c
-         if ((diffVersion == 1) .or. (diffVersion == 2)) then       ! Inverse SLS & Aupoix
-            do k=1,kmax
-               kp=k+1
-               km=k-1
-               do i=1,imax
-                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3         ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))*
-     3                                (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k )))
-     3          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))*
-     3                                (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km)))
-     &                 )/(dz*dz)   )
-               enddo
-            enddo
-         else                               ! Standard
-            do k=1,kmax
-               kp=k+1
-               km=k-1
-               do i=1,imax
-                  putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3                    ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))
-     3                     -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))   )/(dz*dz)   )
-               enddo
-            enddo
-         endif
-      end
-
-
-      !>********************************************************************
-      !! diffusion term for epsilon in the z-direction, set as a source term...
-      !!********************************************************************
-      subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-      implicit none
-      include 'param.txt'
-      integer   km,kp, rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &      rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &      ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma, difcp, difcm
-
-         if ((diffVersion == 1) .or. (diffVersion == 2)) then       ! Inverse SLS  and Aupoix
-            do k=1,k1-1
-               kp=k+1
-               km=k-1
-               do i=1,i1-1
-                  difcp = (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,kp)))
-                  difcm = (ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km)))
-                  putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*(
-     3                     (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k ))
-     3                          -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
-               enddo
-            enddo
-         else                               ! Standard
-            do k=1,k1-1
-               kp=k+1
-               km=k-1
-               do i=1,i1-1
-                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3                    ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))
-     3                     -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km))   )/(dz*dz)   )
-               enddo
-            enddo
-         endif
-
-
-      end
 
 
 
