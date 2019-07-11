@@ -170,13 +170,13 @@
             enddo
          enddo
       elseif (turbmod.eq.1) then
-         calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+         calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.3) then
-         calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+         calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.4) then
-         calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+         calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.5) then
-         calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+         calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
       endif
 
       ekmttmp(i1,:) = -ekmttmp(imax,:)

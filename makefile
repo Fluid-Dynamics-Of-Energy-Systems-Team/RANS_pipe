@@ -18,8 +18,8 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF
-SRCS    = parpipe.f numerics.f mk.f vf.f sa.f sst.f turbmodels.f fileio.f math.f mpistuff.f vfft.f
-OBJS    = parpipe.o numerics.o mk.o vf.o sa.o sst.o turbmodels.o fileio.o math.o mpistuff.o vfft.o
+SRCS    = numerics.f mk.f vf.f sa.f sst.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f
+OBJS    = numerics.o mk.o vf.o sa.o sst.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 

@@ -9,12 +9,12 @@
 !>******************************************************************************************
 !!      MK routine to estimate the eddy viscosity
 !!******************************************************************************************
-      subroutine calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+      subroutine calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
-      integer  im,ip,km,kp,step,rank
+      integer  im,ip,km,kp,step
       real*8   tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Tt
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin

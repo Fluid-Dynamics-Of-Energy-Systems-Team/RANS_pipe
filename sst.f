@@ -10,12 +10,12 @@
 !>******************************************************************************************
 !!      SST routine to estimate the eddy viscosity
 !!******************************************************************************************
-      subroutine calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+      subroutine calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
       implicit none
       include 'param.txt'
       include 'common.txt'
-      integer  im,ip,km,kp,step,rank
+      integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
@@ -109,6 +109,7 @@
       real*8  StR
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
+      real*8 tmpPk, tmpDiv ! COMMENT RENE
 
       sigma_om1 = 0.5
       sigma_om2 = 0.856
@@ -162,7 +163,7 @@
                betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
 
                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                    ((U(i,k)-U(im,k))/dRu(i)**2. +
+     &                    ((U(i,k)-U(im,k))/dRu(i))**2. +
      &                    ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &                   (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
      &                    -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
@@ -235,7 +236,11 @@
       ! calculating constant with blending function factor
       sigmakSST = 0.85*bF1 + 1.0*(1.0 - bF1)
       sigmakSST = 1.0/sigmakSST
-      call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
+
+      call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST,
+     &                 Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
+
+
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
           do k=1,kmax
              do i=1,imax

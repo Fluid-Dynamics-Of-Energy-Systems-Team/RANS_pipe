@@ -189,7 +189,7 @@
                   betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
 
                   StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                       ((U(i,k)-U(im,k))/dRu(i)**2. +
+     &                       ((U(i,k)-U(im,k))/dRu(i))**2. +
      &                       ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
      &                       -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)

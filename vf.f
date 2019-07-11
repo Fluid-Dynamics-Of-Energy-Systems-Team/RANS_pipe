@@ -10,12 +10,12 @@
 !>******************************************************************************************
 !!      V2F routine to estimate the eddy viscosity
 !!******************************************************************************************
-      subroutine calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+      subroutine calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
       implicit none
       include 'param.txt'
       include 'common.txt'
-      integer  im,ip,km,kp,step,rank
+      integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Tt,Srsq
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
@@ -49,11 +49,11 @@
             ce2    = 1.9
            
             StR= (2.*(((W(i,k)-W(i,km))/dz)**2. +
- &                ((U(i,k)-U(im,k))/dru(i))**2. +
- &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +  
- &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
- &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dru(i)
- &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
+     &                ((U(i,k)-U(im,k))/dru(i))**2. +
+     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +  
+     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dru(i)
+     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
     
 !               Srsq(i,k) = Pk(i,k)*rNew(i,k)/(2.*ekmt(i,k))
 
@@ -88,7 +88,9 @@
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,putinv2,Tt,Srsq,dimpl
       real*8, dimension(imax,kmax) :: putinf,putinftmp
-      real*8  scl
+      real*8  StR,scl
+
+      real*8 tmppk,tmpDiv ! CHECK THIS (comment RENE): it is used in calculate_pk, not sure if input or output... 
 
       ib = 1
       ie = i1-1
@@ -170,7 +172,7 @@
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 resK, resE, resV2
-      real*8 rho3(0:i1,0:k1)
+      real*8 rho3(0:i1,0:k1), scl
 
       real*8     a  (imax)
       real*8     b  (imax)
