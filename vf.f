@@ -21,9 +21,6 @@
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
       real*8  StR
 
-
-
-      sigmat = 0.9
       sigmak = 1.0
       sigmae = 1.3
       cmu    = 0.22
@@ -119,7 +116,7 @@
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
-            ! time scale for v2f model
+            
             StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
      &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
      &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
@@ -129,12 +126,13 @@
     
 !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
             Srsq(i,k) = Str*rho(i,k)*0.5
+
+            ! turbulent time scale
             Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
             Tt(i,k)   = max(Tt(i,k), 1.0e-8)
             Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
                
-               
-               ! Bouyancy prodution with a different time scale
+            ! Bouyancy prodution
             Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
      &             *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
      &                          +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
@@ -144,7 +142,6 @@
 
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
 
             if (scl.eq.0) then
                !k equation
@@ -160,8 +157,6 @@
                !v'2 equation
                putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
                dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
-
-            
 
             endif
          enddo

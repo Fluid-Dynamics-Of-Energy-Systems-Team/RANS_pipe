@@ -21,9 +21,6 @@
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
       real*8  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
 
-
-
-      sigmat = 0.9
       sigma_om2 = 0.856
       betaStar  = 0.09
 
@@ -109,8 +106,6 @@
       real*8  StR
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
-      real*8 tmpPk, tmpDiv ! COMMENT RENE
-
       sigma_om1 = 0.5
       sigma_om2 = 0.856
       beta_1    = 0.075
@@ -132,7 +127,6 @@
             ip=i+1
             im=i-1
 
-
             ! Production of turbulent kinetic energy
             Pk(i,k) = ekmt(i,k)*(
      &         2.*(((W(i,k)-W(i,km))/dz)**2. +
@@ -151,7 +145,6 @@
             ! turbulent time scale
             Tt(i,k)   = 1.0/omNew(i,k)   ! 0.31 cmu/omega
                
-            ! Bouyancy prodution with a different time scale
             Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
      &             *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                          +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
@@ -188,7 +181,6 @@
      &         )
 
 
-               !!! RENE: change to turbulent time scale here!
                GtR = GtR + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
 
                putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-bF1(i,k))*cdKOM(i,k) ) /rho(i,k)

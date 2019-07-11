@@ -20,9 +20,9 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)
-      parameter (nstep             = 20000)
+      parameter (nstep             = 40000)
 
-      parameter (LoD               = 10)
+      parameter (LoD               = 20)
       parameter (periodic          = 2)               ! 1..periodic, 2..developing 
       parameter (dpdz              = 4)
 
@@ -31,7 +31,7 @@
       parameter (Pr                = 3.19457)
 
 !     Q+=Qwall=(qw*D/(k0*T0))        
-      parameter (Qwall             = 2.4)     !0.0) !2.4)
+      parameter (Qwall             = 0.0)     !0.0) !2.4)
 
 !     1/Fr = Gr/(beta_o*T_o*Re**2.*Qwall)
       parameter (Fr_1              =  0.0) 

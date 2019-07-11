@@ -19,10 +19,10 @@ C      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,
          call prodis_MK(putout,dimpl,putink,putine,U,W,T,rho,scl)
       elseif (turbmod.eq.3) then
          call prodis_VF(putout,dimpl,putink,putine,putinv2,putinf,U,W,T,rho,scl)
-c      elseif (turbmod.eq.4) then
-c         call prodis_SA(putout,dimpl,nuSAtmp,U,W,T,rho)
-c      elseif (turbmod.eq.5) then
-c         call prodis_SST(putout,dimpl,putink,U,W,T,rho,scl)
+      elseif (turbmod.eq.4) then
+         call prodis_SA(putout,dimpl,nuSAtmp,U,W,T,rho)
+      elseif (turbmod.eq.5) then
+         call prodis_SST(putout,dimpl,putink,U,W,T,rho,scl)
       endif
 c
 c      ib = 1

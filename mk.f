@@ -19,8 +19,6 @@
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Tt
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
 
-      sigmat = 0.9
-
       sigmak       = 1.4
       sigmae       = 1.3
       cmu          = 0.09
@@ -68,7 +66,7 @@
 
       integer im,ip,jm,jp,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,Tt,dimpl
-      real*8  scl!,tmpPk,tmpDiv
+      real*8  scl
 
 
       ib = 1
@@ -99,20 +97,18 @@
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
+            ! turbulent time scale
+            Tt(i,k)=putink(i,k)/putine(i,k)
+
             ! Bouyancy prodution
-            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)
+            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
      &           *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                         +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
      &                                                                              (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
      &           +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
      &           )
 
-
-            !!! RENE: change to turbulent time scale here!
-            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*putink(i,k)/putine(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-            Tt(i,k)=putink(i,k)/putine(i,k)
- 
+            Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
 
             if (scl.eq.0) then
                !k equation

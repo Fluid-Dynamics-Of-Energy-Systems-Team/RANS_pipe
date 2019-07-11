@@ -22,10 +22,6 @@
       real*8  cv1_3,chi,fv1SA, wallD
 
 
-
-      sigmat = 0.9
-
-
       do k=1,kmax
          km=k-1
          kp=k+1
@@ -64,8 +60,6 @@
       real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,Tt,nuSAtmp,dimpl
       real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
-
-      real*8 tmpPk, tmpDiv ! COMMENT RENE 
 
       cv1_3     = (7.1)**3.0
       cb1       = 0.1355
