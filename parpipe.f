@@ -70,7 +70,7 @@
       kin(:) = 0.0
       ein(:) = 0.0
       v2in(:) = 0.0
-      omIn(:) = 0.0
+      omIn(:) = 1.0
       nuSAin(:) = 0.0
       ekmtin(:) = 0.0
       Pk(:,0) = 0.0
@@ -80,9 +80,11 @@
       call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);   ! necessary to call it twice
       rold = rnew
-
+      print*,"Hellow!"
       call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
+
       call bound_v(Unew,Wnew,Win,rank)
+      
 
 
       call chkdt(rank,istep)
@@ -177,6 +179,23 @@
          call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.5) then
          call calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
+
+        ! Boundary condition for bF1 of sst model
+        bF1(i1,:) =  bF1(imax,:)
+        bF1(0,:)  =  bF1(1,:)
+
+        call shiftf(bF1,ekmtf,rank)
+        call shiftb(bF1,ekmtb,rank)
+        bF1(:,0)  = ekmtf(:)
+        bF1(:,k1) = ekmtb(:)
+
+        if ((periodic.ne.1).and.(rank.eq.0)) then
+           bF1(:,0) = bF1(:,1)  ! ATTENTION
+        endif
+
+        if ((periodic.ne.1).and.(rank.eq.px-1)) then
+           bF1(:,k1) = 2.*bF1(:,kmax)-bF1(:,kmax-1)
+        endif
       endif
 
       sigmat = 0.9

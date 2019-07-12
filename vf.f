@@ -53,11 +53,11 @@
 !               Srsq(i,k) = Pk(i,k)*rNew(i,k)/(2.*ekmt(i,k))
 
             Srsq(i,k) = Str*rNew(i,k)*0.5
+            !Tt(i,k)   = kNew(i,k)/eNew(i,k)
             Tt(i,k)   = max(kNew(i,k)/eNew(i,k),6.0*(ekm(i,k)/(rNew(i,k)*eNew(i,k)))**0.5)
-
             !extras
-            !Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-            !Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+            Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+            Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
 
             fmu(i,k) = v2New(i,k)*Tt(i,k)/(kNew(i,k)**2./eNew(i,k))
             f1(i,k)  = 1.0 + 0.045*(kNew(i,k)/v2New(i,k))**0.5
@@ -128,6 +128,7 @@
             Srsq(i,k) = Str*rho(i,k)*0.5
 
             ! turbulent time scale
+            !Tt(i,k)=putink(i,k)/putine(i,k)
             Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
             Tt(i,k)   = max(Tt(i,k), 1.0e-8)
             Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))

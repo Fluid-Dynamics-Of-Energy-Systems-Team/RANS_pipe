@@ -23,13 +23,14 @@
 
       sigma_om2 = 0.856
       betaStar  = 0.09
+      
 
       do k=1,kmax
          km=k-1
          kp=k+1
 
          tauw(k) = ekmi(imax,k)*0.5*(W(imax,km)+W(imax,k))/wallDist(imax)
-
+         
          do i=1,imax
             im=i-1
             ip=i+1
@@ -71,23 +72,9 @@
 
          enddo
       enddo
+      
 
       ! Boundary condition for bF1 of sst model
-      bF1(i1,:) =  bF1(imax,:)
-      bF1(0,:)  =  bF1(1,:)
-
-      call shiftf(bF1,ekmtf,rank)
-      call shiftb(bF1,ekmtb,rank)
-      bF1(:,0)  = ekmtf(:)
-      bF1(:,k1) = ekmtb(:)
-
-      if ((periodic.ne.1).and.(rank.eq.0)) then
-         bF1(:,0) = bF1(:,1)  ! ATTENTION
-      endif
-
-      if ((periodic.ne.1).and.(rank.eq.px-1)) then
-         bF1(:,k1) = 2.*bF1(:,kmax)-bF1(:,kmax-1)
-      endif
 
 
       end
