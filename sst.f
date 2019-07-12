@@ -74,7 +74,7 @@
       enddo
       
 
-      ! Boundary condition for bF1 of sst model
+
 
 
       end
