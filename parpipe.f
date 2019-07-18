@@ -66,23 +66,13 @@
 !         close(29)
 !      endif
 
-      Win(:) = 1.0
-      kin(:) = 0.0
-      ein(:) = 0.0
-      v2in(:) = 0.0
-      omIn(:) = 1.0
-      nuSAin(:) = 0.0
-      ekmtin(:) = 0.0
-      Pk(:,0) = 0.0
-
-
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
       call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);   ! necessary to call it twice
       rold = rnew
+
       print*,"Hellow!"
       call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
-
       call bound_v(Unew,Wnew,Win,rank)
       
 
@@ -95,6 +85,7 @@
 
          ! calculating turbulent viscosity
          call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
+         
 
          if (turbmod.eq.3)  then
             call fillhm(rank)
@@ -102,7 +93,7 @@
          endif
  		 
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
-
+         !stop
          call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
          call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
       	
@@ -138,8 +129,7 @@
                 write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA
             endif
          end if
-
-
+         
       enddo
 
       call outputProfile(rank)
@@ -799,7 +789,7 @@ c
             if (rank.eq.0)  write(*,*) 'Initializing flow from scratch = ', select_init
 
             do i=1,imax
-              Wnew(i,:)  = 1.0 !Re/6*3/2.*(1-(rp(i)/0.5)**2)
+              Wnew(i,:)  = Re/6*3/2.*(1-(rp(i)/0.5)**2)
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0
               omnew(i,:) = 0.001

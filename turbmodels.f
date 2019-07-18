@@ -72,6 +72,7 @@
          do i=1,imax
             resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
             eNew(i,k) = max(rhs(i), 1.0e-8)
+
          enddo
       enddo
       end
@@ -120,9 +121,7 @@
       if (turbmod.eq.1) then 
          call prodis_MK(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)
       elseif (turbmod.eq.3) then
-         call prodis_VF(dnew,dimpl,kNew,eNew,v2New,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
-!      elseif (turbmod.eq.5) then
-!         call prodis_SST(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)   
+         call prodis_VF(dnew,dimpl,kNew,eNew,v2New,ftmp,Utmp,Wtmp,temp,Rtmp,scl) 
       endif
 
       call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,mrank,modifDiffTerm)

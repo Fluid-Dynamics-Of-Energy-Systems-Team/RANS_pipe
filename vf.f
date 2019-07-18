@@ -53,11 +53,13 @@
 !               Srsq(i,k) = Pk(i,k)*rNew(i,k)/(2.*ekmt(i,k))
 
             Srsq(i,k) = Str*rNew(i,k)*0.5
-            !Tt(i,k)   = kNew(i,k)/eNew(i,k)
             Tt(i,k)   = max(kNew(i,k)/eNew(i,k),6.0*(ekm(i,k)/(rNew(i,k)*eNew(i,k)))**0.5)
-            !extras
-            Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-            Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+            
+            if (modVF.eq.1) then
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+               Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+            endif
 
             fmu(i,k) = v2New(i,k)*Tt(i,k)/(kNew(i,k)**2./eNew(i,k))
             f1(i,k)  = 1.0 + 0.045*(kNew(i,k)/v2New(i,k))**0.5
@@ -66,7 +68,9 @@
             eterm(i,k) = 0.0
             ekmttmp(i,k) = min(1.,rNew(i,k)*cmu*v2New(i,k)*Tt(i,k))
 !               ekmttmp(i,k) = min(max(ekmttmp(i,k),1.0e-8), 1.0)
-          
+            
+
+            
          enddo
       enddo
 
@@ -85,8 +89,6 @@
       real*8, dimension(imax,kmax) :: putinf,putinftmp
       real*8  StR,scl
 
-      real*8 tmppk,tmpDiv ! CHECK THIS (comment RENE): it is used in calculate_pk, not sure if input or output... 
-
       ib = 1
       ie = i1-1
 
@@ -104,7 +106,7 @@
             ! Production of turbulent kinetic energy
             Pk(i,k) = ekmt(i,k)*(
      &         2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &             ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
+     &             ((U(i,k)-U(im,k))/dRu(i))**2. +
      &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
      &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
@@ -116,34 +118,34 @@
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
+            ! turbulent time scale
+            Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
             
-            StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
+            if (modVF.eq.1) then
+                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
      &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
      &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
      &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)  
     
 !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
-            Srsq(i,k) = Str*rho(i,k)*0.5
-
-            ! turbulent time scale
-            !Tt(i,k)=putink(i,k)/putine(i,k)
-            Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
-            Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-            Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-               
+                Srsq(i,k) = Str*rho(i,k)*0.5
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+               Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+            endif
             ! Bouyancy prodution
             Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &             *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/(Ru(i)-Ru(im))
+     &             *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
      &                          +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                             (T(ip,k)-T(im,k))/(Rp(ip)-Rp(im))  )
+     &                                                                             (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
      &               +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
      &               )
 
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
+            !write(*,*) i,k,Pk(i,k),Tt(i,k)
             if (scl.eq.0) then
                !k equation
                putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
@@ -197,7 +199,7 @@
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! advanceV2
-      resV2 = 0.0
+      !resV2 = 0.0
       dnew  = 0.0; dimpl = 0.0;
       scl=2.0
 
@@ -211,10 +213,12 @@
             
               a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
               a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
+
               c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
               c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
 
               b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
+
               a(i) = a(i)*rho3(i-1,k)
               c(i) = c(i)*rho3(i+1,k)
 
@@ -243,11 +247,13 @@
              
                a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+
                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
 
 
                b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
+
                a(i) = a(i)*rho3(i-1,k)
                c(i) = c(i)*rho3(i+1,k)
 
@@ -272,4 +278,50 @@
       endif
 
 
+      end
+
+!>********************************************************************
+!!     helmotz solver
+!!********************************************************************
+      subroutine fillhm(rank)
+      implicit none
+c     
+      include 'param.txt'
+      include 'common.txt'
+      real*8   Tt(0:i1,0:k1) ,Srsq(0:i1,0:k1)
+      !real*8   Str
+
+c     
+c     *** Fill the right hand for the poisson solver. ***
+c     
+
+
+      do  k=1,kmax
+         do i=1,imax
+         
+            ! time scale
+            Tt(i,k)   = max(knew(i,k)/enew(i,k), 6.0*(ekm(i,k)/(rnew(i,k)*enew(i,k)))**0.5)
+             
+            ! lenght scale
+            Lh(i,k)=0.23*max(knew(i,k)**1.5/enew(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
+            
+            if (modVF.eq.1) then
+               ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
+               Tt(i,k)   = max(Tt(i,k), 1.0e-8)
+               Tt(i,k)   = min(Tt(i,k),0.6*knew(i,k)/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+
+               Lh(i,k)=min(knew(i,k)**1.5/enew(i,k),knew(i,k)**1.5/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
+               Lh(i,k)=0.23*max(Lh(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
+            endif
+
+!            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
+!     &                - 0.3*(Pk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
+            ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
+            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
+     &                - 0.3*(Pk(i,k)+Gk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
+            fv2(i,k) = fv2(i,k)/Lh(i,k)**2.0
+         enddo
+      enddo
+
+      return
       end
