@@ -20,6 +20,8 @@
       real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
       real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1)
 
+      real :: start, finish
+
       call cpu_time(time1)
       call mpi_init(ierr)
       call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
@@ -79,6 +81,7 @@
 
       call chkdt(rank,istep)
 
+      call cpu_time(start)
 
       ! simulation loop 
       do istep=istart,nstep
@@ -91,9 +94,9 @@
             call fillhm(rank)
             call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh)
          endif
- 		 
+ 		
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
-         !stop
+         
          call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
          call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
       	
@@ -131,6 +134,8 @@
          end if
          
       enddo
+      call cpu_time(finish)
+      print '("Time = ",f6.3," seconds.")',finish-start
 
       call outputProfile(rank)
       call output2d(rank,istep)

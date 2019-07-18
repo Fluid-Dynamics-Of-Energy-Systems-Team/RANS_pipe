@@ -73,24 +73,19 @@
          enddo
       enddo
       
-
-
-
-
       end
+
 !>******************************************************************************************
 !!      SST prodis subroutine which calculates the production term of the turbulent scalar equation
 !>******************************************************************************************
-      subroutine prodis_SST(putout,dimpl,putink,U,W,T,rho,scl)
+      subroutine prodisSST(putink,U,W,T,rho)
 
       implicit none
       include 'param.txt'
       include 'common.txt'
 
-      integer im,ip,jm,jp,km,kp,ib,ie,jb,je,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,Tt,dimpl
-      real*8  scl
-      real*8  StR
+      integer im,ip,km,kp,ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,putink
       real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
       sigma_om1 = 0.5
@@ -141,40 +136,6 @@
 
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-            if (scl.eq.10) then
-               ! k- equation
-               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)         
-               dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density
-
-            elseif (scl.eq.11) then
-               ! omega- equation
-               alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1-bF1(i,k))
-               betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
-
-               StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                    ((U(i,k)-U(im,k))/dRu(i))**2. +
-     &                    ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &                   (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                    -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                   +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
-
-               ! Bouyancy prodution divided by mut 
-               GtR=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &         *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                      +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                           (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
-     &         +(2*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &         )
-
-
-               GtR = GtR + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-
-               putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-bF1(i,k))*cdKOM(i,k) ) /rho(i,k)
-               dimpl(i,k)  = dimpl(i,k)  + betaSST*omNew(i,k) ! note, beta*rho*omega^2/(rho*omega), set implicit and divided by density
-
-            endif
-
             
          enddo
       enddo
@@ -182,13 +143,115 @@
       end
 
 !>******************************************************************************************
-!!      SST advancing the turbulence scalars of this model: k and omega
-!!******************************************************************************************
-      subroutine advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
+!!      To calculate the rhs of the k equation
+!>******************************************************************************************
+      subroutine rhs_kSST(putout,dimpl,putink,U,W,T,rho)
+
       implicit none
       include 'param.txt'
       include 'common.txt'
-      real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1)
+
+      integer ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,dimpl!,Tt
+      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
+
+      sigma_om1 = 0.5
+      sigma_om2 = 0.856
+      beta_1    = 0.075
+      beta_2    = 0.0828
+      betaStar  = 0.09
+      alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
+      alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+
+      do k=kb,ke
+         do i=ib,ie 
+            ! k- equation
+            putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)         
+            dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density            
+         enddo
+      enddo
+
+      end
+
+!>******************************************************************************************
+!!      To calculate the rhs of the omega equation
+!>******************************************************************************************
+      subroutine rhs_OmSST(putout,dimpl,putink,U,W,T,rho)
+
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+
+      integer km,kp,im,ip,ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,div,dimpl!,Tt
+      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST,StR,GtR
+
+      sigma_om1 = 0.5
+      sigma_om2 = 0.856
+      beta_1    = 0.075
+      beta_2    = 0.0828
+      betaStar  = 0.09
+      alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
+      alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+
+      do k=kb,ke
+         kp=k+1
+         km=k-1
+         do i=ib,ie
+            ip=i+1
+            im=i-1
+            ! omega- equation
+            alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1-bF1(i,k))
+            betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
+
+            StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
+     &                 ((U(i,k)-U(im,k))/dRu(i))**2. +
+     &                 ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
+     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
+     &                 -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
+
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
+     &              +(      W(i,k) -      W(i,km))/dz
+               ! Bouyancy prodution divided by mut 
+            GtR=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
+     &      *  ((((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
+     &                   +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
+     &                                                                        (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
+     &      +(2*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
+     &      )
+
+
+            GtR = GtR + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
+
+            putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-bF1(i,k))*cdKOM(i,k) ) /rho(i,k)
+            dimpl(i,k)  = dimpl(i,k)  + betaSST*omNew(i,k) ! note, beta*rho*omega^2/(rho*omega), set implicit and divided by density
+
+         enddo
+      enddo
+
+      end
+
+!>******************************************************************************************
+!!      SST advancing the turbulence scalars of this model: k
+!!******************************************************************************************
+      subroutine advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
       real*8 rho3(0:i1,0:k1)
 
@@ -198,34 +261,17 @@
       real*8     rhs(imax)
 
       real*8 scl
-      real*8 resK, resOm
+      real*8 resK
 
       resK  = 0.0
-      resOm = 0.0
-
-      ! modified turb. model
-      !    modifDiffTerm = 1, our modification
-      !    modifDiffTerm = 2, Aupoix modification
-
-      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-         rho3 = Rtmp
-      else
-         rho3 = 1.0
-      endif
-
-      ! --------------------------------------------------------------------
-      ! --------------------------------------------------------------------
-      ! advance K
       dnew=0.0; dimpl = 0.0;
+
       call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-      !if (modifDiffTerm == 1) call advecrho(dnew,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank)
-      scl = 10.0
-      call prodis_SST(dnew,dimpl,kNew,Utmp,Wtmp,temp,Rtmp,scl)
+      call rhs_kSST(dnew,dimpl,kNew,Utmp,Wtmp,temp,Rtmp) 
 
       ! calculating constant with blending function factor
       sigmakSST = 0.85*bF1 + 1.0*(1.0 - bF1)
       sigmakSST = 1.0/sigmakSST
-
       call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST,
      &                 Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
@@ -292,13 +338,33 @@
           enddo
       endif
 
-      ! --------------------------------------------------------------------
-      ! --------------------------------------------------------------------
-      ! advance omega
+      
+
+      end
+
+!>******************************************************************************************
+!!      SST advancing the turbulence scalars of this model: omega
+!!******************************************************************************************
+      subroutine advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
+      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
+      real*8 rho3(0:i1,0:k1)
+
+      real*8     a  (imax)
+      real*8     b  (imax)
+      real*8     c  (imax)
+      real*8     rhs(imax)
+
+      real*8 resOm
+
+      resOm = 0.0
+
       dnew=0.0; dimpl = 0.0;
       call advecc(dnew,dimpl,omNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-      scl = 11.0
-      call prodis_SST(dnew,dimpl,kNew,Utmp,Wtmp,temp,Rtmp,scl)
+      call rhs_OmSST(dnew,dimpl,kNew,Utmp,Wtmp,temp,Rtmp)
 
       ! calculating constant with blending function factor
       sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
@@ -330,6 +396,35 @@
             omNew(i,k) = max(rhs(i), 1.0e-8)
          enddo
       enddo
+
+      end
+
+
+!>******************************************************************************************
+!!      SST advancing the turbulence scalars of this model: k and omega
+!!******************************************************************************************
+      subroutine advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
+      real*8 rho3(0:i1,0:k1)
+
+      real*8 resK, resOm
+
+      ! modified turb. model
+      !    modifDiffTerm = 1, our modification
+      !    modifDiffTerm = 2, Aupoix modification
+
+      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
+         rho3 = Rtmp
+      else
+         rho3 = 1.0
+      endif
+
+      call prodisSST(kNew,Utmp,Wtmp,temp,Rtmp)
+      call advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
+      call advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
 
       end
 

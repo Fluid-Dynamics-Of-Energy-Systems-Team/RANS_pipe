@@ -17,7 +17,7 @@
       include 'common.txt'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
-      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Tt,Srsq
+      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Srsq!,Tt
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
       real*8  StR
 
@@ -79,15 +79,14 @@
 !>******************************************************************************************
 !!      V2F prodis subroutine which calculates the production term of the turbulent scalar equation
 !>******************************************************************************************
-      subroutine prodis_VF(putout,dimpl,putink,putine,putinv2,putinf,U,W,T,rho,scl)
+      subroutine prodisVF(putink,putine,putinv2,U,W,T,rho)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,putinv2,Tt,Srsq,dimpl
-      real*8, dimension(imax,kmax) :: putinf,putinftmp
-      real*8  StR,scl
+      real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,putink,putine,putinv2,Srsq!,Tt
+      real*8  StR
 
       ib = 1
       ie = i1-1
@@ -145,23 +144,7 @@
 
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
-            !write(*,*) i,k,Pk(i,k),Tt(i,k)
-            if (scl.eq.0) then
-               !k equation
-               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
 
-            elseif (scl.eq.1) then
-               !epsilon equation
-               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
-
-            elseif (scl.eq.2) then
-               !v'2 equation
-               putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
-               dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
-
-            endif
          enddo
       enddo
 
@@ -169,42 +152,55 @@
 
 
 !>******************************************************************************************
-!!      VF advancing the turbulence scalars of this model: k and epsilon and v2
+!!      To calculate the rhs of the v2 equation
+!>******************************************************************************************
+      subroutine rhs_v2(putout,dimpl,putink,putine,putinv2,putinf,rho)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+
+      integer ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,putink,putine,putinv2,rho,dimpl
+      real*8, dimension(imax,kmax) :: putinf
+
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+      
+      do k=kb,ke
+         do i=ib,ie
+            !v'2 equation
+            putout(i,k) = putout(i,k) + putink(i,k)*putinf(i,k)       ! note, source is rho*k*f/rho
+            dimpl(i,k)  = dimpl(i,k)  + 6.*putine(i,k)/putink(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
+         enddo
+      enddo
+
+      end
+
+!>******************************************************************************************
+!!      VF advancing the turbulence scalars of this model: v2
 !!******************************************************************************************
-      subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
+      subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
       implicit none
       include 'param.txt'
       include 'common.txt'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
-      real*8 resK, resE, resV2
-      real*8 rho3(0:i1,0:k1), scl
+      real*8 resV2
+      real*8 rho3(0:i1,0:k1)
 
       real*8     a  (imax)
       real*8     b  (imax)
       real*8     c  (imax)
       real*8     rhs(imax)
 
-      ! modified turb. model
-      !    modifDiffTerm = 1, our modification
-      !    modifDiffTerm = 2, Aupoix modification
-      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-         rho3 = Rtmp
-      else
-         rho3 = 1.0
-      endif
-
-      call advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
-      call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! advanceV2
-      !resV2 = 0.0
       dnew  = 0.0; dimpl = 0.0;
-      scl=2.0
 
       call advecc(dnew,dimpl,v2New,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-      call prodis_VF(dnew,dimpl,kNew,eNew,v2New,ftmp,Utmp,Wtmp,temp,Rtmp,scl)
+      call rhs_v2(dnew,dimpl,kNew,eNew,v2New,ftmp,Rtmp)    !new
       call diffc(dnew,v2New,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
@@ -280,6 +276,36 @@
 
       end
 
+
+!>******************************************************************************************
+!!      VF advancing the turbulence scalars of this model: k and epsilon and v2
+!!******************************************************************************************
+      subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
+      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
+      real*8 resK, resE, resV2
+      real*8 rho3(0:i1,0:k1)
+
+
+      ! modified turb. model
+      !    modifDiffTerm = 1, our modification
+      !    modifDiffTerm = 2, Aupoix modification
+      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
+         rho3 = Rtmp
+      else
+         rho3 = 1.0
+      endif
+
+      call prodisVF(kNew,eNew,v2New,Utmp,Wtmp,temp,Rtmp)  
+      call advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+      call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+      call advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+
+      end
+
 !>********************************************************************
 !!     helmotz solver
 !!********************************************************************
@@ -288,7 +314,7 @@
 c     
       include 'param.txt'
       include 'common.txt'
-      real*8   Tt(0:i1,0:k1) ,Srsq(0:i1,0:k1)
+      real*8   Srsq(0:i1,0:k1) !,Tt(0:i1,0:k1)
       !real*8   Str
 
 c     

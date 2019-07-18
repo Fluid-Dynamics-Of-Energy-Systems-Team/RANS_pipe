@@ -1,10 +1,12 @@
       integer         i,k,imax,kmax,i1,k1,iwork,isave,px,rank,nTab,LoD
       integer         EOSmode,periodic,kmaxper,k1Old
       integer         nstep,K_start_heat,select_init
-      integer         turbmod,modifDiffTerm,modVF
+      integer         turbmod,modifDiffTerm,modVF,profiling
       real*8          Re,Pr,Qwall
       real*8          dpdz,ctheta,Fr_1
       real*8    alphac,alphak,alphae,alphav2
+
+      parameter (profiling         = 1)        ! number of cores
 
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 96)       ! radial direction
@@ -20,7 +22,7 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)
-      parameter (nstep             = 40000)
+      parameter (nstep             = 10000)
 
       parameter (LoD               = 20)
       parameter (periodic          = 1)               ! 1..periodic, 2..developing 
@@ -50,9 +52,9 @@ c      /(beta_o*T_o*Re**2.*Qwall))
       
       !MK: alphac=0.3, alphak=0.1 and alphae=0.1
       parameter (alphac            = 0.1)
-      parameter (alphak            = 0.05)         ! for SA
-      parameter (alphae            = 0.05) 
-      parameter (alphav2           = 0.03) 
+      parameter (alphak            = 0.1) !0.05)         ! for SA
+      parameter (alphae            = 0.1) !0.05) 
+      parameter (alphav2           = 0.1) !0.03) 
 
       parameter (modifDiffTerm     = 0)              ! 0..Standard, 1..invSLS, 2..Aupoix
      

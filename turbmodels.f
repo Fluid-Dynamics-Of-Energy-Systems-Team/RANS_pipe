@@ -1,3 +1,58 @@
+
+!>******************************************************************************************
+!!      To calculate the rhs of the k equation  
+!>******************************************************************************************
+      subroutine rhs_K(putout,dimpl,putink,putine,rho)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+
+      integer ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,rho,putink,putine,dimpl
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+
+      do k=kb,ke
+         do i=ib,ie
+            !k equation
+            putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
+            dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
+         enddo
+      enddo
+
+      end
+
+!>******************************************************************************************
+!!      To calculate the rhs of the epsilon equation 
+!>******************************************************************************************
+      subroutine rhs_Epsilon(putout,dimpl,rho)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+
+      integer ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,rho,dimpl!,Tt
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+
+      do k=kb,ke
+         do i=ib,ie
+            !epsilon equation
+            putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
+            dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
+         enddo
+      enddo
+
+      end
+
 !>************************************************************************************
 !!
 !!     Performes time integration with second order
@@ -29,21 +84,13 @@
       real*8     c  (imax)
       real*8     rhs(imax)
 
-      real*8 scl
       real*8 resE
 
       resE  = 0.0
       dnew  = 0.0; dimpl = 0.0;
-      scl=1.0
 
-      call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)     
-
-      if (turbmod.eq.1) then 
-         call prodis_MK(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)
-      elseif (turbmod.eq.3) then
-         call prodis_VF(dnew,dimpl,kNew,eNew,v2New,ftmp,Utmp,Wtmp,temp,Rtmp,scl)  
-      endif
-
+      call advecc(dnew,dimpl,eNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)           
+      call rhs_Epsilon(dnew,dimpl,Rtmp)    !new
       call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
       do k=1,kmax
@@ -107,23 +154,15 @@
       real*8     c  (imax)
       real*8     rhs(imax)
 
-      real*8 scl
       real*8 resK
       integer mrank
 
       resK  = 0.0
       dnew  = 0.0; dimpl = 0.0;
-      scl=0.0
 
 
       call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,mrank,periodic,.true.)
-
-      if (turbmod.eq.1) then 
-         call prodis_MK(dnew,dimpl,kNew,eNew,Utmp,Wtmp,temp,Rtmp,scl)
-      elseif (turbmod.eq.3) then
-         call prodis_VF(dnew,dimpl,kNew,eNew,v2New,ftmp,Utmp,Wtmp,temp,Rtmp,scl) 
-      endif
-
+      call rhs_K(dnew,dimpl,kNew,eNew,Rtmp)    !new
       call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,mrank,modifDiffTerm)
 
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then

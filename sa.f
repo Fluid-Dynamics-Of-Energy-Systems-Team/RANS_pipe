@@ -21,6 +21,7 @@
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
       real*8  cv1_3,chi,fv1SA, wallD
 
+      cv1_3 = (7.1)**3.0
 
       do k=1,kmax
          km=k-1
@@ -38,7 +39,7 @@
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
             Ret(i,k)    = rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
         
-            cv1_3        = (7.1)**3.0
+            
             chi          = nuSAnew(i,k)/(ekm(i,k)/rNew(i,k))
             fv1SA        = (chi**3.0)/(chi**3.0 + cv1_3);
             ekmttmp(i,k) = min(100.0,max(0.0,rNew(i,k)*nuSAnew(i,k)*fv1SA))
@@ -48,18 +49,19 @@
 
 
       end
+
+
 !>******************************************************************************************
 !!      SA prodis subroutine which calculates the production term of the turbulent scalar equation
 !>******************************************************************************************
-      subroutine prodis_SA(putout,dimpl,nuSAtmp,U,W,T,rho)
+      subroutine prodisSA(nuSAtmp,U,W,T,rho)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,Tt,nuSAtmp,dimpl
+      real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,nuSAtmp!,Tt
       real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,shatSA
-      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
       cv1_3     = (7.1)**3.0
       cb1       = 0.1355
@@ -85,7 +87,6 @@
             ip=i+1
             im=i-1
 
-
             ! Bouyancy prodution and time scale, not defined for this model
             Gk(i,k)=0
             Tt(i,k)=1
@@ -97,10 +98,10 @@
             StR = StR**0.5
 
             ! calculating Shat from SA model
-            chi    = nuSAtmp(i,k)/(ekm(i,k)/rho(i,k))
-            fv1SA  = (chi**3.0)/((chi**3.0) + cv1_3);
-            fv2SA  = 1.0 - (chi/(1.0 + (chi*fv1SA)))
-            ShatSA = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0))
+            chi         = nuSAtmp(i,k)/(ekm(i,k)/rho(i,k))
+            fv1SA       = (chi**3.0)/((chi**3.0) + cv1_3);
+            fv2SA       = 1.0 - (chi/(1.0 + (chi*fv1SA)))
+            ShatSA      = StR + fv2SA*nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0))
 
             ! production term in SA model
             Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
@@ -108,41 +109,120 @@
             div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
      &              +(      W(i,k) -      W(i,km))/dz
 
-            ! destruction term in SA model
-            r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
-            g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
-            fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
-
-            ! gustavo: i think this is not correct
-            !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
-            dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
-
-
-            ! source term
-            if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-            ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
-     &            (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
-     &          + (((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
-            else
-            ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
-                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
-     &            ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
-            endif
-
          enddo
       enddo
 
       end
 
 !>******************************************************************************************
-!!      SA advancing the turbulence scalars of this model: nuSA
-!!******************************************************************************************
-      subroutine advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+!!      To calculate the rhs of the nuSA equation
+!>******************************************************************************************
+      subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
+      integer im,ip,km,kp,ib,ie,kb,ke !< integers
+      real*8, dimension(0:i1,0:k1) :: putout,rho,div,nuSAtmp,dimpl!,Tt
+      real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,r_SA,g_SA,fw_SA,StR,ShatSA
+
+      cv1_3     = (7.1)**3.0
+      cb1       = 0.1355
+      cb2       = 0.622
+      cb3       = 2.0/3.0
+      inv_cb3   = 1.0/cb3
+      kappa_2   = (0.41)**2.0   ! von karman constant
+      cw1       = (cb1/kappa_2) + (1.0+cb2)/cb3
+      cw2       = 0.3
+      cw3_6     = (2.0)**6.0
+
+
+      ib = 1
+      ie = i1-1
+
+      kb = 1
+      ke = k1-1
+      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
+          do k=kb,ke
+             kp=k+1
+             km=k-1
+             do i=ib,ie
+                ip=i+1
+                im=i-1
+                
+                ShatSA = Pk(i,k)/(cb1*nuSAtmp(i,k))
+    
+                ! destruction term in SA model
+                r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
+                g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+                fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+    
+                ! gustavo: i think this is not correct
+                !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
+                dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
+
+                ! source term
+                ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
+     &         (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
+     &         +(((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+
+    
+             enddo
+          enddo
+      else
+          do k=kb,ke
+             kp=k+1
+             km=k-1
+             do i=ib,ie
+                ip=i+1
+                im=i-1
+
+                ShatSA = Pk(i,k)/(cb1*nuSAtmp(i,k))
+    
+                ! destruction term in SA model
+                r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
+                g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+                fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+    
+                ! gustavo: i think this is not correct
+                !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
+                dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
+    
+                ! source term
+                ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
+                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
+     &         ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
+             enddo
+          enddo
+      endif
+
+
+      end
+
+
+!>************************************************************************************
+!!
+!!     Performes time integration with second order
+!!     Adams-Bashforth scheme, i.e
+!!
+!!
+!!     n+1     n
+!!     dU     U     - U                               n
+!!     ---- = ------------ = 1.5*( -ADV + DIFF + Force)     -
+!!     dt        dt                                   n-1
+!!     0.5*( -ADV + DIFF + Force)
+!!
+!!     This scheme is weakly instabel for pure advection,
+!!     and therefore a very small amount of physical diffusion
+!!     is necessary.
+!!     The timestep is limited (see routine chkdt)
+!!
+!!************************************************************************************
+      subroutine advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
       real*8 rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
@@ -155,21 +235,11 @@
 
       real*8 resSA 
 
-      ! modified turb. model
-      !    modifDiffTerm = 1, our modification
-      !    modifDiffTerm = 2, Aupoix modification
-      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-         rho3 = Rtmp
-      else
-         rho3 = 1.0
-      endif
-
       cb3 = 2.0/3.0
       resSA = 0.0
       dnew=0.0; dimpl = 0.0;
-
       call advecc(dnew,dimpl,nuSANew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-      call prodis_SA(dnew,dimpl,nuSANew,Utmp,Wtmp,temp,Rtmp)
+      call rhs_SA(dnew,dimpl,nuSANew,Rtmp)
 
       do k=0,kmax+1
          do i=0,imax+1
@@ -223,6 +293,33 @@
             nuSANew(i,k) = max(rhs(i), 1.0e-8)
          enddo
       enddo
+      end
+
+!>******************************************************************************************
+!!      SA advancing the turbulence scalars of this model: nuSA
+!!******************************************************************************************
+      subroutine advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+
+      real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ShatSA(0:i1,0:k1)
+      real*8 rho3(0:i1,0:k1)
+      real*8 resSA 
+
+      ! modified turb. model
+      !    modifDiffTerm = 1, our modification
+      !    modifDiffTerm = 2, Aupoix modification
+      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
+         rho3 = Rtmp
+      else
+         rho3 = 1.0
+      endif
+
+      call prodisSA(nuSANew,Utmp,Wtmp,temp,Rtmp)
+      call advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
+
+      
       end
 
       !>********************************************************************

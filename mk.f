@@ -16,7 +16,7 @@
 
       integer  im,ip,km,kp,step
       real*8   tauw(0:k1) 
-      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Tt
+      real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp!,Tt
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
 
       sigmak       = 1.4
@@ -59,14 +59,13 @@
 !>******************************************************************************************
 !!      MK routine to estimate the equation terms
 !!******************************************************************************************
-      subroutine prodis_MK(putout,dimpl,putink,putine,U,W,T,rho,scl)
+      subroutine prodisMK(putink,putine,U,W,T,rho)
       implicit none
       include 'param.txt'
       include 'common.txt'
 
       integer im,ip,jm,jp,km,kp,ib,ie,kb,ke !< integers
-      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,Tt,dimpl
-      real*8  scl
+      real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,dimpl!,Tt
 
 
       ib = 1
@@ -110,18 +109,6 @@
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
 
-            if (scl.eq.0) then
-               !k equation
-               putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k) + putine(i,k)/putink(i,k)       ! note, rho*epsilon/(rho*k), set implicit and divided by density
-
-            elseif (scl.eq.1) then
-               !epsilon equation
-               putout(i,k) = putout(i,k) +(ce1*f1(i,k)*Pk(i,k)/Tt(i,k) +  ce1*f1(i,k)*Gk(i,k)/Tt(i,k) )/rho(i,k)
-               dimpl(i,k)  = dimpl(i,k)  + ce2*f2(i,k)/Tt(i,k)              ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
-
-            endif
-
          enddo
       enddo
 
@@ -150,6 +137,7 @@
          rho3 = 1.0
       endif
 
+      call prodisMK(kNew,eNew,Utmp,Wtmp,temp,Rtmp)  !new
       call advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
       call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
 
