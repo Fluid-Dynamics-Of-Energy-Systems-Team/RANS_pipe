@@ -103,7 +103,7 @@
          call advance(rank)
          call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
          call fillps(rank)
-         call SOLVEpois(p,Ru,Rp,dz,rank)
+         call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank)
          call correc(rank,1)
          call bound_v(Unew,Wnew,Win,rank)
 
@@ -343,8 +343,8 @@
 !!     at the old(n-1) and new(n) timelevels
 !!********************************************************************
       dnew = 0.0
-      call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,i1,k1)
-      call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,dz,i1,k1,dif)
+      call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
+      call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif) ! new
 
       do k=1,kmax
          do i=1,imax-1
@@ -379,7 +379,7 @@
 
       dnew = 0.0
       call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
-      call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,dz,i1,k1,dif,rank)
+      call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,rank)  ! new
 
       if (periodic.eq.1) dnew = dnew + dpdz
 
@@ -553,12 +553,20 @@ c
 !     Radial Boundary condition
       do k=0,k1
 
-         Ubound(0,k)    =   Ubound(1,k)
-
+         if (numDomain.eq.1) then ! new
+            Ubound(1,k) =   0.0
+            Ubound(0,k) = - Ubound(2,k)
+         else
+            Ubound(0,k)    =   Ubound(1,k)
+         endif
          Ubound(imax,k) =   0.0
          Ubound(i1,k)   = - Ubound(imax-1,k)
 
-         Wbound(0,k)    =   Wbound(1,k)
+         if (numDomain.eq.1) then ! new
+            Wbound(0,k)    =   -Wbound(1,k)
+         else
+            Wbound(0,k)    =   Wbound(1,k)
+         endif
          Wbound(i1,k)   = - Wbound(imax,k)
 
       enddo
@@ -626,12 +634,21 @@ c
 
 
       do k=0,k1
-         Ubound(0,k)    =   Ubound(1,k)
 
+         if (numDomain.eq.1) then ! new
+            Ubound(1,k) =   0.0
+            Ubound(0,k) = - Ubound(2,k)
+         else
+            Ubound(0,k)    =   Ubound(1,k)
+         endif
          Ubound(imax,k) =   0.0
          Ubound(i1,k)   = - Ubound(imax-1,k)
 
-         Wbound(0,k)    =   Wbound(1,k)
+         if (numDomain.eq.1) then ! new
+            Wbound(0,k)    =   -Wbound(1,k)
+         else
+            Wbound(0,k)    =   Wbound(1,k)
+         endif
          Wbound(i1,k)   = - Wbound(imax,k)
       enddo
 

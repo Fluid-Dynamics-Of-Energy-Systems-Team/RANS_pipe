@@ -93,7 +93,7 @@ c********************************************************************
 
 
 
-      SUBROUTINE SOLVEpois(rhs,Ru,Rp,dz,rank)
+      SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank)
 c     
 c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
 c     BENDIKS JAN BOERSMA
@@ -105,7 +105,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       implicit none
       include    'param.txt'
       real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
-      real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z
+      real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
       real*8      a(imax),b(imax),c(imax)
       real*8      zrt(kmax*px)
       real*8      vfftk(imax/px,kmax*px)
@@ -140,12 +140,21 @@ c     generate tridiagonal systems
 
 
       do i=1,imax
-         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
-         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
-     &        (Rp(I)*(Ru(I)-Ru(I-1)))
-         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
-      end do
-      b(1)    =   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
+!         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
+!         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
+!     &        (Rp(I)*(Ru(I)-Ru(I-1)))
+!         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
+!         a(i)= 1./((Rp(I)-Rp(I-1))*(Ru(I)-Ru(I-1)))
+!         b(i)=-(1./(Rp(I+1)-Rp(I))+1./(Rp(I)-Rp(I-1)))/
+!     &        ((Ru(I)-Ru(I-1)))
+!         c(i)= 1. /((Rp(I+1)-Rp(I))*(Ru(I)-Ru(I-1)))
+         a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
+         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
+     &        (Rp(I)*dRu(I))
+         c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
+      enddo
+      !b(1)    =   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
+      b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
       b(imax) = b(imax)+c(imax)
 
       c(imax)=0.
@@ -227,7 +236,7 @@ c     solve tridiagonal systems with Gaussian elemination
 
 
 
-      SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dz,rank,hterm)
+      SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm)
 c
 c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
 c     BENDIKS JAN BOERSMA
@@ -239,7 +248,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       implicit none
       include    'param.txt'
       real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1),hterm(IMAX,KMAX)
-      real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z
+      real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
       real*8      a(imax),b(imax),c(imax)
       real*8      zrt(kmax*px)
       real*8      vfftk(imax/px,kmax*px)
@@ -274,17 +283,22 @@ c     generate tridiagonal systems
 
 
       do i=1,imax
-         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
-         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
-     &        (Rp(I)*(Ru(I)-Ru(I-1)))
-         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
+!         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
+!         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
+!     &        (Rp(I)*(Ru(I)-Ru(I-1)))
+!         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
 !         a(i)= 1./((Rp(I)-Rp(I-1))*(Ru(I)-Ru(I-1)))
 !         b(i)=-(1./(Rp(I+1)-Rp(I))+1./(Rp(I)-Rp(I-1)))/
 !     &        ((Ru(I)-Ru(I-1)))
 !         c(i)= 1. /((Rp(I+1)-Rp(I))*(Ru(I)-Ru(I-1)))
+         a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
+         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
+     &        (Rp(I)*dRu(I))
+         c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       end do
 
-      b(1)=   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
+      !b(1)=   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
+      b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
 !      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
       b(imax)=b(imax)-c(imax)
       c(imax)=0.

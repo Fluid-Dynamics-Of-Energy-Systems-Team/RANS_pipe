@@ -24,8 +24,8 @@
       real*8 enth_i1, enth_imax, ekh_imax
 
         ekh_imax = 1./(Re*Pr)
-        enth_i1 = enth_imax + (Rp(i1)-Rp(imax))*Qwall/(ekh_imax*Re*Pr) ! RENE not sure
-
+        !enth_i1 = enth_imax + (Rp(i1)-Rp(imax))*Qwall/(ekh_imax*Re*Pr) ! RENE not sure
+        enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
       end
 
 
@@ -79,7 +79,8 @@
       tabkhi = 0
       tabklo = 0
       call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
-      fxValue = enth - enthIMAX - (Rp(i1)-Rp(imax))*Qwall/lamocpinter
+      !fxValue = enth - enthIMAX - (Rp(i1)-Rp(imax))*Qwall/lamocpinter
+      fxValue = enth - enthIMAX - dRp(imax)*Qwall/lamocpinter  !new
       end
 
 
@@ -251,7 +252,7 @@ c
 
       do k=1,kmax
          do i=1,imax-1
-            dUdt(i,k)=dUdt(i,k)-dt*(p(i+1,k)-p(i,k))/(Rp(i+1)-Rp(i))
+            dUdt(i,k)=dUdt(i,k)-dt*(p(i+1,k)-p(i,k))/dRp(i) !(Rp(i+1)-Rp(i))
          enddo
       enddo
 
@@ -320,7 +321,7 @@ c
 
       do k=1,kmax
          do i=1,imax
-            tmp = ( abs(Unew(i,k)) / ( Rp(i+1)-Rp(i) ) ) +
+            tmp = ( abs(Unew(i,k)) /  dRp(i) ) +! ( Rp(i+1)-Rp(i) ) ) + new
      &            ( abs(Wnew(i,k)) /         dz        )
             tmp = Courant/tmp
             dt  = min(dt, tmp)
@@ -440,6 +441,16 @@ c******************************************************************
       do i = 1,imax
          wallDist(i) = 0.5 - rp(i)
       enddo
+
+      if (numDomain.eq.1) then
+         if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
+         do i=0,i1
+            ru(i)=1.0
+            rp(i)=1.0
+         enddo 
+      else
+         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"        
+      endif
 
       if (rank.eq.0) then
          open(11,file = 'grid.txt')
@@ -568,12 +579,12 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,dz,i1,k1,dif)
+      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif)
       implicit none
 
       integer  i,k,im,ip,km,kp,i1,k1
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     ekme(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),
+     &     ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1),
      &     epop,epom,dzi,divUim,divUip,divUi,dif
 c     
       dzi =1./dz
@@ -594,19 +605,19 @@ c
      &           + (         Wvel(ip,k)-      Wvel(ip,km))/dz
 
             divUi = ( Rp(ip)*(Uvel(ip,k)+Uvel(i,k)) - Rp(i)*(Uvel(i,k)+Uvel(im,k))
-     &                )/(2.*Ru(i)*(Rp(ip)-Rp(i)))
+     &                )/(2.*Ru(i)*drp(i))!(Rp(ip)-Rp(i))) new
      &           + ((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
 
             putout(i,k) = putout(i,k) +
      1   2.0*( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i ,k))/dru(ip) -1./3.*divUip)
      1        -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ) -1./3.*divUim)
-     1            )/(Ru(i)*(Rp(ip)-Rp(i)))
+     1            )/(Ru(i)*drp(i))!(Rp(ip)-Rp(i))) new
      &           +
      3           ( epop * ( (Uvel(i,kp)-Uvel(i,k))*dzi
-     3                    + (Wvel(ip,k)-Wvel(i,k))/(Rp(ip)-Rp(i)) )
+     3                    + (Wvel(ip,k)-Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i)) ) new
      3             -
      3             epom * ( (Uvel(i,k)  -Uvel(i,km))*dzi
-     3                    + (Wvel(ip,km)-Wvel(i,km))/(Rp(ip)-Rp(i)) )
+     3                    + (Wvel(ip,km)-Wvel(i,km))/drp(i))!(Rp(ip)-Rp(i)) ) new
      3            )*dzi
      &           -
      4           (ekme(i,k)+ekme(ip,k))/Ru(i)*(Uvel(i,k)/Ru(i)-1./3.*divUi)
@@ -654,13 +665,13 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,dz,i1,k1,dif,rank)
+      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,rank)
       implicit none
      
 
       integer  i,k,im,ip,km,kp,i1,k1,rank
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     ekme(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),
+     &     ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1),
      &     epop,emop,divUkm,divUkp,dif
 c
       do k=1,k1-1
@@ -681,10 +692,10 @@ c
 
             putout(i,k) = putout(i,k) +
      1         (Ru(i )*epop*(  (Uvel(i,kp) - Uvel(i,k))/dz
-     1                    +dif*(Wvel(ip,k) - Wvel(i,k))/(Rp(ip)-Rp(i)))
+     1                    +dif*(Wvel(ip,k) - Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i))) new
      1         -
      1          Ru(im)*emop*(  (Uvel(im,kp) - Uvel(im,k))/dz
-     1                    +dif*(Wvel(i,k)   - Wvel(im,k))/(Rp(i)-Rp(im)))
+     1                    +dif*(Wvel(i,k)   - Wvel(im,k))/drp(im))!(Rp(i)-Rp(im))) new
      1         )/(Rp(i)*dru(i))
      &         +
      3         (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp)-
@@ -861,60 +872,6 @@ c
 
       end
 
-!>********************************************************************
-!!   
-!!     advecrho calculate the extra term of the modified turbulence models (our modifications)
-!!     coming from the adveccion
-!!     
-!!     In formula:
-!!     
-!!       U*C   d(rho)     W*C   d(rho)
-!!    (------  ------  + -----  -----  )
-!!      2*rho    dr      2*rho    dz
-!!     
-!!     on input :
-!!     
-!!     putout            : "empty" (initialised to zero)
-!!     Uvel,Vvel,Wvel    : contain velocities at former timestep
-!!     Wtmp              : contains velocity at oldest timestep
-!!     dr,dphi,dz        : grid spacing in r, phi and z-direction
-!!     i1,j1,k1          : parameters for array-dimensions
-!!     ib,ie,jb,je,kb,ke : range of gridpoints for which the
-!!     advection has to be calculated
-!!     Ru,Rp             : radial positions of the U-velocity
-!!     component and the pressure location
-!!     respectively
-!!     
-!!     on output :
-!!     
-!!     putout            : advection part
-!!     other parameters  : all unchanged
-!!   
-!!********************************************************************
-      subroutine advecrho(putout,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank)
-
-  
-      implicit none
-      integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank
-      real*8 putout(0:i1,0:k1),putin(0:i1,0:k1)
-      real*8 U(0:i1,0:k1),W(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1), rnew(0:i1,0:k1)
-      ib = 1
-      ie = i1-1
-      kb = 1
-      ke = k1-1
-      do k=kb,ke
-         kp=k+1
-         km=k-1
-         do i=ib,ie
-            ip=i+1
-            im=i-1
-            putout(i,k)  = putout(i,k) + 0.5*putin(i,k)*U(i,k)/rnew(i,k)*((rnew(ip,k ) - rnew(im,k ))/(Rp(ip)-Rp(im)))  
-     &                                 + 0.5*putin(i,k)*W(i,k)/rnew(i,k)*((rnew(i ,kp) - rnew(i ,km))/(2.0*dz))       
-      
-         enddo
-      enddo
-      return
-      end
 
 !>********************************************************************
 !!     
@@ -946,13 +903,13 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-      subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,i1,k1)
+      subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,drp,dz,i1,k1)
       implicit none
 c     
 
       integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
-     &     dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
+     &     dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1)
       real*8 rho(0:i1,0:k1)
       real*8 rhoip,rhoim,rhokp,rhokm
 c     
@@ -979,7 +936,7 @@ c
      1           *rho(ip,k) -
      1            Rp(i )*(Uvel(im,k)+Uvel(i,k))*(Uvel(i,k)+Uvel(im,k))
      1           *rho(i ,k)  )
-     1           / ( Ru(i) * ( Rp(ip)-Rp(i) ) )
+     1           / ( Ru(i) * drp(i))! ( Rp(ip)-Rp(i) ) ) new
      &           +
      3           ( (Wvel(i,k) +Wvel(ip,k) )*(Uvel(i,k)+Uvel(i,kp))*rhokp -
      3             (Wvel(i,km)+Wvel(ip,km))*(Uvel(i,k)+Uvel(i,km))*rhokm  )
