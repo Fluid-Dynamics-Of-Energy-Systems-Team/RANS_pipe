@@ -11,11 +11,10 @@ c********************************************************************
 
           if (rank.eq.px/2) then
              if (turbmod.eq.0) open(29,file='0/Inflow', form='unformatted')
-             if (turbmod.eq.1) open(29,file='MK/Inflow',form='unformatted')
-             if (turbmod.eq.2) open(29,file='LS/Inflow',form='unformatted')
+             if (turbmod.eq.1) open(29,file='SA/Inflow',form='unformatted')
+             if (turbmod.eq.2) open(29,file='MK/Inflow',form='unformatted')
              if (turbmod.eq.3) open(29,file='VF/Inflow',form='unformatted')
-             if (turbmod.eq.4) open(29,file='SA/Inflow',form='unformatted')
-             if (turbmod.eq.5) open(29,file='OM/Inflow',form='unformatted')
+             if (turbmod.eq.4) open(29,file='OM/Inflow',form='unformatted')
              write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)       
              close(29)
           endif
@@ -152,11 +151,10 @@ c*******************************************************************************
 
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.1) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.2) open(19,file='LS/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.4) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.5) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
          read(19) startStep
          read(19) UNEWR,UOLDR,WNEWR,WOLDR,CNEWR,KNEWR,ENEWR,V2NEWR,omNEWR,nuSANEWR, PKR
          close(19)
@@ -190,11 +188,10 @@ c*******************************************************************************
       character*5 cha
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.1) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.2) open(19,file='LS/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.4) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.5) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
          write(19) istep
          write(19) UNEW,UOLD,WNEW,WOLD,CNEW,KNEW,ENEW,V2NEW,omNEW,nuSANEW,Pk
          close(19)
@@ -277,11 +274,10 @@ c*******************************************************************************
       ! bulk stuff
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(9,file='0/profX.'//cha)
-      if (turbmod.eq.1) open(9,file='MK/profX.'//cha)
-      if (turbmod.eq.2) open(9,file='LS/profX.'//cha)
+      if (turbmod.eq.1) open(9,file='SA/profX.'//cha)
+      if (turbmod.eq.2) open(9,file='MK/profX.'//cha)
       if (turbmod.eq.3) open(9,file='VF/profX.'//cha)
-      if (turbmod.eq.4) open(9,file='SA/profX.'//cha)
-      if (turbmod.eq.5) open(9,file='OM/profX.'//cha)
+      if (turbmod.eq.4) open(9,file='OM/profX.'//cha)
       do k=1,kmax
          write(9,'(8E18.6)') (k+rank*kmax)*dz, massflow(k),enthflow(k),enth_b(k)
      &        ,Twall(k),Tbulk(k),Gb(k)/Gb(1),Gb(k)/Gb(1)/rhob(k)
@@ -338,11 +334,10 @@ c*******************************************************************************
       enddo
 
       if (turbmod.eq.0) open(15,file='0/tecp.'//cha)
-      if (turbmod.eq.1) open(15,file='MK/tecp.'//cha)
-      if (turbmod.eq.2) open(15,file='LS/tecp.'//cha)
+      if (turbmod.eq.1) open(15,file='SA/tecp.'//cha)
+      if (turbmod.eq.2) open(15,file='MK/tecp.'//cha)
       if (turbmod.eq.3) open(15,file='VF/tecp.'//cha)
-      if (turbmod.eq.4) open(15,file='SA/tecp.'//cha)
-      if (turbmod.eq.5) open(15,file='OM/tecp.'//cha)
+      if (turbmod.eq.4) open(15,file='OM/tecp.'//cha)
 
       if (rank.eq.0) then
          write(15,*) 'VARIABLES ="X","Y","U","W","P","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
@@ -361,31 +356,5 @@ c*******************************************************************************
 
       close(15)
 
-
-!      if (turbmod.eq.0) open(16,file='0/k_eps.'//cha)
-!      if (turbmod.eq.1) open(16,file='MK/k_eps.'//cha)
-!      if (turbmod.eq.2) open(16,file='LS/k_eps.'//cha)
-!      if (turbmod.eq.3) open(16,file='VF/k_eps.'//cha)
-!      do i=1,imax
-!         k=kmax/2
-!         if (rank.eq.3) k=2
-!         write(16,'(13E18.5)') rp(i),yp(i,k),ypt(i,k),Wnew(i,k),knew(i,k),enew(i,k),v2new(i,k),fv2(i,k),
-!     &        ekmt(i,k),fmu(i,k),rnew(i,k),Pk(i,k)*rnew(i,k),Gk(i,k)*rnew(i,k)
-!
-!      enddo
-!      close(16)
-!
-!      if (turbmod.eq.0)  open(17,file='0/temp.'//cha)
-!      if (turbmod.eq.1) open(17,file='MK/temp.'//cha)
-!      if (turbmod.eq.2) open(17,file='LS/temp.'//cha)
-!      if (turbmod.eq.3) open(17,file='VF/temp.'//cha)
-!      do i=1,imax
-!         k=kmax/2
-!         if (rank.eq.3) k=2
-!         ndt=(Twall(k)-temp(i,k))/(Twall(k)-Tbulk(k))
-!         write(17,'(7E18.5)') rp(i),yp(i,k),ypt(i,k),cnew(i,k),temp(i,k),ndt,h2new(i,k)
-!
-!      enddo
-!      close(17)
 
       end

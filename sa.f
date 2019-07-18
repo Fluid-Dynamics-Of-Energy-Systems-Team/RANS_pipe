@@ -5,7 +5,7 @@
 !! SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA 
 !! SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA 
 !! SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA SA 
-!!              SA =  parameter (turbmod           = 4) 
+!!              SA =  parameter (turbmod           = 1) 
 !!
 !>******************************************************************************************
 !!      SA routine to estimate the eddy viscosity
@@ -244,16 +244,8 @@
       do k=0,kmax+1
          do i=0,imax+1
             eknu (i,k) = ekm(i,k)/Rtmp(i,k)
-          enddo
-      enddo
-      do k=0,kmax+1
-         do i=0,imax
-            eknui(i,k) = ekmi(i,k)/(0.5*(Rtmp(i,k)+Rtmp(i+1,k)))
-         enddo
-      enddo
-      do k=0,kmax
-         do i=0,imax+1
-            eknuk(i,k) = ekmk(i,k)/(0.5*(Rtmp(i,k)+Rtmp(i,k+1)))
+            if (i.LE.imax) eknui(i,k) = ekmi(i,k)/(0.5*(Rtmp(i,k)+Rtmp(i+1,k))) 
+            if (k.LE.kmax) eknuk(i,k) = ekmk(i,k)/(0.5*(Rtmp(i,k)+Rtmp(i,k+1)))
           enddo
       enddo
 

@@ -44,7 +44,7 @@ c      /(beta_o*T_o*Re**2.*Qwall))
       parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2
 
       parameter (select_init       = 0)            ! 0..std initialization, 1..read inflow , 2..read restart file
-      parameter (turbmod           = 3)            ! 0..laminar, 1..MK, 2..LS, 3..V2F, 4..SA, 5..SST
+      parameter (turbmod           = 1)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
       parameter (ctheta            = 0.3) 
       parameter (modVF             = 0)            ! 0..Original 1..LienKalitzin Time/Length scale VF model
       

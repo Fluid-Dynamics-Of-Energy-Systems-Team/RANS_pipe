@@ -59,11 +59,10 @@
       ! periodic = 2, heated pipe 
 !      if (periodic.ne.1) then
 !         if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
-!         if (turbmod.eq.1) open(29,file = 'MK/Inflow',form='unformatted')
-!         if (turbmod.eq.2) open(29,file = 'LS/Inflow',form='unformatted')
+!         if (turbmod.eq.1) open(29,file = 'SA/Inflow',form='unformatted')
+!         if (turbmod.eq.2) open(29,file = 'MK/Inflow',form='unformatted')
 !         if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
-!         if (turbmod.eq.4) open(29,file = 'SA/Inflow',form='unformatted')
-!         if (turbmod.eq.5) open(29,file = 'OM/Inflow',form='unformatted')
+!         if (turbmod.eq.4) open(29,file = 'OM/Inflow',form='unformatted')
 !         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
 !         close(29)
 !      endif
@@ -167,12 +166,12 @@
             enddo
          enddo
       elseif (turbmod.eq.1) then
+         call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
+      elseif (turbmod.eq.2) then
          call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.3) then
          call calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
       elseif (turbmod.eq.4) then
-         call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
-      elseif (turbmod.eq.5) then
          call calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
         ! Boundary condition for bF1 of sst model
@@ -191,6 +190,7 @@
         if ((periodic.ne.1).and.(rank.eq.px-1)) then
            bF1(:,k1) = 2.*bF1(:,kmax)-bF1(:,kmax-1)
         endif
+
       endif
 
       sigmat = 0.9
@@ -295,12 +295,12 @@
 
       resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
       if (turbmod.eq.1) then
+         call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+      elseif (turbmod.eq.2) then
          call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
       elseif (turbmod.eq.3) then
          call advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
       elseif (turbmod.eq.4) then
-         call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
-      elseif (turbmod.eq.5) then
          call advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
       endif
 
@@ -450,32 +450,26 @@ c
 
 !     Radial boundary condition
       if (turbmod.eq.1) then
+         ! SA
+         nuSAnew(i1,:) = -nuSAnew(imax,:)
 
+      elseif (turbmod.eq.2) then
+         ! MK
          knew(i1,:) = -knew(imax,:)
          BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
 
-      elseif (turbmod.eq.2) then
-
-         knew(i1,:) =  -knew(imax,:)
-         enew(i1,:) =  -enew(imax,:)
-
       elseif (turbmod.eq.3) then
-
+         ! VF
          knew(i1,:)  = -knew(imax,:)
          v2new(i1,:) = -v2new(imax,:)
          BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
       elseif (turbmod.eq.4) then
-
-         nuSAnew(i1,:) = -nuSAnew(imax,:)
-
-      elseif (turbmod.eq.5) then
-
+         ! SST
          knew(i1,:)  = -knew(imax,:)
          BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
-!         omNew(i1,:) = 50205072.858428769
          omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
 
       endif
@@ -781,11 +775,10 @@ c
 
             do k=0,k1
               if (turbmod.eq.0) open(29,file=  '0/Inflow',form='unformatted')
-              if (turbmod.eq.1) open(29,file= 'MK/Inflow',form='unformatted')
-              if (turbmod.eq.2) open(29,file= 'LS/Inflow',form='unformatted')
+              if (turbmod.eq.1) open(29,file= 'SA/Inflow',form='unformatted')
+              if (turbmod.eq.2) open(29,file= 'MK/Inflow',form='unformatted')
               if (turbmod.eq.3) open(29,file= 'VF/Inflow',form='unformatted')
-              if (turbmod.eq.4) open(29,file= 'SA/Inflow',form='unformatted')
-              if (turbmod.eq.5) open(29,file= 'OM/Inflow',form='unformatted')
+              if (turbmod.eq.4) open(29,file= 'OM/Inflow',form='unformatted')
               read(29) Wnew(:,k),knew(:,k),enew(:,k),v2new(:,k),omNew(:,k),nuSAnew(:,k),ekmt(:,k),Pk(:,k)
               close(29)
             enddo

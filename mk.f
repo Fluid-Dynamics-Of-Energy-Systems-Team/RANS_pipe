@@ -4,7 +4,7 @@
 !! MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK
 !! MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK
 !! MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK MK
-!!              MK =  parameter (turbmod           = 1) 
+!!              MK =  parameter (turbmod           =  2) 
 !!
 !>******************************************************************************************
 !!      MK routine to estimate the eddy viscosity

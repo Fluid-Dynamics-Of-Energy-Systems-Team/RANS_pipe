@@ -29,9 +29,11 @@
       rank = 0
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.1core.'//cha,form='unformatted')
-      if (turbmod.eq.1) open(19,file='MK/Restart/start_stop.1core.'//cha,form='unformatted')
-      if (turbmod.eq.2) open(19,file='LS/Restart/start_stop.1core.'//cha,form='unformatted')
+      if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.1core.'//cha,form='unformatted')
+      if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.1core.'//cha,form='unformatted')
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.1core.'//cha,form='unformatted')
+      if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.1core.'//cha,form='unformatted')
+
       write(19) time,istep
       write(19) UNEW2,WNEW2,CNEW2,KNEW2,ENEW2,V2NEW2,Pk2,EKMT2,UOLD2,WOLD2,COLD2,KOLD2,EOLD2,V2old2
       close(19)
@@ -54,9 +56,10 @@ c*******************************************************************************
       integer startStep
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file='0/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.1) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.2) open(19,file='LS/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
       read(19) time,startStep
       read(19) UNEW,WNEW,CNEW,KNEW,ENEW,V2NEW,Pk,EKMT,UOLD,WOLD,COLD,KOLD,EOLD,V2old
       close(19)
@@ -73,9 +76,11 @@ c*******************************************************************************
       character*5 cha
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file='0/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.1) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-      if (turbmod.eq.2) open(19,file='LS/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
       if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
+      if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
+
       write(19) time,istep
       write(19) UNEW,WNEW,CNEW,KNEW,ENEW,V2NEW,Pk,EKMT,UOLD,WOLD,COLD,KOLD,EOLD,V2old
       close(19)

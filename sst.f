@@ -5,7 +5,7 @@
 !! SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST 
 !! SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST 
 !! SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST SST 
-!!              SST =  parameter (turbmod           = 5) 
+!!              SST =  parameter (turbmod           = 4) 
 !!
 !>******************************************************************************************
 !!      SST routine to estimate the eddy viscosity
@@ -72,6 +72,8 @@
 
          enddo
       enddo
+
+      
       
       end
 
