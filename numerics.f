@@ -394,7 +394,7 @@ c
       include 'param.txt'
       include 'common.txt'
       real*8  delta(imax),Yplus,X,rmax,drr,Rei
-      real*8  pii,y,y1,y2,fA,fB,fC,fact, const
+      real*8  pii,y,y1,y2,fA,fB,fC,fact,gridSize
 
 !     const = 0.25
 !      const = 0.65
@@ -405,8 +405,15 @@ c******************************************************************
       dz    = 1.0*LoD/(kmax*px)
       ru(0) = 0
 
+
       fA = 0.12
       fB = 2.4
+      gridSize = 0.5            !for the pipe the diameter is 1; radius is 0.5
+      if (numDomain.eq.-1) then
+         fA = 0.5
+         fB = 2.9
+         gridSize = 2.0         !for the channel the half channel height is 1   
+      endif
 
 !      fA = 0.0001
 !      fB = 0.0001
@@ -420,7 +427,7 @@ c******************************************************************
       enddo
 
       do i=0,imax
-         ru(i)=ru(i)/(2.*ru(imax))
+         ru(i)=ru(i)/ru(imax)*gridSize
       enddo
 
       do i = 1 , imax
@@ -441,15 +448,22 @@ c******************************************************************
       do i = 1,imax
          wallDist(i) = 0.5 - rp(i)
       enddo
+    
+      do i=0,i1
+         x1(i)=rp(i)
+      enddo
 
-      if (numDomain.eq.1) then
+      if (numDomain.eq.-1) then
          if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
          do i=0,i1
             ru(i)=1.0
             rp(i)=1.0
          enddo 
+      else if (numDomain.eq.1) then
+         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"   
       else
-         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"        
+         if (rank.eq.0) print '("numDomain is ",i7," when it should be either +1 (for pipe flow) or -1 (for channel flow)")',numDomain
+         stop  
       endif
 
       if (rank.eq.0) then

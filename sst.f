@@ -294,7 +294,7 @@
                 rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
              enddo
 
-             b(1) = b(1)+a(1)
+             b(1) = b(1)+numDomain*a(1)
              i=imax
              b(i) = b(i) - (c(i) /alphak)
              !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
@@ -324,7 +324,7 @@
                 rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
              enddo
 
-             b(1) = b(1)+a(1)
+             b(1) = b(1)+numDomain*a(1)
              i=imax
              b(i) = b(i) - (c(i) /alphak)
              !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
@@ -387,7 +387,7 @@
             rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
          enddo
 
-         b(1) = b(1) + a(1)
+         b(1) = b(1) + numDomain*a(1)
          i = imax
          rhs(i) = dnew(i,k) - c(i)*omNew(i1,k) + (1-alphae)*(b(i)*omNew(i,k))
 

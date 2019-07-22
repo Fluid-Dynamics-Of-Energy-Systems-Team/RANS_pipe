@@ -6,7 +6,7 @@
       real*8          dpdz,ctheta,Fr_1
       real*8    alphac,alphak,alphae,alphav2
 
-      parameter (numDomain         = 0)        ! numerical domain  0.. Pipe, 1.. Channel
+      parameter (numDomain         = -1)        ! numerical domain  -1.. Channel, 1.. Pipe
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 96)       ! radial direction
       parameter (kmax              = 16/px)    ! 384/px)   ! axial direction
@@ -21,11 +21,11 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)
-      parameter (nstep             = 20000)
+      parameter (nstep             = 100000) !20000)
 
       parameter (LoD               = 20)
       parameter (periodic          = 1)               ! 1..periodic, 2..developing 
-      parameter (dpdz              = 4)
+      parameter (dpdz              = 1)
 
 
       parameter (Re                = 360)

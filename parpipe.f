@@ -135,7 +135,6 @@
       enddo
       call cpu_time(finish)
       print '("Time = ",f6.3," seconds.")',finish-start
-
       call outputProfile(rank)
       call output2d(rank,istep)
       call mpi_finalize(ierr)
@@ -274,7 +273,15 @@
             rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
          enddo
 
-         b(1)=b(1)+a(1)
+         i=1
+         if (numDomain.eq.-1) then
+            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+            c(i)   =  0.0
+            b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+            rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+         else
+            b(i)=b(i)+a(i)
+         endif
          i=imax
             a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
             c(i)   =  0.0
@@ -360,7 +367,7 @@
          enddo
 
          i = imax-1;    cu(i) = 0.0
-         i = 1;         bu(i) = bu(i) + au(i)
+         i = 1;         bu(i) = bu(i) + numDomain*au(i)    ! BC at center: Neumann: cancel coeff a
 
          do i=1,imax-1
             rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
@@ -401,7 +408,7 @@
          enddo
 
          i=imax;    b(i) = b(i) - c(i)    ! BC at wall: zero vel: subtract one c
-         i = 1;     b(i) = b(i) + a(i)    ! BC at center: Neumann: cancel coeff a
+         i = 1;     b(i) = b(i) + numDomain*a(i)     ! BC at wall: zero vel: subtract one a
 
          do i=1,imax
             rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
@@ -444,6 +451,7 @@ c
             cnew(i1,:) = cnew(imax,:)
          else
             call funcNewtonSolve(cnew(i1,k), cnew(imax,k))
+            if (numDomain.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
          endif
       enddo
 
@@ -453,11 +461,21 @@ c
          ! SA
          nuSAnew(i1,:) = -nuSAnew(imax,:)
 
+         if (numDomain.eq.-1) then
+            nuSAnew(0,:) = -nuSAnew(1,:)
+         endif
+
       elseif (turbmod.eq.2) then
          ! MK
          knew(i1,:) = -knew(imax,:)
          BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
+
+         if (numDomain.eq.-1) then
+            knew(0,:)  = -knew(1,:)
+            BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
+            enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
+         endif
 
       elseif (turbmod.eq.3) then
          ! VF
@@ -466,23 +484,36 @@ c
          BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
+         if (numDomain.eq.-1) then
+            knew(0,:)  = -knew(1,:)
+            v2new(0,:) = -v2new(1,:)
+            BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
+            enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
+         endif
+
       elseif (turbmod.eq.4) then
          ! SST
          knew(i1,:)  = -knew(imax,:)
          BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
          omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
 
+         if (numDomain.eq.-1) then
+            knew(0,:)  = -knew(1,:)
+            BCvalue(:) = 60.0/0.075*ekm(1,:)/rNew(1,:)/wallDist(1)**2
+            omNew(0,:) = 2.0*BCvalue(:) - omNew(1,:)
+         endif
+
       endif
 
-
+      if (numDomain.eq.1) then
 !     center line BC
-      cnew(0,:)    = cnew(1,:)
-      knew(0,:)    = knew(1,:)
-      enew(0,:)    = enew(1,:)
-      v2new(0,:)   = v2new(1,:)
-      omNew(0,:)   = omNew(1,:)
-      nuSAnew(0,:) = nuSAnew(1,:)
-
+         cnew(0,:)    = cnew(1,:)
+         knew(0,:)    = knew(1,:)
+         enew(0,:)    = enew(1,:)
+         v2new(0,:)   = v2new(1,:)
+         omNew(0,:)   = omNew(1,:)
+         nuSAnew(0,:) = nuSAnew(1,:)
+      endif
 !     ghost cells between CPU
       call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
       call shiftf(knew,   tmpShift,rank);       knew(:,0) = tmpShift(:);
@@ -551,25 +582,26 @@ c
 
 
 !     Radial Boundary condition
-      do k=0,k1
+      if (numDomain.eq.-1) then ! channal bc
+         do k=0,k1
+            Ubound(1,k)    =   0.0
+            Ubound(0,k)    = - Ubound(2,k)
+            Ubound(imax,k) =   0.0
+            Ubound(i1,k)   = - Ubound(imax-1,k)
 
-         if (numDomain.eq.1) then ! new
-            Ubound(1,k) =   0.0
-            Ubound(0,k) = - Ubound(2,k)
-         else
+            Wbound(0,k)   = - Wbound(1,k)
+            Wbound(i1,k)  = - Wbound(imax,k) 
+         enddo
+      else
+         do k=0,k1
             Ubound(0,k)    =   Ubound(1,k)
-         endif
-         Ubound(imax,k) =   0.0
-         Ubound(i1,k)   = - Ubound(imax-1,k)
+            Ubound(imax,k) =   0.0
+            Ubound(i1,k)   = - Ubound(imax-1,k)
 
-         if (numDomain.eq.1) then ! new
-            Wbound(0,k)    =   -Wbound(1,k)
-         else
-            Wbound(0,k)    =   Wbound(1,k)
-         endif
-         Wbound(i1,k)   = - Wbound(imax,k)
-
-      enddo
+            Wbound(0,k)   =   Wbound(1,k)
+            Wbound(i1,k)  = - Wbound(imax,k)
+         enddo
+      endif
 
       call shiftf(Ubound,ubf,rank);     Ubound(:,0)  = Ubf(:);
       call shiftf(Wbound,wbf,rank);     Wbound(:,0)  = Wbf(:);
@@ -632,25 +664,26 @@ c
       real*8 wbf(0:i1)
       integer   ib,ie,kb,ke
 
+      if (numDomain.eq.-1) then ! channal bc
+         do k=0,k1
+            Ubound(1,k)    =   0.0
+            Ubound(0,k)    = - Ubound(2,k)
+            Ubound(imax,k) =   0.0
+            Ubound(i1,k)   = - Ubound(imax-1,k)
 
-      do k=0,k1
-
-         if (numDomain.eq.1) then ! new
-            Ubound(1,k) =   0.0
-            Ubound(0,k) = - Ubound(2,k)
-         else
+            Wbound(0,k)   = - Wbound(1,k)
+            Wbound(i1,k)  = - Wbound(imax,k) 
+         enddo
+      else
+         do k=0,k1
             Ubound(0,k)    =   Ubound(1,k)
-         endif
-         Ubound(imax,k) =   0.0
-         Ubound(i1,k)   = - Ubound(imax-1,k)
+            Ubound(imax,k) =   0.0
+            Ubound(i1,k)   = - Ubound(imax-1,k)
 
-         if (numDomain.eq.1) then ! new
-            Wbound(0,k)    =   -Wbound(1,k)
-         else
-            Wbound(0,k)    =   Wbound(1,k)
-         endif
-         Wbound(i1,k)   = - Wbound(imax,k)
-      enddo
+            Wbound(0,k)   =   Wbound(1,k)
+            Wbound(i1,k)  = - Wbound(imax,k)
+         enddo
+      endif
 
 
       call shiftf(Ubound,ubf,rank)
@@ -804,7 +837,9 @@ c
             if (rank.eq.0)  write(*,*) 'Initializing flow from scratch = ', select_init
 
             do i=1,imax
-              Wnew(i,:)  = Re/6*3/2.*(1-(rp(i)/0.5)**2)
+              
+              Wnew(i,:)  = Re/6*3/2.*(1-(x1(i)/0.5)**2)
+
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0
               omnew(i,:) = 0.001

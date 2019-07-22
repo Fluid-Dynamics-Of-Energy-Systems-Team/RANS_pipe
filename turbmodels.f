@@ -110,7 +110,12 @@
             rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
          enddo
 
-         b(1)=b(1)+a(1)
+         i=1
+         if (numDomain.eq.-1) then
+            rhs(i) = dnew(i,k) - a(i)*eNew(i1,k) + (1-alphae)*b(i)*eNew(i,k)
+         else
+            b(i)=b(i)+a(i)
+         endif
          i=imax
          rhs(i) = dnew(i,k) - c(i)*eNew(i1,k) + (1-alphae)*b(i)*eNew(i,k)
 
@@ -178,7 +183,7 @@
 
                rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
            enddo
-           b(1) = b(1) + a(1)
+           b(1) = b(1) + numDomain*a(1)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)
@@ -206,7 +211,7 @@
 
                rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
            enddo
-           b(1) = b(1) + a(1)
+           b(1) = b(1) + numDomain*a(1)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)

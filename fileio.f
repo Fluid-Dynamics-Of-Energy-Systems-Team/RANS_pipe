@@ -214,7 +214,7 @@ c*******************************************************************************
         open(19,file='profile')
           k = 1
           do i=1,imax
-            write(19,'(11E18.6)') rp(i),unew(i,k),Wnew(i,k),cnew(i,k),
+            write(19,'(11E18.6)') x1(i),unew(i,k),Wnew(i,k),cnew(i,k),
      &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),nuSAnew(i,k),ekmt(i,k)
           enddo
         close(19)
@@ -346,7 +346,7 @@ c*******************************************************************************
 
       do k=0,k1
          do i=0,i1
-            write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, rp(i),
+            write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, x1(i),
      &          0.5*(unew(max(i-1,0),k)+unew(i,k)),
      &          Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), temp(i,k),
      &          knew(i,k),enew(i,k),v2new(i,k),

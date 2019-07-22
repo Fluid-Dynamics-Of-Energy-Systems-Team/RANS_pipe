@@ -271,7 +271,7 @@
             rhs(i) = dnew(i,k) + (1-alphak)*b(i)*nuSANew(i,k)
          enddo
 
-         b(1) = b(1)+a(1)
+         b(1) = b(1)+numDomain*a(1)
          i=imax
          b(i) = b(i) - (c(i) /alphak)
          !b(i) = ((-(a(i)/(rho3(i-1,k)**0.5))-(c(i)/(rho3(i+1,k)**0.5)))*(rho3(i,k)**0.5) - c(i) +  dimpl(i,k)   )/alphak
