@@ -411,7 +411,7 @@ c******************************************************************
       gridSize = 0.5            !for the pipe the diameter is 1; radius is 0.5
       if (numDomain.eq.-1) then
          fA = 0.5
-         fB = 2.9
+         fB = 4.6
          gridSize = 2.0         !for the channel the half channel height is 1   
       endif
 
@@ -445,10 +445,19 @@ c******************************************************************
          drp(i) = Rp(i+1) - Rp(i)
       enddo
 
-      do i = 1,imax
-         wallDist(i) = 0.5 - rp(i)
-      enddo
-    
+      if (numDomain.eq.-1) then
+         do i = 1,imax
+            if (rp(i).le.1) then
+               wallDist(i) = rp(i)
+            else
+               wallDist(i) = 2.0-rp(i)
+            endif
+         enddo
+      else
+         do i = 1,imax
+            wallDist(i) = 0.5 - rp(i)
+         enddo
+      endif
       do i=0,i1
          x1(i)=rp(i)
       enddo
@@ -471,7 +480,7 @@ c******************************************************************
          write(11,*) Re, imax
          do i=0,imax
             Yplus = (0.5-Rp(i))*Re
-            write(11,'(i5,4F12.6)') i,yplus,Ru(i),Rp(i),delta(max(1,i))
+            write(11,'(i5,4F12.6)') i,yplus,Ru(i),x1(i),delta(max(1,i))
          enddo
          close(11)
       endif

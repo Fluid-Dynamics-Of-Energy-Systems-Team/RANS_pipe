@@ -93,40 +93,71 @@
       call rhs_Epsilon(dnew,dimpl,Rtmp)    !new
       call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
-      do k=1,kmax
-         do i=1,imax
-                
-            a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
-            a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+      if (numDomain.eq.-1) then
+          do k=1,kmax
+             do i=1,imax
+                    
+                a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+    
+                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+    
+                b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
+    
+                a(i) = a(i)*(rho3(i-1,k)**1.5)
+                c(i) = c(i)*(rho3(i+1,k)**1.5)
+    
+                rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
+             enddo
+    
+             i=1
+             rhs(i) = dnew(i,k) - a(i)*eNew(i-1,k) + (1-alphae)*b(i)*eNew(i,k)
+    
+             i=imax
+             rhs(i) = dnew(i,k) - c(i)*eNew(i+1,k) + (1-alphae)*b(i)*eNew(i,k)
+    
+             call matrixIdir(imax,a,b,c,rhs)
+    
+             do i=1,imax
+                resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
+                eNew(i,k) = max(rhs(i), 1.0e-8)
+    
+             enddo
+          enddo
+      else
+          do k=1,kmax
+             do i=1,imax
+                    
+                a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+    
+                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+    
+                b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
+    
+                a(i) = a(i)*(rho3(i-1,k)**1.5)
+                c(i) = c(i)*(rho3(i+1,k)**1.5)
+    
+                rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
+             enddo
+    
+             i=1
+             b(i)=b(i)+a(i)
 
-            c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
-            c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
-
-            b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
-
-            a(i) = a(i)*(rho3(i-1,k)**1.5)
-            c(i) = c(i)*(rho3(i+1,k)**1.5)
-
-            rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
-         enddo
-
-         i=1
-         if (numDomain.eq.-1) then
-            rhs(i) = dnew(i,k) - a(i)*eNew(i1,k) + (1-alphae)*b(i)*eNew(i,k)
-         else
-            b(i)=b(i)+a(i)
-         endif
-         i=imax
-         rhs(i) = dnew(i,k) - c(i)*eNew(i1,k) + (1-alphae)*b(i)*eNew(i,k)
-
-         call matrixIdir(imax,a,b,c,rhs)
-
-         do i=1,imax
-            resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
-            eNew(i,k) = max(rhs(i), 1.0e-8)
-
-         enddo
-      enddo
+             i=imax
+             rhs(i) = dnew(i,k) - c(i)*eNew(i+1,k) + (1-alphae)*b(i)*eNew(i,k)
+    
+             call matrixIdir(imax,a,b,c,rhs)
+    
+             do i=1,imax
+                resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
+                eNew(i,k) = max(rhs(i), 1.0e-8)
+    
+             enddo
+          enddo
+      endif
       end
 !>************************************************************************************
 !!
@@ -173,17 +204,23 @@
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
          do k=1,kmax
             do i=1,imax
+
                a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
+
                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
+
                b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+
                a(i) = a(i)*rho3(i-1,k)
                c(i) = c(i)*rho3(i+1,k)
 
                rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
            enddo
-           b(1) = b(1) + numDomain*a(1)
+
+           i=1
+           b(i) = b(i) + numDomain*a(i)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)
@@ -203,15 +240,20 @@
             do i=1,imax
                a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+
                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+
                b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+
                a(i) = a(i)*rho3(i-1,k)
                c(i) = c(i)*rho3(i+1,k)
 
                rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
            enddo
-           b(1) = b(1) + numDomain*a(1)
+
+           i=1
+           b(i) = b(i) + numDomain*a(i)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)

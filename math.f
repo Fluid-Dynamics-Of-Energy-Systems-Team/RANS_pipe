@@ -154,7 +154,12 @@ c     generate tridiagonal systems
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       enddo
       !b(1)    =   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
-      b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
+!      if (numDomain.eq.-1) then
+!         b(1)    = b(1)-a(1)
+!      else
+!         b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
+!      endif
+      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
       b(imax) = b(imax)+c(imax)
 
       c(imax)=0.
@@ -298,8 +303,12 @@ c     generate tridiagonal systems
       end do
 
       !b(1)=   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
-      b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
-!      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
+!      if (numDomain.eq.-1) then
+!         b(1)    = b(1)-a(1)
+!      else
+!         b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
+!      endif
+      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
       b(imax)=b(imax)-c(imax)
       c(imax)=0.
       a(1)=0.

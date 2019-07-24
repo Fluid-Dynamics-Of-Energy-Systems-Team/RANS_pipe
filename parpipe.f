@@ -91,7 +91,7 @@
 
          if (turbmod.eq.3)  then
             call fillhm(rank)
-            call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh)
+            call SOLVEhelm(fv2,Ru,Rp,dRu,dRp,dz,rank,Lh)
          endif
  		
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
@@ -481,7 +481,7 @@ c
          ! VF
          knew(i1,:)  = -knew(imax,:)
          v2new(i1,:) = -v2new(imax,:)
-         BCvalue(:)  = 2.*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
+         BCvalue(:)  = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
          if (numDomain.eq.-1) then
@@ -837,8 +837,12 @@ c
             if (rank.eq.0)  write(*,*) 'Initializing flow from scratch = ', select_init
 
             do i=1,imax
-              
-              Wnew(i,:)  = Re/6*3/2.*(1-(x1(i)/0.5)**2)
+                            
+              if (numDomain.eq.-1) then
+                 Wnew(i,:)  = Re*dpdz*x1(i)*((x1(i)/0.5)-1.0)
+              else
+                 Wnew(i,:)  = Re/6*3/2.*(1-(x1(i)/0.5)**2)
+              endif
 
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0

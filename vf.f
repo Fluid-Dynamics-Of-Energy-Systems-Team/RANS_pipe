@@ -221,7 +221,9 @@
                rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
             enddo
 
-            b(1)=b(1)+a(1)
+            i=1
+            b(i)=b(i)+numDomain*a(i)
+
             i=imax
             b(i) = b(i) - (c(i) /alphav2)
             !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k)))  - c(i) + dimpl(i,k) )/alphav2
@@ -247,7 +249,6 @@
                c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
 
-
                b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
 
                a(i) = a(i)*rho3(i-1,k)
@@ -256,7 +257,9 @@
                rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
              enddo
 
-             b(1)=b(1)+a(1)
+             i=1
+             b(i)=b(i)+numDomain*a(i)
+
              i=imax
              b(i) = b(i) - (c(i) /alphav2)
              !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k)))  - c(i) + dimpl(i,k) )/alphav2
@@ -320,7 +323,6 @@ c
 c     
 c     *** Fill the right hand for the poisson solver. ***
 c     
-
 
       do  k=1,kmax
          do i=1,imax

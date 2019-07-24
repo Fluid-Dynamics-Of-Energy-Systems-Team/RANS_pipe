@@ -214,8 +214,9 @@ c*******************************************************************************
         open(19,file='profile')
           k = 1
           do i=1,imax
-            write(19,'(11E18.6)') x1(i),unew(i,k),Wnew(i,k),cnew(i,k),
-     &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),nuSAnew(i,k),ekmt(i,k)
+            write(19,'(14E18.6)') x1(i),unew(i,k),Wnew(i,k),cnew(i,k),
+     &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),
+     &             ekmt(i,k),bf1(i,k),bf2(i,k)
           enddo
         close(19)
       endif

@@ -21,6 +21,7 @@
       real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
       real*8  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
 
+      !constants
       sigma_om2 = 0.856
       betaStar  = 0.09
       
@@ -41,7 +42,6 @@
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
             Ret(i,k)    = rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
 
-            !constants
             
             wallD     = wallDist(i)
 
@@ -155,15 +155,16 @@
 
       integer ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,dimpl!,Tt
-      real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
+      real*8  betaStar
+      !real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
-      sigma_om1 = 0.5
-      sigma_om2 = 0.856
-      beta_1    = 0.075
-      beta_2    = 0.0828
+      !sigma_om1 = 0.5
+      !sigma_om2 = 0.856
+      !beta_1    = 0.075
+      !beta_2    = 0.0828
       betaStar  = 0.09
-      alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
-      alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
+      !alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
+      !alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
 
       ib = 1
       ie = i1-1
@@ -175,7 +176,7 @@
          do i=ib,ie 
             ! k- equation
             putout(i,k) = putout(i,k) + ( Pk(i,k) + Gk(i,k) )/rho(i,k)         
-            dimpl(i,k)  = dimpl(i,k)  + 0.09*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density            
+            dimpl(i,k)  = dimpl(i,k)  + betaStar*omNew(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density            
          enddo
       enddo
 
@@ -215,7 +216,7 @@
             ip=i+1
             im=i-1
             ! omega- equation
-            alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1-bF1(i,k))
+            alfaSST   = alfa_1*bF1(i,k) + alfa_2*(1.0-bF1(i,k))
             betaSST   = beta_1*bF1(i,k) + beta_2*(1.0 - bF1(i,k))
 
             StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
@@ -281,20 +282,24 @@
       if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
           do k=1,kmax
              do i=1,imax
-                
+
                 a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
                 a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+
                 c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
                 c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
 
                 b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+
                 a(i) = a(i)*rho3(i-1,k)
                 c(i) = c(i)*rho3(i+1,k)
 
                 rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
              enddo
 
-             b(1) = b(1)+numDomain*a(1)
+             i=1
+             b(i) = b(i)+numDomain*a(i)
+
              i=imax
              b(i) = b(i) - (c(i) /alphak)
              !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
@@ -314,17 +319,21 @@
 
                 a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))
                 a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+
                 c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))
                 c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
                 
                 b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+
                 a(i) = a(i)*rho3(i-1,k)
                 c(i) = c(i)*rho3(i+1,k)
 
                 rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
              enddo
 
-             b(1) = b(1)+numDomain*a(1)
+             i=1
+             b(i) = b(i)+numDomain*a(i)
+
              i=imax
              b(i) = b(i) - (c(i) /alphak)
              !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
@@ -372,33 +381,69 @@
       sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
       sigmakSST = 1.0/sigmakSST
       call diffcSSTOmega(dnew,omNew,ekm,ekmi,ekmk,ekmt,sigmakSST,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
-
-      do k=1,kmax
-         do i=1,imax
-            a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5 
-            a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-            c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5 
-            c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-
-            b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
-            a(i) = a(i)*rho3(i-1,k)**0.5
-            c(i) = c(i)*rho3(i+1,k)**0.5
-
-            rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
-         enddo
-
-         b(1) = b(1) + numDomain*a(1)
-         i = imax
-         rhs(i) = dnew(i,k) - c(i)*omNew(i1,k) + (1-alphae)*(b(i)*omNew(i,k))
-
-         call matrixIdir(imax,a,b,c,rhs)
-
-         do i=1,imax
-            resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
-            omNew(i,k) = max(rhs(i), 1.0e-8)
-         enddo
-      enddo
-
+      if (numDomain.eq.-1) then
+          do k=1,kmax
+             do i=1,imax
+    
+                a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5 
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+    
+                c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5 
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+    
+                b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
+    
+                a(i) = a(i)*rho3(i-1,k)**0.5
+                c(i) = c(i)*rho3(i+1,k)**0.5
+    
+                rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
+             enddo
+    
+             i=1
+             rhs(i) = dnew(i,k) - a(i)*omNew(i-1,k) + (1-alphae)*b(i)*omNew(i,k)
+             
+             i = imax
+             rhs(i) = dnew(i,k) - c(i)*omNew(i+1,k) + (1-alphae)*(b(i)*omNew(i,k))
+    
+             call matrixIdir(imax,a,b,c,rhs)
+    
+             do i=1,imax
+                resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
+                omNew(i,k) = max(rhs(i), 1.0e-8)
+             enddo
+          enddo
+      else
+          do k=1,kmax
+             do i=1,imax
+    
+                a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5 
+                a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+    
+                c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5 
+                c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+    
+                b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
+    
+                a(i) = a(i)*rho3(i-1,k)**0.5
+                c(i) = c(i)*rho3(i+1,k)**0.5
+    
+                rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
+             enddo
+    
+             i=1
+             b(i)=b(i)+a(i)
+             
+             i = imax
+             rhs(i) = dnew(i,k) - c(i)*omNew(i+1,k) + (1-alphae)*(b(i)*omNew(i,k))
+    
+             call matrixIdir(imax,a,b,c,rhs)
+    
+             do i=1,imax
+                resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
+                omNew(i,k) = max(rhs(i), 1.0e-8)
+             enddo
+          enddo
+      endif
       end
 
 
