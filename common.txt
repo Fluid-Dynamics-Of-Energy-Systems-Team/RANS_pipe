@@ -29,8 +29,8 @@ c     ****************
 
 
 c     ****************
-      real*8          Ru(0:i1),Rp(0:i1),xu(0:i1),xp(0:i1),dru(0:i1),drp(0:i1),dz,z1(0:k1),z2(0:k1),wallDist(1:imax)
-      common /phsgrd/ Ru,Rp,xu,xp,dru,drp,dz,z1,z2,wallDist
+      real*8          Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1),dz,z1(0:k1),z2(0:k1),wallDist(1:imax)
+      common /phsgrd/ Ru,Rp,y_fa,y_cv,dru,drp,dz,z1,z2,wallDist
       save   /phsgrd/
 
 
