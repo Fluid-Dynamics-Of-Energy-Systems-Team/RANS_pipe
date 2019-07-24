@@ -839,9 +839,9 @@ c
             do i=1,imax
                             
               if (numDomain.eq.-1) then
-                 Wnew(i,:)  = Re*dpdz*x1(i)*((x1(i)/0.5)-1.0)
+                 Wnew(i,:)  = Re*dpdz*xp(i)*((xp(i)/0.5)-1.0)
               else
-                 Wnew(i,:)  = Re/6*3/2.*(1-(x1(i)/0.5)**2)
+                 Wnew(i,:)  = Re/6*3/2.*(1-(xp(i)/0.5)**2)
               endif
 
               knew(i,:)  = 0.1

@@ -459,7 +459,8 @@ c******************************************************************
          enddo
       endif
       do i=0,i1
-         x1(i)=rp(i)
+         xp(i)=rp(i)
+         xu(i)=ru(i)
       enddo
 
       if (numDomain.eq.-1) then
@@ -480,7 +481,7 @@ c******************************************************************
          write(11,*) Re, imax
          do i=0,imax
             Yplus = (0.5-Rp(i))*Re
-            write(11,'(i5,4F12.6)') i,yplus,Ru(i),x1(i),delta(max(1,i))
+            write(11,'(i5,4F12.6)') i,yplus,xu(i),xp(i),delta(max(1,i))
          enddo
          close(11)
       endif
