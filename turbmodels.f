@@ -93,7 +93,7 @@
       call rhs_Epsilon(dnew,dimpl,Rtmp)    !new
       call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
-      if (numDomain.eq.-1) then
+      if (numDomain.eq.-1) then   ! channel!!!!
           do k=1,kmax
              do i=1,imax
                     
@@ -125,7 +125,7 @@
     
              enddo
           enddo
-      else
+      else             ! pipe!!!!
           do k=1,kmax
              do i=1,imax
                     

@@ -6,6 +6,7 @@
 %             "lamcp","cp","alphat","kt",      (17-20)
 %             "epst","Pk","Gk"                 (21)
 
+
 function [ data ] = readTecplot(folder,ncpu, imax,kmax,nvar)
 
     data=[];

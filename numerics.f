@@ -450,12 +450,12 @@ c******************************************************************
             if (rp(i).le.1) then
                wallDist(i) = rp(i)
             else
-               wallDist(i) = 2.0-rp(i)
+               wallDist(i) = gridSize-rp(i)
             endif
          enddo
       else
          do i = 1,imax
-            wallDist(i) = 0.5 - rp(i)
+            wallDist(i) = gridSize - rp(i)
          enddo
       endif
       do i=0,i1
@@ -480,7 +480,7 @@ c******************************************************************
          open(11,file = 'grid.txt')
          write(11,*) Re, imax
          do i=0,imax
-            Yplus = (0.5-Rp(i))*Re
+            Yplus = wallDist(i)*Re
             write(11,'(i5,4F12.6)') i,yplus,y_fa(i),y_cv(i),delta(max(1,i))
          enddo
          close(11)
@@ -603,50 +603,83 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif)
+      subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
       implicit none
 
-      integer  i,k,im,ip,km,kp,i1,k1
+      integer  i,k,im,ip,km,kp,i1,k1,numDom
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
      &     ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1),
      &     epop,epom,dzi,divUim,divUip,divUi,dif
-c     
-      dzi =1./dz
-      do k=1,k1-1
-         kp=k+1
-         km=k-1
-         do i=1,i1-1
-            ip=i+1
-            im=i-1
 
-            epop = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,kp) + ekme(i,kp))
-            epom = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,km) + ekme(i,km))
+      if (numDom == -1) then
 
-            divUim = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
-     &           + (        Wvel(i,k) -        Wvel(i,km))/dz
+         dzi =1./dz
+         do k=1,k1-1
+            kp=k+1
+            km=k-1
+            do i=1,i1-1
+               ip=i+1
+               im=i-1
 
-            divUip = (Ru(ip)*Uvel(ip,k)-Ru(i)*Uvel(i ,k ))/(Rp(ip)*dru(ip))
-     &           + (         Wvel(ip,k)-      Wvel(ip,km))/dz
+               epop = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,kp) + ekme(i,kp))
+               epom = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,km) + ekme(i,km))
 
-            divUi = ( Rp(ip)*(Uvel(ip,k)+Uvel(i,k)) - Rp(i)*(Uvel(i,k)+Uvel(im,k))
-     &                )/(2.*Ru(i)*drp(i))!(Rp(ip)-Rp(i))) new
-     &           + ((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
-
-            putout(i,k) = putout(i,k) +
-     1   2.0*( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i ,k))/dru(ip) -1./3.*divUip)
-     1        -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ) -1./3.*divUim)
-     1            )/(Ru(i)*drp(i))!(Rp(ip)-Rp(i))) new
-     &           +
-     3           ( epop * ( (Uvel(i,kp)-Uvel(i,k))*dzi
-     3                    + (Wvel(ip,k)-Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i)) ) new
-     3             -
-     3             epom * ( (Uvel(i,k)  -Uvel(i,km))*dzi
-     3                    + (Wvel(ip,km)-Wvel(i,km))/drp(i))!(Rp(ip)-Rp(i)) ) new
-     3            )*dzi
-     &           -
-     4           (ekme(i,k)+ekme(ip,k))/Ru(i)*(Uvel(i,k)/Ru(i)-1./3.*divUi)
+               putout(i,k) = putout(i,k) +
+     1      2.0*( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i ,k))/dru(ip))
+     1           -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ))
+     1               )/(Ru(i)*drp(i))
+     &              +
+     3              ( epop * ( (Uvel(i,kp)-Uvel(i,k))*dzi
+     3                       + (Wvel(ip,k)-Wvel(i,k))/drp(i))
+     3                -
+     3                epom * ( (Uvel(i,k)  -Uvel(i,km))*dzi
+     3                       + (Wvel(ip,km)-Wvel(i,km))/drp(i))
+     3               )*dzi
+            enddo
          enddo
-      enddo
+
+      elseif (numDom == 1) then    
+      
+         dzi =1./dz
+         do k=1,k1-1
+            kp=k+1
+            km=k-1
+            do i=1,i1-1
+               ip=i+1
+               im=i-1
+
+               epop = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,kp) + ekme(i,kp))
+               epom = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,km) + ekme(i,km))
+
+               divUim = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
+     &              + (        Wvel(i,k) -        Wvel(i,km))/dz
+
+               divUip = (Ru(ip)*Uvel(ip,k)-Ru(i)*Uvel(i ,k ))/(Rp(ip)*dru(ip))
+     &              + (         Wvel(ip,k)-      Wvel(ip,km))/dz
+
+               divUi = ( Rp(ip)*(Uvel(ip,k)+Uvel(i,k)) - Rp(i)*(Uvel(i,k)+Uvel(im,k))
+     &                   )/(2.*Ru(i)*drp(i))!(Rp(ip)-Rp(i))) new
+     &              + ((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
+
+               putout(i,k) = putout(i,k) +
+     1      2.0*( Rp(ip)*ekme(ip,k)*(dif*(Uvel(ip,k)-Uvel(i ,k))/dru(ip) -1./3.*divUip)
+     1           -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ) -1./3.*divUim)
+     1               )/(Ru(i)*drp(i))
+     &              +
+     3              ( epop * ( (Uvel(i,kp)-Uvel(i,k))*dzi
+     3                       + (Wvel(ip,k)-Wvel(i,k))/drp(i))
+     3                -
+     3                epom * ( (Uvel(i,k)  -Uvel(i,km))*dzi
+     3                       + (Wvel(ip,km)-Wvel(i,km))/drp(i))
+     3               )*dzi
+     &              -
+     4              (ekme(i,k)+ekme(ip,k))/Ru(i)*(Uvel(i,k)/Ru(i)-1./3.*divUi)
+            enddo
+         enddo
+      endif
+
+
+
       return
       end
 
@@ -689,43 +722,69 @@ c
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,rank)
+      subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
       implicit none
      
 
-      integer  i,k,im,ip,km,kp,i1,k1,rank
+      integer  i,k,im,ip,km,kp,i1,k1,numDom
       real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),
      &     ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1),
      &     epop,emop,divUkm,divUkp,dif
 c
-      do k=1,k1-1
-         kp=k+1
-         km=k-1
-         do i=1,i1-1
-            ip=i+1
-            im=i-1
+      if (numDom == -1) then   
+         do k=1,k1-1
+            kp=k+1
+            km=k-1
+            do i=1,i1-1
+               ip=i+1
+               im=i-1
 
-            epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) )
-            emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) )
+               epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) )
+               emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) )
 
-            divUkm = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
-     &             + (      Wvel(i,k) -        Wvel(i,km))/dz
+               putout(i,k) = putout(i,k) +
+     1            (Ru(i )*epop*(  (Uvel(i,kp) - Uvel(i,k))/dz
+     1                       +dif*(Wvel(ip,k) - Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i))) new
+     1            -
+     1             Ru(im)*emop*(  (Uvel(im,kp) - Uvel(im,k))/dz
+     1                       +dif*(Wvel(i,k)   - Wvel(im,k))/drp(im))!(Rp(i)-Rp(im))) new
+     1            )/(Rp(i)*dru(i))
+     &            +
+     3            (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz )-
+     3             2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz ))/dz
+            enddo
+         enddo 
 
-            divUkp = (Ru(i)*Uvel(i,kp)- Ru(im)*Uvel(im, kp))/(Rp(i)*dru(i))
-     &             + (      Wvel(i,kp)-        Wvel(i,  k ))/dz
+      elseif (numDom == 1) then   
+         do k=1,k1-1
+            kp=k+1
+            km=k-1
+            do i=1,i1-1
+               ip=i+1
+               im=i-1
 
-            putout(i,k) = putout(i,k) +
-     1         (Ru(i )*epop*(  (Uvel(i,kp) - Uvel(i,k))/dz
-     1                    +dif*(Wvel(ip,k) - Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i))) new
-     1         -
-     1          Ru(im)*emop*(  (Uvel(im,kp) - Uvel(im,k))/dz
-     1                    +dif*(Wvel(i,k)   - Wvel(im,k))/drp(im))!(Rp(i)-Rp(im))) new
-     1         )/(Rp(i)*dru(i))
-     &         +
-     3         (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp)-
-     3          2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz - 1./3.*divUkm))/dz
+               epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) )
+               emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) )
+
+               divUkm = (Ru(i)*Uvel(i,k) - Ru(im)*Uvel(im,k))/(Rp(i)*dru(i))
+     &                + (      Wvel(i,k) -        Wvel(i,km))/dz
+
+               divUkp = (Ru(i)*Uvel(i,kp)- Ru(im)*Uvel(im, kp))/(Rp(i)*dru(i))
+     &                + (      Wvel(i,kp)-        Wvel(i,  k ))/dz
+
+               putout(i,k) = putout(i,k) +
+     1            (Ru(i )*epop*(  (Uvel(i,kp) - Uvel(i,k))/dz
+     1                       +dif*(Wvel(ip,k) - Wvel(i,k))/drp(i))!(Rp(ip)-Rp(i))) new
+     1            -
+     1             Ru(im)*emop*(  (Uvel(im,kp) - Uvel(im,k))/dz
+     1                       +dif*(Wvel(i,k)   - Wvel(im,k))/drp(im))!(Rp(i)-Rp(im))) new
+     1            )/(Rp(i)*dru(i))
+     &            +
+     3            (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp)-
+     3             2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz - 1./3.*divUkm))/dz
+            enddo
          enddo
-      enddo
+      endif   
       return
       end
 

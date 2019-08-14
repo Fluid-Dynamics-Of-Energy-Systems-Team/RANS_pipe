@@ -140,26 +140,20 @@ c     generate tridiagonal systems
 
 
       do i=1,imax
-!         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
-!         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
-!     &        (Rp(I)*(Ru(I)-Ru(I-1)))
-!         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
-!         a(i)= 1./((Rp(I)-Rp(I-1))*(Ru(I)-Ru(I-1)))
-!         b(i)=-(1./(Rp(I+1)-Rp(I))+1./(Rp(I)-Rp(I-1)))/
-!     &        ((Ru(I)-Ru(I-1)))
-!         c(i)= 1. /((Rp(I+1)-Rp(I))*(Ru(I)-Ru(I-1)))
-         a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
-         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
+         a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))    
+         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ 
      &        (Rp(I)*dRu(I))
-         c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
+         c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))       
       enddo
-      !b(1)    =   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
-!      if (numDomain.eq.-1) then
-!         b(1)    = b(1)-a(1)
-!      else
-!         b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
-!      endif
-      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
+
+
+      if (numDomain.eq.-1) then
+         b(1)    = b(1)-a(1)
+      else
+         b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
+     &        (Rp(1)*dRu(1))
+      endif
+
       b(imax) = b(imax)+c(imax)
 
       c(imax)=0.
@@ -172,7 +166,7 @@ c     K --> direction      (zrt)
       dzi = 1./dz
 
 !     RENE: added Sept21_2011
-! RENE: commented Sept21_2011
+!     RENE: commented Sept21_2011
       if (periodic.eq.1) then
          zrt(1)=0.
          do k=3,kmax*px,2
@@ -288,30 +282,25 @@ c     generate tridiagonal systems
 
 
       do i=1,imax
-!         a(i)= Ru(I-1)/((Rp(I)-Rp(I-1))*Rp(I)*(Ru(I)-Ru(I-1)))
-!         b(i)=-(Ru(I)/(Rp(I+1)-Rp(I))+Ru(I-1)/(Rp(I)-Rp(I-1)))/
-!     &        (Rp(I)*(Ru(I)-Ru(I-1)))
-!         c(i)= Ru(I) /((Rp(I+1)-Rp(I))*Rp(I)*(Ru(I)-Ru(I-1)))
-!         a(i)= 1./((Rp(I)-Rp(I-1))*(Ru(I)-Ru(I-1)))
-!         b(i)=-(1./(Rp(I+1)-Rp(I))+1./(Rp(I)-Rp(I-1)))/
-!     &        ((Ru(I)-Ru(I-1)))
-!         c(i)= 1. /((Rp(I+1)-Rp(I))*(Ru(I)-Ru(I-1)))
+
          a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
          b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
      &        (Rp(I)*dRu(I))
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       end do
 
-      !b(1)=   -(Ru(1)/(Rp(2)-Rp(1)))/(Rp(1)*(Ru(1)-Ru(0)))
-!      if (numDomain.eq.-1) then
-!         b(1)    = b(1)-a(1)
-!      else
-!         b(1)    =   -(Ru(1)/dRp(1))/(Rp(1)*dRu(1))   ! new
-!      endif
-      b(1)=   -(1./(Rp(2)-Rp(1)))/((Ru(1)-Ru(0)))
-      b(imax)=b(imax)-c(imax)
+      if (numDomain.eq.-1) then
+         b(1)    = b(1)-a(1)
+      else
+         b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
+     &        (Rp(1)*dRu(1))
+      endif
+
+      b(imax) = b(imax)+c(imax)
+
       c(imax)=0.
       a(1)=0.
+
 
 
 c     Generate Eigenvalues

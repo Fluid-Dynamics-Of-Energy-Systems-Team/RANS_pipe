@@ -57,16 +57,18 @@
 
       ! periodic = 1, turb flow generator
       ! periodic = 2, heated pipe 
-!      if (periodic.ne.1) then
-!         if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
-!         if (turbmod.eq.1) open(29,file = 'SA/Inflow',form='unformatted')
-!         if (turbmod.eq.2) open(29,file = 'MK/Inflow',form='unformatted')
-!         if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
-!         if (turbmod.eq.4) open(29,file = 'OM/Inflow',form='unformatted')
-!         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
-!         close(29)
-!      endif
+      if (periodic.ne.1) then
+         if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
+         if (turbmod.eq.1) open(29,file = 'SA/Inflow',form='unformatted')
+         if (turbmod.eq.2) open(29,file = 'MK/Inflow',form='unformatted')
+         if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
+         if (turbmod.eq.4) open(29,file = 'OM/Inflow',form='unformatted')
+         read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+         close(29)
+      endif
 
+
+    
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
       call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);   ! necessary to call it twice
@@ -259,43 +261,74 @@
       call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
       call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
-      do k=1,kmax
-         if (rank.eq.0.and.k.lt.K_start_heat) then
-            Q=0.0
-         else
-            Q=Qwall
-         endif
+      if (numDomain.eq.-1) then  ! channel!!!!
+         do k=1,kmax
+            if (rank.eq.0.and.k.lt.K_start_heat) then
+               Q=0.0
+            else
+               Q=Qwall
+            endif
 
-         do i=1,imax-1
-            a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-            c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-            b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-            rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+               rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+            enddo
+   
+            i=1
+               a(i)   = 0.0
+               c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
+               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+            i=imax
+               a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+               c(i)   =  0.0
+               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               !resC = resC + (cnew(i,k) - rhs(i))**2.0
+               resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+               cnew(i,k) = max(rhs(i), 0.0)
+            enddo
          enddo
+      else ! pipe!!!!
+         do k=1,kmax
+            if (rank.eq.0.and.k.lt.K_start_heat) then
+               Q=0.0
+            else
+               Q=Qwall
+            endif
 
-         i=1
-         if (numDomain.eq.-1) then
-            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-            c(i)   =  0.0
-            b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-            rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-         else
-            b(i)=b(i)+a(i)
-         endif
-         i=imax
-            a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-            c(i)   =  0.0
-            b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-            rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+            do i=1,imax-1
+               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+               rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+            enddo
 
-         call matrixIdir(imax,a,b,c,rhs)
+            i=1
+               b(i)=b(i)+a(i)
+         
+            i=imax
+               a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+               c(i)   =  0.0
+               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
 
-         do i=1,imax
-            !resC = resC + (cnew(i,k) - rhs(i))**2.0
-            resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-            cnew(i,k) = max(rhs(i), 0.0)
+            call matrixIdir(imax,a,b,c,rhs)
+
+            do i=1,imax
+               !resC = resC + (cnew(i,k) - rhs(i))**2.0
+               resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+               cnew(i,k) = max(rhs(i), 0.0)
+            enddo
          enddo
-      enddo
+      endif
 
 
       if (periodic.eq.1) cnew = 0.0
@@ -351,7 +384,7 @@
 !!********************************************************************
       dnew = 0.0
       call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
-      call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif) ! new
+      call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain) ! new
 
       do k=1,kmax
          do i=1,imax-1
@@ -367,7 +400,12 @@
          enddo
 
          i = imax-1;    cu(i) = 0.0
-         i = 1;         bu(i) = bu(i) + numDomain*au(i)    ! BC at center: Neumann: cancel coeff a
+         i = 1;  
+         if (numDomain == -1) then
+            au(i+1) = 0.0           ! BC wall 
+         elseif (numDomain == 1) then    
+            bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
+         endif
 
          do i=1,imax-1
             rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
@@ -386,7 +424,7 @@
 
       dnew = 0.0
       call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
-      call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,rank)  ! new
+      call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain)  ! new
 
       if (periodic.eq.1) dnew = dnew + dpdz
 
@@ -732,7 +770,7 @@ c
          enddo
 
          Wbound(i1,kmax) = -Wbound(imax,kmax)
-         Wbound(0,kmax)  =  Wbound(1,kmax)
+         Wbound(0,kmax)  = numDomain*Wbound(1,kmax)
       endif
 
 c     compute drho/dt*dvol
@@ -771,12 +809,12 @@ c
             Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
          enddo
          Wbound(i1,kmax) = -Wbound(imax,kmax)
-         Wbound(0,kmax)  =  Wbound(1,kmax)
+         Wbound(0,kmax)  = numDomain*Wbound(1,kmax)
 
-         flux = 0
-         do i=1,imax
-            flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
-         enddo
+!         flux = 0
+!         do i=1,imax
+!            flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
+!         enddo
 !         write(*,*) "flux out: ", flux
 
       endif
@@ -809,7 +847,7 @@ c
       delta=0.5
       t1=3.5
       t2=5.
-      t3=10.
+      t3=360.00
       Unew =0.
       Uold =0.
       Cnew =0.
@@ -839,7 +877,7 @@ c
             do i=1,imax
                             
               if (numDomain.eq.-1) then
-                 Wnew(i,:)  = Re*dpdz*y_cv(i)*((y_cv(i)/0.5)-1.0)
+                 Wnew(i,:)  = Re*dpdz*y_cv(i)*(1.0-(y_cv(i)*0.5))
               else
                  Wnew(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)
               endif
