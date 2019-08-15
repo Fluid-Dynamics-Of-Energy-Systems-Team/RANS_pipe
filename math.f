@@ -146,9 +146,8 @@ c     generate tridiagonal systems
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))       
       enddo
 
-
       if (numDomain.eq.-1) then
-         b(1)    = b(1)-a(1)
+         b(1)    = b(1)+a(1)
       else
          b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
      &        (Rp(1)*dRu(1))
@@ -223,11 +222,12 @@ c     solve tridiagonal systems with Gaussian elemination
       else
          call vcosqf(imax/px,kmax*px,vfftk,rtmp,imax/px,wk)
       endif
-         do i=1,imax/px
-            do k=1,kmax*px
-               rtmp(i,k)=vfftk(i,k)
-            enddo
+
+      do i=1,imax/px
+         do k=1,kmax*px
+            rtmp(i,k)=vfftk(i,k)
          enddo
+      enddo
 
       call t2np(rtmp,rhs,rank)
       return
@@ -282,7 +282,6 @@ c     generate tridiagonal systems
 
 
       do i=1,imax
-
          a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
          b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
      &        (Rp(I)*dRu(I))

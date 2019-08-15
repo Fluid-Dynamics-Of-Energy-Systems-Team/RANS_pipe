@@ -313,17 +313,15 @@ c
       include 'common.txt'
       include 'mpif.h'
       integer ierr,istap
-      real*8  tmp,Courant,dtmp
+      real*8  tmp,Courant,dtmp,tmp1,tmp2,tmp3,dr2,dz2,kcoeff
 
-      dt = 100.0
-
-      Courant = 1
+      dt = dtmax
 
       do k=1,kmax
          do i=1,imax
             tmp = ( abs(Unew(i,k)) /  dRp(i) ) +! ( Rp(i+1)-Rp(i) ) ) + new
      &            ( abs(Wnew(i,k)) /         dz        )
-            tmp = Courant/tmp
+            tmp = CFL/tmp
             dt  = min(dt, tmp)
          enddo
       enddo

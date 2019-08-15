@@ -2,12 +2,13 @@
       integer         EOSmode,periodic,kmaxper,k1Old
       integer         nstep,K_start_heat,select_init,numDomain
       integer         turbmod,modifDiffTerm,modVF,profiling
-      real*8          Re,Pr,Qwall
+      real*8          Re,Pr,Qwall,CFL
       real*8          dpdz,ctheta,Fr_1
       real*8    alphac,alphak,alphae,alphav2
 
-      parameter (numDomain         = 1)        ! numerical domain  -1.. Channel, 1.. Pipe
-      parameter (dpdz              = 4)        ! should be 1 for channel, 4 for the pipe 
+      parameter (CFL               = 1.5)      ! CFL number / time step
+      parameter (numDomain         = -1)        ! numerical domain  -1.. Channel, 1.. Pipe
+      parameter (dpdz              = 1)        ! should be 1 for channel, 4 for the pipe 
 
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 96)       ! radial direction
