@@ -408,14 +408,15 @@ c******************************************************************
       fB = 2.4
       gridSize = 0.5            !for the pipe the diameter is 1; radius is 0.5
       if (numDomain.eq.-1) then
+         ! TODO: BoundaryLayer: gridSize??
+         gridSize = 1.0  
+      endif
+      if (centerBC.eq.-1) then  ! there are two walls
          fA = 0.5
          fB = 4.6
          gridSize = 2.0         !for the channel the half channel height is 1   
       endif
-
-!      fA = 0.0001
-!      fB = 0.0001
-
+      
 
       do i = 1,imax
          fact = (i-0.)/(imax-0.)
@@ -443,7 +444,7 @@ c******************************************************************
          drp(i) = Rp(i+1) - Rp(i)
       enddo
 
-      if (numDomain.eq.-1) then
+      if (centerBC.eq.-1) then ! two walls
          do i = 1,imax
             if (rp(i).le.1) then
                wallDist(i) = rp(i)
@@ -451,7 +452,7 @@ c******************************************************************
                wallDist(i) = gridSize-rp(i)
             endif
          enddo
-      else
+      else ! one wall
          do i = 1,imax
             wallDist(i) = gridSize - rp(i)
          enddo
@@ -462,13 +463,25 @@ c******************************************************************
       enddo
 
       if (numDomain.eq.-1) then
-         if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
+         if (centerBC.eq.-1) then
+            if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
+         else if (centerBC.eq.1) then
+            if (rank.eq.0) print*,"*************SOLVING A BOUNDARY LAYER FLOW*************!"
+         else
+            if (rank.eq.0) print '("centerBC is ",i7," when it should be either +1 (for symmetry) or -1 (for wall)")',centerBC
+            stop  
+         endif
          do i=0,i1
             ru(i)=1.0
             rp(i)=1.0
          enddo 
       else if (numDomain.eq.1) then
-         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"   
+         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"  
+ 
+         if (centerBC.ne.1) then
+            if (rank.eq.0) print '("centerBC is ",i7," when it should be +1 (for pipe flow)")',centerBC
+            stop  
+         endif
       else
          if (rank.eq.0) print '("numDomain is ",i7," when it should be either +1 (for pipe flow) or -1 (for channel flow)")',numDomain
          stop  

@@ -273,7 +273,7 @@
          enddo
 
          i=1
-         b(i) = b(i)+numDomain*a(i)
+         b(i) = b(i)+centerBC*a(i)
 
          i=imax
          b(i) = b(i) - (c(i) /alphak)

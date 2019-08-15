@@ -261,7 +261,7 @@
       call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
       call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
-      if (numDomain.eq.-1) then  ! channel!!!!
+      if (centerBC.eq.-1) then  ! wall both sides!!!!
          do k=1,kmax
             if (rank.eq.0.and.k.lt.K_start_heat) then
                Q=0.0
@@ -296,7 +296,7 @@
                cnew(i,k) = max(rhs(i), 0.0)
             enddo
          enddo
-      else ! pipe!!!!
+      else ! wall one side!!!!
          do k=1,kmax
             if (rank.eq.0.and.k.lt.K_start_heat) then
                Q=0.0
@@ -319,7 +319,7 @@
                c(i)   =  0.0
                b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
                rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
+            ! TODO: BoundaryLayer: isothermal wakk
             call matrixIdir(imax,a,b,c,rhs)
 
             do i=1,imax
@@ -386,36 +386,61 @@
       call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
       call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain) ! new
 
-      do k=1,kmax
-         do i=1,imax-1
-            au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
-            cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
-            bu(i) = -au(i)-cu(i)
-            rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
-            rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
-            rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
-            au(i) = au(i)/rhoa
-            bu(i) = bu(i)/rhob + 1.0
-            cu(i) = cu(i)/rhoc
+      if (centerBC == -1) then
+         do k=1,kmax
+            do i=1,imax-1
+               au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+               cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+               bu(i) = -au(i)-cu(i)
+               rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+               rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+               rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+               au(i) = au(i)/rhoa
+               bu(i) = bu(i)/rhob + 1.0
+               cu(i) = cu(i)/rhoc
+            enddo
+   
+            i = imax-1;    cu(i) = 0.0
+            i = 1;  
+               au(i+1) = 0.0           ! BC wall 
+   
+            do i=1,imax-1
+               rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+            enddo
+   
+            call matrixIdir(imax-1,au,bu,cu,rhsu)
+            do i=1,imax-1
+               dUdt(i,k)=rhsu(i)
+            enddo
          enddo
+      elseif (centerBC == 1) then 
+         do k=1,kmax
+            do i=1,imax-1
+               au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+               cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+               bu(i) = -au(i)-cu(i)
+               rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+               rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+               rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+               au(i) = au(i)/rhoa
+               bu(i) = bu(i)/rhob + 1.0
+               cu(i) = cu(i)/rhoc
+            enddo
 
-         i = imax-1;    cu(i) = 0.0
-         i = 1;  
-         if (numDomain == -1) then
-            au(i+1) = 0.0           ! BC wall 
-         elseif (numDomain == 1) then    
-            bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
-         endif
-
-         do i=1,imax-1
-            rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+            i = imax-1;    cu(i) = 0.0
+            i = 1;  
+               bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
+   
+            do i=1,imax-1
+               rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+            enddo
+   
+            call matrixIdir(imax-1,au,bu,cu,rhsu)
+            do i=1,imax-1
+               dUdt(i,k)=rhsu(i)
+            enddo
          enddo
-
-         call matrixIdir(imax-1,au,bu,cu,rhsu)
-         do i=1,imax-1
-            dUdt(i,k)=rhsu(i)
-         enddo
-      enddo
+      endif
 
 !********************************************************************
 !     CALCULATE advection, diffusion and Force in z-direction
@@ -446,7 +471,7 @@
          enddo
 
          i=imax;    b(i) = b(i) - c(i)    ! BC at wall: zero vel: subtract one c
-         i = 1;     b(i) = b(i) + numDomain*a(i)     ! BC at wall: zero vel: subtract one a
+         i = 1;     b(i) = b(i) + centerBC*a(i)     ! BC at wall: zero vel: subtract one a
 
          do i=1,imax
             rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
@@ -489,7 +514,7 @@ c
             cnew(i1,:) = cnew(imax,:)
          else
             call funcNewtonSolve(cnew(i1,k), cnew(imax,k))
-            if (numDomain.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
+            if (centerBC.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
          endif
       enddo
 
@@ -499,7 +524,7 @@ c
          ! SA
          nuSAnew(i1,:) = -nuSAnew(imax,:)
 
-         if (numDomain.eq.-1) then
+         if (centerBC.eq.-1) then
             nuSAnew(0,:) = -nuSAnew(1,:)
          endif
 
@@ -509,7 +534,7 @@ c
          BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
 
-         if (numDomain.eq.-1) then
+         if (centerBC.eq.-1) then
             knew(0,:)  = -knew(1,:)
             BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
             enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
@@ -522,7 +547,7 @@ c
          BCvalue(:)  = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
          enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
 
-         if (numDomain.eq.-1) then
+         if (centerBC.eq.-1) then
             knew(0,:)  = -knew(1,:)
             v2new(0,:) = -v2new(1,:)
             BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
@@ -535,7 +560,7 @@ c
          BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
          omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
 
-         if (numDomain.eq.-1) then
+         if (centerBC.eq.-1) then
             knew(0,:)  = -knew(1,:)
             BCvalue(:) = 60.0/0.075*ekm(1,:)/rNew(1,:)/wallDist(1)**2
             omNew(0,:) = 2.0*BCvalue(:) - omNew(1,:)
@@ -543,7 +568,7 @@ c
 
       endif
 
-      if (numDomain.eq.1) then
+      if (centerBC.eq.1) then
 !     center line BC
          cnew(0,:)    = cnew(1,:)
          knew(0,:)    = knew(1,:)
@@ -620,7 +645,7 @@ c
 
 
 !     Radial Boundary condition
-      if (numDomain.eq.-1) then ! channal bc
+      if (centerBC.eq.-1) then ! channal bc
          do k=0,k1
             Ubound(1,k)    =   0.0
             Ubound(0,k)    = - Ubound(2,k)
@@ -702,7 +727,7 @@ c
       real*8 wbf(0:i1)
       integer   ib,ie,kb,ke
 
-      if (numDomain.eq.-1) then ! channal bc
+      if (centerBC.eq.-1) then ! channal bc
          do k=0,k1
             Ubound(1,k)    =   0.0
             Ubound(0,k)    = - Ubound(2,k)
@@ -770,7 +795,7 @@ c
          enddo
 
          Wbound(i1,kmax) = -Wbound(imax,kmax)
-         Wbound(0,kmax)  = numDomain*Wbound(1,kmax)
+         Wbound(0,kmax)  = centerBC*Wbound(1,kmax)
       endif
 
 c     compute drho/dt*dvol
@@ -809,7 +834,7 @@ c
             Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
          enddo
          Wbound(i1,kmax) = -Wbound(imax,kmax)
-         Wbound(0,kmax)  = numDomain*Wbound(1,kmax)
+         Wbound(0,kmax)  = centerBC*Wbound(1,kmax)
 
 !         flux = 0
 !         do i=1,imax
@@ -840,7 +865,7 @@ c
       include 'param.txt'
       include 'common.txt'
 
-      real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta
+      real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
 
       character*5 inflow
 
@@ -852,7 +877,7 @@ c
       Uold =0.
       Cnew =0.
 
-
+      gridSize = y_fa(imax)
       rold =1.
       rnew =1.
 
@@ -877,10 +902,15 @@ c
             do i=1,imax
                             
               if (numDomain.eq.-1) then
-                 Wnew(i,:)  = Re*dpdz*y_cv(i)*(1.0-(y_cv(i)*0.5))
-              else
+                 if (centerBC.eq.-1) then     ! channel
+                    Wnew(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))
+                 elseif (centerBC.eq.1) then ! boundary layer 
+                    Wnew(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i)))
+                 endif
+              else                           ! pipe
                  Wnew(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)
               endif
+              ! TODO: BoundaryLayer: Analytical solution?
 
               knew(i,:)  = 0.1
               enew(i,:)  = 1.0

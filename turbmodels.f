@@ -93,7 +93,7 @@
       call rhs_Epsilon(dnew,dimpl,Rtmp)    !new
       call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
-      if (numDomain.eq.-1) then   ! channel!!!!
+      if (centerBC.eq.-1) then   
           do k=1,kmax
              do i=1,imax
                     
@@ -125,7 +125,7 @@
     
              enddo
           enddo
-      else             ! pipe!!!!
+      else             
           do k=1,kmax
              do i=1,imax
                     
@@ -220,7 +220,7 @@
            enddo
 
            i=1
-           b(i) = b(i) + numDomain*a(i)
+           b(i) = b(i) + centerBC*a(i)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)
@@ -253,7 +253,7 @@
            enddo
 
            i=1
-           b(i) = b(i) + numDomain*a(i)
+           b(i) = b(i) + centerBC*a(i)
              
            i=imax
            b(i) = b(i) - (c(i) /alphak)

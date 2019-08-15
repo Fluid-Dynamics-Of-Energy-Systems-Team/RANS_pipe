@@ -146,7 +146,7 @@ c     generate tridiagonal systems
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))       
       enddo
 
-      if (numDomain.eq.-1) then
+      if (centerBC.eq.-1) then
          b(1)    = b(1)+a(1)
       else
          b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
@@ -288,7 +288,7 @@ c     generate tridiagonal systems
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       end do
 
-      if (numDomain.eq.-1) then
+      if (centerBC.eq.-1) then
          b(1)    = b(1)-a(1)
       else
          b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new

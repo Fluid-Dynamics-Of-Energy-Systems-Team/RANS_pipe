@@ -22,4 +22,7 @@ numerics.f
 	advecc: advection term of the scalars in both directions: r and z
 	advecu: advection term of the radial velocity (U): for cylindrical d(rho U W)/dz + 1/r d(r rho U^2)/dr
 	advecw: advection term of the axial velocity (W) : for cylincrical d(rho W^2)/dz + 1/r d(r rho U W)/dr
-	
+
+
+
+How to solve incompressible NS (SIMPLE algorithm): https://www.youtube.com/watch?v=OOILoJ1zuiw	

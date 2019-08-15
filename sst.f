@@ -298,7 +298,7 @@
              enddo
 
              i=1
-             b(i) = b(i)+numDomain*a(i)
+             b(i) = b(i)+centerBC*a(i)
 
              i=imax
              b(i) = b(i) - (c(i) /alphak)
@@ -332,7 +332,7 @@
              enddo
 
              i=1
-             b(i) = b(i)+numDomain*a(i)
+             b(i) = b(i)+centerBC*a(i)
 
              i=imax
              b(i) = b(i) - (c(i) /alphak)
@@ -381,7 +381,7 @@
       sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
       sigmakSST = 1.0/sigmakSST
       call diffcSSTOmega(dnew,omNew,ekm,ekmi,ekmk,ekmt,sigmakSST,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
-      if (numDomain.eq.-1) then
+      if (centerBC.eq.-1) then   
           do k=1,kmax
              do i=1,imax
     
