@@ -1,21 +1,15 @@
       integer         i,k,imax,kmax,i1,k1,iwork,isave,px,rank,nTab,LoD
       integer         EOSmode,periodic,kmaxper,k1Old
-      integer         nstep,K_start_heat,select_init,numDomain,centerBC
-      integer         turbmod,modifDiffTerm,modVF,profiling
-      real*8          Re,Pr,Qwall,CFL
-      real*8          dpdz,ctheta,Fr_1
+      integer         nstep,K_start_heat,select_init,systemSolve
+      integer         turbmod,modifDiffTerm,modVF,profiling,isothermalBC
+      real*8          Re,Pr,Qwall,CFL,Tw
+      real*8          ctheta,Fr_1
       real*8    alphac,alphak,alphae,alphav2
 
       parameter (CFL               = 1.0)      ! CFL number / time step
-      
-      ! To run   
-      !                      pipe: numDoman = 1 , centerBC = 1
-      !                   channel: numDoman =-1 , centerBC =-1
-      !            boundary layer: numDoman =-1 , centerBC = 1
-      parameter (numDomain         = -1)       ! -1..Channel/BL , 1: pipe
-      parameter (centerBC          = -1)       ! 1: symmetry (BL), -1: wall (Channel) 
-      
-      parameter (dpdz              = 1)        ! should be 1 for channel, 4 for the pipe 
+     
+      parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer       
+      !parameter (dpdz              = 1)        ! now defined in mkgrid should be 1 for channel/BL, 4 for the pipe 
 
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 96)       ! radial direction
@@ -31,16 +25,18 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)
-      parameter (nstep             = 20000) !20000)
+      parameter (nstep             = 60000)
 
       parameter (LoD               = 20)
-      parameter (periodic          = 1)               ! 1..periodic, 2..developing 
+      parameter (periodic          = 2)               ! 1..periodic, 2..developing 
      
       parameter (Re                = 360)
       parameter (Pr                = 3.19457)
 
 !     Q+=Qwall=(qw*D/(k0*T0))        
       parameter (Qwall             = 0.0)     !0.0) !2.4)
+      parameter (isothermalBC      = 1)        ! isothermal wall: 1
+      parameter (Tw                = 1.4)       ! scaled with the inflow temp (Tin=1)
 
 !     1/Fr = Gr/(beta_o*T_o*Re**2.*Qwall)
       parameter (Fr_1              =  0.0) 
@@ -50,10 +46,10 @@
 !      parameter (Fr_1              =  99.59)  ! downward
 c      /(beta_o*T_o*Re**2.*Qwall))   
 
-      parameter (EOSmode           = 0)             ! 0..IG, 1..SCCO2
+      parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2
 
-      parameter (select_init       = 0)            ! 0..std initialization, 1..read inflow , 2..read restart file
-      parameter (turbmod           = 3)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
+      parameter (select_init       = 2)            ! 0..std initialization, 1..read inflow , 2..read restart file
+      parameter (turbmod           = 1)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
       parameter (ctheta            = 0.3) 
       parameter (modVF             = 0)            ! 0..Original 1..LienKalitzin Time/Length scale VF model
       
@@ -61,7 +57,7 @@ c      /(beta_o*T_o*Re**2.*Qwall))
       parameter (alphac            = 0.1)
       parameter (alphak            = 0.2) !0.05)         ! for SA
       parameter (alphae            = 0.2) !0.05) 
-      parameter (alphav2           = 0.1) !0.03) 
+      parameter (alphav2           = 0.05) !0.03) 
 
       parameter (modifDiffTerm     = 0)              ! 0..Standard, 1..invSLS, 2..Aupoix
      

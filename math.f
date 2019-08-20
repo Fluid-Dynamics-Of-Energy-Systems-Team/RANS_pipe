@@ -93,7 +93,7 @@ c********************************************************************
 
 
 
-      SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank)
+      SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
 c     
 c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
 c     BENDIKS JAN BOERSMA
@@ -110,6 +110,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       real*8      zrt(kmax*px)
       real*8      vfftk(imax/px,kmax*px)
       real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
+      integer     centerBC
 
 c     generate tridiagonal systems
 
@@ -235,7 +236,7 @@ c     solve tridiagonal systems with Gaussian elemination
 
 
 
-      SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm)
+      SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm,centerBC)
 c
 c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
 c     BENDIKS JAN BOERSMA
@@ -252,7 +253,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       real*8      zrt(kmax*px)
       real*8      vfftk(imax/px,kmax*px)
       real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
-
+      integer     centerBC
 c     generate tridiagonal systems
 
       pi = 4.*atan(1.)

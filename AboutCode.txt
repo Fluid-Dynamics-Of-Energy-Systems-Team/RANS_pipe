@@ -23,6 +23,7 @@ numerics.f
 	advecu: advection term of the radial velocity (U): for cylindrical d(rho U W)/dz + 1/r d(r rho U^2)/dr
 	advecw: advection term of the axial velocity (W) : for cylincrical d(rho W^2)/dz + 1/r d(r rho U W)/dr
 
-
+fileo.f 
+        ReadTable(): to read the thermodynamic table. For CO2 the file name is: co2h_table.dat [temp,rho,mu,lam,cp,enth,beta] which are already scaled
 
 How to solve incompressible NS (SIMPLE algorithm): https://www.youtube.com/watch?v=OOILoJ1zuiw	

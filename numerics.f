@@ -1,4 +1,32 @@
 !>********************************************************************
+!!     Calculate enthalpy at the wall boundary condition for isothermal
+!!********************************************************************
+      subroutine funcIsothermalEnthBC()
+      implicit none
+      include 'param.txt'
+      include 'common.txt'
+      integer tabkhi,tabklo
+      tabkhi=0
+      tabklo=0
+
+
+      if (EOSmode.eq.0) enth_wall = (Tw-1.0)
+      if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Tw,enth_wall,tabkhi,tabklo)
+
+      
+      if (Qwall.ne.0) then
+         if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
+         stop 
+      else
+         if (rank.eq.0) then
+            print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
+            print '("enthalpy at the wall = ",f6.3," .")',enth_wall
+         endif
+      endif
+
+      end
+
+!>********************************************************************
 !!     Newton solver for wall boundary condition
 !!********************************************************************
       subroutine funcNewtonSolve(enth_i1, enth_imax)
@@ -9,7 +37,6 @@
 
          if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
          if (EOSmode.eq.1) call funcNewtonSolveRG(enth_i1, enth_imax)
-
       end
 
 
@@ -24,8 +51,8 @@
       real*8 enth_i1, enth_imax, ekh_imax
 
         ekh_imax = 1./(Re*Pr)
-        !enth_i1 = enth_imax + (Rp(i1)-Rp(imax))*Qwall/(ekh_imax*Re*Pr) ! RENE not sure
         enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
+        
       end
 
 
@@ -147,23 +174,46 @@
       real*8 cpp (0:i1,0:k1)
       real enthface,cpface,conface,muface,beface
 
-      do k=0,k1
-         call funcNewtonSolveRG(enth(i1,k), enth(imax,k))
-         if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
-         do i=0,i1
-            tabkhi = 0
-            tabklo = 0
-            call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
-            call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
-            call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
-            call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
-            call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
-            call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
-            mu(i,k)  = mu(i,k)/Re
-            lam(i,k) = lam(i,k)/(Re*Pr)
+
+      if(isothermalBC.eq.1) then
+         do k=0,k1
+          !  if (rank.eq.0.and.k.lt.K_start_heat) then
+          !     enth(i1,k)=enth(imax,k)
+          !  else
+          !     enth(i1,k) = 2.0*enth_wall - enth(imax,k)
+          !  endif
+            do i=0,i1
+               tabkhi = 0
+               tabklo = 0
+               call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+               call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+               call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+               call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+               call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+               call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+               mu(i,k)  = mu(i,k)/Re
+               lam(i,k) = lam(i,k)/(Re*Pr)
+            enddo
          enddo
-      enddo
-      
+      else
+         do k=0,k1   
+            call funcNewtonSolveRG(enth(i1,k), enth(imax,k))
+            if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
+            do i=0,i1
+               tabkhi = 0
+               tabklo = 0
+               call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+               call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+               call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+               call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+               call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+               call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+               mu(i,k)  = mu(i,k)/Re
+               lam(i,k) = lam(i,k)/(Re*Pr)
+            enddo
+         enddo
+      endif
+
       do k=0,kmax
          do i=0,imax
             tabkhi = 0
@@ -403,19 +453,33 @@ c******************************************************************
       dz    = 1.0*LoD/(kmax*px)
       ru(0) = 0
 
-
       fA = 0.12
       fB = 2.4
-      gridSize = 0.5            !for the pipe the diameter is 1; radius is 0.5
-      if (numDomain.eq.-1) then
-         ! TODO: BoundaryLayer: gridSize??
-         gridSize = 1.0  
-      endif
-      if (centerBC.eq.-1) then  ! there are two walls
+      if (systemSolve.eq.1) then
+         numDomain = 1
+         centerBC  = 1
+         gridSize = 0.5 
+         dpdz =4.0 
+         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"  
+      elseif (systemSolve.eq.2) then
+         numDomain = -1
+         centerBC  = -1
+         gridSize  = 2.0 
          fA = 0.5
-         fB = 4.6
-         gridSize = 2.0         !for the channel the half channel height is 1   
+         fB = 4.6 
+         dpdz= 1.0 
+         if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
+      elseif (systemSolve.eq.3) then
+         numDomain = -1
+         centerBC  = 1
+         gridSize = 1.0 
+         dpdz= 1.0
+         if (rank.eq.0) print*,"*************SOLVING A BOUNDARY LAYER FLOW*************!"
+      else
+         if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")',systemSolve
+         stop 
       endif
+
       
 
       do i = 1,imax
@@ -463,28 +527,10 @@ c******************************************************************
       enddo
 
       if (numDomain.eq.-1) then
-         if (centerBC.eq.-1) then
-            if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
-         else if (centerBC.eq.1) then
-            if (rank.eq.0) print*,"*************SOLVING A BOUNDARY LAYER FLOW*************!"
-         else
-            if (rank.eq.0) print '("centerBC is ",i7," when it should be either +1 (for symmetry) or -1 (for wall)")',centerBC
-            stop  
-         endif
          do i=0,i1
             ru(i)=1.0
             rp(i)=1.0
          enddo 
-      else if (numDomain.eq.1) then
-         if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"  
- 
-         if (centerBC.ne.1) then
-            if (rank.eq.0) print '("centerBC is ",i7," when it should be +1 (for pipe flow)")',centerBC
-            stop  
-         endif
-      else
-         if (rank.eq.0) print '("numDomain is ",i7," when it should be either +1 (for pipe flow) or -1 (for channel flow)")',numDomain
-         stop  
       endif
 
       if (rank.eq.0) then

@@ -2,16 +2,16 @@
 
 
 c     ****************      
-      integer         istep,nsteps,inlet
-      common /intvar/ istep,nsteps,inlet
+      integer         istep,nsteps,inlet,centerBC,numDomain
+      common /intvar/ istep,nsteps,inlet,centerBC,numDomain
       save   /intvar/
 
 
 
 
 c     ****************
-      real*8          pi
-      common /numvar/ pi
+      real*8          pi,dpdz
+      common /numvar/ pi,dpdz
       save   /numvar/
 
 
@@ -39,8 +39,8 @@ c     ****************
       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),
      1                temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1),
      1                ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1),
-     1                Tt(0:i1,0:k1)
-      common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt
+     1                Tt(0:i1,0:k1),enth_wall
+      common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
       save   /energy/
       
       

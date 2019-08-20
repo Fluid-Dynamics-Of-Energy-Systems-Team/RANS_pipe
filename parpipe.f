@@ -31,8 +31,9 @@
       dtmax = 1.e-3
 
       ! generating the table for thermodynamic quantities...
-      call readTable(rank)
-
+      call readTable(rank)      
+      ! calculating the coefficient (xxx2Tab) for the spline interpolation
+      call spline(tempTab, enthTab,   nTab, enth2Tab)
       call spline(enthTab, rhoTab,    nTab, rho2Tab)
       call spline(enthTab, muTab,     nTab, mu2Tab)
       call spline(enthTab, lamTab,    nTab, lam2Tab)
@@ -41,6 +42,8 @@
       call spline(enthTab, tempTab,   nTab, temp2Tab)
       call spline(enthTab, betaTab,   nTab, beta2Tab)
 
+      if (isothermalBC.eq.1)  call funcIsothermalEnthBC() ! calc. enthalpy at the wall (isothermal BC)
+  
       call mkgrid(rank)
 
       dt = dtmax
@@ -93,7 +96,7 @@
 
          if (turbmod.eq.3)  then
             call fillhm(rank)
-            call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh)
+            call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh,centerBC)
          endif
  		
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
@@ -105,7 +108,7 @@
          call advance(rank)
          call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
          call fillps(rank)
-         call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank)
+         call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
          call correc(rank,1)
          call bound_v(Unew,Wnew,Win,rank)
 
@@ -241,7 +244,7 @@
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
       real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
-      real*8 cb3,Q
+      real*8 cb3,Q,hbc
       integer ierr
       real*8     a  (imax)
       real*8     b  (imax)
@@ -261,77 +264,114 @@
       call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
       call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
-      if (centerBC.eq.-1) then  ! wall both sides!!!!
-         do k=1,kmax
-            if (rank.eq.0.and.k.lt.K_start_heat) then
-               Q=0.0
-            else
-               Q=Qwall
-            endif
+      if (isothermalBC.eq.1) then  
+        !!!!!!!!! isothermal wall
+        if (centerBC.eq.1) then
+            do k=1,kmax
+               do i=1,imax
+                  a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+                  c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+                  b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+                  rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+               enddo
 
-            do i=1,imax-1
-               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-               rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-            enddo
-   
-            i=1
-               a(i)   = 0.0
-               c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
-               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-            i=imax
-               a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-               c(i)   =  0.0
-               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-            call matrixIdir(imax,a,b,c,rhs)
-
-            do i=1,imax
-               !resC = resC + (cnew(i,k) - rhs(i))**2.0
-               resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-               cnew(i,k) = max(rhs(i), 0.0)
-            enddo
-         enddo
-      else ! wall one side!!!!
-         do k=1,kmax
-            if (rank.eq.0.and.k.lt.K_start_heat) then
-               Q=0.0
-            else
-               Q=Qwall
-            endif
-
-            do i=1,imax-1
-               a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-               c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-               b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-               rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-            enddo
-
-            i=1
-               b(i)=b(i)+a(i)
+               i=1
+                  b(i)=b(i)+a(i)
          
-            i=imax
-               a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-               c(i)   =  0.0
-               b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-               rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-            ! TODO: BoundaryLayer: isothermal wakk
-            call matrixIdir(imax,a,b,c,rhs)
+               i=imax
+                  rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
 
-            do i=1,imax
-               !resC = resC + (cnew(i,k) - rhs(i))**2.0
-               resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-               cnew(i,k) = max(rhs(i), 0.0)
+               call matrixIdir(imax,a,b,c,rhs)
+   
+               do i=1,imax
+                  !resC = resC + (cnew(i,k) - rhs(i))**2.0
+                  resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+                  cnew(i,k) = max(rhs(i), 0.0)
+               enddo
+               
             enddo
-         enddo
+            
+
+         else
+            if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
+            stop 
+         endif
+     
+      else
+         !!!!!!!!! isoflux
+         if (centerBC.eq.-1) then  ! wall both sides!!!!
+            do k=1,kmax
+               if (rank.eq.0.and.k.lt.K_start_heat) then
+                  Q=0.0
+               else
+                  Q=Qwall
+               endif
+
+               do i=1,imax-1
+                  a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+                  c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+                  b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+                  rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+               enddo
+   
+               i=1
+                  a(i)   = 0.0
+                  c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
+                  b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+                  rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+               i=imax
+                  a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+                  c(i)   =  0.0
+                  b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+                  rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+               call matrixIdir(imax,a,b,c,rhs)
+
+               do i=1,imax
+                  !resC = resC + (cnew(i,k) - rhs(i))**2.0
+                  resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+                  cnew(i,k) = max(rhs(i), 0.0)
+               enddo
+            enddo
+         else if (centerBC.eq.1) then
+            do k=1,kmax
+               if (rank.eq.0.and.k.lt.K_start_heat) then
+                  Q=0.0
+               else
+                  Q=Qwall
+               endif
+
+               do i=1,imax-1
+                  a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+                  c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+                  b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+                  rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+               enddo
+
+               i=1
+                  b(i)=b(i)+a(i)
+         
+               i=imax
+                  a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+                  c(i)   =  0.0
+                  b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+                  rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+               call matrixIdir(imax,a,b,c,rhs)
+   
+               do i=1,imax
+                  !resC = resC + (cnew(i,k) - rhs(i))**2.0
+                  resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+                  cnew(i,k) = max(rhs(i), 0.0)
+               enddo
+            enddo
+         endif
       endif
 
 
-      if (periodic.eq.1) cnew = 0.0
+      if (periodic.eq.1) then
+         cnew = 0.0; resC=0.0;
+      endif
 
       resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
       if (turbmod.eq.1) then
@@ -509,15 +549,35 @@ c
 
 
 !     Radial boundary condition for enthalpy c
-      do k=0,k1
-         if (rank.eq.0.and.k.lt.K_start_heat) then
-            cnew(i1,:) = cnew(imax,:)
-         else
-            call funcNewtonSolve(cnew(i1,k), cnew(imax,k))
-            if (centerBC.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
-         endif
-      enddo
+      if (isothermalBC.eq.1) then 
+        !!!!!!!!!!!! isothermal
+         if (centerBC.eq.1) then
+            do k=0,k1
+               if (rank.eq.0.and.k.lt.K_start_heat) then
+                  cnew(i1,k) = cnew(imax,k)
+               else
+                  cnew(i1,k) = 2.0*enth_wall - cnew(imax,k)
+               endif
+            enddo
 
+         else
+            if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
+            stop 
+         endif   
+     
+      else                        
+         !!!!!!!!!!!! isoflux
+         do k=0,k1
+            if (rank.eq.0.and.k.lt.K_start_heat) then
+               cnew(i1,:) = cnew(imax,:)
+            else
+               call funcNewtonSolve(cnew(i1,k), cnew(imax,k))
+               if (centerBC.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
+            endif
+
+         enddo
+
+      endif
 
 !     Radial boundary condition
       if (turbmod.eq.1) then
