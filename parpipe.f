@@ -95,7 +95,6 @@
          if (turbmod.eq.3)  then
             call fillhm(rank)
             call SOLVEhelm(fv2,Ru,Rp,dRu,dRp,dz,rank,Lh,centerBC)
-
          endif
  		
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)

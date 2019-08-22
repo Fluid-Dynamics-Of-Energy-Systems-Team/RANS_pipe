@@ -148,13 +148,11 @@ c     generate tridiagonal systems
       enddo
 
       if (centerBC.eq.-1) then
-         b(1)    = b(1)+a(1)
+         b(1)    = b(1)-a(1)
       else
-         b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
-     &        (Rp(1)*dRu(1))
+         b(1)    =-Ru(1) /(dRp(1)*Rp(1)*dRu(1)) 
       endif
-
-      b(imax) = b(imax)+c(imax)
+      b(imax) = b(imax)-c(imax)
 
       c(imax)=0.
       a(1)=0.
@@ -288,12 +286,11 @@ c     generate tridiagonal systems
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       enddo
       if (centerBC.eq.-1) then
-         b(1)    = b(1)+a(1)
+         b(1)    = b(1)-a(1)
       else
-         b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
-     &        (Rp(1)*dRu(1))
+         b(1)    =-Ru(1) /(dRp(1)*Rp(1)*dRu(1)) 
       endif
-      b(imax) = b(imax)+c(imax)
+      b(imax) = b(imax)-c(imax)
       c(imax)=0.
       a(1)=0.
 
