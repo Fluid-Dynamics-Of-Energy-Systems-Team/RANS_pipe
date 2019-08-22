@@ -86,17 +86,16 @@
       call chkdt(rank,istep)
 
       call cpu_time(start)
-
       ! simulation loop 
       do istep=istart,nstep
 
          ! calculating turbulent viscosity
          call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
          
-
          if (turbmod.eq.3)  then
             call fillhm(rank)
-            call SOLVEhelm(fv2,Ru,Rp,dz,rank,Lh,centerBC)
+            call SOLVEhelm(fv2,Ru,Rp,dRu,dRp,dz,rank,Lh,centerBC)
+
          endif
  		
          call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
@@ -104,7 +103,6 @@
          call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
          call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
       	
-
          call advance(rank)
          call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
          call fillps(rank)

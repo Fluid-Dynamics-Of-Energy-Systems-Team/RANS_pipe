@@ -24,6 +24,8 @@ numerics.f
 	advecw: advection term of the axial velocity (W) : for cylincrical d(rho W^2)/dz + 1/r d(r rho U W)/dr
 
 fileo.f 
-        ReadTable(): to read the thermodynamic table. For CO2 the file name is: co2h_table.dat [temp,rho,mu,lam,cp,enth,beta] which are already scaled
+        ReadTable(): to read the thermodynamic table. For CO2 the file name is: co2h_table.dat [temp,rho,mu,lam,cp,enth,beta] which are already scaled. 
+
+From Hassan's thesis: inflow conditions correspond to p0=80 bar and T0=301.15K (28C)
 
 How to solve incompressible NS (SIMPLE algorithm): https://www.youtube.com/watch?v=OOILoJ1zuiw	

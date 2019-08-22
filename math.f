@@ -281,26 +281,21 @@ c     generate tridiagonal systems
         enddo
       call t2np(rtmp,rhs,rank)
 
-
       do i=1,imax
          a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
          b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
      &        (Rp(I)*dRu(I))
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
-      end do
-
+      enddo
       if (centerBC.eq.-1) then
-         b(1)    = b(1)-a(1)
+         b(1)    = b(1)+a(1)
       else
          b(1)=-(Ru(1)/(dRp(1))+Ru(0)/dRp(0))/  ! new
      &        (Rp(1)*dRu(1))
       endif
-
       b(imax) = b(imax)+c(imax)
-
       c(imax)=0.
       a(1)=0.
-
 
 
 c     Generate Eigenvalues
@@ -322,6 +317,7 @@ c     K --> direction      (zrt)
             zrt(k)=-4.*dzi*dzi*(sin(float((k-1))*pi/(2.*kmax*px)))**2
          enddo
       endif
+      
 
 
 

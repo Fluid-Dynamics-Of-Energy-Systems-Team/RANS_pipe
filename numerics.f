@@ -461,6 +461,7 @@ c******************************************************************
          gridSize = 0.5 
          dpdz =4.0 
          if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"  
+         write(*,*) centerBC
       elseif (systemSolve.eq.2) then
          numDomain = -1
          centerBC  = -1
