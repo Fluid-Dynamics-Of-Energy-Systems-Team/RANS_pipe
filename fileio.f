@@ -84,7 +84,15 @@ c********************************************************************
       integer ierr
 
       if (rank.eq.0) then
-         open(27,file='co2h_table.dat')
+         if (isothermalBC.eq.1) then
+            if(pressIsoThermal.eq.2) then
+               open(27,file='pH2_2MPa_table.dat')
+            else
+               open(27,file='pH2_4MPa_table.dat')
+            endif
+         else
+            open(27,file='co2h_table.dat')
+         endif
          do i=1,nTab
             read (27,*) tempTab(i),rhoTab(i),muTab(i),lamTab(i),cpTab(i),enthTab(i),betaTab(i)
 

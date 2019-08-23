@@ -550,7 +550,7 @@ c
         !!!!!!!!!!!! isothermal
          if (centerBC.eq.1) then
             do k=0,k1
-               if (rank.eq.0.and.k.lt.K_start_heat) then
+               if ((k+rank*kmax)*dz.lt.x_start_heat) then
                   cnew(i1,k) = cnew(imax,k)
                else
                   cnew(i1,k) = 2.0*enth_wall - cnew(imax,k)
