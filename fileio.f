@@ -95,13 +95,11 @@ c********************************************************************
          endif
          do i=1,nTab
             read (27,*) tempTab(i),rhoTab(i),muTab(i),lamTab(i),cpTab(i),enthTab(i),betaTab(i)
-
 !     rhoTab(i)  = 1.0/tempTab(i)
 !     muTab(i)   = 1.0
 !     lamTab(i)  = 1.0
 !     cpTab(i)   = 1.0
 !     enthTab(i) = tempTab(i) - 1.0
-
             lamocpTab(i) = lamTab(i)/cpTab(i)
          enddo
          close(27)

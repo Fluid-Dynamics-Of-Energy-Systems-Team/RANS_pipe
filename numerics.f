@@ -1,28 +1,21 @@
 !>********************************************************************
 !!     Calculate enthalpy at the wall boundary condition for isothermal
 !!********************************************************************
-      subroutine funcIsothermalEnthBC()
+      subroutine funcIsothermalEnthBC(Twall_bc)
       implicit none
       include 'param.txt'
       include 'common.txt'
+      real*8 Twall_bc
       integer tabkhi,tabklo
       tabkhi=0
       tabklo=0
 
 
-      if (EOSmode.eq.0) enth_wall = (Tw-1.0)
-      if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Tw,enth_wall,tabkhi,tabklo)
+      if (EOSmode.eq.0) enth_wall = (Twall_bc-1.0)
+      if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
 
       
-      if (Qwall.ne.0) then
-         if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
-         stop 
-      else
-         if (rank.eq.0) then
-            print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
-            print '("enthalpy at the wall = ",f6.3," .")',enth_wall
-         endif
-      endif
+
 
       end
 

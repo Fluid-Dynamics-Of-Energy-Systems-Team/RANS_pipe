@@ -2,21 +2,21 @@
       integer         EOSmode,periodic,kmaxper,k1Old
       integer         nstep,K_start_heat,x_start_heat,select_init,systemSolve
       integer         turbmod,modifDiffTerm,modVF,profiling,isothermalBC,pressIsoThermal
-      real*8          Re,Pr,Qwall,CFL,Tw
+      real*8          Re,Pr,Qwall,CFL,Tw,dTwall
       real*8          ctheta,Fr_1
       real*8    alphac,alphak,alphae,alphav2
 
-      parameter (CFL               = 1.0)      ! CFL number / time step
+      parameter (CFL               = 100.0)      ! CFL number / time step
      
-      parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer       
-      !parameter (dpdz              = 4)        ! now defined in mkgrid should be 1 for channel/BL, 4 for the pipe 
+      parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer ! dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe 
 
       parameter (px                = 1)        ! number of cores
       parameter (imax              = 96)       ! radial direction
-      parameter (kmax              = 8/px)    ! 384/px)   ! axial direction
+      parameter (kmax              = 32/px)    ! 384/px)   ! axial direction
       parameter (kmaxper           = kmax*px/2)
       parameter (i1                = imax + 1)
       parameter (k1                = kmax + 1)
+
       parameter (k1old             = k1)    !previous kmax/px + 1  (to restart to a finer mesh in x)
       
       parameter (K_start_heat      = 3)    ! for isoflux:    after home many cells in x will you start heating
@@ -26,7 +26,7 @@
       parameter (isave             = 1)
 
       parameter (nTab              = 2000)    ! 2000 for co2, 2500 for pH2
-      parameter (nstep             = 60000)
+      parameter (nstep             = 100000)
 
       parameter (LoD               = 30)      ! pH2= 30
       parameter (periodic          = 2)               ! 1..periodic, 2..developing 
@@ -38,13 +38,14 @@
       parameter (Qwall             = 0.0)     !0.0) !2.4)
       parameter (isothermalBC      = 1)       ! isothermal wall: 1
 
-      parameter (Tw                = 1)     ! scaled with the inflow temp (Tin=1)
-      !parameter (Tw                = 4)      ! case for Tw=100K
-      !parameter (Tw                = 8)      ! case for Tw=200K  
+      parameter (Tw                = 4.0)     ! scaled with the inflow temp (Tin=1)
+      parameter (dTwall            = 0.05)
+!     parameter (Tw                = 4)      ! case for Tw=100K
+!     parameter (Tw                = 8)      ! case for Tw=200K  
 
       parameter (pressIsoThermal   = 2)       ! constant pressure for BL cases (2 or 4)
-      !parameter (pressIsoThermal   = 2)       ! 2MPa: pH2_2MPa_table.dat
-      !parameter (pressIsoThermal   = 4)       ! 4MPa: pH2_4MPa_table.dat 
+!     parameter (pressIsoThermal   = 2)       ! 2MPa: pH2_2MPa_table.dat
+!     parameter (pressIsoThermal   = 4)       ! 4MPa: pH2_4MPa_table.dat 
 
 !     1/Fr = Gr/(beta_o*T_o*Re**2.*Qwall)
       parameter (Fr_1              =  0.0) 

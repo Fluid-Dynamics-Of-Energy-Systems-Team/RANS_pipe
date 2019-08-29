@@ -19,7 +19,7 @@
      &     newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot 
       real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
       real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1)
-
+      real*8       tempWall
       real :: start, finish
 
       call cpu_time(time1)
@@ -42,8 +42,7 @@
       call spline(enthTab, tempTab,   nTab, temp2Tab)
       call spline(enthTab, betaTab,   nTab, beta2Tab)
 
-      if (isothermalBC.eq.1)  call funcIsothermalEnthBC() ! calc. enthalpy at the wall (isothermal BC)
-  
+
       call mkgrid(rank)
 
       dt = dtmax
@@ -70,9 +69,23 @@
          close(29)
       endif
 
-
-    
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      tempWall = 1.0
+      if (isothermalBC.eq.1) then
+         tempWall = min(max(tempWall, (temp(imax,kmax)+temp(i1,kmax))*0.5),Tw)
+         call funcIsothermalEnthBC(tempWall) ! calc. enthalpy at the wall (isothermal BC)
+         if (Qwall.ne.0) then
+            if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
+            stop 
+         else
+            if (rank.eq.0) print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
+         endif
+         if (rank.eq.0) print '("temperature at the wall = ",f6.3," .")',tempWall
+      endif
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
+      
       call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
       call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);   ! necessary to call it twice
       rold = rnew
@@ -88,6 +101,7 @@
       call cpu_time(start)
       ! simulation loop 
       do istep=istart,nstep
+
 
          ! calculating turbulent viscosity
          call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
@@ -108,6 +122,15 @@
          call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
          call correc(rank,1)
          call bound_v(Unew,Wnew,Win,rank)
+
+         !ramping isothermal wall temperature
+         if (mod(istep,2000).eq.0) then    
+            if (isothermalBC.eq.1 .AND.  tempWall.lt.Tw) then
+               tempWall = min(tempWall+dTwall, Tw)
+               call funcIsothermalEnthBC(tempWall) ! calc. enthalpy at the wall (isothermal BC)
+               if (rank.eq.0) print '("temperature at the wall ramped! = ",f6.3," .")',tempWall
+            endif
+         endif
 
          if (mod(istep,10) .eq. 0)      call chkdiv(rank)
 
