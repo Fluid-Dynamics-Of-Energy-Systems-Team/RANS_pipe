@@ -13,8 +13,8 @@
 subroutine calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
   real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
@@ -83,9 +83,9 @@ end
 subroutine prodisSST(putink,U,W,T,rho)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
-
+      
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,putink
   real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
@@ -150,9 +150,9 @@ end
 subroutine rhs_kSST(putout,dimpl,putink,U,W,T,rho)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
-
+      
   integer ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,dimpl!,Tt
   real*8  betaStar
@@ -188,8 +188,9 @@ end
 subroutine rhs_OmSST(putout,dimpl,putink,U,W,T,rho)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
 
   integer km,kp,im,ip,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,div,dimpl!,Tt
@@ -252,8 +253,9 @@ end
 !!******************************************************************************************
 subroutine advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
@@ -359,8 +361,9 @@ end
 !!******************************************************************************************
 subroutine advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
   integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
@@ -454,8 +457,9 @@ end
 !!******************************************************************************************
 subroutine advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)

@@ -13,8 +13,9 @@
 subroutine calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
   real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
@@ -56,8 +57,8 @@ end
 !>******************************************************************************************
 subroutine prodisSA(nuSAtmp,U,W,T,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,nuSAtmp!,Tt
@@ -119,8 +120,8 @@ end
 !>******************************************************************************************
 subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,rho,div,nuSAtmp,dimpl!,Tt
@@ -221,8 +222,9 @@ end
 !!************************************************************************************
 subroutine advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+  
   integer rank
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
@@ -296,8 +298,9 @@ end
 !!******************************************************************************************
 subroutine advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ShatSA(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)

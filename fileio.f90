@@ -4,8 +4,9 @@
 !********************************************************************
 subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+  
   integer rank,istap
   character*5 inflow
 
@@ -45,8 +46,9 @@ end
 !********************************************************************
 subroutine readTableIG(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
       include 'mpif.h'
   integer ierr, rank
 
@@ -80,8 +82,8 @@ end
 !********************************************************************
 subroutine readTableRG(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
       include 'mpif.h'
   integer ierr,rank
 
@@ -117,8 +119,8 @@ end
 !********************************************************************
 subroutine dumpTABLE(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer rank
   character*5 cha
@@ -137,8 +139,9 @@ end
 !***************************************************************************************
 subroutine loadRestart(startStep,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
   character*5 cha
   integer startStep,ierr,rank
 
@@ -188,8 +191,9 @@ end
 !***************************************************************************************
 subroutine saveRestart(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
   character*5 cha
   integer rank
   write(cha,'(I5.5)')rank
@@ -211,8 +215,9 @@ end
 !***************************************************************************************
 subroutine outputProfile(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+  
   integer rank
   ! radius= 1, velocity=3, temperature=5, density=6, turb. kine=7,
   ! epsilon=8, v2=9, nuSA=10, mut=11
@@ -235,8 +240,9 @@ end
 !***************************************************************************************
 subroutine outputX_h(rank,istap)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
       include 'mpif.h'
   character*5 cha
   integer rank,ierr,istap,ktabhi,ktablo
@@ -303,8 +309,9 @@ end
 !***************************************************************************************
 subroutine output2d(rank,istap)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
       include 'mpif.h'
   character*5 cha
   real*8 pecletx,peclety,pecletz

@@ -3,8 +3,9 @@
 !!********************************************************************
 subroutine funcIsothermalEnthBC(Twall_bc)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   real*8 Twall_bc
   integer tabkhi,tabklo
   tabkhi=0
@@ -38,8 +39,9 @@ end
 !!********************************************************************
 subroutine funcNewtonSolveIG(enth_i1, enth_imax)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+  
   real*8 enth_i1, enth_imax, ekh_imax
 
   ekh_imax = 1./(Re*Pr)
@@ -91,8 +93,8 @@ end
 !!********************************************************************
 subroutine funcNewtonBC(enth, enthIMAX, fxValue)
   use mod_param
+  use mod_common
   implicit none
-  include 'common.f90'
   integer tabkhi,tabklo
   real*8 enth,lamOcpinter,enthIMAX,fxValue
   tabkhi = 0
@@ -123,8 +125,8 @@ end
 !!********************************************************************
 subroutine stateIG(enth,rho,mu,lam,tp,be,istap,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
   integer istap,rank
   real*8 enth(0:i1,0:k1)
   real*8  rho(0:i1,0:k1)
@@ -153,8 +155,8 @@ end
 !!********************************************************************
 subroutine stateRG(enth,rho,mu,lam,tp,be,istap,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer tabkhi,tabklo,istap,rank
 
@@ -244,9 +246,9 @@ end
 !!********************************************************************
 subroutine fillps(rank)
   use mod_param
+  use mod_common
   implicit none
 
-  include 'common.f90'
   include 'mpif.h'
 
   integer ierr,rank
@@ -287,8 +289,9 @@ end
 !!********************************************************************
 subroutine correc(rank,setold)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank,setold
   real*8 pplus_w(imax)
 
@@ -351,8 +354,9 @@ end
 !!********************************************************************
 subroutine chkdt(rank,istap)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
       include 'mpif.h'
   integer rank,ierr,istap
   real*8  tmp,Courant,dtmp,tmp1,tmp2,tmp3,dr2,dz2,kcoeff
@@ -382,8 +386,9 @@ end
 !!********************************************************************
 subroutine chkdiv(rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
       include 'mpif.h'
   integer rank,ierr,ll
   real*8   div,divmax,divbar,divmax_tot,divbar_tot,rhoip,rhoim,rhokp,rhokm
@@ -430,9 +435,9 @@ end
 !!********************************************************************
 subroutine mkgrid(rank)
   use mod_param
+  use mod_common
   implicit none
-  include 'common.f90'
-
+  
   integer rank
   real*8  delta(imax),Yplus,X,rmax,drr,Rei
   real*8  pii,y,y1,y2,fA,fB,fC,fact,gridSize

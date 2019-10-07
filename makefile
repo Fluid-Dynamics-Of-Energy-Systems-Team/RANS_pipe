@@ -5,7 +5,7 @@
 #F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O0 -g -fbounds-check -finit-local-zero -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O0 -g -fbounds-check -Wall -Wno-unused-variable -fdefault-real-8 -ffixed-line-length-none
-F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
+F77 = mpif90  -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O2 -r8 -132
 #F77 = /usr/mpi/intel/openmpi-1.4.2/bin/mpif90  -r8 -132 -O5 #-fpe0 -traceback
 #F77 = /opt/mvapich2/bin/mpif90 -r8 -132
@@ -19,7 +19,7 @@ RM = rm -f
 
 PROGRAM = forced_real_VF
 SRCS    = numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
-OBJS    = param.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
+OBJS    = param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 
@@ -50,7 +50,8 @@ vfft.o: vfft.f makefile
 	$(F77) $(DBG) $(FLAGS) -c vfft.f
 param.o: param.f90
 	$(F77) $(DBG) $(FLAGS) -c param.f90
-
+common.o: common.f90
+	$(F77) $(DBG) $(FLAGS) -c common.f90
 
 
 

@@ -4,8 +4,8 @@
 !>******************************************************************************************
 subroutine rhs_K(putout,dimpl,putink,putine,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,rho,putink,putine,dimpl
@@ -31,8 +31,8 @@ end
 !>******************************************************************************************
 subroutine rhs_Epsilon(putout,dimpl,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,rho,dimpl!,Tt
@@ -73,8 +73,9 @@ end
 !!************************************************************************************
 subroutine advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+
   integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
@@ -180,8 +181,8 @@ end
 !!************************************************************************************
 subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
 
   integer mrank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)

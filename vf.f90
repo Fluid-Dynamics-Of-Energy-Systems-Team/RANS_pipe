@@ -13,8 +13,9 @@
 subroutine calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+  
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
   real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Srsq!,Tt
@@ -81,9 +82,9 @@ end
 !>******************************************************************************************
 subroutine prodisVF(putink,putine,putinv2,U,W,T,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
-
+  
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,putink,putine,putinv2,Srsq!,Tt
   real*8  StR
@@ -156,9 +157,9 @@ end
 !>******************************************************************************************
 subroutine rhs_v2(putout,dimpl,putink,putine,putinv2,putinf,rho)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
-
+      
   integer ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,putink,putine,putinv2,rho,dimpl
   real*8, dimension(imax,kmax) :: putinf
@@ -185,8 +186,9 @@ end
 !!******************************************************************************************
 subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
@@ -286,8 +288,9 @@ end
 !!******************************************************************************************
 subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
+      
   integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
@@ -316,9 +319,9 @@ end
 !!********************************************************************
 subroutine fillhm(rank)
   use mod_param
+  use mod_common
   implicit none
-  include 'common.f90'
-
+  
   integer rank
   real*8   Srsq(0:i1,0:k1) !,Tt(0:i1,0:k1)
   !real*8   Str

@@ -2,8 +2,8 @@
 
 subroutine shiftb(UT,UP,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
       include 'mpif.h'
   integer rank,ileng,rankb,rankf,ierr
   integer itag,status(MPI_STATUS_SIZE),l
@@ -30,8 +30,8 @@ end
 
 subroutine shiftf(UT,UP,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
       include 'mpif.h'
   integer rank,ileng,rankb,rankf
   integer  itag,status(MPI_STATUS_SIZE),l,ierr
@@ -56,8 +56,8 @@ end
 
 subroutine pshiftb_w(UT,UP,rank)
   use mod_param
+  use mod_common
   implicit none
-      include 'common.f90'
       include 'mpif.h'
   integer rank,ileng,rankb,rankf,ierr
   integer itag,status(MPI_STATUS_SIZE),l
