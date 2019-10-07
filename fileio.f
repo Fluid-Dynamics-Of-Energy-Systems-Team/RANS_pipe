@@ -49,7 +49,7 @@ c********************************************************************
       integer ierr
 
       if (rank.eq.0) then
-!     open(27,file='tables/co2h_table.dat')
+         open(27,file='tables/co2h_table.dat')
          do i=1,nTab
             tempTab(i)   = ((1.0*i-1)/(nTab-1.0)-0.1)*3.0 + 1.0
             rhoTab(i)    = 1.0/tempTab(i)
@@ -95,11 +95,6 @@ c********************************************************************
          endif
          do i=1,nTab
             read (27,*) tempTab(i),rhoTab(i),muTab(i),lamTab(i),cpTab(i),enthTab(i),betaTab(i)
-!     rhoTab(i)  = 1.0/tempTab(i)
-!     muTab(i)   = 1.0
-!     lamTab(i)  = 1.0
-!     cpTab(i)   = 1.0
-!     enthTab(i) = tempTab(i) - 1.0
             lamocpTab(i) = lamTab(i)/cpTab(i)
          enddo
          close(27)
