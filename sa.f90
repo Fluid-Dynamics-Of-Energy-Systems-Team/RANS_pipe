@@ -13,8 +13,8 @@
       subroutine calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
@@ -56,8 +56,8 @@
 !>******************************************************************************************
       subroutine prodisSA(nuSAtmp,U,W,T,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,nuSAtmp!,Tt
@@ -92,8 +92,8 @@
             Tt(i,k)=1
 
             ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
-            StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                +( (U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)           )**2.)
+            StR = ( ( -( (W(ip,km)+W(ip,k)+W(i,km)+W(i ,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
+                      +( (U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)           )**2.)
 
             StR = StR**0.5
 
@@ -106,8 +106,8 @@
             ! production term in SA model
             Pk(i,k) = cb1*nuSAtmp(i,k)*ShatSA
 
-            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
-     &              +(      W(i,k) -      W(i,km))/dz
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i)) &
+                    +(      W(i,k) -      W(i,km))/dz
 
          enddo
       enddo
@@ -119,8 +119,8 @@
 !>******************************************************************************************
       subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,rho,div,nuSAtmp,dimpl!,Tt
@@ -163,9 +163,9 @@
 
                 ! source term
                 ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * (
-     &         (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0
-     &         +(((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
+               (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
+               +(((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
 
     
              enddo
@@ -191,8 +191,8 @@
     
                 ! source term
                 ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
-                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * (
-     &         ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
+                putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * ( &
+               ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
              enddo
           enddo
       endif
@@ -221,8 +221,8 @@
 !!************************************************************************************
       subroutine advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
       real*8 rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
@@ -295,8 +295,8 @@
 !!******************************************************************************************
       subroutine advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ShatSA(0:i1,0:k1)
       real*8 rho3(0:i1,0:k1)
@@ -322,11 +322,11 @@
       !!********************************************************************
       subroutine diffcSA(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       integer   km,kp,im,ip,rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &     ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
+      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
+           rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
+           ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
 !          Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
          ! For, Standard, Inverse SLS and Aupoix
          ! rho=1 for standard
@@ -334,10 +334,12 @@
           kp=k+1
           km=k-1
           do i=1,imax
-             putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3          ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*sqrt(0.5*(rho(i,k)+rho(i,kp)))*((rho(i,kp)**0.5)*putin(i,kp)-(rho(i,k )**0.5)*putin(i,k ))
-     3           -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*sqrt(0.5*(rho(i,k)+rho(i,km)))*((rho(i,k )**0.5)*putin(i,k )-(rho(i,km)**0.5)*putin(i,km))
-     &                 )/(dz*dz)   )
+             putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+                ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* & 
+                  sqrt(0.5*(rho(i,k)+rho(i,kp)))*((rho(i,kp)**0.5)*putin(i,kp)-(rho(i,k )**0.5)*putin(i,k )) & 
+                 -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
+                 sqrt(0.5*(rho(i,k)+rho(i,km)))*((rho(i,k )**0.5)*putin(i,k )-(rho(i,km)**0.5)*putin(i,km)) &
+                       )/(dz*dz)   )
           enddo
       enddo
         
@@ -348,8 +350,8 @@
               kp=k+1
               km=k-1
               do i=1,imax
-                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)*((ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho(i,kp)-rho(i,k ))
-     &                                                     -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho(i,k )-rho(i,km)))/(dz*dz))
+                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)*((ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho(i,kp)-rho(i,k )) &
+                                                           -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho(i,k )-rho(i,km)))/(dz*dz))
               enddo
           enddo
       ! in the r-direction
@@ -357,9 +359,10 @@
               ip=i+1
               im=i-1
               do k=1,kmax
-                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)* (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho(ip,k)-rho(i ,k)))
-     &                                                     -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho(i ,k)-rho(im,k)))
-     &                                                     )
+                 putout(i,k) = putout(i,k) - 1.0/rho(i,k)* &
+                 (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho(ip,k)-rho(i ,k))) &
+                 -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho(i ,k)-rho(im,k))) &
+                 )
               enddo
           enddo
       endif

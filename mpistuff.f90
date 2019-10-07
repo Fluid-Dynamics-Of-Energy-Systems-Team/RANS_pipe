@@ -3,7 +3,7 @@
       subroutine shiftb(UT,UP,rank)
       implicit none
       include 'param.f90'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       integer ileng,rankb,rankf,ierr
       integer itag,status(MPI_STATUS_SIZE),l
@@ -31,7 +31,7 @@
       subroutine shiftf(UT,UP,rank)
       implicit none
       include 'param.f90'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       integer ileng,rankb,rankf
       integer  itag,status(MPI_STATUS_SIZE),l,ierr
@@ -57,7 +57,7 @@
       subroutine pshiftb_w(UT,UP,rank)
       implicit none
       include 'param.f90'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       integer ileng,rankb,rankf,ierr
       integer itag,status(MPI_STATUS_SIZE),l

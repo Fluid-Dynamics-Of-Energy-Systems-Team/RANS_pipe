@@ -1,7 +1,7 @@
 
-c********************************************************************
-c     spline (numerical recipes)
-c********************************************************************
+!********************************************************************
+!     spline (numerical recipes)
+!********************************************************************
       subroutine spline(x, y, n, y2)
       implicit none
       integer   i, k, n, nmax
@@ -14,8 +14,8 @@ c********************************************************************
          sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
          p=sig*y2(i-1)+2.
          y2(i)=(sig-1.)/p
-         u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1))/
-     &        (x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
+         u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1))/ &
+              (x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
       enddo
 
       qn=0.
@@ -29,9 +29,9 @@ c********************************************************************
       return
       end
 
-c********************************************************************
-c     spline (numerical recipes)
-c********************************************************************
+!********************************************************************
+!     spline (numerical recipes)
+!********************************************************************
       subroutine splint(xa,ya,y2a,n,x,y,khi,klo)
       implicit none
       integer n,k,khi,klo
@@ -60,9 +60,9 @@ c********************************************************************
       return
       end
 
-c********************************************************************
-c     spline (numerical recipes)
-c********************************************************************
+!********************************************************************
+!     spline (numerical recipes)
+!********************************************************************
       subroutine splint_(xa,ya,y2a,n,x,y)
       implicit none
       integer n,k,khi,klo
@@ -94,16 +94,16 @@ c********************************************************************
 
 
       SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
-c     
-c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
-c     BENDIKS JAN BOERSMA
-C     LABORATORIUM VOOR AERO EN HYDRODYNAMICA
-C     ROTTERDAMSEWEG 145
-C     2628 AL DELFT
-C     email ::::   b.j.boersma@wbmt.tudelft.nl
-*     
+!     
+!     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
+!     BENDIKS JAN BOERSMA
+!     LABORATORIUM VOOR AERO EN HYDRODYNAMICA
+!     ROTTERDAMSEWEG 145
+!     2628 AL DELFT
+!     email ::::   b.j.boersma@wbmt.tudelft.nl
+!     
       implicit none
-      include    'param.txt'
+      include    'param.f90'
       real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
       real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
       real*8      a(imax),b(imax),c(imax)
@@ -112,7 +112,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
       integer     centerBC
 
-c     generate tridiagonal systems
+!     generate tridiagonal systems
 
       pi = 4.*atan(1.)
       if (periodic.eq.1) then
@@ -142,8 +142,8 @@ c     generate tridiagonal systems
 
       do i=1,imax
          a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))    
-         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ 
-     &        (Rp(I)*dRu(I))
+         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ &
+              (Rp(I)*dRu(I))
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))       
       enddo
 
@@ -158,9 +158,9 @@ c     generate tridiagonal systems
       a(1)=0.
 
 
-c     Generate Eigenvalues
+!     Generate Eigenvalues
 
-c     K --> direction      (zrt)
+!     K --> direction      (zrt)
       dzi = 1./dz
 
 !     RENE: added Sept21_2011
@@ -180,7 +180,7 @@ c     K --> direction      (zrt)
 
 
 
-c     solve tridiagonal systems with Gaussian elemination
+!     solve tridiagonal systems with Gaussian elemination
       do k=1,kmax
             bbb        = b(1)+zrt(k+rank*kmax)
             z          = 1./bbb
@@ -235,16 +235,16 @@ c     solve tridiagonal systems with Gaussian elemination
 
 
       SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm,centerBC)
-c
-c     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
-c     BENDIKS JAN BOERSMA
-C     LABORATORIUM VOOR AERO EN HYDRODYNAMICA
-C     ROTTERDAMSEWEG 145
-C     2628 AL DELFT
-C     email ::::   b.j.boersma@wbmt.tudelft.nl
-*
+!
+!     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
+!     BENDIKS JAN BOERSMA
+!     LABORATORIUM VOOR AERO EN HYDRODYNAMICA
+!     ROTTERDAMSEWEG 145
+!     2628 AL DELFT
+!     email ::::   b.j.boersma@wbmt.tudelft.nl
+!
       implicit none
-      include    'param.txt'
+      include    'param.f90'
       real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1),hterm(IMAX,KMAX)
       real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
       real*8      a(imax),b(imax),c(imax)
@@ -252,7 +252,7 @@ C     email ::::   b.j.boersma@wbmt.tudelft.nl
       real*8      vfftk(imax/px,kmax*px)
       real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
       integer     centerBC
-c     generate tridiagonal systems
+!     generate tridiagonal systems
 
       pi = 4.*atan(1.)
       if (periodic.eq.1) then
@@ -281,8 +281,8 @@ c     generate tridiagonal systems
 
       do i=1,imax
          a(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))     ! new
-         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  ! new
-     &        (Rp(I)*dRu(I))
+         b(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/  &! new
+              (Rp(I)*dRu(I))
          c(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))        ! new
       enddo
       if (centerBC.eq.-1) then
@@ -295,9 +295,9 @@ c     generate tridiagonal systems
       a(1)=0.
 
 
-c     Generate Eigenvalues
+!     Generate Eigenvalues
 
-c     K --> direction      (zrt)
+!     K --> direction      (zrt)
       dzi = 1./dz
 
 !     RENE: added Sept21_2011
@@ -319,7 +319,7 @@ c     K --> direction      (zrt)
 
 
 
-c     solve tridiagonal systems with Gaussian elemination
+!     solve tridiagonal systems with Gaussian elemination
 
       do k=1,kmax
             bbb        = b(1)+zrt(k+rank*kmax)-1./hterm(1,k)**2.

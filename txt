@@ -1,0 +1,4163 @@
+mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none -g  -c numerics.f
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+numerics.f:183:73:
+
+                call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+                                                                         1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘cp’ at (1)
+numerics.f:200:73:
+
+                call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+                                                                         1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘cp’ at (1)
+numerics.f:218:12:
+
+             ekhi(i,k) = conface/cpface/(Re*Pr)
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:219:12:
+
+             Cpi(i,k)=cpface
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:222:12:
+
+             ekmi(i,k)  = muface/Re
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:228:12:
+
+             ekhk(i,k) = conface/cpface/(Re*Pr)
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:229:12:
+
+             Cpk(i,k)=cpface
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:232:12:
+
+             ekmk(i,k)  = muface/Re
+            1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+numerics.f:262:12:
+
+             p(i,k)  = (
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:267:12:
+
+             qcrit(i,k) = p(i,k)*dt
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:269:29:
+
+             sumps = sumps + p(i,k)*dru(i)*dz
+                             1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘p’ at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+numerics.f:298:37:
+
+             dUdt(i,k)=dUdt(i,k)-dt*(p(i+1,k)-p(i,k))/dRp(i) !(Rp(i+1)-Rp(i))
+                                     1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘p’ at (1)
+numerics.f:304:37:
+
+             dWdt(i,k)=dWdt(i,k)-dt*(p(i,k+1)-p(i,k))/dz
+                                     1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘p’ at (1)
+numerics.f:312:12:
+
+             pplus_w(i)=p(i,kmax)
+            1
+Error: Unclassifiable statement at (1)
+numerics.f:317:51:
+
+          dWdt(i,kmax)=dWdt(i,kmax)-dt*(pplus_w(i)-p(i,kmax))/dz
+                                                   1
+Error: Expected a right parenthesis in expression at (1)
+numerics.f:334:15:
+
+                Unew(i,k)=dUdt(i,k)/(0.5*(rnew(i,k)+rnew(i+1,k))) !Unew(i,k)=dUdt(i,k)/(0.5*(drdt(i,k)+drdt(i+1,k)))
+               1
+Error: Unclassifiable statement at (1)
+numerics.f:335:15:
+
+                Wnew(i,k)=dWdt(i,k)/(0.5*(rnew(i,k)+rnew(i,k+1))) !Wnew(i,k)=dWdt(i,k)/(0.5*(drdt(i,k)+drdt(i,k+1)))
+               1
+Error: Unclassifiable statement at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+numerics.f:365:28:
+
+             tmp = ( abs(Unew(i,k)) /  dRp(i) ) +! ( Rp(i+1)-Rp(i) ) ) + new
+                            1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘unew’ at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+numerics.f:404:28:
+
+      &           (Ru(i)*Unew(i,k)*rhoip-Ru(i-1)*Unew(i-1,k)*rhoim)*dz/Rp(i)+
+                            1
+Error: PROCEDURE attribute conflicts with COMMON attribute in ‘unew’ at (1)
+common.txt:20:114:
+
+       real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1), &
+                                                                                                                  1
+Error: Invalid character in name at (1)
+common.txt:21:22:
+
+                       ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), & 
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:22:33:
+
+                                  at(imax,kmax),Lht(imax,kmax),sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2,atmp(0:i1,0:k1), &
+                                 1
+Error: Unclassifiable statement at (1)
+common.txt:23:21:
+
+                      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax) 
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:24:91:
+
+       common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+                                                                                           1
+Error: Syntax error in COMMON statement at (1)
+common.txt:25:21:
+
+                      cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:39:100:
+
+       real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1), &
+                                                                                                    1
+Error: Invalid character in name at (1)
+common.txt:40:21:
+
+                      temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:41:21:
+
+                      ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:42:21:
+
+                      Tt(0:i1,0:k1),enth_wall
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:58:106:
+
+       real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+                                                                                                          1
+Error: Invalid character in name at (1)
+common.txt:59:22:
+
+                       Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:68:89:
+
+       real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+                                                                                         1
+Error: Invalid character in name at (1)
+common.txt:69:22:
+
+                       Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:92:59:
+
+       real*8          work(iwork),save(isave),bdrs(kmax), &
+                                                           1
+Error: Invalid character in name at (1)
+common.txt:93:22:
+
+                       bdts(imax,kmax),bdzs(imax), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:94:22:
+
+                       p(imax,kmax),phi(imax,kmax)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:102:71:
+
+       real*8          tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab), &
+                                                                       1
+Error: Invalid character in name at (1)
+common.txt:103:22:
+
+                       muTab(1:nTab),lamTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:104:22:
+
+                       cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:105:22:
+
+                       temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:106:22:
+
+                       mu2Tab(1:nTab),lam2Tab(1:nTab), &
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:107:22:
+
+                       cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab)
+                      1
+Error: Unclassifiable statement at (1)
+common.txt:108:83:
+
+       common /table/  tempTab,rhoTab,betaTab,muTab,lamTab,cpTab,enthTab,lamocpTab, &
+                                                                                   1
+Error: Syntax error in COMMON statement at (1)
+common.txt:109:21:
+
+                      temp2Tab,rho2Tab,beta2Tab,mu2Tab,lam2Tab,cp2Tab,enth2Tab,lamocp2Tab
+                     1
+Error: Unclassifiable statement at (1)
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+numerics.f:15:62:
+
+       if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
+                                                              1
+Error: Symbol ‘enth2tab’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+numerics.f:15:52:
+
+       if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
+                                                    1
+Error: Symbol ‘enthtab’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+numerics.f:15:43:
+
+       if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
+                                           1
+Error: Symbol ‘temptab’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+numerics.f:101:25:
+
+       call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
+                         1
+Error: Symbol ‘enthtab’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+numerics.f:101:46:
+
+       call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
+                                              1
+Error: Symbol ‘lamocp2tab’ at (1) has no IMPLICIT type
+numerics.f:101:35:
+
+       call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
+                                   1
+Error: Symbol ‘lamocptab’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+numerics.f:186:53:
+
+                call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+                                                     1
+Error: Symbol ‘beta2tab’ at (1) has no IMPLICIT type
+numerics.f:186:42:
+
+                call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+                                          1
+Error: Symbol ‘betatab’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+numerics.f:215:45:
+
+             call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
+                                             1
+Error: Symbol ‘cp2tab’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+numerics.f:215:37:
+
+             call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
+                                     1
+Error: Symbol ‘cptab’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+numerics.f:181:34:
+
+                call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+                                  1
+Error: Symbol ‘enthtab’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+numerics.f:216:46:
+
+             call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
+                                              1
+Error: Symbol ‘lam2tab’ at (1) has no IMPLICIT type
+numerics.f:184:55:
+
+                call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+                                                       1
+Error: Symbol ‘lamocp2tab’ at (1) has no IMPLICIT type
+numerics.f:184:44:
+
+                call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+                                            1
+Error: Symbol ‘lamocptab’ at (1) has no IMPLICIT type
+numerics.f:216:38:
+
+             call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
+                                      1
+Error: Symbol ‘lamtab’ at (1) has no IMPLICIT type
+numerics.f:182:51:
+
+                call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+                                                   1
+Error: Symbol ‘mu2tab’ at (1) has no IMPLICIT type
+numerics.f:182:40:
+
+                call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+                                        1
+Error: Symbol ‘mutab’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+numerics.f:181:52:
+
+                call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+                                                    1
+Error: Symbol ‘rho2tab’ at (1) has no IMPLICIT type
+numerics.f:181:41:
+
+                call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+                                         1
+Error: Symbol ‘rhotab’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+numerics.f:185:53:
+
+                call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+                                                     1
+Error: Symbol ‘temp2tab’ at (1) has no IMPLICIT type
+numerics.f:185:42:
+
+                call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+                                          1
+Error: Symbol ‘temptab’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+common.txt:95:36:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                    1
+Error: Symbol ‘bdrs’ at (1) has no IMPLICIT type
+common.txt:95:41:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                         1
+Error: Symbol ‘bdts’ at (1) has no IMPLICIT type
+common.txt:95:46:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                              1
+Error: Symbol ‘bdzs’ at (1) has no IMPLICIT type
+common.txt:43:69:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                     1
+Error: Symbol ‘beta’ at (1) has no IMPLICIT type
+common.txt:60:53:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                     1
+Error: Symbol ‘cnew’ at (1) has no IMPLICIT type
+common.txt:70:52:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                    1
+Error: Symbol ‘cold’ at (1) has no IMPLICIT type
+common.txt:43:42:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                          1
+Error: Symbol ‘cp’ at (1) has no IMPLICIT type
+common.txt:43:93:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                             1
+Error: Symbol ‘cpi’ at (1) has no IMPLICIT type
+common.txt:43:97:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                 1
+Error: Symbol ‘cpk’ at (1) has no IMPLICIT type
+common.txt:43:39:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                       1
+Error: Symbol ‘ekh’ at (1) has no IMPLICIT type
+common.txt:43:74:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                          1
+Error: Symbol ‘ekhi’ at (1) has no IMPLICIT type
+common.txt:43:79:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                               1
+Error: Symbol ‘ekhk’ at (1) has no IMPLICIT type
+common.txt:43:25:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                         1
+Error: Symbol ‘ekm’ at (1) has no IMPLICIT type
+common.txt:43:35:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                   1
+Error: Symbol ‘ekme’ at (1) has no IMPLICIT type
+common.txt:43:84:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                    1
+Error: Symbol ‘ekmi’ at (1) has no IMPLICIT type
+common.txt:43:89:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                         1
+Error: Symbol ‘ekmk’ at (1) has no IMPLICIT type
+common.txt:43:30:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                              1
+Error: Symbol ‘ekmt’ at (1) has no IMPLICIT type
+common.txt:60:63:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                               1
+Error: Symbol ‘enew’ at (1) has no IMPLICIT type
+common.txt:43:110:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                              1
+Error: Symbol ‘enth_wall’ at (1) has no IMPLICIT type
+common.txt:70:36:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                    1
+Error: Symbol ‘eold’ at (1) has no IMPLICIT type
+common.txt:43:57:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                         1
+Error: Symbol ‘gk’ at (1) has no IMPLICIT type
+common.txt:60:48:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                1
+Error: Symbol ‘h2new’ at (1) has no IMPLICIT type
+common.txt:70:63:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                               1
+Error: Symbol ‘h2old’ at (1) has no IMPLICIT type
+common.txt:60:58:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                          1
+Error: Symbol ‘knew’ at (1) has no IMPLICIT type
+common.txt:70:57:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                         1
+Error: Symbol ‘kold’ at (1) has no IMPLICIT type
+common.txt:60:77:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                             1
+Error: Symbol ‘nusanew’ at (1) has no IMPLICIT type
+common.txt:70:71:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                       1
+Error: Symbol ‘nusaold’ at (1) has no IMPLICIT type
+common.txt:60:83:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                                   1
+Error: Symbol ‘omnew’ at (1) has no IMPLICIT type
+common.txt:70:77:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                                                             1
+Error: Symbol ‘omold’ at (1) has no IMPLICIT type
+common.txt:95:48:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                1
+Error: Symbol ‘p’ at (1) has no IMPLICIT type
+common.txt:43:64:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                1
+Error: Symbol ‘peclet’ at (1) has no IMPLICIT type
+common.txt:95:52:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                                                    1
+Error: Symbol ‘phi’ at (1) has no IMPLICIT type
+common.txt:43:54:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                      1
+Error: Symbol ‘pk’ at (1) has no IMPLICIT type
+common.txt:60:69:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                                                     1
+Error: Symbol ‘qcrit’ at (1) has no IMPLICIT type
+common.txt:95:31:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                               1
+Error: Symbol ‘save’ at (1) has no IMPLICIT type
+common.txt:43:51:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                   1
+Error: Symbol ‘tco’ at (1) has no IMPLICIT type
+common.txt:43:47:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                               1
+Error: Symbol ‘temp’ at (1) has no IMPLICIT type
+common.txt:43:100:
+
+       common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+                                                                                                    1
+Error: Symbol ‘tt’ at (1) has no IMPLICIT type
+common.txt:60:26:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                          1
+Error: Symbol ‘unew’ at (1) has no IMPLICIT type
+common.txt:70:26:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                          1
+Error: Symbol ‘uold’ at (1) has no IMPLICIT type
+common.txt:60:42:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                          1
+Error: Symbol ‘v2new’ at (1) has no IMPLICIT type
+common.txt:70:42:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                          1
+Error: Symbol ‘v2old’ at (1) has no IMPLICIT type
+common.txt:60:31:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                               1
+Error: Symbol ‘vnew’ at (1) has no IMPLICIT type
+common.txt:70:31:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                               1
+Error: Symbol ‘vold’ at (1) has no IMPLICIT type
+common.txt:60:36:
+
+       common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+                                    1
+Error: Symbol ‘wnew’ at (1) has no IMPLICIT type
+common.txt:70:47:
+
+       common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+                                               1
+Error: Symbol ‘wold’ at (1) has no IMPLICIT type
+common.txt:95:26:
+
+       common /press/  work,save,bdrs,bdts,bdzs,p,phi
+                          1
+Error: Symbol ‘work’ at (1) has no IMPLICIT type
+makefile:32: recipe for target 'numerics.o' failed
+make: *** [numerics.o] Error 1

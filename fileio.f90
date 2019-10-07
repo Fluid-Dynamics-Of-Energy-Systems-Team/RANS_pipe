@@ -1,11 +1,11 @@
 
-c********************************************************************
-c     write inflow file
-c********************************************************************
+!********************************************************************
+!     write inflow file
+!********************************************************************
       subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       integer istap
       character*5 inflow
 
@@ -15,7 +15,8 @@ c********************************************************************
              if (turbmod.eq.2) open(29,file='MK/Inflow',form='unformatted')
              if (turbmod.eq.3) open(29,file='VF/Inflow',form='unformatted')
              if (turbmod.eq.4) open(29,file='OM/Inflow',form='unformatted')
-             write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)       
+             write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2), &
+             nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)       
              close(29)
           endif
 
@@ -25,12 +26,12 @@ c********************************************************************
 
 
 
-c********************************************************************
-c     read table from file
-c********************************************************************
+!********************************************************************
+!     read table from file
+!********************************************************************
       subroutine readTable(rank)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       include 'mpif.h'
       if (EOSmode.eq.0) call readTableIG(rank)
       if (EOSmode.eq.1) call readTableRG(rank)
@@ -38,13 +39,13 @@ c********************************************************************
 
 
 
-c********************************************************************
-c     read table from file
-c********************************************************************
+!********************************************************************
+!     read table from file
+!********************************************************************
       subroutine readTableIG(rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       include 'mpif.h'
       integer ierr
 
@@ -73,13 +74,13 @@ c********************************************************************
 
       end
 
-c********************************************************************
-c     read table from file
-c********************************************************************
+!********************************************************************
+!     read table from file
+!********************************************************************
       subroutine readTableRG(rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       include 'mpif.h'
       integer ierr
 
@@ -110,13 +111,13 @@ c********************************************************************
       call MPI_BCAST(betaTab,   nTab,mpi_real8,0,MPI_COMM_WORLD,ierr)
       end
 
-c********************************************************************
-c     dump table to file
-c********************************************************************
+!********************************************************************
+!     dump table to file
+!********************************************************************
       subroutine dumpTABLE(rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       character*5 cha
       write(cha,'(I5.5)')rank
       open(207,file='table.'//cha)
@@ -128,13 +129,13 @@ c********************************************************************
 
 
 
-c***************************************************************************************
-c     read istep from the restart file to identify the corresponding inflow profile
-c***************************************************************************************
+!***************************************************************************************
+!     read istep from the restart file to identify the corresponding inflow profile
+!***************************************************************************************
       subroutine loadRestart(startStep,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       character*5 cha
       integer startStep,ierr
 
@@ -148,7 +149,7 @@ c*******************************************************************************
       real*8    V2NEWR(0:i1,0:k1old)
       real*8  NUSANEWR(0:i1,0:k1old)
       real*8    omNEWR(0:i1,0:k1old)
-	  real*8    PKR(0:i1,0:k1old)
+      real*8    PKR(0:i1,0:k1old)
 
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
@@ -179,13 +180,13 @@ c*******************************************************************************
 
       end
 
-c***************************************************************************************
-c     store istep in the restart file to identify the corresponding inflow profile
-c***************************************************************************************
+!***************************************************************************************
+!     store istep in the restart file to identify the corresponding inflow profile
+!***************************************************************************************
       subroutine saveRestart(rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       character*5 cha
       write(cha,'(I5.5)')rank
       if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
@@ -201,13 +202,13 @@ c*******************************************************************************
 
 
 
-c***************************************************************************************
-c
-c***************************************************************************************
+!***************************************************************************************
+!
+!***************************************************************************************
       subroutine outputProfile(rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
     ! radius= 1, velocity=3, temperature=5, density=6, turb. kine=7,
     ! epsilon=8, v2=9, nuSA=10, mut=11
@@ -215,9 +216,9 @@ c*******************************************************************************
         open(19,file='profile')
           k = 1
           do i=1,imax
-            write(19,'(14E18.6)') y_cv(i),unew(i,k),Wnew(i,k),cnew(i,k),
-     &             temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k),
-     &             ekmt(i,k),bf1(i,k),bf2(i,k)
+            write(19,'(14E18.6)') y_cv(i),unew(i,k),Wnew(i,k),cnew(i,k), &
+                   temp(i,k),rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),omNew(i,k),nuSAnew(i,k), &
+                   ekmt(i,k),bf1(i,k),bf2(i,k)
           enddo
         close(19)
       endif
@@ -225,19 +226,19 @@ c*******************************************************************************
       end
 
 
-c***************************************************************************************
-c     
-c***************************************************************************************
+!***************************************************************************************
+!     
+!***************************************************************************************
       subroutine outputX_h(rank,istap)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       include 'mpif.h'
       character*5 cha
       integer ierr,istap,ktabhi,ktablo
-      real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),Qp(kmax),
-     &     tmp(kmax),massfl,enth,laminter,tempinter,cpinter,Gb(kmax),rhob(kmax),ekmb(kmax),Ub(kmax),
-     &     addedHeat,addedHeatTot,subheat,subheatTot,w_c
+      real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),Qp(kmax), &
+           tmp(kmax),massfl,enth,laminter,tempinter,cpinter,Gb(kmax),rhob(kmax),ekmb(kmax),Ub(kmax), &
+           addedHeat,addedHeatTot,subheat,subheatTot,w_c
 
       twall    = 0.0
       Qp       = 0.0
@@ -281,8 +282,8 @@ c*******************************************************************************
       if (turbmod.eq.3) open(9,file='VF/profX.'//cha)
       if (turbmod.eq.4) open(9,file='OM/profX.'//cha)
       do k=1,kmax
-         write(9,'(8E18.6)') (k+rank*kmax)*dz, massflow(k),enthflow(k),enth_b(k)
-     &        ,Twall(k),Tbulk(k),Gb(k)/Gb(1),Gb(k)/Gb(1)/rhob(k)
+         write(9,'(8E18.6)') (k+rank*kmax)*dz, massflow(k),enthflow(k),enth_b(k) &
+              ,Twall(k),Tbulk(k),Gb(k)/Gb(1),Gb(k)/Gb(1)/rhob(k)
 
       enddo
       close(9)
@@ -293,18 +294,18 @@ c*******************************************************************************
 
 
 
-c***************************************************************************************
-c
-c***************************************************************************************
+!***************************************************************************************
+!
+!***************************************************************************************
       subroutine output2d(rank,istap)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       include 'mpif.h'
       character*5 cha
       real*8 pecletx,peclety,pecletz
-      real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),
-     &     massfl,w_c,ndt
+      real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
+           massfl,w_c,ndt
       integer istap,jstart,ktabhi,ktablo
       write(cha,'(I5.5)')rank
 
@@ -348,11 +349,11 @@ c*******************************************************************************
 
       do k=0,k1
          do i=0,i1
-            write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, y_cv(i),
-     &          0.5*(unew(max(i-1,0),k)+unew(i,k)),
-     &          Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), temp(i,k),
-     &          knew(i,k),enew(i,k),v2new(i,k),
-     &          omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
+            write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, y_cv(i), &
+                0.5*(unew(max(i-1,0),k)+unew(i,k)), &
+                Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), temp(i,k), &
+                knew(i,k),enew(i,k),v2new(i,k), &
+                omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k) 
          enddo
       enddo
 

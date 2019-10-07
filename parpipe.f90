@@ -7,7 +7,7 @@
 
       implicit none
 
-      include      'param.txt'          !> input file
+      include      'param.f90'          !> input file
       include      'common.f90'         !> def. of turb model variables
       include      'mpif.h'             !> mpi stuff
 
@@ -174,7 +174,7 @@
       subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
 
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
@@ -259,7 +259,7 @@
 !!************************************************************************************
       subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
@@ -428,7 +428,7 @@
 !!*************************************************************************************
       subroutine advance(rank)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
 
       real*8, dimension(imax)   :: a, b, c, rhs
@@ -559,7 +559,7 @@
       subroutine bound_h(kin,ein,v2in,omin,nuSAin,rank)
       implicit none
      
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
 
@@ -707,7 +707,7 @@
 
       implicit none
 
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
       character*5 inflow
@@ -786,7 +786,7 @@
       subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
       implicit none
 !     
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
       character*5 inflow
@@ -941,7 +941,7 @@
 !!*************************************************************************************
       subroutine fkdat(rank)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
 
       real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
@@ -1011,7 +1011,7 @@
       subroutine cmpinf(Bulk,Stress)
       implicit none
      
-      include 'param.txt'
+      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
       integer ierr

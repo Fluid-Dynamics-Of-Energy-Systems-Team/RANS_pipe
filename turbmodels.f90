@@ -4,8 +4,8 @@
 !>******************************************************************************************
       subroutine rhs_K(putout,dimpl,putink,putine,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,rho,putink,putine,dimpl
@@ -31,8 +31,8 @@
 !>******************************************************************************************
       subroutine rhs_Epsilon(putout,dimpl,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,rho,dimpl!,Tt
@@ -73,8 +73,8 @@
 !!************************************************************************************
       subroutine advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 rho3(0:i1,0:k1)
@@ -179,8 +179,8 @@
 !!************************************************************************************
       subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 rho3(0:i1,0:k1)
@@ -278,11 +278,11 @@
       !!********************************************************************
       subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
       implicit none
-      include 'param.txt'
+      include 'param.f90'
       integer   km,kp, rank1,diffVersion
-      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),
-     &      rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),
-     &      ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma, difcp, difcm
+      real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
+            rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
+            ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma, difcp, difcm
 
          if ((diffVersion == 1) .or. (diffVersion == 2)) then       ! Inverse SLS  and Aupoix
             do k=1,k1-1
@@ -291,9 +291,9 @@
                do i=1,i1-1
                   difcp = (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,kp)))
                   difcm = (ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km)))
-                  putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*(
-     3                     (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k ))
-     3                          -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
+                  putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*( &
+                           (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k )) &
+                                -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
                enddo
             enddo
          else                               ! Standard
@@ -301,9 +301,9 @@
                kp=k+1
                km=k-1
                do i=1,i1-1
-                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)*(
-     3                    ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))
-     3                     -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km))   )/(dz*dz)   )
+                     putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+                          ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k )) &
+                           -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km))   )/(dz*dz)   )
                enddo
             enddo
          endif

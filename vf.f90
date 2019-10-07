@@ -13,8 +13,8 @@
       subroutine calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp,Srsq!,Tt
@@ -38,17 +38,17 @@
             ip=i+1
 
             yp(i,k)     = sqrt(rNew(i,k))/ekm(i,k)*(wallDist(i))*tauw(k)**0.5           ! ystar
-  !          yp(i,k)     = sqrt(rNew(imax,k))/ekm(imax,k)*(wallDist(i))*tauw(k)**0.5    ! yplus
-  !          yp(i,:)     = (wallDist(i))*Re*(1/Re*(Win(imax)/(wallDist(imax))))**0.5        ! yplus
+!            yp(i,k)     = sqrt(rNew(imax,k))/ekm(imax,k)*(wallDist(i))*tauw(k)**0.5    ! yplus
+!            yp(i,:)     = (wallDist(i))*Re*(1/Re*(Win(imax)/(wallDist(imax))))**0.5        ! yplus
             ReTauS(i,k) = 0.5*sqrt(rNew(i,k))/ekm(i,k)*tauw(k)**0.5
             Ret(i,k)    = rNew(i,k)*(kNew(i,k)**2.)/(ekm(i,k)*eNew(i,k))        ! not sure if r2 or r
            
-            StR= (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                ((U(i,k)-U(im,k))/dru(i))**2. +
-     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +  
-     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dru(i)
-     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
+            StR= (2.*(((W(i,k)-W(i,km))/dz)**2. + &
+                      ((U(i,k)-U(im,k))/dru(i))**2. + &
+                      ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +  &
+                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4. &
+                      -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dru(i) &
+                      +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
     
 !               Srsq(i,k) = Pk(i,k)*rNew(i,k)/(2.*ekmt(i,k))
 
@@ -81,8 +81,8 @@
 !>******************************************************************************************
       subroutine prodisVF(putink,putine,putinv2,U,W,T,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer im,ip,km,kp,ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: U,W,T,rho,div,putink,putine,putinv2,Srsq!,Tt
@@ -103,17 +103,17 @@
 
 
             ! Production of turbulent kinetic energy
-            Pk(i,k) = ekmt(i,k)*(
-     &         2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &             ((U(i,k)-U(im,k))/dRu(i))**2. +
-     &             ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &            (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &             -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &            +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)
-     &              )**2.)
+            Pk(i,k) = ekmt(i,k)*( &
+               2.*(((W(i,k)-W(i,km))/dz)**2. + &
+                   ((U(i,k)-U(im,k))/dRu(i))**2. + &
+                   ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) + &
+                  (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4. &
+                   -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
+                  +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) &
+                   )**2.)
 
-            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i))
-     &              +(      W(i,k) -      W(i,km))/dz
+            div(i,k) =(Ru(i)*U(i,k)-Ru(im)*U(im,k))/(Rp(i)*dru(i)) &
+                     +(      W(i,k) -      W(i,km))/dz
 
             Pk(i,k) = Pk(i,k) - 2./3.*(rho(i,k)*putink(i,k)+ekmt(i,k)*(div(i,k)))*(div(i,k))
 
@@ -121,12 +121,12 @@
             Tt(i,k)   = max(putink(i,k)/putine(i,k), 6.0*(ekm(i,k)/(rho(i,k)*putine(i,k)))**0.5)
             
             if (modVF.eq.1) then
-                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. +
-     &                ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. +
-     &                ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) +
-     &                (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.
-     &                -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)  
+                StR = (2.*(((W(i,k)-W(i,km))/dz)**2. + &
+                      ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. + &
+                      ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) + &
+                      (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4. &
+                      -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
+                      +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)  
     
 !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
                 Srsq(i,k) = Str*rho(i,k)*0.5
@@ -135,12 +135,12 @@
                Tt(i,k)   = min(Tt(i,k),0.6*putink(i,k)/(3.**0.5*putinv2(i,k)*cmu*(2.*Srsq(i,k))**0.5))
             endif
             ! Bouyancy prodution
-            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k)
-     &             *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i)
-     &                          +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )*
-     &                                                                             (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  )
-     &               +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz)
-     &               )
+            Gk(i,k)=-ctheta*beta(i,k)*Fr_1*Tt(i,k) &
+                   *  (ekmt(i,k)*(((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4.-(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
+                                +((U(i,kp)+U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz) )* &
+                                                                                   (T(ip,k)-T(im,k))/(dRp(i)+dRp(im))  ) &
+                     +(2.*ekmt(i,k)*((W(i,k)-W(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(T(i,kp)-T(i,km))/(2.*dz) &
+                     )
 
 
             Gk(i,k) = Gk(i,k) + ctheta*beta(i,k)*Fr_1*Tt(i,k)*2./3.*ekmt(i,k)*div(i,k)*(T(i,kp)-T(i,km))/(2.*dz)
@@ -156,8 +156,8 @@
 !>******************************************************************************************
       subroutine rhs_v2(putout,dimpl,putink,putine,putinv2,putinf,rho)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
 
       integer ib,ie,kb,ke !< integers
       real*8, dimension(0:i1,0:k1) :: putout,putink,putine,putinv2,rho,dimpl
@@ -185,8 +185,8 @@
 !!******************************************************************************************
       subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 resV2
@@ -285,8 +285,8 @@
 !!******************************************************************************************
       subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
       implicit none
-      include 'param.txt'
-      include 'common.txt'
+      include 'param.f90'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
       real*8 resK, resE, resV2
@@ -314,15 +314,15 @@
 !!********************************************************************
       subroutine fillhm(rank)
       implicit none
-c     
-      include 'param.txt'
-      include 'common.txt'
+     
+      include 'param.f90'
+      include 'common.f90'
       real*8   Srsq(0:i1,0:k1) !,Tt(0:i1,0:k1)
       !real*8   Str
 
-c     
-c     *** Fill the right hand for the poisson solver. ***
-c     
+!     
+!     *** Fill the right hand for the poisson solver. ***
+!     
 
       do  k=1,kmax
          do i=1,imax
@@ -345,8 +345,8 @@ c
 !            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
 !     &                - 0.3*(Pk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
             ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
-            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k)
-     &                - 0.3*(Pk(i,k)+Gk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
+            fv2(i,k)= - (1.4-1.)*(2./3.-v2new(i,k)/knew(i,k))/Tt(i,k) &
+                      - 0.3*(Pk(i,k)+Gk(i,k))/(rnew(i,k)*knew(i,k))-5.*v2new(i,k)/(knew(i,k)*Tt(i,k))
             fv2(i,k) = fv2(i,k)/Lh(i,k)**2.0
          enddo
       enddo

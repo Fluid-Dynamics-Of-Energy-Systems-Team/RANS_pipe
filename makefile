@@ -18,7 +18,7 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF
-SRCS    = numerics.f90 mk.f vf.f sst.f sa.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f90
+SRCS    = numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
 OBJS    = numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
@@ -32,20 +32,20 @@ numerics.o: numerics.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c numerics.f90
 mk.o: mk.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c mk.f90
-vf.o: vf.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c vf.f
-sa.o: sa.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sa.f
-sst.o: sst.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sst.f
-turbmodels.o: param.f90 turbmodels.f makefile
-	$(F77) $(DBG) $(FLAGS) -c turbmodels.f
-fileio.o: fileio.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c fileio.f
-math.o: math.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c math.f
-mpistuff.o: mpistuff.f param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c mpistuff.f	
+vf.o: vf.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c vf.f90
+sa.o: sa.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c sa.f90
+sst.o: sst.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c sst.f90
+turbmodels.o: param.f90 turbmodels.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c turbmodels.f90
+fileio.o: fileio.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c fileio.f90
+math.o: math.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c math.f90
+mpistuff.o: mpistuff.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c mpistuff.f90	
 vfft.o: vfft.f makefile
 	$(F77) $(DBG) $(FLAGS) -c vfft.f
 
