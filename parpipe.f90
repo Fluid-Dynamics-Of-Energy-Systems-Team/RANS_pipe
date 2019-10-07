@@ -8,7 +8,7 @@
       implicit none
 
       include      'param.txt'          !> input file
-      include      'common.txt'         !> def. of turb model variables
+      include      'common.f90'         !> def. of turb model variables
       include      'mpif.h'             !> mpi stuff
 
       ! def. of variables
@@ -175,7 +175,7 @@
 
       implicit none
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       integer  im,ip,km,kp,step
       real*8   tauwLoc, tauw(0:k1) 
       real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
@@ -260,7 +260,7 @@
       subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
       implicit none
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
       real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
       real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
@@ -429,7 +429,7 @@
       subroutine advance(rank)
       implicit none
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
 
       real*8, dimension(imax)   :: a, b, c, rhs
       real*8, dimension(imax-1) :: au, bu, cu, rhsu
@@ -560,7 +560,7 @@
       implicit none
      
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
 
       real*8 unin,flux,Ub,BCvalue(0:k1)
@@ -708,7 +708,7 @@
       implicit none
 
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       character*5 inflow
       integer ierr,tabkhi,tabklo
@@ -787,7 +787,7 @@
       implicit none
 !     
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       character*5 inflow
 !     
@@ -942,7 +942,7 @@
       subroutine fkdat(rank)
       implicit none
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
 
       real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
 
@@ -1012,7 +1012,7 @@
       implicit none
      
       include 'param.txt'
-      include 'common.txt'
+      include 'common.f90'
       include 'mpif.h'
       integer ierr
       real*8 waver(imax),waver2(imax)

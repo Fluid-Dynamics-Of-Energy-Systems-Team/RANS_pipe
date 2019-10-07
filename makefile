@@ -18,7 +18,7 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF
-SRCS    = numerics.f mk.f vf.f sst.f sa.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f
+SRCS    = numerics.f90 mk.f vf.f sst.f sa.f turbmodels.f fileio.f math.f mpistuff.f vfft.f parpipe.f90
 OBJS    = numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
@@ -26,25 +26,25 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(F77) $(DBG) $(FLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
-parpipe.o: parpipe.f90 param.txt makefile
+parpipe.o: parpipe.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c parpipe.f90
-numerics.o: numerics.f param.txt makefile
-	$(F77) $(DBG) $(FLAGS) -c numerics.f
-mk.o: mk.f param.txt makefile
-	$(F77) $(DBG) $(FLAGS) -c mk.f
-vf.o: vf.f param.txt makefile
+numerics.o: numerics.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c numerics.f90
+mk.o: mk.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c mk.f90
+vf.o: vf.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c vf.f
-sa.o: sa.f param.txt makefile
+sa.o: sa.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c sa.f
-sst.o: sst.f param.txt makefile
+sst.o: sst.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c sst.f
-turbmodels.o: param.txt turbmodels.f makefile
+turbmodels.o: param.f90 turbmodels.f makefile
 	$(F77) $(DBG) $(FLAGS) -c turbmodels.f
-fileio.o: fileio.f param.txt makefile
+fileio.o: fileio.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c fileio.f
-math.o: math.f param.txt makefile
+math.o: math.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c math.f
-mpistuff.o: mpistuff.f param.txt makefile
+mpistuff.o: mpistuff.f param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c mpistuff.f	
 vfft.o: vfft.f makefile
 	$(F77) $(DBG) $(FLAGS) -c vfft.f
@@ -55,7 +55,7 @@ vfft.o: vfft.f makefile
 changeCPU: changeNcpu.o
 	$(F77) $(FLAGS) -o changeCPU changeNcpu.o $(LIBS)
 
-changeCPU.o: changeCPU.f90 param.txt makefile
+changeCPU.o: changeCPU.f90 param.f90 makefile
 	$(F77) $(FLAGS) -c changeCPU.f90
 
 clean:
