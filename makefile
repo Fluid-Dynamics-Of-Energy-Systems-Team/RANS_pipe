@@ -26,8 +26,8 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(F77) $(DBG) $(FLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
-parpipe.o: parpipe.f param.txt makefile
-	$(F77) $(DBG) $(FLAGS) -c parpipe.f
+parpipe.o: parpipe.f90 param.txt makefile
+	$(F77) $(DBG) $(FLAGS) -c parpipe.f90
 numerics.o: numerics.f param.txt makefile
 	$(F77) $(DBG) $(FLAGS) -c numerics.f
 mk.o: mk.f param.txt makefile

@@ -12,7 +12,7 @@
 
       parameter (px                = 4)        ! number of cores
       parameter (imax              = 96)       ! radial direction
-      parameter (kmax              = 32/px)    ! 384/px)   ! axial direction
+      parameter (kmax              = 384/px)    ! 384/px)   ! axial direction
       parameter (kmaxper           = kmax*px/2)
       parameter (i1                = imax + 1)
       parameter (k1                = kmax + 1)
@@ -38,7 +38,7 @@
       parameter (Qwall             = 0.0)     !0.0) !2.4)
       parameter (isothermalBC      = 1)       ! isothermal wall: 1
 
-      parameter (Tw                = 4.0)     ! scaled with the inflow temp (Tin=1)
+      parameter (Tw                = 1.25)     ! scaled with the inflow temp (Tin=1)
       parameter (dTwall            = 0.05)
 !     parameter (Tw                = 4)      ! case for Tw=100K
 !     parameter (Tw                = 8)      ! case for Tw=200K  
@@ -53,7 +53,7 @@
 !      parameter (Fr_1              = -79.67)  ! case C
 !      parameter (Fr_1              = -268.89) ! case D 
 !      parameter (Fr_1              =  99.59)  ! downward
-c      /(beta_o*T_o*Re**2.*Qwall))   
+!      /(beta_o*T_o*Re**2.*Qwall))   
 
       parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2/sPH2
 

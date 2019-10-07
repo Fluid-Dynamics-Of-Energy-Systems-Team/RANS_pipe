@@ -15,8 +15,8 @@
       integer      ploc,ierr,istart,noutput
       integer      iTabFoundHi,iTabFoundLo
       real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
-      real*8       newTemp,newRho,newMu,newLam,newCP,newEnth,
-     &     newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot 
+      real*8       newTemp,newRho,newMu,newLam,newCP,newEnth, &
+                   newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot 
       real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
       real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1)
       real*8       tempWall
@@ -149,8 +149,8 @@
          noutput = 100
          if (rank.eq.0) then
             if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
-                write(6,'(A7,9A14)') 'istep','dt','bulk',
-     1           'stress','cResid','kineResid','epsResid','v2Resid','omResid','nuSAresid'
+                write(6,'(A7,9A14)') 'istep','dt','bulk', &
+                'stress','cResid','kineResid','epsResid','v2Resid','omResid','nuSAresid'
             endif
             if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
                 write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA
@@ -558,7 +558,7 @@
 !!*************************************************************************************
       subroutine bound_h(kin,ein,v2in,omin,nuSAin,rank)
       implicit none
-c     
+     
       include 'param.txt'
       include 'common.txt'
       include 'mpif.h'
@@ -785,17 +785,17 @@ c
 !!*************************************************************************************
       subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
       implicit none
-c     
+!     
       include 'param.txt'
       include 'common.txt'
       include 'mpif.h'
       character*5 inflow
-c     
+!     
       real*8      W_out(0:i1,0:k1)
       integer ierr
       real*8  y1,y2,y3,y4
-      real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1)
-     1     ,Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
+      real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
+              Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
       real*8 Ub,flux,flux_tot,deltaW,rhob,wfunc,wr(1:imax)
       real*8 Rbb(0:i1)
       real*8 ubb(0:i1)
@@ -878,14 +878,14 @@ c
          Wbound(0,kmax)  = centerBC*Wbound(1,kmax)
       endif
 
-c     compute drho/dt*dvol
+!     compute drho/dt*dvol
       do k=1,kmax
          do i=1,imax
             flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
          enddo
       enddo
 
-c     compute mf in
+!     compute mf in
       if (rank.eq.0)then
          do i=1,imax
             flux = flux + Wbound(i,0)*dru(i)*rp(i)
@@ -903,7 +903,6 @@ c     compute mf in
 
 !      write(*,*) "delta flux: ", flux
 
-c     
       call mpi_allreduce(flux,flux_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 
 
@@ -963,7 +962,7 @@ c
 
 
         if (select_init.eq.1) then    
-			!initialized from inflow
+            !initialized from inflow
             if (rank.eq.0)  write(*,*) 'Initializing flow with inflow = ', select_init
 
             do k=0,k1
@@ -1030,8 +1029,8 @@ c
             Waver(i) = Waver(i) + wnew(i,k)
          enddo
       enddo
-      call mpi_allreduce(waver,waver2,imax,
-     &     mpi_real8,mpi_sum,mpi_comm_world,ierr)
+      call mpi_allreduce(waver,waver2,imax, &
+          mpi_real8,mpi_sum,mpi_comm_world,ierr)
 !     -------------------------------------------end i,j,k-loop
       waver = waver2/(kmax*px)
 
