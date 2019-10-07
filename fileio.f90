@@ -3,10 +3,10 @@
 !     write inflow file
 !********************************************************************
 subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-  integer istap
+  integer rank,istap
   character*5 inflow
 
   if (rank.eq.px/2) then
@@ -30,9 +30,10 @@ end
 !     read table from file
 !********************************************************************
 subroutine readTable(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'mpif.h'
+  integer rank
   if (EOSmode.eq.0) call readTableIG(rank)
   if (EOSmode.eq.1) call readTableRG(rank)
 end
@@ -43,11 +44,11 @@ end
 !     read table from file
 !********************************************************************
 subroutine readTableIG(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ierr
+  integer ierr, rank
 
   if (rank.eq.0) then
     open(27,file='tables/co2h_table.dat')
@@ -78,11 +79,11 @@ end
 !     read table from file
 !********************************************************************
 subroutine readTableRG(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ierr
+  integer ierr,rank
 
   if (rank.eq.0) then
     if (isothermalBC.eq.1) then
@@ -115,9 +116,11 @@ end
 !     dump table to file
 !********************************************************************
 subroutine dumpTABLE(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+
+  integer rank
   character*5 cha
   write(cha,'(I5.5)')rank
   open(207,file='table.'//cha)
@@ -133,11 +136,11 @@ end
 !     read istep from the restart file to identify the corresponding inflow profile
 !***************************************************************************************
 subroutine loadRestart(startStep,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   character*5 cha
-  integer startStep,ierr
+  integer startStep,ierr,rank
 
   real*8     UNEWR(0:i1,0:k1old)
   real*8     UOLDR(0:i1,0:k1old)
@@ -184,10 +187,11 @@ end
 !     store istep in the restart file to identify the corresponding inflow profile
 !***************************************************************************************
 subroutine saveRestart(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   character*5 cha
+  integer rank
   write(cha,'(I5.5)')rank
   if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
   if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
@@ -206,10 +210,10 @@ end
 !
 !***************************************************************************************
 subroutine outputProfile(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-
+  integer rank
   ! radius= 1, velocity=3, temperature=5, density=6, turb. kine=7,
   ! epsilon=8, v2=9, nuSA=10, mut=11
   if (rank == 0) then
@@ -230,12 +234,12 @@ end
 !     
 !***************************************************************************************
 subroutine outputX_h(rank,istap)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
   character*5 cha
-  integer ierr,istap,ktabhi,ktablo
+  integer rank,ierr,istap,ktabhi,ktablo
   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),Qp(kmax), &
     tmp(kmax),massfl,enth,laminter,tempinter,cpinter,Gb(kmax),rhob(kmax),ekmb(kmax),Ub(kmax), &
     addedHeat,addedHeatTot,subheat,subheatTot,w_c
@@ -298,15 +302,15 @@ end
 !
 !***************************************************************************************
 subroutine output2d(rank,istap)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
   character*5 cha
   real*8 pecletx,peclety,pecletz
   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
     massfl,w_c,ndt
-  integer istap,jstart,ktabhi,ktablo
+  integer rank,istap,jstart,ktabhi,ktablo
   write(cha,'(I5.5)')rank
 
 

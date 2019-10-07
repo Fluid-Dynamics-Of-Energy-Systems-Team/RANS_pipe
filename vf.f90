@@ -12,8 +12,8 @@
 !!******************************************************************************************
 subroutine calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
@@ -80,8 +80,8 @@ end
 !!      V2F prodis subroutine which calculates the production term of the turbulent scalar equation
 !>******************************************************************************************
 subroutine prodisVF(putink,putine,putinv2,U,W,T,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
@@ -155,8 +155,8 @@ end
 !!      To calculate the rhs of the v2 equation
 !>******************************************************************************************
 subroutine rhs_v2(putout,dimpl,putink,putine,putinv2,putinf,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
@@ -184,9 +184,10 @@ end
 !!      VF advancing the turbulence scalars of this model: v2
 !!******************************************************************************************
 subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
   real*8 resV2
@@ -284,9 +285,10 @@ end
 !!      VF advancing the turbulence scalars of this model: k and epsilon and v2
 !!******************************************************************************************
 subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
   real*8 resK, resE, resV2
@@ -313,10 +315,11 @@ end
 !!     helmotz solver
 !!********************************************************************
 subroutine fillhm(rank)
+  use mod_param
   implicit none
-     
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
+
+  integer rank
   real*8   Srsq(0:i1,0:k1) !,Tt(0:i1,0:k1)
   !real*8   Str
 

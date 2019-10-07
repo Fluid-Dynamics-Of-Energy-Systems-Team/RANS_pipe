@@ -1,11 +1,11 @@
 
 
 subroutine shiftb(UT,UP,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ileng,rankb,rankf,ierr
+  integer rank,ileng,rankb,rankf,ierr
   integer itag,status(MPI_STATUS_SIZE),l
   real*8 ut(0:i1,0:k1)
   real*8 up(0:i1),UTMP(0:i1)
@@ -29,11 +29,11 @@ end
 
 
 subroutine shiftf(UT,UP,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ileng,rankb,rankf
+  integer rank,ileng,rankb,rankf
   integer  itag,status(MPI_STATUS_SIZE),l,ierr
   real*8 UT(0:i1,0:k1),UP(0:i1),UTMP(0:i1)
   parameter (ileng= i1+1)
@@ -55,11 +55,11 @@ subroutine shiftf(UT,UP,rank)
 end
 
 subroutine pshiftb_w(UT,UP,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ileng,rankb,rankf,ierr
+  integer rank,ileng,rankb,rankf,ierr
   integer itag,status(MPI_STATUS_SIZE),l
   real*8 ut(imax,kmax)
   real*8 up(imax),UTMP(imax)
@@ -81,7 +81,7 @@ end
 
 
 SUBROUTINE init_transpose
-      include 'param.f90'
+  use mod_param
   parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
   integer Xii(Nx),Xkk(Nx,Mt)
   common /XPOSE/ Xii,Xkk
@@ -113,7 +113,7 @@ end
 
 
 SUBROUTINE t2fp(Q,Qt,rank)
-      include 'param.f90'
+  use mod_param
       include 'mpif.h'
   parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
   integer N
@@ -151,7 +151,7 @@ end
 
 
 SUBROUTINE t2fpVector(Q,Qt,rank)
-      include 'param.f90'
+  use mod_param
       include 'mpif.h'
   parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
   integer n
@@ -191,7 +191,7 @@ SUBROUTINE t2fpVector(Q,Qt,rank)
   return
 end
 SUBROUTINE t2fpTensor(Q,Qt,rank)
-      include 'param.f90'
+      use mod_param
       include 'mpif.h'
   parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
   integer n,s
@@ -239,8 +239,8 @@ end
 !     to (j,k,i) node distributed in x.
 
 SUBROUTINE t2np(Q,Qt,rank)
-      include 'param.f90'
-      include 'mpif.h'
+  use mod_param
+  include 'mpif.h'
   parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
   integer N
   integer ii,kk,l

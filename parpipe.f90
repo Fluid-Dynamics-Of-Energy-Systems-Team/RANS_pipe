@@ -5,14 +5,14 @@
 !!    heated pipe with constant heat flux
 !!    ****************************************************
 
+use mod_param
 implicit none
 
-include      'param.f90'          !> input file
 include      'common.f90'         !> def. of turb model variables
 include      'mpif.h'             !> mpi stuff
 
 ! def. of variables
-integer      ploc,ierr,istart,noutput
+integer      ploc,rank,ierr,istart,noutput
 integer      iTabFoundHi,iTabFoundLo
 real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
 real*8       newTemp,newRho,newMu,newLam,newCP,newEnth, &
@@ -90,7 +90,8 @@ call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
 call state(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
 
-print*,"Hellow!"
+!print *,"Hellow!"
+
 call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
 call bound_v(Unew,Wnew,Win,rank)
       
@@ -173,10 +174,10 @@ end
 !!******************************************************************************************
 subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-  integer  im,ip,km,kp,step
+  integer  rank,im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
   real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
   real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
@@ -258,14 +259,14 @@ end
 !!
 !!************************************************************************************
 subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
   real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
   real*8 cb3,Q,hbc
-  integer ierr
+  integer rank,ierr
   real*8     a  (imax)
   real*8     b  (imax)
   real*8     c  (imax)
@@ -427,10 +428,10 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!*************************************************************************************
 subroutine advance(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-
+  integer rank
   real*8, dimension(imax)   :: a, b, c, rhs
   real*8, dimension(imax-1) :: au, bu, cu, rhsu
   real*8 dnew(0:i1,0:k1)
@@ -557,12 +558,12 @@ end
 !!
 !!*************************************************************************************
 subroutine bound_h(kin,ein,v2in,omin,nuSAin,rank)
+  use mod_param
   implicit none
      
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-
+  integer rank
   real*8 unin,flux,Ub,BCvalue(0:k1)
   real*8 Sk(0:k1),kin(0:i1),ein(0:i1),v2in(0:i1),omin(0:i1),nuSAin(0:i1)
   real*8 tmpShift(0:i1)
@@ -705,13 +706,13 @@ end
 !!*************************************************************************************
 subroutine bound_v(Ubound,Wbound,Win,rank)
 
+  use mod_param
   implicit none
 
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
   character*5 inflow
-  integer ierr,tabkhi,tabklo
+  integer rank,ierr,tabkhi,tabklo
   real*8  y1,y2,y3,y4
   real*8  Ubound(0:i1,0:k1), Wbound(0:i1,0:k1),flux,Ub,Win(0:i1)
   real*8 Rbb(0:i1)
@@ -784,15 +785,15 @@ end
 !!
 !!*************************************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
+  use mod_param
   implicit none
   !
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
   character*5 inflow
   !
   real*8      W_out(0:i1,0:k1)
-  integer ierr
+  integer rank,ierr
   real*8  y1,y2,y3,y4
   real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
     Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
@@ -940,10 +941,10 @@ end
 !!
 !!*************************************************************************************
 subroutine fkdat(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-
+  integer rank
   real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
 
   character*5 inflow
@@ -1009,9 +1010,9 @@ end
 !!
 !!*************************************************************************************
 subroutine cmpinf(Bulk,Stress)
+  use mod_param
   implicit none
      
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
   integer ierr

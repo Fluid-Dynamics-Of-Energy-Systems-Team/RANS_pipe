@@ -3,8 +3,8 @@
 !!      To calculate the rhs of the k equation  
 !>******************************************************************************************
 subroutine rhs_K(putout,dimpl,putink,putine,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
@@ -30,8 +30,8 @@ end
 !!      To calculate the rhs of the epsilon equation 
 !>******************************************************************************************
 subroutine rhs_Epsilon(putout,dimpl,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
@@ -72,9 +72,10 @@ end
 !!
 !!************************************************************************************
 subroutine advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
   real*8 rho3(0:i1,0:k1)
@@ -178,9 +179,11 @@ end
 !!
 !!************************************************************************************
 subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+
+  integer mrank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
   real*8 rho3(0:i1,0:k1)
@@ -191,7 +194,6 @@ subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
   real*8     rhs(imax)
 
   real*8 resK
-  integer mrank
 
   resK  = 0.0
   dnew  = 0.0; dimpl = 0.0;
@@ -277,8 +279,8 @@ end
 !! diffusion term for epsilon in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+  use mod_param
   implicit none
-      include 'param.f90'
   integer   km,kp, rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &

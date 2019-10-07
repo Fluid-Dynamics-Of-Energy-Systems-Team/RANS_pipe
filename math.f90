@@ -102,15 +102,16 @@ SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   !     2628 AL DELFT
   !     email ::::   b.j.boersma@wbmt.tudelft.nl
   !
+  use mod_param
   implicit none
-      include    'param.f90'
+
   real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
   real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
   real*8      a(imax),b(imax),c(imax)
   real*8      zrt(kmax*px)
   real*8      vfftk(imax/px,kmax*px)
   real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
-  integer     centerBC
+  integer     rank, centerBC
 
   !     generate tridiagonal systems
 
@@ -243,15 +244,15 @@ SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm,centerBC)
   !     2628 AL DELFT
   !     email ::::   b.j.boersma@wbmt.tudelft.nl
   !
+  use mod_param
   implicit none
-      include    'param.f90'
   real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1),hterm(IMAX,KMAX)
   real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
   real*8      a(imax),b(imax),c(imax)
   real*8      zrt(kmax*px)
   real*8      vfftk(imax/px,kmax*px)
   real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
-  integer     centerBC
+  integer     rank, centerBC
   !     generate tridiagonal systems
 
   pi = 4.*atan(1.)

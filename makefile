@@ -19,7 +19,7 @@ RM = rm -f
 
 PROGRAM = forced_real_VF
 SRCS    = numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
-OBJS    = numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
+OBJS    = param.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 
@@ -48,6 +48,8 @@ mpistuff.o: mpistuff.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c mpistuff.f90	
 vfft.o: vfft.f makefile
 	$(F77) $(DBG) $(FLAGS) -c vfft.f
+param.o: param.f90
+	$(F77) $(DBG) $(FLAGS) -c param.f90
 
 
 

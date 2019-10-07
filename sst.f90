@@ -12,8 +12,8 @@
 !!******************************************************************************************
 subroutine calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
@@ -82,8 +82,8 @@ end
 !>******************************************************************************************
 subroutine prodisSST(putink,U,W,T,rho)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
@@ -149,8 +149,8 @@ end
 !>******************************************************************************************
 subroutine rhs_kSST(putout,dimpl,putink,U,W,T,rho)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer ib,ie,kb,ke !< integers
@@ -187,8 +187,8 @@ end
 !>******************************************************************************************
 subroutine rhs_OmSST(putout,dimpl,putink,U,W,T,rho)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer km,kp,im,ip,ib,ie,kb,ke !< integers
@@ -251,9 +251,10 @@ end
 !!      SST advancing the turbulence scalars of this model: k
 !!******************************************************************************************
 subroutine advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)
@@ -357,9 +358,10 @@ end
 !!      SST advancing the turbulence scalars of this model: omega
 !!******************************************************************************************
 subroutine advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)
@@ -451,9 +453,10 @@ end
 !!      SST advancing the turbulence scalars of this model: k and omega
 !!******************************************************************************************
 subroutine advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)
 
@@ -479,8 +482,8 @@ end
 !! diffusion term for kine of the SST model in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffcSSTKine(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+  use mod_param
   implicit none
-      include 'param.f90'
   integer   km,kp,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1),  &
     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1),  &
@@ -530,8 +533,8 @@ end
 !! diffusion term for omega of the SST model in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffcSSTOmega(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+  use mod_param
   implicit none
-      include 'param.f90'
   integer   km,kp,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &

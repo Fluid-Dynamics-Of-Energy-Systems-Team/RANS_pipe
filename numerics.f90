@@ -2,8 +2,8 @@
 !!     Calculate enthalpy at the wall boundary condition for isothermal
 !!********************************************************************
 subroutine funcIsothermalEnthBC(Twall_bc)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   real*8 Twall_bc
   integer tabkhi,tabklo
@@ -23,8 +23,8 @@ end
 !!     Newton solver for wall boundary condition
 !!********************************************************************
 subroutine funcNewtonSolve(enth_i1, enth_imax)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   real*8 enth_i1, enth_imax
 
@@ -38,8 +38,8 @@ end
 !!     Newton solver for wall boundary condition with PIG
 !!********************************************************************
 subroutine funcNewtonSolveIG(enth_i1, enth_imax)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   real*8 enth_i1, enth_imax, ekh_imax
 
@@ -91,9 +91,9 @@ end
 !!     function for wall boundary condition used by Newton solver
 !!********************************************************************
 subroutine funcNewtonBC(enth, enthIMAX, fxValue)
+  use mod_param
   implicit none
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
   integer tabkhi,tabklo
   real*8 enth,lamOcpinter,enthIMAX,fxValue
   tabkhi = 0
@@ -108,9 +108,9 @@ end
 !!     PIG equation of state
 !!********************************************************************
 subroutine state(enth,rho,mu,lam,tp,be,istap,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
-  integer istap
+  integer istap, rank
   real*8 enth(0:i1,0:k1)
   real*8 rho(0:i1,0:k1)
   real*8 mu (0:i1,0:k1)
@@ -123,10 +123,10 @@ end
 !!     PIG equation of state IG
 !!********************************************************************
 subroutine stateIG(enth,rho,mu,lam,tp,be,istap,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-  integer istap
+  integer istap,rank
   real*8 enth(0:i1,0:k1)
   real*8  rho(0:i1,0:k1)
   real*8  mu (0:i1,0:k1)
@@ -153,11 +153,11 @@ end
 !!     real gas equation of state RG
 !!********************************************************************
 subroutine stateRG(enth,rho,mu,lam,tp,be,istap,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
-  integer tabkhi,tabklo,istap
+  integer tabkhi,tabklo,istap,rank
 
   real*8 enth(0:i1,0:k1)
   real*8 rho(0:i1,0:k1)
@@ -244,12 +244,13 @@ end
 !!     poisson solver
 !!********************************************************************
 subroutine fillps(rank)
+  use mod_param
   implicit none
 
-      include 'param.f90'
-      include 'common.f90'
-      include 'mpif.h'
-  integer ierr
+  include 'common.f90'
+  include 'mpif.h'
+
+  integer ierr,rank
 
   real*8 sumps,sumps_tot
   !
@@ -286,10 +287,10 @@ end
 !!     correc
 !!********************************************************************
 subroutine correc(rank,setold)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-  integer setold
+  integer rank,setold
   real*8 pplus_w(imax)
 
   do k=1,kmax
@@ -350,11 +351,11 @@ end
 !!     chkdt
 !!********************************************************************
 subroutine chkdt(rank,istap)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ierr,istap
+  integer rank,ierr,istap
   real*8  tmp,Courant,dtmp,tmp1,tmp2,tmp3,dr2,dz2,kcoeff
 
   dt = dtmax
@@ -381,11 +382,11 @@ end
 !!     chkdiv
 !!********************************************************************
 subroutine chkdiv(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
       include 'mpif.h'
-  integer ierr,ll
+  integer rank,ierr,ll
   real*8   div,divmax,divbar,divmax_tot,divbar_tot,rhoip,rhoim,rhokp,rhokm
   divbar = 0.0
   divmax = 0.0
@@ -429,9 +430,11 @@ end
 !!     mkgrid
 !!********************************************************************
 subroutine mkgrid(rank)
+  use mod_param
   implicit none
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
+
+  integer rank
   real*8  delta(imax),Yplus,X,rmax,drr,Rei
   real*8  pii,y,y1,y2,fA,fB,fC,fact,gridSize
 
@@ -451,7 +454,7 @@ subroutine mkgrid(rank)
     centerBC  = 1
     gridSize = 0.5
     dpdz =4.0
-    if (rank.eq.0) print*,"*************SOLVING A PIPE FLOW*************!"
+    if (rank.eq.0) print*,"************* SOLVING A PIPE FLOW *************!"
     write(*,*) centerBC
   elseif (systemSolve.eq.2) then
     numDomain = -1
@@ -460,13 +463,13 @@ subroutine mkgrid(rank)
     fA = 0.5
     fB = 4.6
     dpdz= 1.0
-    if (rank.eq.0) print*,"*************SOLVING A CHANNEL FLOW*************!"
+    if (rank.eq.0) print*,"************* SOLVING A CHANNEL FLOW *************!"
   elseif (systemSolve.eq.3) then
     numDomain = -1
     centerBC  = 1
     gridSize = 1.0
     dpdz= 1.0
-    if (rank.eq.0) print*,"*************SOLVING A BOUNDARY LAYER FLOW*************!"
+    if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
   else
     if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")',systemSolve
     stop
@@ -564,8 +567,8 @@ end
 !!     diffusion term in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+  use mod_param
   implicit none
-      include 'param.f90'
   integer   km,kp,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
@@ -1112,8 +1115,8 @@ end
 !!     
 !!********************************************************************
 subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
+  use mod_param
   implicit none
-      include 'param.f90'
 
   integer   im,ip,km,kp,ib,ie,kb,ke
   real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &

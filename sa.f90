@@ -12,8 +12,8 @@
 !!******************************************************************************************
 subroutine calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
 
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
   integer  im,ip,km,kp,step
   real*8   tauwLoc, tauw(0:k1)
@@ -55,8 +55,8 @@ end
 !!      SA prodis subroutine which calculates the production term of the turbulent scalar equation
 !>******************************************************************************************
 subroutine prodisSA(nuSAtmp,U,W,T,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
@@ -118,8 +118,8 @@ end
 !!      To calculate the rhs of the nuSA equation
 !>******************************************************************************************
 subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
 
   integer im,ip,km,kp,ib,ie,kb,ke !< integers
@@ -220,9 +220,10 @@ end
 !!
 !!************************************************************************************
 subroutine advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
+  integer rank
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1)
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
@@ -294,10 +295,10 @@ end
 !!      SA advancing the turbulence scalars of this model: nuSA
 !!******************************************************************************************
 subroutine advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
       include 'common.f90'
-
+  integer rank
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ShatSA(0:i1,0:k1)
   real*8 rho3(0:i1,0:k1)
   real*8 resSA
@@ -321,8 +322,8 @@ end
 !!  diffusion term for SA model: in the z-direction as, plus extra for Aupoix modifications...
 !!********************************************************************
 subroutine diffcSA(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+  use mod_param
   implicit none
-      include 'param.f90'
   integer   km,kp,im,ip,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
     rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &

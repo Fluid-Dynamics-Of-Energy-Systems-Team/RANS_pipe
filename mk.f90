@@ -10,9 +10,9 @@
 !!      MK routine to estimate the eddy viscosity
 !!******************************************************************************************
 subroutine calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
+  use mod_param
   implicit none
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
 
   integer  im,ip,km,kp,step
   real*8   tauw(0:k1)
@@ -60,9 +60,9 @@ end
 !!      MK routine to estimate the equation terms
 !!******************************************************************************************
 subroutine prodisMK(putink,putine,U,W,T,rho)
+  use mod_param
   implicit none
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
 
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,div,putink,putine,dimpl!,Tt
@@ -120,9 +120,11 @@ end
 !!      MK advancing the turbulence scalars of this model: k and epsilon
 !!******************************************************************************************
 subroutine advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
+  use mod_param
   implicit none
-      include 'param.f90'
-      include 'common.f90'
+  include 'common.f90'
+
+  integer rank
   real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax)
   real*8 resK, resE
   real*8 rho3(0:i1,0:k1)
