@@ -25,7 +25,6 @@ end
 subroutine funcNewtonSolve(enth_i1, enth_imax)
   use mod_param
   implicit none
-      include 'common.f90'
   real*8 enth_i1, enth_imax
 
   if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)

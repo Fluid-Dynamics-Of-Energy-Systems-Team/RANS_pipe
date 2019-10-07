@@ -8,24 +8,38 @@
 use mod_param
 implicit none
 
-include      'common.f90'         !> def. of turb model variables
 include      'mpif.h'             !> mpi stuff
+include      'common.f90'         !> def. of turb model variables
 
 ! def. of variables
-integer      ploc,rank,ierr,istart,noutput
+integer      rank,ierr,istart,noutput
 integer      iTabFoundHi,iTabFoundLo
 real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
 real*8       newTemp,newRho,newMu,newLam,newCP,newEnth, &
   newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot
 real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
-real*8 	   Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1)
+
+real(8), dimension(0:i1) :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
+
 real*8       tempWall
 real :: start, finish
 
 call cpu_time(time1)
 call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
-call mpi_comm_size(MPI_COMM_WORLD,ploc,ierr)
+call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
+
+!px = ploc
+kmax    = 384/px
+kmaxper = kmax*px/2
+k1      = kmax + 1
+k1old   = k1
+
+
+
+
+
+
 call init_transpose
 
 dtmax = 1.e-3

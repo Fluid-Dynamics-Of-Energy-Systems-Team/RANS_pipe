@@ -14,14 +14,14 @@ module mod_param
      
   parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer ! dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe
 
-  parameter (px                = 4)        ! number of cores
+!  parameter (px                = 4)        ! number of cores
   parameter (imax              = 96)       ! radial direction
-  parameter (kmax              = 384/px)    ! 384/px)   ! axial direction
-  parameter (kmaxper           = kmax*px/2)
+!  parameter (kmax              = 384/px)    ! 384/px)   ! axial direction
+!  parameter (kmaxper           = kmax*px/2)
   parameter (i1                = imax + 1)
-  parameter (k1                = kmax + 1)
+!  parameter (k1                = kmax + 1)
 
-  parameter (k1old             = k1)    !previous kmax/px + 1  (to restart to a finer mesh in x)
+!  parameter (k1old             = k1)    !previous kmax/px + 1  (to restart to a finer mesh in x)
       
   parameter (K_start_heat      = 3)    ! for isoflux:    after home many cells in x will you start heating
   parameter (x_start_heat      = 5)    ! for isothermal: lenght at which you start heating
