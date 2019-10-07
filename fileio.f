@@ -49,7 +49,7 @@ c********************************************************************
       integer ierr
 
       if (rank.eq.0) then
-!     open(27,file='co2h_table.dat')
+!     open(27,file='tables/co2h_table.dat')
          do i=1,nTab
             tempTab(i)   = ((1.0*i-1)/(nTab-1.0)-0.1)*3.0 + 1.0
             rhoTab(i)    = 1.0/tempTab(i)
@@ -86,12 +86,12 @@ c********************************************************************
       if (rank.eq.0) then
          if (isothermalBC.eq.1) then
             if(pressIsoThermal.eq.2) then
-               open(27,file='pH2_2MPa_table.dat')
+               open(27,file='tables/pH2_2MPa_table.dat')
             else
-               open(27,file='pH2_4MPa_table.dat')
+               open(27,file='tables/pH2_4MPa_table.dat')
             endif
          else
-            open(27,file='co2h_table.dat')
+            open(27,file='tables/co2h_table.dat')
          endif
          do i=1,nTab
             read (27,*) tempTab(i),rhoTab(i),muTab(i),lamTab(i),cpTab(i),enthTab(i),betaTab(i)
@@ -177,7 +177,7 @@ c*******************************************************************************
            V2NEW(i,k) =   V2NEWR(i,k1old*k/k1)
          nuSAnew(i,k) = nuSAnewR(i,k1old*k/k1)
            omNew(i,k) =   omNewR(i,k1old*k/k1)
-		      Pk(i,k) =      PKR(i,k1old*k/k1)
+              Pk(i,k) =      PKR(i,k1old*k/k1)
         enddo
       enddo
 
