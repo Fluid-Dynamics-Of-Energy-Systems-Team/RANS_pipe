@@ -82,7 +82,8 @@ end
 
 SUBROUTINE init_transpose
   use mod_param
-  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+!  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+
   integer Xii(Nx),Xkk(Nx,Mt)
   common /XPOSE/ Xii,Xkk
   integer Tkk(Nt),Tii(Nt,Mx)
@@ -115,7 +116,8 @@ end
 SUBROUTINE t2fp(Q,Qt,rank)
   use mod_param
       include 'mpif.h'
-  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+  ! parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+
   integer N
   integer ii,kk,l
   integer Xii(Nx),Xkk(Nx,Mt)
@@ -153,7 +155,8 @@ end
 SUBROUTINE t2fpVector(Q,Qt,rank)
   use mod_param
       include 'mpif.h'
-  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+  ! parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+
   integer n
   integer ii,kk,l
   integer Xii(Nx),Xkk(Nx,Mt)
@@ -193,7 +196,8 @@ end
 SUBROUTINE t2fpTensor(Q,Qt,rank)
       use mod_param
       include 'mpif.h'
-  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+  ! parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+
   integer n,s
   integer ii,kk,l
   integer Xii(Nx),Xkk(Nx,Mt)
@@ -241,7 +245,8 @@ end
 SUBROUTINE t2np(Q,Qt,rank)
   use mod_param
   include 'mpif.h'
-  parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+  ! parameter (mt=imax/px,nx=kmax*px,mx=kmax,NT=imax)
+
   integer N
   integer ii,kk,l
   integer Tkk(Nt),Tii(Nt,Mx)

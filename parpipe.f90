@@ -34,6 +34,10 @@ kmax    = 384/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
+mt=imax/px
+nx=kmax*px
+mx=kmax
+NT=imax
 
 call initMem()
 
