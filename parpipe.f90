@@ -11,16 +11,12 @@ implicit none
 
 include      'mpif.h'             !> mpi stuff
 
-! def. of variables
 integer      rank,ierr,istart,noutput
 integer      iTabFoundHi,iTabFoundLo
 real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
-real*8       newTemp,newRho,newMu,newLam,newCP,newEnth, &
-  newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot
+real*8       newTemp,newRho,newMu,newLam,newCP,newEnth,newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot
 real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
-
 real(8), dimension(0:i1) :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
-
 real*8       tempWall
 real :: start, finish
 
@@ -29,8 +25,7 @@ call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
 call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 
-!px = ploc
-kmax    = 384/px
+kmax    = 32/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
@@ -40,11 +35,6 @@ Mx=kmax
 Nt=imax
 
 call initMem()
-
-
-
-
-
 
 call init_transpose
 
@@ -131,12 +121,12 @@ do istep=istart,nstep
     call fillhm(rank)
     call SOLVEhelm(fv2,Ru,Rp,dRu,dRp,dz,rank,Lh,centerBC)
   endif
- 		
+  
   call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
          
   call bound_h(kin,ein,v2in,omIn,nuSAin,rank)
   call state(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
-      	
+  
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)

@@ -5,7 +5,7 @@
 #F77 = mpif90 -O2 -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O0 -g -fbounds-check -finit-local-zero -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O0 -g -fbounds-check -Wall -Wno-unused-variable -fdefault-real-8 -ffixed-line-length-none
-F77 = mpif90 -g -Wall -fcheck=all -fdefault-real-8 -ffixed-line-length-none
+F77 = mpif90 -O3 -fdefault-real-8 -ffixed-line-length-none
 #F77 = mpif90 -O2 -r8 -132
 #F77 = /usr/mpi/intel/openmpi-1.4.2/bin/mpif90  -r8 -132 -O5 #-fpe0 -traceback
 #F77 = /opt/mvapich2/bin/mpif90 -r8 -132
