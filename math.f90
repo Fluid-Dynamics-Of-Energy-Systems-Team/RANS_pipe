@@ -102,9 +102,10 @@ SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   !     2628 AL DELFT
   !     email ::::   b.j.boersma@wbmt.tudelft.nl
   !
+ 
   use mod_param
   implicit none
-
+        
   real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
   real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
   real*8      a(imax),b(imax),c(imax)

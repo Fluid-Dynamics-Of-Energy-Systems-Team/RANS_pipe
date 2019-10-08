@@ -34,10 +34,10 @@ kmax    = 384/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
-mt=imax/px
-nx=kmax*px
-mx=kmax
-NT=imax
+Mt=imax/px
+Nx=kmax*px
+Mx=kmax
+Nt=imax
 
 call initMem()
 
@@ -62,8 +62,8 @@ call spline(enthTab, lamocpTab, nTab, lamocp2Tab)
 call spline(enthTab, tempTab,   nTab, temp2Tab)
 call spline(enthTab, betaTab,   nTab, beta2Tab)
 
-
 call mkgrid(rank)
+
 
 dt = dtmax
        
@@ -140,6 +140,7 @@ do istep=istart,nstep
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
+
   call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,rank)

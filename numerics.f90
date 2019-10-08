@@ -535,7 +535,7 @@ subroutine mkgrid(rank)
   if (rank.eq.0) then
     open(11,file = 'grid.txt')
     write(11,*) Re, imax
-    do i=0,imax
+    do i=1,imax
       Yplus = wallDist(i)*Re
       write(11,'(i5,4F12.6)') i,yplus,y_fa(i),y_cv(i),delta(max(1,i))
     enddo

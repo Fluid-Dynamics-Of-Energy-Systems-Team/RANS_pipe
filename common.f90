@@ -1,5 +1,5 @@
 module mod_common
-  ! implicit none
+  implicit none
 
   public
 
@@ -13,6 +13,16 @@ module mod_common
   ! imax,kmax
   real(8), dimension(:,:), allocatable :: fv2,Lh,at,LhT,bF2,cdKOM
 
+    !     ****************
+!    real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),&
+!      ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), &
+!      at(imax,kmax),Lht(imax,kmax),atmp(0:i1,0:k1), &
+!      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax)
+    !      common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+    !                     cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+    !      save   /turb/
+
+
 
 
   !0:i1
@@ -23,18 +33,47 @@ module mod_common
   !1:imax
   real(8),  dimension(:), allocatable :: wallDist
 
+    !     ****************
+    ! real*8          Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1),dz,z1(0:k1),z2(0:k1),wallDist(1:imax)
+    !      common /phsgrd/ Ru,Rp,y_fa,y_cv,dru,drp,dz,z1,z2,wallDist
+    !      save   /phsgrd/
+
 
   !0:i1,0:k1 
   real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt
   real(8) enth_wall
 
+    !     ****************
+    ! real*8          ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),&
+    !   temp(0:i1,0:k1),tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1),&
+    !   ekhi(0:i1,0:k1),ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1), &
+    !   Tt(0:i1,0:k1),enth_wall
+    !      common /energy/ ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt,enth_wall
+    !      save   /energy/
+
+
+
   real(8) dt,dtmax
   
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,v2new,h2new, Cnew,knew,enew,qcrit,nuSAnew,omNew
+  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+
+    !     ****************
+    ! real*8          Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1), &
+    !   Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),omNew(0:i1,0:k1)
+    !      common /new/    Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
+    !      save   /new/
+
 
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Uold,Vold,eold,v2old, Wold,Cold,kold,h2old,nuSAold,omOld
+  real(8), dimension(:,:), allocatable :: Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+
+
+    !     ****************
+    ! real*8          Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1), &
+    !   Wold(0:i1,0:k1),Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1)
+    !      common /old/    Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
+    !      save   /old/
 
   !0:i1,0:k1 
   real(8), dimension(:,:), allocatable :: dUdt,dVdt,dWdt
@@ -61,6 +100,18 @@ module mod_common
 
 
                                           
+  !Nx
+  integer, dimension(:), allocatable :: Xii
+  !Nx,Mt
+  integer, dimension(:,:), allocatable :: Xkk
+  !Nt
+  integer, dimension(:), allocatable :: Tkk
+  !Nt,Mx
+  integer, dimension(:,:), allocatable :: Tii
+  !Mt,Nx
+  real(8), dimension(:,:), allocatable :: W1, W2
+  !Mx,Nt
+  real(8), dimension(:,:), allocatable :: W1t, W2t
 
     
 contains
@@ -72,6 +123,17 @@ contains
     allocate(fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1), &
              ReTauS(0:i1,0:k1),ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),atmp(0:i1,0:k1),bF1(0:i1,0:k1))
     allocate(fv2(imax,kmax),Lh(imax,kmax),at(imax,kmax),LhT(imax,kmax),bF2(imax,kmax),cdKOM(imax,kmax))
+
+    !     ****************
+!    real*8          fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),&
+!      ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),fv2(imax,kmax),Lh(imax,kmax), &
+!      at(imax,kmax),Lht(imax,kmax),atmp(0:i1,0:k1), &
+!      bF1(0:i1,0:k1),bF2(imax,kmax),cdKOM(imax,kmax)
+    !      common /turb/   fmu,f1,f2,ReT,yp,ypt,dterm,eterm,fv2,Lh,at,Lht,sigmat,sigmak,sigmae, &
+    !                     cmu,ce1,ce2,sigmah2,atmp,ReTauS, bF1, bF2, cdKOM
+    !      save   /turb/
+
+
 
     allocate( Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
     allocate(z1(0:k1),z2(0:k1))
@@ -101,6 +163,16 @@ contains
     allocate(tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab),muTab(1:nTab),lamTab(1:nTab), &
              cpTab(1:nTab),enthTab(1:nTab),lamocpTab(1:nTab),temp2Tab(1:nTab),rho2Tab(1:nTab), &
              beta2Tab(1:nTab),mu2Tab(1:nTab),lam2Tab(1:nTab),cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab))
+
+
+    allocate(Xii(Nx))
+    allocate(Xkk(Nx,Mt))
+    allocate(Tkk(Nt))
+    allocate(Tii(Nt,Mx))
+    !allocate(W1(Mx,Nt),W2(Mx,Nt))
+    allocate(W1t(Mx,Nt),W2t(Mx,Nt))
+    allocate(W1(Mt,Nx),W2(Mt,Nx))
+
 
 
 
