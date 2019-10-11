@@ -140,7 +140,7 @@ subroutine advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
   endif
 
   call prodisMK(kNew,eNew,Utmp,Wtmp,temp,Rtmp)  !new
-  call advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  call advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
 
 

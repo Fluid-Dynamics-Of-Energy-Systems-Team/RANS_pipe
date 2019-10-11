@@ -71,7 +71,7 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+subroutine advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   use mod_param
   use mod_common
   implicit none
@@ -95,72 +95,44 @@ subroutine advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   call rhs_Epsilon(dnew,dimpl,Rtmp)    !new
   call diffEPS(dnew,eNew,ekm,ekmi,ekmk,ekmt,sigmae,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
-  if (centerBC.eq.-1) then
-    do k=1,kmax
-      do i=1,imax
-                    
-        a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
-        a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
-    
-        c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
-        c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
-    
-        b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
-    
-        a(i) = a(i)*(rho3(i-1,k)**1.5)
-        c(i) = c(i)*(rho3(i+1,k)**1.5)
-    
-        rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
-      enddo
-    
+  do k=1,kmax
+    do i=1,imax
+                  
+      a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
+      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+  
+      c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
+      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
+  
+      b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
+  
+      a(i) = a(i)*(rho3(i-1,k)**1.5)
+      c(i) = c(i)*(rho3(i+1,k)**1.5)
+  
+      rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
+    enddo
+    if (centerBC.eq.-1) then
       i=1
       rhs(i) = dnew(i,k) - a(i)*eNew(i-1,k) + (1-alphae)*b(i)*eNew(i,k)
-    
-      i=imax
-      rhs(i) = dnew(i,k) - c(i)*eNew(i+1,k) + (1-alphae)*b(i)*eNew(i,k)
-    
-      call matrixIdir(imax,a,b,c,rhs)
-    
-      do i=1,imax
-        resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
-        eNew(i,k) = max(rhs(i), 1.0e-8)
-    
-      enddo
-    enddo
-  else
-    do k=1,kmax
-      do i=1,imax
-                    
-        a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmae)/sqrt(0.5*(rho3(i-1,k)+rho3(i,k)))
-        a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
-    
-        c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmae)/sqrt(0.5*(rho3(i+1,k)+rho3(i,k)))
-        c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)
-    
-        b(i) = ((-a(i)-c(i))*(rho3(i,k)**1.5) + dimpl(i,k)  )/alphae
-    
-        a(i) = a(i)*(rho3(i-1,k)**1.5)
-        c(i) = c(i)*(rho3(i+1,k)**1.5)
-    
-        rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
-      enddo
-    
+    else
       i=1
       b(i)=b(i)+a(i)
+    endif
 
-      i=imax
-      rhs(i) = dnew(i,k) - c(i)*eNew(i+1,k) + (1-alphae)*b(i)*eNew(i,k)
-    
-      call matrixIdir(imax,a,b,c,rhs)
-    
-      do i=1,imax
-        resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
-        eNew(i,k) = max(rhs(i), 1.0e-8)
-    
-      enddo
+    i=imax
+    rhs(i) = dnew(i,k) - c(i)*eNew(i+1,k) + (1-alphae)*b(i)*eNew(i,k)
+  
+    call matrixIdir(imax,a,b,c,rhs)
+  
+    do i=1,imax
+      resE = resE + ((eNew(i,k) - rhs(i))/(eNew(i,k)+1.0e-20))**2.0
+      eNew(i,k) = max(rhs(i), 1.0e-8)
+  
     enddo
-  endif
+  enddo
+  
 end
+
 !>************************************************************************************
 !!
 !!     Performes time integration with second order

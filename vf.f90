@@ -184,7 +184,7 @@ end
 !>******************************************************************************************
 !!      VF advancing the turbulence scalars of this model: v2
 !!******************************************************************************************
-subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+subroutine advanceV2_upd(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   use mod_param
   use mod_common
   implicit none
@@ -206,82 +206,49 @@ subroutine advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   call rhs_v2(dnew,dimpl,kNew,eNew,v2New,ftmp,Rtmp)    !new
   call diffc(dnew,v2New,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
-  if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
-    do k=1,kmax
-      do i=1,imax
-            
+  do k=1,kmax
+    do i=1,imax
+      
+      if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
         a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
 
         c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
-
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
-
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
-
-        rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
-      enddo
-
-      i=1
-      b(i)=b(i)+centerBC*a(i)
-
-      i=imax
-      b(i) = b(i) - (c(i) /alphav2)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k)))  - c(i) + dimpl(i,k) )/alphav2
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphav2
-      rhs(i) = dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
-
-
-      call matrixIdir(imax,a,b,c,rhs)
-
-      do i=1,imax
-        resV2 = resV2 + ((v2New(i,k) - rhs(i))/(v2New(i,k)+1.0e-20))**2.0
-        v2New(i,k) = min(2.0/3.0*kNew(i,k), max(rhs(i), 1.0e-8))
-      enddo
-    enddo
-
-  else if (modifDiffTerm == 2) then
-    do k=1,kmax
-      do i=1,imax
-             
+      else if (modifDiffTerm == 2) then
         a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
 
         c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+      endif
 
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
+      b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
 
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
+      a(i) = a(i)*rho3(i-1,k)
+      c(i) = c(i)*rho3(i+1,k)
 
-        rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
-      enddo
-
-      i=1
-      b(i)=b(i)+centerBC*a(i)
-
-      i=imax
-      b(i) = b(i) - (c(i) /alphav2)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k)))  - c(i) + dimpl(i,k) )/alphav2
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphav2
-      rhs(i) = dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
-
-
-      call matrixIdir(imax,a,b,c,rhs)
-
-      do i=1,imax
-        resV2 = resV2 + ((v2New(i,k) - rhs(i))/(v2New(i,k)+1.0e-20))**2.0
-        v2New(i,k) = min(2.0/3.0*kNew(i,k), max(rhs(i), 1.0e-8))
-      enddo
+      rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
     enddo
-  endif
+
+    i=1
+    b(i)=b(i)+centerBC*a(i)
+
+    i=imax
+    b(i) = b(i) - (c(i) /alphav2)
+    !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k)))  - c(i) + dimpl(i,k) )/alphav2
+    !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphav2
+    rhs(i) = dnew(i,k) + (1-alphav2)*b(i)*v2New(i,k)
 
 
+    call matrixIdir(imax,a,b,c,rhs)
+
+    do i=1,imax
+      resV2 = resV2 + ((v2New(i,k) - rhs(i))/(v2New(i,k)+1.0e-20))**2.0
+      v2New(i,k) = min(2.0/3.0*kNew(i,k), max(rhs(i), 1.0e-8))
+    enddo
+  enddo
 end
-
 
 !>******************************************************************************************
 !!      VF advancing the turbulence scalars of this model: k and epsilon and v2
@@ -308,9 +275,9 @@ subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
   endif
 
   call prodisVF(kNew,eNew,v2New,Utmp,Wtmp,temp,Rtmp)
-  call advanceEpsilon(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  call advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
-  call advanceV2(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  call advanceV2_upd(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
 
 end
 
