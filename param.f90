@@ -12,7 +12,7 @@ module mod_param
   integer   Mt,Nx,Mx,Nt 
   parameter (CFL               = 100.0)      ! CFL number / time step
      
-  parameter (systemSolve       = 2)        ! 1: pipe, 2: channel 3: boundary layer ! dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe
+  parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer ! dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe
 
   parameter (imax              = 96)       ! radial direction
   parameter (i1                = imax + 1)
@@ -34,9 +34,9 @@ module mod_param
 
   !     Q+=Qwall=(qw*D/(k0*T0))
   parameter (Qwall             = 0.0)     !0.0) !2.4)
-  parameter (isothermalBC      = 0)       ! isothermal wall: 1
+  parameter (isothermalBC      = 1)       ! isothermal wall: 1
 
-  parameter (Tw                = 1.0)     ! scaled with the inflow temp (Tin=1)
+  parameter (Tw                = 1.01)     ! scaled with the inflow temp (Tin=1)
   parameter (dTwall            = 0.05)
   !     parameter (Tw                = 4)      ! case for Tw=100K
   !     parameter (Tw                = 8)      ! case for Tw=200K

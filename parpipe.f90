@@ -43,7 +43,7 @@ call initMem()
 if (EOSmode.eq.0) then
   allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 else
-  allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
+  allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'pH2_2MPa_table.dat'))
 endif
 call eos_model%init()
 
