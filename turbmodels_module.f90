@@ -8,6 +8,7 @@ module mod_turbmodels
   
   type, abstract, public :: TurbModel
   integer i1, k1
+  real(8), dimension(:,:), private, allocatable :: Pk
   contains
     procedure(init), deferred :: init
     procedure(set_mut), deferred :: set_mut
@@ -45,17 +46,31 @@ module mod_turbmodels
     procedure :: advance_turb => advance_laminar
   end type Laminar_TurbModel
 
-  ! !************************!
-  ! !         SA class       !
-  ! !************************!
+  !************************!
+  !         SA class       !
+  !************************!
   
-  ! type, extends(TurbModel), public :: SA_TurbModel
-  ! contains
-  !   procedure :: init => init_SA
-  !   procedure :: init_mem => init_mem_SA
-  !   procedure :: set_mut => set_mut_SA
-  !   procedure :: advance => advance_SA
-  ! end type SA_TurbModel
+  type, extends(TurbModel), public :: SA_TurbModel
+  real(8), dimension(:,:), private, allocatable :: nuSAnew
+  contains
+    procedure :: init => init_SA
+    procedure :: init_mem => init_mem_SA
+    procedure :: set_mut => set_mut_SA
+    procedure :: advance_turb => advance_SA
+  end type SA_TurbModel
+
+  !************************!
+  !         SST class      !
+  !************************!
+
+  type, extends(TurbModel), public :: SST_TurbModel
+  contains
+    procedure :: init => init_SST
+    procedure :: init_mem => init_mem_SST
+    procedure :: set_mut => set_mut_SST
+    procedure :: advance_turb => advance_SST
+  end type SST_TurbModel
+
 
 
   ! !************************!
@@ -111,21 +126,16 @@ module mod_turbmodels
   !   procedure :: advance => advance_V2F
   ! end type V2F_TurbModel
 
-  ! !************************!
-  ! !         SST class      !
-  ! !************************!
 
-  ! type, extends(TurbModel), public :: SST_TurbModel
-  ! contains
-  !   procedure :: init => init_SST
-  !   procedure :: init_mem => init_mem_SST
-  !   procedure :: set_mut => set_mut_SST
-  !   procedure :: advance => advance_SST
-  ! end type SST_TurbModel
 
 
 
 contains
+
+
+  !************************!
+  !    Laminar routines    !
+  !************************!
 
 subroutine init_laminar(this)
     class(Laminar_TurbModel) :: this
@@ -147,5 +157,61 @@ subroutine advance_laminar(this, u, w, rho, mu)
     real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
 end subroutine advance_laminar
 
+  !************************!
+  !      SA routines      !
+  !************************!
 
+subroutine init_SA(this)
+    implicit none
+    class(SA_TurbModel) :: this
+
+end subroutine init_SA
+subroutine init_mem_SA(this)
+    implicit none
+    class(SA_TurbModel) :: this
+    allocate(this%Pk(0:this%i1, 0:this%k1),this%nuSAnew(0:this%i1, 0:this%k1))
+
+end subroutine init_mem_SA
+
+subroutine set_mut_SA(this, u, w, rho, mu, mut)
+    implicit none
+    class(SA_TurbModel) :: this
+    real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
+    real(8), dimension(:,:), intent(OUT) :: mut
+
+end subroutine set_mut_SA
+subroutine advance_SA(this, u, w, rho, mu)
+    implicit none
+    class(SA_TurbModel) :: this
+    real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
+end subroutine advance_SA
+
+
+  !************************!
+  !      SST routines      !
+  !************************!
+
+subroutine init_SST(this)
+    implicit none
+    class(SST_TurbModel) :: this
+
+end subroutine init_SST
+subroutine init_mem_SST(this)
+    implicit none
+    class(SST_TurbModel) :: this
+
+end subroutine init_mem_SST
+
+subroutine set_mut_SST(this, u, w, rho, mu, mut)
+    implicit none
+    class(SST_TurbModel) :: this
+    real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
+    real(8), dimension(:,:), intent(OUT) :: mut
+
+end subroutine set_mut_SST
+subroutine advance_SST(this, u, w, rho, mu)
+    implicit none
+    class(SST_TurbModel) :: this
+    real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
+end subroutine advance_SST
 end module mod_turbmodels
