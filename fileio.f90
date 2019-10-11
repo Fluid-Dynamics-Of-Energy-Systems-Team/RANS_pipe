@@ -188,8 +188,7 @@ subroutine output2d_upd(rank,istap)
   use mod_common
   use mod_common2
   implicit none
-
-      include 'mpif.h'
+  include 'mpif.h'
   character*5 cha
   real*8 pecletx,peclety,pecletz
   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &

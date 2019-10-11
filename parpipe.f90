@@ -27,7 +27,7 @@ call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
 call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 
-kmax    = 384/px
+kmax    = 32/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
