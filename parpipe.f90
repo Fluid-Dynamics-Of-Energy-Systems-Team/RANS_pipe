@@ -38,36 +38,24 @@ Nt=imax
 
 call initMem()
 
+
+!initialize EOS
 if (EOSmode.eq.0) then
   allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 else
   allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
 endif
-
-
-
 call eos_model%init()
 
 
+
+
+
+
 call init_transpose
-
-dtmax = 1.e-3
-
-!generating the table for thermodynamic quantities...
-! call readTable(rank)
-!calculating the coefficient (xxx2Tab) for the spline interpolation
-! call spline(tempTab, enthTab,   nTab, enth2Tab)
-! call spline(enthTab, rhoTab,    nTab, rho2Tab)
-! call spline(enthTab, muTab,     nTab, mu2Tab)
-! call spline(enthTab, lamTab,    nTab, lam2Tab)
-! call spline(enthTab, cpTab,     nTab, cp2Tab)
-! call spline(enthTab, lamocpTab, nTab, lamocp2Tab)
-! call spline(enthTab, tempTab,   nTab, temp2Tab)
-! call spline(enthTab, betaTab,   nTab, beta2Tab)
-
 call mkgrid(rank)
 
-
+dtmax = 1.e-3
 dt = dtmax
        
 istart = 1
@@ -113,7 +101,6 @@ call bound_h_upd(kin,ein,v2in,omIn,nuSAin,rank)
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
 
-!print *,"Hellow!"
 
 call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
 call bound_v(Unew,Wnew,Win,rank)
@@ -722,157 +709,6 @@ subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
   endif
 
 end
-
-
-
-
-! !<*************************************************************************************
-! !!
-! !!  bound_h equation
-! !!
-! !!*************************************************************************************
-! subroutine bound_h(kin,ein,v2in,omin,nuSAin,rank)
-!   use mod_param
-!   use mod_common
-!   implicit none
-     
-      
-!       include 'mpif.h'
-!   integer rank
-!   real*8 unin,flux,Ub,BCvalue(0:k1)
-!   real*8 Sk(0:k1),kin(0:i1),ein(0:i1),v2in(0:i1),omin(0:i1),nuSAin(0:i1)
-!   real*8 tmpShift(0:i1)
-
-
-!   !     Radial boundary condition for enthalpy c
-!   if (isothermalBC.eq.1) then
-!     !!!!!!!!!!!! isothermal
-!     if (centerBC.eq.1) then
-!       do k=0,k1
-!         if ((k+rank*kmax)*dz.lt.x_start_heat) then
-!           cnew(i1,k) = cnew(imax,k)
-!         else
-!           cnew(i1,k) = 2.0*enth_wall - cnew(imax,k)
-!         endif
-!       enddo
-
-!     else
-!       if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
-!       stop
-!     endif
-     
-!   else
-!     !!!!!!!!!!!! isoflux
-!     do k=0,k1
-!       if (rank.eq.0.and.k.lt.K_start_heat) then
-!         cnew(i1,:) = cnew(imax,:)
-!       else
-!         call funcNewtonSolve(cnew(i1,k), cnew(imax,k))
-!         if (centerBC.eq.-1) call funcNewtonSolve(cnew(0,k), cnew(1,k))
-!       endif
-
-!     enddo
-
-!   endif
-
-!   !     Radial boundary condition
-!   if (turbmod.eq.1) then
-!     ! SA
-!     nuSAnew(i1,:) = -nuSAnew(imax,:)
-
-!     if (centerBC.eq.-1) then
-!       nuSAnew(0,:) = -nuSAnew(1,:)
-!     endif
-
-!   elseif (turbmod.eq.2) then
-!     ! MK
-!     knew(i1,:) = -knew(imax,:)
-!     BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
-!     enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
-
-!     if (centerBC.eq.-1) then
-!       knew(0,:)  = -knew(1,:)
-!       BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
-!       enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
-!     endif
-
-!   elseif (turbmod.eq.3) then
-!     ! VF
-!     knew(i1,:)  = -knew(imax,:)
-!     v2new(i1,:) = -v2new(imax,:)
-!     BCvalue(:)  = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
-!     enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
-
-!     if (centerBC.eq.-1) then
-!       knew(0,:)  = -knew(1,:)
-!       v2new(0,:) = -v2new(1,:)
-!       BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
-!       enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
-!     endif
-
-!   elseif (turbmod.eq.4) then
-!     ! SST
-!     knew(i1,:)  = -knew(imax,:)
-!     BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
-!     omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
-
-!     if (centerBC.eq.-1) then
-!       knew(0,:)  = -knew(1,:)
-!       BCvalue(:) = 60.0/0.075*ekm(1,:)/rNew(1,:)/wallDist(1)**2
-!       omNew(0,:) = 2.0*BCvalue(:) - omNew(1,:)
-!     endif
-
-!   endif
-
-!   if (centerBC.eq.1) then
-!     !     center line BC
-!     cnew(0,:)    = cnew(1,:)
-!     knew(0,:)    = knew(1,:)
-!     enew(0,:)    = enew(1,:)
-!     v2new(0,:)   = v2new(1,:)
-!     omNew(0,:)   = omNew(1,:)
-!     nuSAnew(0,:) = nuSAnew(1,:)
-!   endif
-!   !     ghost cells between CPU
-!   call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
-!   call shiftf(knew,   tmpShift,rank);       knew(:,0) = tmpShift(:);
-!   call shiftf(enew,   tmpShift,rank);       enew(:,0) = tmpShift(:);
-!   call shiftf(v2new,  tmpShift,rank);      v2new(:,0) = tmpShift(:);
-!   call shiftf(omNew,  tmpShift,rank);      omNew(:,0) = tmpShift(:);
-!   call shiftf(nuSAnew,tmpShift,rank);    nuSAnew(:,0) = tmpShift(:);
-
-!   call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
-!   call shiftb(knew,   tmpShift,rank);      knew(:,k1) = tmpShift(:);
-!   call shiftb(enew,   tmpShift,rank);      enew(:,k1) = tmpShift(:);
-!   call shiftb(v2new,  tmpShift,rank);     v2new(:,k1) = tmpShift(:);
-!   call shiftb(omNew,  tmpShift,rank);     omNew(:,k1) = tmpShift(:);
-!   call shiftb(nuSAnew,tmpShift,rank);   nuSAnew(:,k1) = tmpShift(:);
-      
-!   if (periodic.eq.1) return
-
-
-!   !     set inlet and outlet BC for developing flow
-!   if (rank.eq.0) then
-!     cnew(:,0) = 0.0
-!     knew(:,0) = kin(:)
-!     enew(:,0) = ein(:)
-!     v2new(:,0) = v2in(:)
-!     omNew(:,0) = omin(:)
-!     nuSAnew(:,0) = nuSAin(:)
-!   endif
-
-!   if (rank.eq.px-1) then
-!     cnew(:,k1) = 2.0*   cnew(:,kmax) -    cnew(:,kmax-1)
-!     knew(:,k1) = 2.0*   knew(:,kmax) -    knew(:,kmax-1)
-!     enew(:,k1) = 2.0*   enew(:,kmax) -    enew(:,kmax-1)
-!     v2new(:,k1) = 2.0*  v2new(:,kmax) -   v2new(:,kmax-1)
-!     omNew(:,k1) = 2.0*  omNew(:,kmax) -   omNew(:,kmax-1)
-!     nuSAnew(:,k1) = 2.0*nuSAnew(:,kmax) - nuSAnew(:,kmax-1)
-!   endif
-
-! end
-
-
 
 !>*************************************************************************************
 !!      bound_v(Ubound,Wbound,Win,rank)

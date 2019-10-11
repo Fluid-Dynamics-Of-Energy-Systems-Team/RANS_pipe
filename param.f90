@@ -33,8 +33,8 @@ module mod_param
   parameter (Pr                = 3.19457)
 
   !     Q+=Qwall=(qw*D/(k0*T0))
-  parameter (Qwall             = 0.0)     !0.0) !2.4)
-  parameter (isothermalBC      = 1)       ! isothermal wall: 1
+  parameter (Qwall             = 1.0)     !0.0) !2.4)
+  parameter (isothermalBC      = 0)       ! isothermal wall: 1
 
   parameter (Tw                = 1.0)     ! scaled with the inflow temp (Tin=1)
   parameter (dTwall            = 0.05)
@@ -53,7 +53,7 @@ module mod_param
   !      parameter (Fr_1              =  99.59)  ! downward
   !      /(beta_o*T_o*Re**2.*Qwall))
 
-  parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2/sPH2
+  parameter (EOSmode           = 2)             ! 0..IG, 1..SCCO2/sPH2
 
   parameter (select_init       = 1)            ! 0..std initialization, 1..read inflow , 2..read restart file
   parameter (turbmod           = 2)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST

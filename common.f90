@@ -50,13 +50,6 @@ module mod_common
   real(8), dimension(:), allocatable  :: bdrs
   !imax
   real(8), dimension(:), allocatable  :: bdzs
-  
-
-  ! !1:nTab
-  ! real(8), dimension(:), allocatable :: tempTab,rhoTab,betaTab, muTab,lamTab, cpTab,enthTab,lamocpTab, &
-  !                                         temp2Tab,rho2Tab,beta2Tab, mu2Tab,lam2Tab, cp2Tab,enth2Tab,lamocp2Tab
-
-
                                           
   !Nx
   integer, dimension(:), allocatable :: Xii
@@ -107,11 +100,6 @@ contains
     allocate(save(isave))
     allocate(bdrs(kmax))
     allocate(bdzs(imax))
-
-    ! allocate(tempTab(1:nTab),rhoTab(1:nTab),betaTab(1:nTab),muTab(1:nTab),lamTab(1:nTab),cpTab(1:nTab), &
-    !          enthTab(1:nTab),lamocpTab(1:nTab),temp2Tab(1:nTab),rho2Tab(1:nTab),beta2Tab(1:nTab),       &
-    !          mu2Tab(1:nTab),lam2Tab(1:nTab),cp2Tab(1:nTab),enth2Tab(1:nTab),lamocp2Tab(1:nTab))
-
 
     allocate(Xii(Nx))
     allocate(Xkk(Nx,Mt))

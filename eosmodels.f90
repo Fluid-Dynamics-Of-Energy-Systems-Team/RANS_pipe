@@ -2,9 +2,9 @@ module mod_eosmodels
   implicit none
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   !     Abstract class     !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   
   type, abstract, public :: EOSModel
   real(8) Re, Pr
@@ -36,9 +36,9 @@ module mod_eosmodels
   end interface
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   !     Ideal Gas class    !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   
   type, extends(EOSModel), public :: IG_EOSModel
   contains
@@ -49,9 +49,9 @@ module mod_eosmodels
   end type IG_EOSModel
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   !       Table class      !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   
   type, extends(EOSModel), public :: Table_EOSModel
   integer ntab
@@ -73,9 +73,9 @@ module mod_eosmodels
 
 contains
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   !   Ideal Gas routines   !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
 
   subroutine initialize_ig(this)
     implicit none
@@ -124,9 +124,9 @@ contains
 
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
   !     Table routines     !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!
+  !************************!
 
   subroutine initialize_table(this)
     implicit none
@@ -180,7 +180,6 @@ contains
     end select
   end subroutine set_w_temp_table
   
-
   subroutine allocate_mem(this) 
     implicit none
     class(Table_EOSModel) :: this
