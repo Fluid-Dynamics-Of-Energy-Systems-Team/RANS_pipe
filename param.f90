@@ -27,7 +27,7 @@ module mod_param
   parameter (nstep             = 100000)
 
   parameter (LoD               = 30)      ! pH2= 30
-  parameter (periodic          = 1)               ! 1..periodic, 2..developing
+  parameter (periodic          = 2)               ! 1..periodic, 2..developing
      
   parameter (Re                = 360)
   parameter (Pr                = 3.19457)
