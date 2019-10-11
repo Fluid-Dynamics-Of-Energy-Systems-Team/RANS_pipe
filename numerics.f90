@@ -113,7 +113,7 @@ subroutine state_upd(enth,rho,mu,lam,tp,be,istap,rank)
     enddo
   else 
     do k=0,k1
-      call funcNewtonSolveRG_upd(enth(i1,k), enth(imax,k))
+      call funcNewtonSolve_upd(enth(i1,k), enth(imax,k))
       if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
       do i=0,i1
           call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
