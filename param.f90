@@ -53,7 +53,7 @@ module mod_param
   !      parameter (Fr_1              =  99.59)  ! downward
   !      /(beta_o*T_o*Re**2.*Qwall))
 
-  parameter (EOSmode           = 2)             ! 0..IG, 1..SCCO2/sPH2
+  parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2/sPH2
 
   parameter (select_init       = 0)            ! 0..std initialization, 1..read inflow , 2..read restart file
   parameter (turbmod           = 2)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
@@ -61,9 +61,9 @@ module mod_param
   parameter (modVF             = 0)            ! 0..Original 1..LienKalitzin Time/Length scale VF model
       
   !MK: alphac=0.3, alphak=0.1 and alphae=0.1
-  parameter (alphac            = 0.5)
-  parameter (alphak            = 0.5) !0.05)         ! for SA
-  parameter (alphae            = 0.5) !0.05)
+  parameter (alphac            = 0.1)
+  parameter (alphak            = 0.1) !0.05)         ! for SA
+  parameter (alphae            = 0.1) !0.05)
   parameter (alphav2           = 0.05) !0.03)
 
   parameter (modifDiffTerm     = 0)              ! 0..Standard, 1..invSLS, 2..Aupoix
