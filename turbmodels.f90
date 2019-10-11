@@ -150,7 +150,7 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
+subroutine advanceK_upd(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
   use mod_param
   use mod_common
   implicit none
@@ -175,75 +175,47 @@ subroutine advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
   call rhs_K(dnew,dimpl,kNew,eNew,Rtmp)    !new
   call diffc(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmak,Rtmp,Ru,Rp,dru,dz,mrank,modifDiffTerm)
 
-  if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
-    do k=1,kmax
-      do i=1,imax
+  do k=1,kmax
+    do i=1,imax
+      if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
 
         a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/((0.5*(rho3(i-1,k)+rho3(i,k)))**0.5)
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
 
         c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/((0.5*(rho3(i+1,k)+rho3(i,k)))**0.5)
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/(rho3(i,k)**0.5)
-
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
-
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
-
-        rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
-      enddo
-
-      i=1
-      b(i) = b(i) + centerBC*a(i)
-             
-      i=imax
-      b(i) = b(i) - (c(i) /alphak)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
-      rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
-
-      call matrixIdir(imax,a,b,c,rhs)
-
-      do i=1,imax
-        resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
-        kNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
-    enddo
-  else if (modifDiffTerm == 2) then
-    do k=1,kmax
-      do i=1,imax
+      else if (modifDiffTerm == 2) then
         a(i) = (ekmi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmak)/(0.5*(rho3(i-1,k)+rho3(i,k)))
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
 
         c(i) = (ekmi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmak)/(0.5*(rho3(i+1,k)+rho3(i,k)))
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+      endif
 
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+      b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
 
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
+      a(i) = a(i)*rho3(i-1,k)
+      c(i) = c(i)*rho3(i+1,k)
 
-        rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
-      enddo
-
-      i=1
-      b(i) = b(i) + centerBC*a(i)
-             
-      i=imax
-      b(i) = b(i) - (c(i) /alphak)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
       rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
-
-      call matrixIdir(imax,a,b,c,rhs)
-
-      do i=1,imax
-        resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
-        kNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
     enddo
-  endif
 
+    i=1
+    b(i) = b(i) + centerBC*a(i)
+           
+    i=imax
+    b(i) = b(i) - (c(i) /alphak)
+    !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
+    !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
+    rhs(i) = dnew(i,k) + (1-alphak)*b(i)*kNew(i,k)
+
+    call matrixIdir(imax,a,b,c,rhs)
+
+    do i=1,imax
+      resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
+      kNew(i,k) = max(rhs(i), 1.0e-8)
+    enddo
+  enddo
 end
 
 
