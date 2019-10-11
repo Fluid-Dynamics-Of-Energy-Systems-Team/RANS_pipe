@@ -156,15 +156,8 @@ subroutine rhs_kSST(putout,dimpl,putink,U,W,T,rho)
   integer ib,ie,kb,ke !< integers
   real*8, dimension(0:i1,0:k1) :: putout,U,W,T,rho,putink,dimpl!,Tt
   real*8  betaStar
-  !real*8  sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST, GtR
 
-  !sigma_om1 = 0.5
-  !sigma_om2 = 0.856
-  !beta_1    = 0.075
-  !beta_2    = 0.0828
   betaStar  = 0.09
-  !alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
-  !alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
 
   ib = 1
   ie = i1-1
@@ -251,7 +244,7 @@ end
 !>******************************************************************************************
 !!      SST advancing the turbulence scalars of this model: k
 !!******************************************************************************************
-subroutine advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
+subroutine advancekSST_upd(resK,Utmp,Wtmp,Rtmp,rho3,rank)
   use mod_param
   use mod_common
   implicit none
@@ -279,87 +272,56 @@ subroutine advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
   sigmakSST = 0.85*bF1 + 1.0*(1.0 - bF1)
   sigmakSST = 1.0/sigmakSST
   call diffcSSTKine(dnew,kNew,ekm,ekmi,ekmk,ekmt,sigmakSST, &
-    Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
+                    Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
 
 
-  if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
-    do k=1,kmax
-      do i=1,imax
-
+  do k=1,kmax
+    do i=1,imax
+      if ((modifDiffTerm == 0) .or. (modifDiffTerm == 1)) then
         a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
 
         c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
-
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
-
-        rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
-      enddo
-
-      i=1
-      b(i) = b(i)+centerBC*a(i)
-
-      i=imax
-      b(i) = b(i) - (c(i) /alphak)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
-      rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
-
-      call matrixIdir(imax,a,b,c,rhs)
-
-      do i=1,imax
-        resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
-        kNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
-    enddo
-  else if (modifDiffTerm == 2) then
-    do k=1,kmax
-      do i=1,imax
-
+      else if (modifDiffTerm == 2) then
         a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
 
         c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-                
-        b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+      endif
 
-        a(i) = a(i)*rho3(i-1,k)
-        c(i) = c(i)*rho3(i+1,k)
+      b(i) = (rho3(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
 
-        rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
-      enddo
+      a(i) = a(i)*rho3(i-1,k)
+      c(i) = c(i)*rho3(i+1,k)
 
-      i=1
-      b(i) = b(i)+centerBC*a(i)
-
-      i=imax
-      b(i) = b(i) - (c(i) /alphak)
-      !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
-      !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
       rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
+    enddo 
 
-      call matrixIdir(imax,a,b,c,rhs)
+    i=1
+    b(i) = b(i)+centerBC*a(i)
 
-      do i=1,imax
-        resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
-        kNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
+    i=imax
+    b(i) = b(i) - (c(i) /alphak)
+    !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
+    !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
+    rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*kNew(i,k)
+
+    call matrixIdir(imax,a,b,c,rhs)
+
+    do i=1,imax
+      resK = resK + ((kNew(i,k) - rhs(i))/(kNew(i,k)+1.0e-20))**2.0
+      kNew(i,k) = max(rhs(i), 1.0e-8)
     enddo
-  endif
-
-      
-
+  enddo
+  
 end
 
 !>******************************************************************************************
 !!      SST advancing the turbulence scalars of this model: omega
 !!******************************************************************************************
-subroutine advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
+subroutine advanceOmSST_upd(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
   use mod_param
   use mod_common
   implicit none
@@ -386,69 +348,40 @@ subroutine advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
   sigmakSST = 0.5*bF1 + 0.856*(1.0 - bF1)
   sigmakSST = 1.0/sigmakSST
   call diffcSSTOmega(dnew,omNew,ekm,ekmi,ekmk,ekmt,sigmakSST,Rtmp,Ru,Rp,dru,dz,rank,modifDiffTerm)
-  if (centerBC.eq.-1) then
-    do k=1,kmax
-      do i=1,imax
-    
-        a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
-        a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-    
-        c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
-        c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-    
-        b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
-    
-        a(i) = a(i)*rho3(i-1,k)**0.5
-        c(i) = c(i)*rho3(i+1,k)**0.5
-    
-        rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
-      enddo
-    
-      i=1
+  do k=1,kmax
+    do i=1,imax
+  
+      a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
+      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+  
+      c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
+      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
+  
+      b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
+  
+      a(i) = a(i)*rho3(i-1,k)**0.5
+      c(i) = c(i)*rho3(i+1,k)**0.5
+  
+      rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
+    enddo
+  
+    i=1
+    if (centerBC.eq.-1) then
       rhs(i) = dnew(i,k) - a(i)*omNew(i-1,k) + (1-alphae)*b(i)*omNew(i,k)
-             
-      i = imax
-      rhs(i) = dnew(i,k) - c(i)*omNew(i+1,k) + (1-alphae)*(b(i)*omNew(i,k))
-    
-      call matrixIdir(imax,a,b,c,rhs)
-    
-      do i=1,imax
-        resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
-        omNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
-    enddo
-  else
-    do k=1,kmax
-      do i=1,imax
-    
-        a(i) = (ekmi(i-1,k)+(ekmt(i,k)+ekmt(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho3(i-1,k)+rho3(i,k)))**0.5
-        a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-    
-        c(i) = (ekmi(i  ,k)+(ekmt(i,k)+ekmt(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho3(i+1,k)+rho3(i,k)))**0.5
-        c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)/rho3(i,k)**0.5
-    
-        b(i) = ((-a(i)-c(i))*rho3(i,k)**0.5 + dimpl(i,k))/alphae
-    
-        a(i) = a(i)*rho3(i-1,k)**0.5
-        c(i) = c(i)*rho3(i+1,k)**0.5
-    
-        rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*omNew(i,k)
-      enddo
-    
-      i=1
+    else
       b(i)=b(i)+a(i)
-             
-      i = imax
-      rhs(i) = dnew(i,k) - c(i)*omNew(i+1,k) + (1-alphae)*(b(i)*omNew(i,k))
-    
-      call matrixIdir(imax,a,b,c,rhs)
-    
-      do i=1,imax
-        resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
-        omNew(i,k) = max(rhs(i), 1.0e-8)
-      enddo
+    endif
+
+    i = imax
+    rhs(i) = dnew(i,k) - c(i)*omNew(i+1,k) + (1-alphae)*(b(i)*omNew(i,k))
+  
+    call matrixIdir(imax,a,b,c,rhs)
+  
+    do i=1,imax
+      resOm = resOm + ((omNew(i,k) - rhs(i))/(omNew(i,k)+1.0e-20))**2.0
+      omNew(i,k) = max(rhs(i), 1.0e-8)
     enddo
-  endif
+  enddo
 end
 
 
@@ -477,12 +410,12 @@ subroutine advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
   endif
 
   call prodisSST(kNew,Utmp,Wtmp,temp,Rtmp)
-  call advancekSST(resK,Utmp,Wtmp,Rtmp,rho3,rank)
-  call advanceOmSST(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
+  call advancekSST_upd(resK,Utmp,Wtmp,Rtmp,rho3,rank)
+  call advanceOmSST_upd(resOm,Utmp,Wtmp,Rtmp,rho3,rank)
 
 end
 
-!>********************************************************************
+!!********************************************************************
 !! diffusion term for kine of the SST model in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffcSSTKine(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)

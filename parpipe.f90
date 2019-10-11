@@ -49,9 +49,6 @@ call eos_model%init()
 
 
 
-
-
-
 call init_transpose
 call mkgrid(rank)
 

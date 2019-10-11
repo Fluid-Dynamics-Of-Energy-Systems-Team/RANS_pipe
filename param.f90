@@ -27,7 +27,7 @@ module mod_param
   parameter (nstep             = 100000)
 
   parameter (LoD               = 30)      ! pH2= 30
-  parameter (periodic          = 2)               ! 1..periodic, 2..developing
+  parameter (periodic          = 1)               ! 1..periodic, 2..developing
      
   parameter (Re                = 360)
   parameter (Pr                = 3.19457)
@@ -53,10 +53,10 @@ module mod_param
   !      parameter (Fr_1              =  99.59)  ! downward
   !      /(beta_o*T_o*Re**2.*Qwall))
 
-  parameter (EOSmode           = 0)             ! 0..IG, 1..SCCO2/sPH2
+  parameter (EOSmode           = 1)             ! 0..IG, 1..SCCO2/sPH2
 
   parameter (select_init       = 0)            ! 0..std initialization, 1..read inflow , 2..read restart file
-  parameter (turbmod           = 2)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
+  parameter (turbmod           = 3)            ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
   parameter (ctheta            = 0.3)
   parameter (modVF             = 0)            ! 0..Original 1..LienKalitzin Time/Length scale VF model
       
@@ -66,7 +66,7 @@ module mod_param
   parameter (alphae            = 0.1) !0.05)
   parameter (alphav2           = 0.05) !0.03)
 
-  parameter (modifDiffTerm     = 0)              ! 0..Standard, 1..invSLS, 2..Aupoix
+  parameter (modifDiffTerm     = 1)              ! 0..Standard, 1..invSLS, 2..Aupoix
      
 
 end module mod_param

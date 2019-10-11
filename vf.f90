@@ -276,7 +276,7 @@ subroutine advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
 
   call prodisVF(kNew,eNew,v2New,Utmp,Wtmp,temp,Rtmp)
   call advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
-  call advanceK(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+  call advanceK_upd(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   call advanceV2_upd(resV2,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
 
 end

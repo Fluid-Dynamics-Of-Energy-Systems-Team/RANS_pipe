@@ -29,10 +29,8 @@ use mod_common
 implicit none
 
 real*8 enth_i1, enth_imax, ekh_imax
-
   ekh_imax = 1./(Re*Pr)
   enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
-  
 end
 
 

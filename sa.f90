@@ -118,7 +118,7 @@ end
 !>******************************************************************************************
 !!      To calculate the rhs of the nuSA equation
 !>******************************************************************************************
-subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
+subroutine rhs_SA_upd(putout,dimpl,nuSAtmp,rho)
   use mod_param
   use mod_common
   implicit none
@@ -143,61 +143,36 @@ subroutine rhs_SA(putout,dimpl,nuSAtmp,rho)
 
   kb = 1
   ke = k1-1
-  if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
-    do k=kb,ke
-      kp=k+1
-      km=k-1
-      do i=ib,ie
-        ip=i+1
-        im=i-1
-                
-        ShatSA = Pk(i,k)/(cb1*nuSAtmp(i,k))
-    
-        ! destruction term in SA model
-        r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
-        g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
-        fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
-    
-        ! gustavo: i think this is not correct
-        !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
-        dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
+  do k=kb,ke
+    kp=k+1
+    km=k-1
+    do i=ib,ie
+      ip=i+1
+      im=i-1
+              
+      ShatSA = Pk(i,k)/(cb1*nuSAtmp(i,k))
+  
+      ! destruction term in SA model
+      r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
+      g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+      fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+  
+      ! gustavo: i think this is not correct
+      !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
+      dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
+      if ((modifDiffTerm == 1) .or. (modifDiffTerm == 2)) then
 
-        ! source term
-        ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+      ! source term
+      ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
         putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
           (((nuSAtmp(ip,k)*(rho(ip,k)**0.5)) - (nuSAtmp(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
           +(((nuSAtmp(i,kp)*(rho(i,kp)**0.5)) - (nuSAtmp(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
-
-    
-      enddo
-    enddo
-  else
-    do k=kb,ke
-      kp=k+1
-      km=k-1
-      do i=ib,ie
-        ip=i+1
-        im=i-1
-
-        ShatSA = Pk(i,k)/(cb1*nuSAtmp(i,k))
-    
-        ! destruction term in SA model
-        r_SA         = min(nuSAtmp(i,k)/(kappa_2*(wallDist(i)**2.0)*ShatSA), 10.0)
-        g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
-        fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
-    
-        ! gustavo: i think this is not correct
-        !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
-        dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2.0)
-    
-        ! source term
-        ! Conventional SA model=  advection + Pk + cb2/cb3*(dnuSA/dr)^2 +(dnuSA/dz)^2
+      else
         putout(i,k) = putout(i,k) + Pk(i,k) + cb2*inv_cb3 * ( &
           ((nuSAtmp(ip,k) - nuSAtmp(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSAtmp(i,kp) - nuSAtmp(i,km))/(2.0*dz))**2.0  )
-      enddo
+      endif
     enddo
-  endif
-
+  enddo
 
 end
 
@@ -242,7 +217,7 @@ subroutine advanceSA(resSA,Utmp,Wtmp,Rtmp,rho3,rank)
   resSA = 0.0
   dnew=0.0; dimpl = 0.0;
   call advecc(dnew,dimpl,nuSANew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-  call rhs_SA(dnew,dimpl,nuSANew,Rtmp)
+  call rhs_SA_upd(dnew,dimpl,nuSANew,Rtmp)
 
   do k=0,kmax+1
     do i=0,imax+1

@@ -2,7 +2,7 @@
 !>******************************************************************************************
 !!      To calculate the rhs of the k equation  
 !>******************************************************************************************
-subroutine rhs_K(putout,dimpl,putink,putine,rho)
+subroutine rhs_k(putout,dimpl,putink,putine,rho)
   use mod_param
   use mod_common
   implicit none
@@ -29,7 +29,7 @@ end
 !>******************************************************************************************
 !!      To calculate the rhs of the epsilon equation 
 !>******************************************************************************************
-subroutine rhs_Epsilon(putout,dimpl,rho)
+subroutine rhs_epsilon(putout,dimpl,rho)
   use mod_param
   use mod_common
   implicit none
@@ -71,7 +71,7 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
+subroutine advanceepsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   use mod_param
   use mod_common
   implicit none
@@ -150,7 +150,8 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceK_upd(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
+
+subroutine advancek_upd(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
   use mod_param
   use mod_common
   implicit none
@@ -167,9 +168,7 @@ subroutine advanceK_upd(resK,Utmp,Wtmp,Rtmp,rho3,ftmp,mrank)
 
   real*8 resK
 
-  resK  = 0.0
-  dnew  = 0.0; dimpl = 0.0;
-
+  resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,kNew,utmp,wtmp,Ru,Rp,dru,dz,i1,k1,mrank,periodic,.true.)
   call rhs_K(dnew,dimpl,kNew,eNew,Rtmp)    !new
@@ -222,7 +221,7 @@ end
 !>********************************************************************
 !! diffusion term for epsilon in the z-direction, set as a source term...
 !!********************************************************************
-subroutine diffEPS(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
+subroutine diffeps(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
   use mod_param
   implicit none
   integer   km,kp, rank1,diffVersion
