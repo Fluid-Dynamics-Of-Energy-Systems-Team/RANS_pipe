@@ -29,7 +29,7 @@
       parameter (nstep             = 100000)
 
       parameter (LoD               = 30)      ! pH2= 30
-      parameter (periodic          = 1)               ! 1..periodic, 2..developing 
+      parameter (periodic          = 2)               ! 1..periodic, 2..developing 
      
       parameter (Re                = 360)
       parameter (Pr                = 3.19457)
@@ -38,7 +38,7 @@
       parameter (Qwall             = 0.0)     !0.0) !2.4)
       parameter (isothermalBC      = 1)       ! isothermal wall: 1
 
-      parameter (Tw                = 1.0)     ! scaled with the inflow temp (Tin=1)
+      parameter (Tw                = 1.01)     ! scaled with the inflow temp (Tin=1)
       parameter (dTwall            = 0.05)
 !     parameter (Tw                = 4)      ! case for Tw=100K
 !     parameter (Tw                = 8)      ! case for Tw=200K  
