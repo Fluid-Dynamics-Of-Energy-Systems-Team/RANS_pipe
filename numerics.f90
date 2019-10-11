@@ -1,60 +1,19 @@
 !>********************************************************************
-!!     Calculate enthalpy at the wall boundary condition for isothermal
-!!********************************************************************
-subroutine funcIsothermalEnthBC(Twall_bc)
-  use mod_param
-  use mod_common
-  implicit none
-      
-  real*8 Twall_bc
-  integer tabkhi,tabklo
-  tabkhi=0
-  tabklo=0
-
-
-  if (EOSmode.eq.0) enth_wall = (Twall_bc-1.0)
-  if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
-
-      
-
-
-end
-
-!>********************************************************************
 !!     Newton solver for wall boundary condition
 !!********************************************************************
-subroutine funcNewtonSolve(enth_i1, enth_imax)
+subroutine funcNewtonSolve_upd(enth_i1, enth_imax)
   use mod_param
   implicit none
   real*8 enth_i1, enth_imax
-
-  if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
-  if (EOSmode.eq.1) call funcNewtonSolveRG(enth_i1, enth_imax)
+  call funcNewtonSolveRG_upd(enth_i1, enth_imax)
+  !if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
+  !if (EOSmode.eq.1) call funcNewtonSolveRG(enth_i1, enth_imax)
 end
-
-
-
-!>********************************************************************
-!!     Newton solver for wall boundary condition with PIG
-!!********************************************************************
-subroutine funcNewtonSolveIG(enth_i1, enth_imax)
-  use mod_param
-  use mod_common
-  implicit none
-  
-  real*8 enth_i1, enth_imax, ekh_imax
-
-  ekh_imax = 1./(Re*Pr)
-  enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
-        
-end
-
-
 
 !>********************************************************************
 !!     Newton solver for wall boundary condition RG
 !!********************************************************************
-subroutine funcNewtonSolveRG(enth_i1, enth_imax)
+subroutine funcNewtonSolveRG_upd(enth_i1, enth_imax)
   implicit none
   integer nIterNewton,success
   real*8 enth_i1, enth_imax, fxValue, fxValue1, ekh_imax
@@ -68,8 +27,8 @@ subroutine funcNewtonSolveRG(enth_i1, enth_imax)
   enth_i1 = enth_imax
 
   do while (abs(fxValue).gt.1.0e-10)
-    call funcNewtonBC(enth_i1,        enth_imax, fxValue)
-    call funcNewtonBC(enth_i1+1.0e-8, enth_imax, fxValue1)
+    call funcNewtonBC_upd(enth_i1,        enth_imax, fxValue)
+    call funcNewtonBC_upd(enth_i1+1.0e-8, enth_imax, fxValue1)
 
     enth_i1 = enth_i1 - fxValue/((fxValue1-fxValue)/1.0e-8)
 
@@ -89,77 +48,14 @@ subroutine funcNewtonSolveRG(enth_i1, enth_imax)
 end
 
 !>********************************************************************
-!!     function for wall boundary condition used by Newton solver
-!!********************************************************************
-subroutine funcNewtonBC(enth, enthIMAX, fxValue)
-  use mod_param
-  use mod_common
-  implicit none
-  integer tabkhi,tabklo
-  real*8 enth,lamOcpinter,enthIMAX,fxValue
-  tabkhi = 0
-  tabklo = 0
-  call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
-  !fxValue = enth - enthIMAX - (Rp(i1)-Rp(imax))*Qwall/lamocpinter
-  fxValue = enth - enthIMAX - dRp(imax)*Qwall/lamocpinter  !new
-end
-
-
-!>********************************************************************
 !!     PIG equation of state
 !!********************************************************************
-subroutine state(enth,rho,mu,lam,tp,be,istap,rank)
+subroutine state_upd(enth,rho,mu,lam,tp,be,istap,rank)
   use mod_param
+  use mod_common2
+  use mod_common
   implicit none
   integer istap, rank
-  real*8 enth(0:i1,0:k1)
-  real*8 rho(0:i1,0:k1)
-  real*8 mu (0:i1,0:k1)
-  real*8 lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
-  if (EOSmode.eq.0) call stateIG(enth,rho,mu,lam,tp,be,istap,rank)
-  if (EOSmode.eq.1) call stateRG(enth,rho,mu,lam,tp,be,istap,rank)
-end
-
-!>********************************************************************
-!!     PIG equation of state IG
-!!********************************************************************
-subroutine stateIG(enth,rho,mu,lam,tp,be,istap,rank)
-  use mod_param
-  use mod_common
-  implicit none
-  integer istap,rank
-  real*8 enth(0:i1,0:k1)
-  real*8  rho(0:i1,0:k1)
-  real*8  mu (0:i1,0:k1)
-  real*8  lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
-
-  mu   = 1.0/Re
-  ekmi = 1.0/Re
-  ekmk = 1.0/Re
-
-  lam  = 1.0/(Re*Pr)
-  ekhi = 1.0/(Re*Pr)
-  ekhk = 1.0/(Re*Pr)
-
-  rho = 1.0/(enth+1.0)
-  tp  = (enth+1.0)
-  be  = 1.0/tp
-  Cp  = 1.0
-  Cpi = 1.0
-  Cpk = 1.0
-end
-
-
-!>********************************************************************
-!!     real gas equation of state RG
-!!********************************************************************
-subroutine stateRG(enth,rho,mu,lam,tp,be,istap,rank)
-  use mod_param
-  use mod_common
-  implicit none
-
-  integer tabkhi,tabklo,istap,rank
-
   real*8 enth(0:i1,0:k1)
   real*8 rho(0:i1,0:k1)
   real*8 mu (0:i1,0:k1)
@@ -168,73 +64,328 @@ subroutine stateRG(enth,rho,mu,lam,tp,be,istap,rank)
   real*8 cpp (0:i1,0:k1)
   real enthface,cpface,conface,muface,beface
 
-
   if(isothermalBC.eq.1) then
     do k=0,k1
-      !  if ((k+rank*kmax)*dz.lt.x_start_heat) then
-      !     enth(i1,k)=enth(imax,k)
-      !  else
-      !     enth(i1,k) = 2.0*enth_wall - enth(imax,k)
-      !  endif
       do i=0,i1
-        tabkhi = 0
-        tabklo = 0
-        call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
-        call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
-        call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
-        call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
-        call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
-        call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
-        mu(i,k)  = mu(i,k)/Re
-        lam(i,k) = lam(i,k)/(Re*Pr)
+          call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
+          call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
+          call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
+          call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
+          call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
+          call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
       enddo
     enddo
-  else
+  else 
     do k=0,k1
-      call funcNewtonSolveRG(enth(i1,k), enth(imax,k))
+      call funcNewtonSolveRG_upd(enth(i1,k), enth(imax,k))
       if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
       do i=0,i1
-        tabkhi = 0
-        tabklo = 0
-        call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
-        call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
-        call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
-        call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
-        call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
-        call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
-        mu(i,k)  = mu(i,k)/Re
-        lam(i,k) = lam(i,k)/(Re*Pr)
+          call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
+          call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
+          call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
+          call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
+          call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
+          call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
       enddo
     enddo
   endif
 
+
   do k=0,kmax
     do i=0,imax
-      tabkhi = 0
-      tabklo = 0
       enthface = 0.5*(enth(i,k)+enth(i+1,k))
-      call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
-      call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
-      call splint(enthTab,betaTab,beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
-      ekhi(i,k) = conface/cpface/(Re*Pr)
+      call eos_model%set_w_enth(enth(i,k),"C", cpface)
+      call eos_model%set_w_enth(enth(i,k),"L", conface)
+      call eos_model%set_w_enth(enth(i,k),"B", beface) 
+      ekhi(i,k) = conface
       Cpi(i,k)=cpface
-      !            betai(i,k)=beface
-      call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
-      ekmi(i,k)  = muface/Re
-
+      call eos_model%set_w_enth(enth(i,k),"V", muface) 
+      ekmi(i,k)  = muface
       enthface = 0.5*(enth(i,k)+enth(i,k+1))
-      call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
-      call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
-      call splint(enthTab,betaTab,  beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
-      ekhk(i,k) = conface/cpface/(Re*Pr)
+      call eos_model%set_w_enth(enth(i,k),"C", cpface)
+      call eos_model%set_w_enth(enth(i,k),"L", conface)
+      call eos_model%set_w_enth(enth(i,k),"B", beface) 
+      ekhk(i,k) = conface
       Cpk(i,k)=cpface
-      !            betak(i,k)=beface
-      call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
-      ekmk(i,k)  = muface/Re
+      call eos_model%set_w_enth(enth(i,k),"V", muface) 
+      ekmk(i,k)  = muface
     enddo
   enddo
   return
+
+end subroutine state_upd
+
+
+!>********************************************************************
+!!     function for wall boundary condition used by Newton solver
+!!********************************************************************
+subroutine funcNewtonBC_upd(enth, enthIMAX, fxValue)
+  use mod_param
+  use mod_common
+  use mod_common2
+  implicit none
+  integer tabkhi,tabklo
+  real*8 enth,lamOcpinter,enthIMAX,fxValue
+  tabkhi = 0
+  tabklo = 0
+  call eos_model%set_w_enth(0.5*(enth+enthIMAX), 'L', lamocpinter)
+  lamocpinter = lamocpinter*(eos_model%Re*eos_model%Pr)
+  fxValue = enth - enthIMAX - dRp(imax)*Qwall/lamocpinter 
 end
+
+!!     Calculate enthalpy at the wall boundary condition for isothermal
+!!********************************************************************
+subroutine funcIsothermalEnthBC_upd(Twall_bc)
+  use mod_param
+  use mod_common
+  use mod_common2
+  implicit none
+      
+  real*8 Twall_bc
+  integer tabkhi,tabklo
+  tabkhi=0
+  tabklo=0
+  call eos_model%set_w_temp(Twall_bc,"H",enth_wall)
+end
+
+! !>********************************************************************
+! !!     Calculate enthalpy at the wall boundary condition for isothermal
+! !!********************************************************************
+! subroutine funcIsothermalEnthBC(Twall_bc)
+!   use mod_param
+!   use mod_common
+!   implicit none
+      
+!   real*8 Twall_bc
+!   integer tabkhi,tabklo
+!   tabkhi=0
+!   tabklo=0
+
+
+!   if (EOSmode.eq.0) enth_wall = (Twall_bc-1.0)
+!   if (EOSmode.eq.1) call splint(tempTab, enthTab, enth2Tab, nTab, Twall_bc,enth_wall,tabkhi,tabklo)
+
+! end
+
+
+! subroutine funcNewtonSolve(enth_i1, enth_imax)
+!   use mod_param
+!   implicit none
+!   real*8 enth_i1, enth_imax
+
+!   if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
+!   if (EOSmode.eq.1) call funcNewtonSolveRG(enth_i1, enth_imax)
+! end
+
+
+
+! !>********************************************************************
+! !!     Newton solver for wall boundary condition with PIG
+! !********************************************************************
+! subroutine funcNewtonSolveIG(enth_i1, enth_imax)
+!   use mod_param
+!   use mod_common
+!   implicit none
+  
+!   real*8 enth_i1, enth_imax, ekh_imax
+
+!   ekh_imax = 1./(Re*Pr)
+!   enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
+        
+! end
+
+
+
+! !>********************************************************************
+! !!     Newton solver for wall boundary condition RG
+! !!********************************************************************
+! subroutine funcNewtonSolveRG(enth_i1, enth_imax)
+!   implicit none
+!   integer nIterNewton,success
+!   real*8 enth_i1, enth_imax, fxValue, fxValue1, ekh_imax
+!   success = 1
+!   fxValue = 1000.0
+!   nIterNewton = 0
+
+!   if (enth_imax.gt.2)    enth_imax =  2.0
+!   if (enth_imax.lt.-0.1) enth_imax = -0.1
+
+!   enth_i1 = enth_imax
+
+!   do while (abs(fxValue).gt.1.0e-10)
+!     call funcNewtonBC(enth_i1,        enth_imax, fxValue)
+!     call funcNewtonBC(enth_i1+1.0e-8, enth_imax, fxValue1)
+
+!     enth_i1 = enth_i1 - fxValue/((fxValue1-fxValue)/1.0e-8)
+
+!     if (nIterNewton.gt.200) then
+!       fxValue = 0.0
+!       success = 0
+!     endif
+
+!     nIterNewton = nIterNewton + 1
+!   !     write (*,*) 'newton iter: ', nIterNewton,enth_i1,enth_imax,fxValue
+!   enddo
+
+!   if (success.eq.0) then
+!     write (*,*) 'newton didnt converge, enthimax= ',enth_imax,', ', nIterNewton, ', ', enth_i1
+!     stop
+!   endif
+! end
+
+
+
+! !>********************************************************************
+! !!     function for wall boundary condition used by Newton solver
+! !!********************************************************************
+! subroutine funcNewtonBC(enth, enthIMAX, fxValue)
+!   use mod_param
+!   use mod_common
+!   implicit none
+!   integer tabkhi,tabklo
+!   real*8 enth,lamOcpinter,enthIMAX,fxValue
+!   tabkhi = 0
+!   tabklo = 0
+!   call splint(enthTab,lamocpTab,lamocp2Tab,nTab,0.5*(enth+enthIMAX),lamOcpinter,tabkhi,tabklo)
+!   !fxValue = enth - enthIMAX - (Rp(i1)-Rp(imax))*Qwall/lamocpinter
+!   fxValue = enth - enthIMAX - dRp(imax)*Qwall/lamocpinter  !new
+! end
+
+
+
+
+
+
+! !>********************************************************************
+! !!     PIG equation of state
+! !!********************************************************************
+! subroutine state(enth,rho,mu,lam,tp,be,istap,rank)
+!   use mod_param
+!   implicit none
+!   integer istap, rank
+!   real*8 enth(0:i1,0:k1)
+!   real*8 rho(0:i1,0:k1)
+!   real*8 mu (0:i1,0:k1)
+!   real*8 lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
+!   if (EOSmode.eq.0) call stateIG(enth,rho,mu,lam,tp,be,istap,rank)
+!   if (EOSmode.eq.1) call stateRG(enth,rho,mu,lam,tp,be,istap,rank)
+! end
+
+! !>********************************************************************
+! !!     PIG equation of state IG
+! !!********************************************************************
+! subroutine stateIG(enth,rho,mu,lam,tp,be,istap,rank)
+!   use mod_param
+!   use mod_common
+!   implicit none
+!   integer istap,rank
+!   real*8 enth(0:i1,0:k1)
+!   real*8  rho(0:i1,0:k1)
+!   real*8  mu (0:i1,0:k1)
+!   real*8  lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
+
+!   mu   = 1.0/Re
+!   ekmi = 1.0/Re
+!   ekmk = 1.0/Re
+
+!   lam  = 1.0/(Re*Pr)
+!   ekhi = 1.0/(Re*Pr)
+!   ekhk = 1.0/(Re*Pr)
+
+!   rho = 1.0/(enth+1.0)
+!   tp  = (enth+1.0)
+!   be  = 1.0/tp
+!   Cp  = 1.0
+!   Cpi = 1.0
+!   Cpk = 1.0
+! end
+
+
+! !>********************************************************************
+! !!     real gas equation of state RG
+! !!********************************************************************
+! subroutine stateRG(enth,rho,mu,lam,tp,be,istap,rank)
+!   use mod_param
+!   use mod_common
+!   implicit none
+
+!   integer tabkhi,tabklo,istap,rank
+
+!   real*8 enth(0:i1,0:k1)
+!   real*8 rho(0:i1,0:k1)
+!   real*8 mu (0:i1,0:k1)
+!   real*8 lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
+!   real*8 con (0:i1,0:k1)
+!   real*8 cpp (0:i1,0:k1)
+!   real enthface,cpface,conface,muface,beface
+
+
+!   if(isothermalBC.eq.1) then
+!     do k=0,k1
+!       !  if ((k+rank*kmax)*dz.lt.x_start_heat) then
+!       !     enth(i1,k)=enth(imax,k)
+!       !  else
+!       !     enth(i1,k) = 2.0*enth_wall - enth(imax,k)
+!       !  endif
+!       do i=0,i1
+!         tabkhi = 0
+!         tabklo = 0
+!         call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+!         call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+!         call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+!         call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+!         call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+!         call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+!         mu(i,k)  = mu(i,k)/Re
+!         lam(i,k) = lam(i,k)/(Re*Pr)
+!       enddo
+!     enddo
+!   else
+!     do k=0,k1
+!       call funcNewtonSolveRG(enth(i1,k), enth(imax,k))
+!       if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
+!       do i=0,i1
+!         tabkhi = 0
+!         tabklo = 0
+!         call splint(enthTab,rhoTab,   rho2Tab,   nTab,enth(i,k),rho(i,k),tabkhi,tabklo)
+!         call splint(enthTab,muTab,    mu2Tab,    nTab,enth(i,k),mu (i,k), tabkhi,tabklo)
+!         call splint(enthTab,cpTab,    cp2Tab,    nTab,enth(i,k),Cp(i,k),tabkhi,tabklo)
+!         call splint(enthTab,lamocpTab,lamocp2Tab,nTab,enth(i,k),lam(i,k),tabkhi,tabklo)
+!         call splint(enthTab,tempTab,  temp2Tab,  nTab,enth(i,k),tp(i,k),tabkhi,tabklo)
+!         call splint(enthTab,betaTab,  beta2Tab,  nTab,enth(i,k),be(i,k),tabkhi,tabklo)
+!         mu(i,k)  = mu(i,k)/Re
+!         lam(i,k) = lam(i,k)/(Re*Pr)
+!       enddo
+!     enddo
+!   endif
+
+!   do k=0,kmax
+!     do i=0,imax
+!       tabkhi = 0
+!       tabklo = 0
+!       enthface = 0.5*(enth(i,k)+enth(i+1,k))
+!       call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
+!       call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
+!       call splint(enthTab,betaTab,beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
+!       ekhi(i,k) = conface/cpface/(Re*Pr)
+!       Cpi(i,k)=cpface
+!       !            betai(i,k)=beface
+!       call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
+!       ekmi(i,k)  = muface/Re
+
+!       enthface = 0.5*(enth(i,k)+enth(i,k+1))
+!       call splint(enthTab,cpTab, cp2Tab, nTab,enthface,cpface,tabkhi,tabklo)
+!       call splint(enthTab,lamTab,lam2Tab,nTab,enthface,conface,tabkhi,tabklo)
+!       call splint(enthTab,betaTab,  beta2Tab,nTab,enthface,beface,tabkhi,tabklo)
+!       ekhk(i,k) = conface/cpface/(Re*Pr)
+!       Cpk(i,k)=cpface
+!       !            betak(i,k)=beface
+!       call splint(enthTab,muTab, mu2Tab, nTab,enthface,muface, tabkhi,tabklo)
+!       ekmk(i,k)  = muface/Re
+!     enddo
+!   enddo
+!   return
+! end
 
 
 
