@@ -111,11 +111,10 @@ subroutine advanceEpsilon_upd(resE,Utmp,Wtmp,Rtmp,rho3,ftmp,rank)
   
       rhs(i) = dnew(i,k) + (1-alphae)*b(i)*eNew(i,k)
     enddo
+    i=1
     if (centerBC.eq.-1) then
-      i=1
       rhs(i) = dnew(i,k) - a(i)*eNew(i-1,k) + (1-alphae)*b(i)*eNew(i,k)
     else
-      i=1
       b(i)=b(i)+a(i)
     endif
 
