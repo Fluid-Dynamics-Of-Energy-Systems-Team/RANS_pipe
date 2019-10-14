@@ -39,15 +39,17 @@ subroutine init_mem_SA(this)
 end subroutine init_mem_SA
 
 
-subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,mut)
+subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,drp,dru,dz,mut)
   implicit none
   class(SA_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
   real(8), dimension(1:this%imax),         intent(IN) :: walldist
+  real(8), dimension(0:this%i1),           intent(IN) :: dRp, dru
+  real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
   real(8), dimension(0:this%i1,0:this%k1) :: yp
+  real(8), dimension(this%k1) :: tauw
   integer  im,ip,km,kp,i,k
-  real(8)  tauw(this%k1)
   real*8   cv1_3,chi,fv1SA
 
   cv1_3 = (7.1)**3.0
@@ -66,7 +68,9 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,mut)
   enddo
 end subroutine set_mut_SA
 
-subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alphak,modification,centerBC,periodic,rank)
+subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
+                    Ru,Rp,dru,drp,dz,walldist, &
+                    alphak,modification,centerBC,periodic,rank)
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho,mu,mui,muk,rho_mod
@@ -296,15 +300,19 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
   enddo
 end subroutine rhs_SA
 
-subroutine advance_SA(this,u,w,rho,mu,mui,muk,Ru,Rp,dru,drp,dz,alphak,walldist,modification,rank,centerBC,periodic,residual)
+subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
+                       Ru,Rp,dru,drp,dz,walldist,           &
+                       alpha1,alpha2,modification,          &
+                       rank,centerBC,periodic,              &
+                       residual1, residual2)
   implicit none
   class(SA_TurbModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk
+  real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
   real(8),dimension(1:this%imax),         intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz, alphak
+  real(8),                                intent(IN) :: dz, alpha1, alpha2
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual
+  real(8),                                intent(OUT):: residual1, residual2
   real(8),dimension(0:this%i1,0:this%k1)             :: rho_mod
 
   !1, our modification, 2, Aupoix modification
@@ -315,7 +323,7 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,Ru,Rp,dru,drp,dz,alphak,walldist,m
   endif
 
   call this%production_SA(this%nuSA,u,w,rho,mu,dRu,dz,walldist)
-  call this%solve_SA(residual,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alphak,modification,centerBC,periodic,rank)
+  call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
 end subroutine advance_SA
 
 
