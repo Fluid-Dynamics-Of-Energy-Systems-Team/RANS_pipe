@@ -210,7 +210,7 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
     enddo
   elseif (turbmod.eq.1) then
     ! call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
-    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,ekmttmp)
+    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,dRp, dru, dz, ekmttmp)
   elseif (turbmod.eq.2) then
     call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
   elseif (turbmod.eq.3) then
@@ -419,8 +419,8 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
   if (turbmod.eq.1) then
     ! call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
     turb_model%nuSA = nuSAnew
-    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,Ru,Rp,dru,drp,dz,alphak,walldist, &
-     modifDiffTerm,rank,centerBC,periodic,resSA)
+    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
+     modifDiffTerm,rank,centerBC,periodic,resSA,resK)
     nuSAnew = turb_model%nuSA
   elseif (turbmod.eq.2) then
     call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)

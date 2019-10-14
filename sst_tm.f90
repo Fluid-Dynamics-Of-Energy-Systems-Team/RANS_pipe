@@ -37,14 +37,10 @@ end subroutine init_SST
 subroutine init_mem_SST(this)
     implicit none
     class(SST_TurbModel) :: this
-    allocate(this%om (0:this%i1,0:this%k1))
-    allocate(this%k  (0:this%i1,0:this%k1))
-    allocate(this%bF1(0:this%i1,0:this%k1))
-    allocate(this%bF2(0:this%i1,0:this%k1))
-    allocate(this%Gk (0:this%i1,0:this%k1))
-    allocate(this%Pk (0:this%i1,0:this%k1))
-    allocate(this%Tt (0:this%i1,0:this%k1))
-    allocate(this%cdKOM(0:this%i1,0:this%k1))
+    allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),   &
+             this%bF1(0:this%i1,0:this%k1),this%bF2(0:this%i1,0:this%k1), &
+             this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1), &
+             this%Tt (0:this%i1,0:this%k1),this%cdKOM(0:this%i1,0:this%k1))
 end subroutine init_mem_SST
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
@@ -56,8 +52,8 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
   real(8), dimension(0:this%i1,0:this%k1) :: yp
+  real(8), dimension(this%k1) :: tauw
   integer  im,ip,km,kp,i,k
-  real(8)  tauw(this%k1)
   real(8)  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
 
   !constants
@@ -117,7 +113,6 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
   real(8),                                intent(OUT):: residual1, residual2
   real(8),dimension(0:this%i1,0:this%k1)             :: rho_mod
-
 
   !modification: 1, our modification | 2, Aupoix modification
   if ((modification == 1) .or. (modification == 2)) then
@@ -261,7 +256,6 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
       this%k(i,k) = max(rhs(i), 1.0e-8)
     enddo
   enddo
-  
 end subroutine solve_k_SST
 
 subroutine rhs_k_SST(this,putout,dimpl,rho)

@@ -18,7 +18,6 @@ module sa_tm
     procedure :: rhs_SA
   end type SA_TurbModel
 
-
 contains
 
   !************************!
@@ -37,7 +36,6 @@ subroutine init_mem_SA(this)
     allocate(this%nuSA(0:this%i1, 0:this%k1))
     allocate(this%Pk(0:this%i1, 0:this%k1))
 end subroutine init_mem_SA
-
 
 subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,drp,dru,dz,mut)
   implicit none
@@ -67,6 +65,32 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,drp,dru,dz,mut)
     enddo
   enddo
 end subroutine set_mut_SA
+
+subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
+                       Ru,Rp,dru,drp,dz,walldist,           &
+                       alpha1,alpha2,modification,          &
+                       rank,centerBC,periodic,              &
+                       residual1, residual2)
+  implicit none
+  class(SA_TurbModel) :: this
+  real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+  real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
+  real(8),dimension(1:this%imax),         intent(IN) :: walldist
+  real(8),                                intent(IN) :: dz, alpha1, alpha2
+  integer,                                intent(IN) :: modification,rank,centerBC,periodic
+  real(8),                                intent(OUT):: residual1, residual2
+  real(8),dimension(0:this%i1,0:this%k1)             :: rho_mod
+
+  !1, our modification, 2, Aupoix modification
+  if ((modification == 1) .or. (modification == 2)) then
+    rho_mod = rho
+  else
+    rho_mod = 1.0
+  endif
+
+  call this%production_SA(this%nuSA,u,w,rho,mu,dRu,dz,walldist)
+  call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
+end subroutine advance_SA
 
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
@@ -136,58 +160,6 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   enddo
 end subroutine solve_SA
 
-
-
-subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,modification)
-  implicit none
-  class(SA_TurbModel) :: this
-  real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: rho_mod,ek,eki,ekk, ekmt
-  real(8), dimension(0:this%i1),            intent(IN) :: dru,ru,rp
-  real(8),                                  intent(IN) :: sigma, dz
-  integer,                                  intent(IN) :: modification
-  real(8), dimension(0:this%i1, 0:this%k1), intent(OUT):: putout
-  integer km,kp,im,ip,k,i
-  
-  !Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
-  ! For, Standard, Inverse SLS and Aupoix
-  ! rho=1 for standard
-  do k=1,this%kmax
-    kp=k+1
-    km=k-1
-    do i=1,this%imax
-      putout(i,k) = putout(i,k) + 1.0/rho_mod(i,k)*( &
-        ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* &
-        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k )) &
-        -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
-        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km)) &
-        )/(dz*dz)   )
-    enddo
-  enddo
-  
-  ! For Aupoix we need to substract the density gradient diffusion with molecular viscosity
-  !-1/rho d/dx[nu*nusa/2 drhodx]
-  if (modification == 2) then                                        
-    do k=1,this%kmax     ! in the z-direction
-      kp=k+1
-      km=k-1
-      do i=1,this%imax
-        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)*((ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k )) &
-          -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km)))/(dz*dz))
-      enddo
-    enddo
-    do i=1,this%imax     ! in the r-direction
-      ip=i+1
-      im=i-1
-      do k=1,this%kmax
-        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)* &
-          (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho_mod(ip,k)-rho_mod(i ,k))) &
-          -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho_mod(i ,k)-rho_mod(im,k))) &
-          )
-      enddo
-    enddo
-  endif
-end subroutine diffusion_SA
-
 subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
   implicit none
   class(SA_TurbModel) :: this
@@ -240,6 +212,55 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
   enddo
 end subroutine production_SA
 
+subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,modification)
+  implicit none
+  class(SA_TurbModel) :: this
+  real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: rho_mod,ek,eki,ekk, ekmt
+  real(8), dimension(0:this%i1),            intent(IN) :: dru,ru,rp
+  real(8),                                  intent(IN) :: sigma, dz
+  integer,                                  intent(IN) :: modification
+  real(8), dimension(0:this%i1, 0:this%k1), intent(OUT):: putout
+  integer km,kp,im,ip,k,i
+  
+  !Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
+  ! For, Standard, Inverse SLS and Aupoix
+  ! rho=1 for standard
+  do k=1,this%kmax
+    kp=k+1
+    km=k-1
+    do i=1,this%imax
+      putout(i,k) = putout(i,k) + 1.0/rho_mod(i,k)*( &
+        ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* &
+        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k )) &
+        -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
+        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km)) &
+        )/(dz*dz)   )
+    enddo
+  enddo
+  
+  ! For Aupoix we need to substract the density gradient diffusion with molecular viscosity
+  !-1/rho d/dx[nu*nusa/2 drhodx]
+  if (modification == 2) then                                        
+    do k=1,this%kmax     ! in the z-direction
+      kp=k+1
+      km=k-1
+      do i=1,this%imax
+        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)*((ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k )) &
+          -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km)))/(dz*dz))
+      enddo
+    enddo
+    do i=1,this%imax     ! in the r-direction
+      ip=i+1
+      im=i-1
+      do k=1,this%kmax
+        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)* &
+          (  Ru(i )/((Rp(ip)-Rp(i ))*Rp(i)*dru(i))*(eki(i ,k)*0.5*(ekmt(i,k)+ekmt(ip,k))/2*(rho_mod(ip,k)-rho_mod(i ,k))) &
+          -  Ru(im)/((Rp(i )-Rp(im))*Rp(i)*dru(i))*(eki(im,k)*0.5*(ekmt(i,k)+ekmt(im,k))/2*(rho_mod(i ,k)-rho_mod(im,k))) &
+          )
+      enddo
+    enddo
+  endif
+end subroutine diffusion_SA
 
 subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
   implicit none
@@ -299,32 +320,6 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
     enddo
   enddo
 end subroutine rhs_SA
-
-subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                       Ru,Rp,dru,drp,dz,walldist,           &
-                       alpha1,alpha2,modification,          &
-                       rank,centerBC,periodic,              &
-                       residual1, residual2)
-  implicit none
-  class(SA_TurbModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
-  real(8),dimension(1:this%imax),         intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz, alpha1, alpha2
-  integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual1, residual2
-  real(8),dimension(0:this%i1,0:this%k1)             :: rho_mod
-
-  !1, our modification, 2, Aupoix modification
-  if ((modification == 1) .or. (modification == 2)) then
-    rho_mod = rho
-  else
-    rho_mod = 1.0
-  endif
-
-  call this%production_SA(this%nuSA,u,w,rho,mu,dRu,dz,walldist)
-  call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
-end subroutine advance_SA
 
 
 end module sa_tm

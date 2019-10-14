@@ -7,8 +7,8 @@ module mod_turbmodels
   !************************!
   
   type, abstract, public :: TurbModel
-  integer i1, k1, imax, kmax
-  real(8), dimension(:,:), allocatable :: nuSA,Pk
+  integer i1,k1,imax,kmax
+  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2
 
   contains
     procedure(init), deferred :: init
@@ -21,23 +21,28 @@ module mod_turbmodels
       import :: TurbModel
       class(TurbModel) :: this
     end subroutine init
-    subroutine set_mut(this,u,w,rho,mu,mui,walldist,mut)
+    subroutine set_mut(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
       import :: TurbModel
       class(TurbModel) :: this
-      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho, mu, mui
+      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(1:this%imax),        intent(IN) :: walldist
+      real(8), dimension(0:this%i1),          intent(IN) :: dRp,dru
+      real(8),                                intent(IN) :: dz
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: mut
     end subroutine set_mut
-    subroutine advance_turb(this,u,w,rho,mu,mui,muk,Ru,Rp,dru,drp,dz,alphak,walldist,modification, &
-                            rank,centerBC,periodic,residual)
+    subroutine advance_turb(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
+                             Ru,Rp,dru,drp,dz,walldist,           &
+                             alpha1,alpha2,modification,          &
+                             rank,centerBC,periodic,              &
+                             residual1, residual2)
       import :: TurbModel
       class(TurbModel) :: this
-      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho, mu, mui, muk
-      real(8), dimension(0:this%i1),          intent(IN) :: Ru, Rp, dru,drp
+      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+      real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
       real(8), dimension(1:this%i1),          intent(IN) :: walldist
-      real(8),                                intent(IN) :: dz, alphak
-      integer,                                intent(IN) :: modification, rank,centerBC, periodic
-      real(8),                                intent(OUT):: residual
+      real(8),                                intent(IN) :: dz,alpha1,alpha2
+      integer,                                intent(IN) :: modification,rank,centerBC,periodic
+      real(8),                                intent(OUT):: residual1,residual2
     end subroutine advance_turb
   end interface
 
@@ -56,17 +61,6 @@ module mod_turbmodels
 
 
 
-  ! !************************!
-  ! !         SST class      !
-  ! !************************!
-
-  ! type, extends(TurbModel), public :: SST_TurbModel
-  ! contains
-  !   procedure :: init => init_SST
-  !   procedure :: init_mem => init_mem_SST
-  !   procedure :: set_mut => set_mut_SST
-  !   procedure :: advance_turb => advance_SST
-  ! end type SST_TurbModel
 
 
 
