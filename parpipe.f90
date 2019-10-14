@@ -9,6 +9,7 @@ use mod_param
 use mod_common
 use mod_eosmodels
 use mod_common2
+use sa_tm
 implicit none
 
 include      'mpif.h'             !> mpi stuff
@@ -46,6 +47,12 @@ else
   allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
 endif
 call eos_model%init()
+
+
+!initialize turbomodel
+! if (EOSmode.eq.0) then
+allocate(turb_model,    source=SA_TurbModel(i1, k1, imax, kmax))
+call turb_model%init()
 
 
 
@@ -184,6 +191,8 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
 
   use mod_param
   use mod_common
+  use mod_common2
+  
   implicit none
       
   integer  rank,im,ip,km,kp,step
@@ -200,7 +209,8 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
       enddo
     enddo
   elseif (turbmod.eq.1) then
-    call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
+    ! call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
+    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,ekmttmp)
   elseif (turbmod.eq.2) then
     call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
   elseif (turbmod.eq.3) then
@@ -270,6 +280,7 @@ end
 subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
   use mod_param
   use mod_common
+  use mod_common2
   implicit none
       
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
@@ -406,7 +417,11 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
 
   resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
   if (turbmod.eq.1) then
-    call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+    ! call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+    turb_model%nuSA = nuSAnew
+    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,Ru,Rp,dru,drp,dz,alphak,walldist, &
+     modifDiffTerm,rank,centerBC,periodic,resSA)
+    nuSAnew = turb_model%nuSA
   elseif (turbmod.eq.2) then
     call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
   elseif (turbmod.eq.3) then
