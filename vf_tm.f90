@@ -161,16 +161,16 @@ subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
   ! developing
   if (periodic.eq.1) return
-  if (rank.eq.0) then
-    this%k  (:,0) = kin(:)
-    this%eps(:,0) = ein(:)
-    this%v2  (:0) = v2in(:)
-  endif
-  if (rank.eq.px-1) then
-    this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
-    this%eps(:,this%k1)= 2.0*this%eps(:,this%kmax)-this%eps(:,this%kmax-1)
-    this%v2 (:,this%k1)= 2.0*this%v2 (:,this%kmax)-this%v2 (:,this%kmax-1)
-  endif
+  ! if (rank.eq.0) then
+  !   this%k  (:,0) = kin(:)
+  !   this%eps(:,0) = ein(:)
+  !   this%v2  (:0) = v2in(:)
+  ! endif
+  ! if (rank.eq.px-1) then
+  !   this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
+  !   this%eps(:,this%k1)= 2.0*this%eps(:,this%kmax)-this%eps(:,this%kmax-1)
+  !   this%v2 (:,this%k1)= 2.0*this%v2 (:,this%kmax)-this%v2 (:,this%kmax-1)
+  ! endif
 
 end subroutine set_bc_VF
 

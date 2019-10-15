@@ -51,7 +51,6 @@ if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
 call eos_model%init()
 
-
 !initialize turbomodel
 ! if (EOSmode.eq.0) allocate(turb_model,source= Laminar_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.1) allocate(turb_model,source= SA_TurbModel(i1, k1, imax, kmax))
@@ -779,66 +778,51 @@ end
 !>*************************************************************************************
 !!      bound_v(Ubound,Wbound,Win,rank)
 !!
-!!
 !!*************************************************************************************
 subroutine bound_v(Ubound,Wbound,Win,rank)
 
   use mod_param
   use mod_common
-  implicit none
-    
-      include 'mpif.h'
-  character*5 inflow
-  integer rank,ierr,tabkhi,tabklo
-  real*8  y1,y2,y3,y4
-  real*8  Ubound(0:i1,0:k1), Wbound(0:i1,0:k1),flux,Ub,Win(0:i1)
-  real*8 Rbb(0:i1)
-  real*8 ubb(0:i1)
-  real*8 wbb(0:i1)
-  real*8 Rbf(0:i1)
-  real*8 ubf(0:i1)
-  real*8 wbf(0:i1)
-  integer ib,ie,kb,ke
+  implicit none  
+  include 'mpif.h'
 
+  integer rank
+  real*8 Ubound(0:i1,0:k1), Wbound(0:i1,0:k1)
+  real*8 tmp(0:i1),Win(0:i1)
 
-
-  !     Radial Boundary condition
-  if (centerBC.eq.-1) then ! channal bc
+  ! Radial Boundary condition
+  ! channel
+  if (centerBC.eq.-1) then 
     do k=0,k1
       Ubound(1,k)    =   0.0
       Ubound(0,k)    = - Ubound(2,k)
       Ubound(imax,k) =   0.0
       Ubound(i1,k)   = - Ubound(imax-1,k)
-
       Wbound(0,k)   = - Wbound(1,k)
       Wbound(i1,k)  = - Wbound(imax,k)
     enddo
+  !pipe/BL
   else
     do k=0,k1
       Ubound(0,k)    =   Ubound(1,k)
       Ubound(imax,k) =   0.0
       Ubound(i1,k)   = - Ubound(imax-1,k)
-
       Wbound(0,k)   =   Wbound(1,k)
       Wbound(i1,k)  = - Wbound(imax,k)
     enddo
   endif
 
-  call shiftf(Ubound,ubf,rank);     Ubound(:,0)  = Ubf(:);
-  call shiftf(Wbound,wbf,rank);     Wbound(:,0)  = Wbf(:);
-  call shiftb(Ubound,ubb,rank);     Ubound(:,k1) = Ubb(:);
-  call shiftb(Wbound,wbb,rank);     Wbound(:,k1) = Wbb(:);
+  call shiftf(Ubound,tmp,rank);     Ubound(:,0)  = tmp(:);
+  call shiftf(Wbound,tmp,rank);     Wbound(:,0)  = tmp(:);
+  call shiftb(Ubound,tmp,rank);     Ubound(:,k1) = tmp(:);
+  call shiftb(Wbound,tmp,rank);     Wbound(:,k1) = tmp(:);
 
-
-  !     if periodic is true, no need to overwrite k=0 proofile on rank=0 and to
-  !     apply advective outflow BC
+  !developing
   if (periodic.eq. 1) return
-
   if (rank.eq.0) then
     Ubound(:,0) = 0.0
     Wbound(:,0) = Win(:)
   endif
-
   if (rank.eq.px-1)then
     ubound(:,k1) = 2.*ubound(:,kmax)-ubound(:,kmax-1)
     wbound(:,k1) = 2.*wbound(:,kmax)-wbound(:,kmax-1)
@@ -869,32 +853,26 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
       include 'mpif.h'
   character*5 inflow
   !
-  real*8      W_out(0:i1,0:k1)
+  real*8  W_out(0:i1,0:k1)
   integer rank,ierr
   real*8  y1,y2,y3,y4
   real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
-    Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
+          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
   real*8 Ub,flux,flux_tot,deltaW,rhob,wfunc,wr(1:imax)
-  real*8 Rbb(0:i1)
-  real*8 ubb(0:i1)
-  real*8 vbb(0:i1)
-  real*8 wbb(0:i1)
-  real*8 Rbf(0:i1)
-  real*8 ubf(0:i1)
-  real*8 vbf(0:i1)
-  real*8 wbf(0:i1)
-  integer   ib,ie,kb,ke
+  real*8 tmp(0:i1)
+  integer ib,ie,kb,ke
 
+  !channel
   if (centerBC.eq.-1) then ! channal bc
     do k=0,k1
       Ubound(1,k)    =   0.0
       Ubound(0,k)    = - Ubound(2,k)
       Ubound(imax,k) =   0.0
       Ubound(i1,k)   = - Ubound(imax-1,k)
-
       Wbound(0,k)   = - Wbound(1,k)
       Wbound(i1,k)  = - Wbound(imax,k)
     enddo
+  !pipe/BL
   else
     do k=0,k1
       Ubound(0,k)    =   Ubound(1,k)
@@ -906,28 +884,14 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
     enddo
   endif
 
-
-  call shiftf(Ubound,ubf,rank)
-  call shiftf(Wbound,wbf,rank)
-  call shiftb(Ubound,ubb,rank)
-  call shiftb(Wbound,wbb,rank)
-  !!!!!!!!!!!!!!!!!!!!!!!
-
-  do i=0,i1
-    Ubound(i,k1) = Ubb(i)
-    Wbound(i,k1) = Wbb(i)
-    Ubound(i,0)  = Ubf(i)
-    Wbound(i,0)  = Wbf(i)
-  enddo
+  call shiftf(Ubound,tmp,rank);     Ubound(:,0)  = tmp(:);
+  call shiftf(Wbound,tmp,rank);     Wbound(:,0)  = tmp(:);
+  call shiftb(Ubound,tmp,rank);     Ubound(:,k1) = tmp(:);
+  call shiftb(Wbound,tmp,rank);     Wbound(:,k1) = tmp(:);
 
 
-
-
-  !     if periodic is true, no need to overwrite k=0 proofile on rank=0 and to
-  !     apply advective outflow BC
+  !developing
   if (periodic.eq.1) return
-
-
 
   if (rank.eq.0) then
     Rbound(:,0) = 1.0
@@ -935,11 +899,9 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
     Wbound(:,0) = Win(:)
   endif
 
-
   wr = 0
   Ub = 0.
   flux = 0.0
-
   if (rank.eq.px-1) then
     Ub = 0.
     do i=1,imax

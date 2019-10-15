@@ -173,12 +173,12 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
   !developing
   if (periodic.eq.1) return
-  if (rank.eq.0) then
-    this%k  (:,0) = kin(:)
-    this%om (:,0) = omin(:)
-    !this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION (THIS WAS THE ORIGINAL)
-    this%bF1(:,0) = bF1in(:) 
-  endif
+  ! if (rank.eq.0) then
+  !   this%k  (:,0) = kin(:)
+  !   this%om (:,0) = omin(:)
+  !   !this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION (THIS WAS THE ORIGINAL)
+  !   this%bF1(:,0) = bF1in(:) 
+  ! endif
 
   if (rank.eq.px-1) then
     this%k  (:,this%k1) = 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)

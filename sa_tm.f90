@@ -121,12 +121,12 @@ subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
   ! developing
   if (periodic.eq.1) return
-  if (rank.eq.0) then
-    this%nuSA(:,0) = nuSAin(:)
-  endif
-  if (rank.eq.px-1) then
-    this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
-  endif
+  ! if (rank.eq.0) then
+  !   this%nuSA(:,0) = nuSAin(:)
+  ! endif
+  ! if (rank.eq.px-1) then
+  !   this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
+  ! endif
 
 end subroutine set_bc_SA
 
