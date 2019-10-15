@@ -14,6 +14,8 @@ module mod_turbmodels
     procedure(init), deferred :: init
     procedure(set_mut), deferred :: set_mut
     procedure(advance_turb), deferred :: advance_turb
+    procedure(set_bc), deferred :: set_bc
+
   end type TurbModel
 
   interface
@@ -44,6 +46,12 @@ module mod_turbmodels
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
       real(8),                                intent(OUT):: residual1,residual2
     end subroutine advance_turb
+    subroutine set_bc(this,periodic, rank, px)
+      import :: TurbModel
+      class(TurbModel) :: this
+      integer, intent(IN) :: periodic, rank, px
+    end subroutine set_bc
+
   end interface
 
 
@@ -150,33 +158,5 @@ contains
 
 
 
-!   !************************!
-!   !      SST routines      !
-!   !************************!
 
-! subroutine init_SST(this)
-!   implicit none
-!   class(SST_TurbModel) :: this
-
-! end subroutine init_SST
-! subroutine init_mem_SST(this)
-!   implicit none
-!   class(SST_TurbModel) :: this
-
-! end subroutine init_mem_SST
-
-! subroutine set_mut_SST(this, u, w, rho, mu, mui, mut)
-
-
-
-! end
-
-
-
-! end subroutine set_mut_SST
-! subroutine advance_SST(this, u, w, rho, mu)
-!     implicit none
-!     class(SST_TurbModel) :: this
-!     real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
-! end subroutine advance_SST
 end module mod_turbmodels

@@ -13,6 +13,8 @@ module sst_tm
     procedure :: init_mem_SST
     procedure :: set_mut => set_mut_SST
     procedure :: advance_turb => advance_SST
+    procedure :: set_bc => set_bc_SST
+
     procedure :: solve_k_SST
     procedure :: solve_om_sst
     procedure :: diffusion_k_SST
@@ -94,7 +96,9 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
       this%bF2(i,k) = tanh(gammaSST**2.0)
 
       zetaSST  = max(0.31*this%om(i,k), this%bF2(i,k)*StR)
-      mut(i,k) = rho(i,k)*this%k(i,k)/zetaSST
+      ! mut(i,k) = rho(i,k)*this%k(i,k)/zetaSST !!! NOTE this is the correct one !!!!
+      mut(i,k) = rho(i,k)*this%k(i,k)/this%om(i,k)
+
     enddo
   enddo
 end subroutine set_mut_SST
@@ -129,6 +133,29 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                         Ru,Rp,dru,drp,dz, &
                         alpha2,modification,rank,centerBC,periodic)
 end subroutine advance_SST
+
+subroutine set_bc_SST(this,periodic, rank, px)
+  implicit none
+  class(SST_TurbModel) :: this
+  integer, intent(IN)  :: periodic, rank, px
+  real(8), dimension(0:this%i1) :: ekmtb,ekmtf
+
+  this%bF1(this%i1,:) =  this%bF1(this%imax,:)
+  this%bF1(0,:)  =  this%bF1(1,:)
+
+  call shiftf(this%bF1,ekmtf,rank)
+  call shiftb(this%bF1,ekmtb,rank)
+
+  this%bF1(:,0)  = ekmtf(:)
+  this%bF1(:,this%k1) = ekmtb(:)
+
+  if ((periodic.ne.1).and.(rank.eq.0)) then
+    this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION
+  endif
+  if ((periodic.ne.1).and.(rank.eq.px-1)) then
+    this%bF1(:,this%k1) = 2.*this%bF1(:,this%kmax)-this%bF1(:,this%kmax-1)
+  endif
+end subroutine set_bc_SST
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   implicit none

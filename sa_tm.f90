@@ -12,6 +12,7 @@ module sa_tm
     procedure :: init_mem_SA
     procedure :: set_mut => set_mut_SA
     procedure :: advance_turb => advance_SA
+    procedure :: set_bc => set_bc_SA
     procedure :: solve_SA
     procedure :: production_SA
     procedure :: diffusion_SA
@@ -91,6 +92,12 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
   call this%production_SA(this%nuSA,u,w,rho,mu,dRu,dz,walldist)
   call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
 end subroutine advance_SA
+
+subroutine set_bc_SA(this, periodic, rank, px)
+    implicit none
+    class(SA_TurbModel) :: this
+    integer, intent(IN) :: periodic, rank, px
+end subroutine set_bc_SA
 
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
