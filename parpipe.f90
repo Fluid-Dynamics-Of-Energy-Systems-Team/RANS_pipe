@@ -441,11 +441,11 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
 
   resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
   if (turbmod.eq.1) then
-    call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
-    ! turb_model%nuSA = nuSAnew
-    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
-    !  modifDiffTerm,rank,centerBC,periodic,resSA,resK)
-    ! nuSAnew = turb_model%nuSA
+    ! call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+    turb_model%nuSA = nuSAnew
+    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
+     modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
+    nuSAnew = turb_model%nuSA
   elseif (turbmod.eq.2) then
     call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
     ! turb_model%eps = eNew
@@ -637,6 +637,7 @@ end
 subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
   use mod_param
   use mod_common
+  use mod_common2
   implicit none
      
       
@@ -677,7 +678,8 @@ subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
     enddo
 
   endif
-
+  
+  call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   !     Radial boundary condition
   if (turbmod.eq.1) then
     ! SA
