@@ -15,6 +15,7 @@ module mod_turbmodels
     procedure(set_mut_tm), deferred :: set_mut
     procedure(advance_turb_tm), deferred :: advance_turb
     procedure(set_bc_tm), deferred :: set_bc
+    procedure(init_sol_tm), deferred :: init_sol
 
   end type TurbModel
 
@@ -23,6 +24,11 @@ module mod_turbmodels
       import :: TurbModel
       class(TurbModel) :: this
     end subroutine init_tm
+    subroutine init_sol_tm(this)
+      import :: TurbModel
+      class(TurbModel) :: this
+    end subroutine init_sol_tm
+    
     subroutine set_mut_tm(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       import :: TurbModel
       class(TurbModel) :: this

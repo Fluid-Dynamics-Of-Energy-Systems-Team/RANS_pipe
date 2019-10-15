@@ -12,10 +12,12 @@ module sst_tm
   real(8), dimension(:,:), allocatable :: Gk, cdKOM, Tt
   contains
     procedure :: init => init_SST
+    procedure :: init_sol => init_sol_SST
     procedure :: init_mem_SST
     procedure :: set_mut => set_mut_SST
     procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
+
     procedure :: solve_k_SST
     procedure :: solve_om_sst
     procedure :: diffusion_k_SST
@@ -37,6 +39,16 @@ subroutine init_SST(this)
     class(SST_TurbModel) :: this
     call this%init_mem_SST()
 end subroutine init_SST
+
+subroutine init_sol_SST(this)
+  import :: TurbModel
+  class(TurbModel) :: this
+  integer i
+  do i=1,this%imax
+    this%k(i,:)  = 0.1
+    this%om(i,:)  = 1.0
+  enddo
+end subroutine init_sol_SST
 
 subroutine init_mem_SST(this)
     implicit none

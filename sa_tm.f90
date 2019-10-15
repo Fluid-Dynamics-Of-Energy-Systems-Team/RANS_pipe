@@ -11,6 +11,7 @@ module sa_tm
   
   contains
     procedure :: init => init_SA
+    procedure :: init_sol => init_sol_SA
     procedure :: set_mut => set_mut_SA
     procedure :: advance_turb => advance_SA
     procedure :: set_bc => set_bc_SA
@@ -19,6 +20,7 @@ module sa_tm
     procedure :: production_SA
     procedure :: diffusion_SA
     procedure :: rhs_SA
+
   end type SA_TurbModel
 
 contains
@@ -34,6 +36,16 @@ subroutine init_SA(this)
     class(SA_TurbModel) :: this
     call this%init_mem_SA()
 end subroutine init_SA
+
+subroutine init_sol_SA(this)
+    implicit none
+    class(SA_TurbModel) :: this
+    integer i
+    do i=1,this%imax
+      this%nuSA(this%i,:) = 0.001
+    enddo
+end subroutine init_mem_SA
+
 
 subroutine init_mem_SA(this)
     implicit none
