@@ -12,7 +12,7 @@ module mk_tm
   contains
     procedure :: set_constants => set_constants_MK
     procedure :: set_mut => set_mut_MK
-    procedure :: advance => advance_MK
+    procedure :: advance_turb => advance_MK
     procedure :: set_bc => set_bc_MK
     procedure :: production_MK
   end type MK_TurbModel
@@ -25,6 +25,14 @@ contains
   !       MK routines      !
   !************************!
 
+type(MK_TurbModel) function init_MK_TurbModel(i1,k1,imax,kmax)
+  integer, intent(in) :: i1,k1,imax,kmax
+  init_MK_TurbModel%i1 = i1
+  init_MK_TurbModel%k1 = k1
+  init_MK_TurbModel%imax = imax
+  init_MK_TurbModel%kmax = kmax
+end function init_MK_TurbModel
+
 subroutine set_constants_MK(this)
   class(MK_TurbModel) :: this
   this%sigmak = 1.4
@@ -34,16 +42,16 @@ subroutine set_constants_MK(this)
   this%ce2 = 1.8
 end subroutine set_constants_MK
 
-subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
+subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none
-  class(TurbModel) :: this
+  class(MK_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
   real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  real(8),dimension(0:this%i1),          intent(IN) :: dRp,dru
+  real(8),dimension(0:this%i1),          intent(IN) :: Rp,dRp,dru
   real(8),                               intent(IN) :: dz
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: mut
   integer  im,ip,km,kp,i,k
-  real(8),dimension(0:this%k1) ::   tauw(0:k1)
+  real(8),dimension(0:this%k1) ::   tauw
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
 
   do k=1,this%kmax
@@ -64,17 +72,17 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
 end subroutine set_mut_MK
 
 subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                      Ru,Rp,dru,drp,dz,walldist,           &
-                      alpha1,alpha2,modification,          &
-                      rank,centerBC,periodic,              &
-                      residual1, residual2)
+                             Ru,Rp,dru,drp,dz,walldist,              &
+                             alpha1,alpha2,alpha3,                    &
+                             modification,rank,centerBC,periodic,    &
+                             residual1, residual2, residual3)
   class(MK_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
   real(8), dimension(1:this%i1),          intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz,alpha1,alpha2
+  real(8),                                intent(IN) :: dz,alpha1,alpha2, alpha3
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual1,residual2
+  real(8),                                intent(OUT):: residual1,residual2, residual3
   real(8), dimension(0:this%i1,0:this%k1) :: rho_mod
 
   !1, our modification, 2, Aupoix modification
@@ -85,16 +93,17 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
   endif
 
   call this%production_MK(u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
-  call this%solve_eps_EK(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
-                       alphae,modification,rank,centerBC,periodic)
-  call this%solve_k_EK(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha2,modification,rank,centerBC,periodic)
+  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
-                       alphae,modification,rank,centerBC,periodic)
+                       alpha1,modification,rank,centerBC,periodic)
 end
 
-subroutine set_bc_MK(this)
+subroutine set_bc_MK(this,periodic,rank,px)
   class(MK_TurbModel) :: this
+  integer, intent(IN) :: periodic, rank, px
 end subroutine set_bc_MK
 
 subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)

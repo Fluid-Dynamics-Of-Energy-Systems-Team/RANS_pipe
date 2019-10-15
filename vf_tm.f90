@@ -11,13 +11,14 @@ module vf_tm
   type, extends(KE_TurbModel), public :: VF_TurbModel
   contains
     procedure :: set_constants => set_constants_VF
-    procedure :: set_mut_KE => set_mut_VF
-    procedure :: advance_KE => advance_VF
-    procedure :: set_bc_KE => set_bc_VF
+    procedure :: set_mut => set_mut_VF
+    procedure :: advance_turb => advance_VF
+    procedure :: set_bc => set_bc_VF
     procedure :: production_VF
     procedure :: rhs_v2_VF
     procedure :: solve_v2_VF
-  end type MK_TurbModel
+    procedure :: fillhem
+  end type VF_TurbModel
 
 contains
 
@@ -28,6 +29,8 @@ contains
   !************************!
 
 subroutine set_constants_VF(this)
+  implicit none
+  class(VF_TurbModel) :: this
   this%sigmak = 1.0
   this%sigmae = 1.3
   this%cmu    = 0.22
@@ -35,17 +38,17 @@ subroutine set_constants_VF(this)
   this%ce2    = 1.9
 end subroutine
 
-subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
+subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
   real(8), dimension(1:this%imax),         intent(IN) :: walldist
-  real(8), dimension(0:this%i1),           intent(IN) :: dRp, dru
+  real(8), dimension(0:this%i1),           intent(IN) :: Rp,dRp, dru
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
 
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
-  real(8),dimension(0:this%k1) ::   tauw(0:k1)
+  real(8),dimension(0:this%k1) ::   tauw
   real(8) :: StR
   integer :: im,ip,km,kp,i,k
 
@@ -79,18 +82,18 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
 end subroutine set_mut_VF
 
 subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                      Ru,Rp,dru,drp,dz,walldist,           &
-                      alpha1,alpha2,modification,          &
-                      rank,centerBC,periodic,              &
-                      residual1, residual2)
+                             Ru,Rp,dru,drp,dz,walldist,              &
+                             alpha1,alpha2,alpha3,                    &
+                             modification,rank,centerBC,periodic,    &
+                             residual1, residual2, residual3)
   implicit none
-  class(MK_TurbModel) :: this
+  class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
   real(8), dimension(1:this%i1),          intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz,alpha1,alpha2
+  real(8),                                intent(IN) :: dz,alpha1,alpha2,alpha3
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual1,residual2
+  real(8),                                intent(OUT):: residual1,residual2,residual3
   real(8), dimension(0:this%i1,0:this%k1) :: rho_mod
 
   !1, our modification, 2, Aupoix modification
@@ -100,29 +103,38 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
     rho_mod = 1.0
   endif
 
-  call this%fillhm(mu,rho)
+  call this%fillhem(mu,rho)
   call SOLVEhelm(this%fv2,Ru,Rp,dRu,dRp,dz,rank,this%Lh,centerBC)
-  call this%production_VF(u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
-  call this%solve_eps_EK(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+  call this%production_VF(u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
-                       alphae,modification,rank,centerBC,periodic)
-  call this%solve_k_EK(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha2,modification,rank,centerBC,periodic)
+  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
-                       alphae,modification,rank,centerBC,periodic)
-  call this%solve_v2_VF(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha1,modification,rank,centerBC,periodic)
+  call this%solve_v2_VF(residual3,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
-                       alphae,modification,rank,centerBC,periodic)
+                       alpha3,modification,rank,centerBC,periodic)
 end
 
-subroutine set_bc_VF(this)
+type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax)
+  integer, intent(in) :: i1,k1,imax,kmax
+  init_VF_TurbModel%i1 = i1
+  init_VF_TurbModel%k1 = k1
+  init_VF_TurbModel%imax = imax
+  init_VF_TurbModel%kmax = kmax
+end function init_VF_TurbModel
+
+subroutine set_bc_VF(this,periodic, rank, px)
   class(VF_TurbModel) :: this
+  integer, intent(IN) :: periodic, rank, px
 end subroutine set_bc_VF
 
 subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,dRp,dz, &
                        alphav2,modification,rank,centerBC,periodic)
   implicit none
-  class(SST_TurbModel) :: this
+  class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
   real(8),dimension(0:this%i1),           intent(IN) :: dRu,ru,rp,dRp
   real(8),                                intent(IN) :: dz, alphav2
@@ -130,6 +142,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resV2
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  integer :: i,k
       
   dnew  = 0.0; dimpl = 0.0;
 
@@ -137,8 +150,8 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
   call this%rhs_v2_VF(dnew,dimpl)    
   call diffc(dnew,this%v2,mu,mui,muk,mut,this%sigmak,rho,Ru,Rp,dru,dz,rank,modification)
 
-  do k=1,kmax
-    do i=1,imax
+  do k=1,this%kmax
+    do i=1,this%imax
       
       if ((modification == 0) .or. (modification == 1)) then
         a(i) = (mui(i-1,k)+0.5*(mut(i,k)+mut(i-1,k))/this%sigmak)/((0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5)
@@ -171,17 +184,17 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
 
     call matrixIdir(this%imax,a,b,c,rhs)
 
-    do i=1,imax
+    do i=1,this%imax
       resV2 = resV2 + ((this%v2(i,k) - rhs(i))/(this%v2(i,k)+1.0e-20))**2.0
       this%v2(i,k) = min(2.0/3.0*this%k(i,k), max(rhs(i), 1.0e-8))
     enddo
   enddo
 end subroutine solve_v2_VF
 
-subroutine production_VF(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
+subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
   implicit none
-  class(MK_TurbModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
+  class(VF_TurbModel) :: this
+  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
   real(8), dimension(0:this%i1),           intent(IN) :: Rp,Ru,dRu,dRp
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1) :: div
@@ -189,10 +202,10 @@ subroutine production_VF(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8) :: Fr_1,ctheta,StR
 
   ib = 1
-  ie = i1-1
+  ie = this%i1-1
 
   kb = 1
-  ke = k1-1
+  ke = this%k1-1
 
   do k=kb,ke
     kp=k+1
@@ -247,14 +260,14 @@ end subroutine production_VF
 subroutine rhs_v2_VF(this,putout,dimpl)
   implicit none
   class(VF_TurbModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimp
+  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
   integer ib,ie,kb,ke,i,k
 
   ib = 1
-  ie = i1-1
+  ie = this%i1-1
 
   kb = 1
-  ke = k1-1
+  ke = this%k1-1
       
   do k=kb,ke
     do i=ib,ie
@@ -266,7 +279,7 @@ subroutine rhs_v2_VF(this,putout,dimpl)
 
 end subroutine rhs_v2_VF
 
-subroutine fillhm(this,mu,rho)
+subroutine fillhem(this,mu,rho)
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mu, rho
@@ -291,12 +304,12 @@ subroutine fillhm(this,mu,rho)
       ! endif
 
       ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
-      this%fv2(i,k)= - (1.4-1.)*(2./3.-this%(i,k)/this%k(i,k))/this%Tt(i,k) &
+      this%fv2(i,k)= - (1.4-1.)*(2./3.-this%v2(i,k)/this%k(i,k))/this%Tt(i,k) &
                 - 0.3*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k))-5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
       this%fv2(i,k) = this%fv2(i,k)/this%Lh(i,k)**2.0
     enddo
   enddo
-end subroutine fillhm
+end subroutine fillhem
 
 
 end module

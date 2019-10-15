@@ -42,12 +42,12 @@ subroutine init_mem_SA(this)
     allocate(this%Pk(0:this%i1, 0:this%k1))
 end subroutine init_mem_SA
 
-subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,drp,dru,dz,mut)
+subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none
   class(SA_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
   real(8), dimension(1:this%imax),         intent(IN) :: walldist
-  real(8), dimension(0:this%i1),           intent(IN) :: dRp, dru
+  real(8), dimension(0:this%i1),           intent(IN) :: Rp,dRp, dru
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
   real(8), dimension(0:this%i1,0:this%k1) :: yp
@@ -72,18 +72,18 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,drp,dru,dz,mut)
 end subroutine set_mut_SA
 
 subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                       Ru,Rp,dru,drp,dz,walldist,           &
-                       alpha1,alpha2,modification,          &
-                       rank,centerBC,periodic,              &
-                       residual1, residual2)
+                             Ru,Rp,dru,drp,dz,walldist,              &
+                             alpha1,alpha2,alpha3,                    &
+                             modification,rank,centerBC,periodic,    &
+                             residual1, residual2, residual3)
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
   real(8),dimension(1:this%imax),         intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz, alpha1, alpha2
+  real(8),                                intent(IN) :: dz, alpha1,alpha2,alpha3
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual1, residual2
+  real(8),                                intent(OUT):: residual1, residual2,residual3
   real(8),dimension(0:this%i1,0:this%k1)             :: rho_mod
 
   !1, our modification, 2, Aupoix modification

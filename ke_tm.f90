@@ -12,17 +12,17 @@ module ke_tm
   real(8), dimension(:,:), allocatable :: Gk,Tt,f1,f2,fmu,Lh,fv2
   real(8) :: sigmak,sigmae,ce1,ce2,cmu
   contains
-    procedure(set_mut), deferred :: set_mut_KE
-    procedure(advance), deferred :: advance_KE
-    procedure(set_bc), deferred :: set_bc_KE
+    procedure(set_mut_KE), deferred :: set_mut
+    procedure(advance_KE), deferred :: advance_turb
+    procedure(set_bc_KE), deferred :: set_bc
     procedure(set_constants), deferred :: set_constants
     procedure :: init => init_KE
     procedure :: rhs_k_KE
     procedure :: rhs_eps_KE
     procedure :: diffusion_eps_KE
     procedure :: solve_eps_KE
-    procedure :: init_mem_KE
     procedure :: solve_k_KE
+    procedure :: init_mem_KE
   end type KE_TurbModel
 
   interface
@@ -30,28 +30,28 @@ module ke_tm
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
     end subroutine set_constants
-    subroutine set_mut_KE(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
+    subroutine set_mut_KE(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(1:this%imax),        intent(IN) :: walldist
-      real(8), dimension(0:this%i1),          intent(IN) :: dRp,dru
+      real(8), dimension(0:this%i1),          intent(IN) :: Rp,dRp,dru
       real(8),                                intent(IN) :: dz
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: mut
     end subroutine set_mut_KE
-    subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp,  &
-                             Ru,Rp,dru,drp,dz,walldist,           &
-                             alpha1,alpha2,modification,          &
-                             rank,centerBC,periodic,              &
-                             residual1, residual2)
+    subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
+                             Ru,Rp,dru,drp,dz,walldist,              &
+                             alpha1,alpha2,alpha3,                    &
+                             modification,rank,centerBC,periodic,    &
+                             residual1, residual2, residual3)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
       real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
       real(8), dimension(1:this%i1),          intent(IN) :: walldist
-      real(8),                                intent(IN) :: dz,alpha1,alpha2
+      real(8),                                intent(IN) :: dz,alpha1,alpha2,alpha3
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
-      real(8),                                intent(OUT):: residual1,residual2
+      real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_KE
     subroutine set_bc_KE(this,periodic, rank, px)
       import :: KE_TurbModel

@@ -11,46 +11,46 @@ module mod_turbmodels
   real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2
 
   contains
-    procedure(init), deferred :: init
-    procedure(set_mut), deferred :: set_mut
-    procedure(advance_turb), deferred :: advance_turb
-    procedure(set_bc), deferred :: set_bc
+    procedure(init_tm), deferred :: init
+    procedure(set_mut_tm), deferred :: set_mut
+    procedure(advance_turb_tm), deferred :: advance_turb
+    procedure(set_bc_tm), deferred :: set_bc
 
   end type TurbModel
 
   interface
-    subroutine init(this)
+    subroutine init_tm(this)
       import :: TurbModel
       class(TurbModel) :: this
-    end subroutine init
-    subroutine set_mut(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
+    end subroutine init_tm
+    subroutine set_mut_tm(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       import :: TurbModel
       class(TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(1:this%imax),        intent(IN) :: walldist
-      real(8), dimension(0:this%i1),          intent(IN) :: dRp,dru
+      real(8), dimension(0:this%i1),          intent(IN) :: Rp,dRp,dru
       real(8),                                intent(IN) :: dz
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: mut
-    end subroutine set_mut
-    subroutine advance_turb(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,           &
-                             alpha1,alpha2,modification,          &
-                             rank,centerBC,periodic,              &
-                             residual1, residual2)
+    end subroutine set_mut_tm
+    subroutine advance_turb_tm(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
+                             Ru,Rp,dru,drp,dz,walldist,              &
+                             alpha1,alpha2,alpha3,                    &
+                             modification,rank,centerBC,periodic,    &
+                             residual1, residual2, residual3)
       import :: TurbModel
       class(TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
       real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
       real(8), dimension(1:this%i1),          intent(IN) :: walldist
-      real(8),                                intent(IN) :: dz,alpha1,alpha2
+      real(8),                                intent(IN) :: dz,alpha1,alpha2,alpha3
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
-      real(8),                                intent(OUT):: residual1,residual2
-    end subroutine advance_turb
-    subroutine set_bc(this,periodic, rank, px)
+      real(8),                                intent(OUT):: residual1,residual2, residual3
+    end subroutine advance_turb_tm
+    subroutine set_bc_tm(this,periodic, rank, px)
       import :: TurbModel
       class(TurbModel) :: this
       integer, intent(IN) :: periodic, rank, px
-    end subroutine set_bc
+    end subroutine set_bc_tm
 
   end interface
 
