@@ -10,7 +10,7 @@ module ke_tm
   
   type,abstract,extends(TurbModel), public :: KE_TurbModel
   real(8), dimension(:,:), allocatable :: Gk,Tt,f1,f2,fmu,Lh,fv2
-  real(8) :: sigmak, sigmae, ce1, ce2, cmu
+  real(8) :: sigmak,sigmae,ce1,ce2,cmu
   contains
     procedure(set_mut), deferred :: set_mut_KE
     procedure(advance), deferred :: advance_KE
@@ -28,11 +28,11 @@ module ke_tm
   interface
     subroutine set_constants(this)
       import :: KE_TurbModel
-      class(TurbModel) :: this
-    end subroutine set_mut_KE
+      class(KE_TurbModel) :: this
+    end subroutine set_constants
     subroutine set_mut_KE(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
       import :: KE_TurbModel
-      class(TurbModel) :: this
+      class(KE_TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(1:this%imax),        intent(IN) :: walldist
       real(8), dimension(0:this%i1),          intent(IN) :: dRp,dru
@@ -69,16 +69,13 @@ contains
   !************************!
 
 subroutine init_KE(this)
-  import :: KE_TurbModel
-  class(TurbModel) :: this
+  class(KE_TurbModel) :: this
   call this%init_mem_KE()
   call this%set_constants()
 end subroutine init_KE
 
 subroutine init_mem_KE(this)
-  import :: KE_TurbModel
-  class(TurbModel) :: this
-  class(SST_TurbModel) :: this
+  class(KE_TurbModel) :: this
   allocate(this%eps(0:this%i1,0:this%k1),this%k (0:this%i1,0:this%k1), &
            this%Gk (0:this%i1,0:this%k1),this%Pk(0:this%i1,0:this%k1), &
            this%f1 (0:this%i1,0:this%k1),this%f2(0:this%i1,0:this%k1), &
@@ -91,19 +88,20 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
   implicit none
-  class(SST_TurbModel) :: this
+  class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
   real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
-  real(8),                                intent(IN) :: dz, alphae
+  real(8),                                intent(IN) :: dz, alphak
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
   real(8),                                intent(OUT):: resK
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  integer                                 :: i,k
 
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%k,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
-  call this%rhs_k_KE(dnew,dimpl,this%k,this%e,rho) 
+  call this%rhs_k_KE(dnew,dimpl,rho) 
   call diffc(dnew,this%k,mu,mui,muk,mut,this%sigmak,rho,Ru,Rp,dru,dz,rank,modification)
 
   do k=1,this%kmax
@@ -151,7 +149,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
   implicit none
-  class(SST_TurbModel) :: this
+  class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
   real(8),dimension(0:this%i1),           intent(IN) :: dru,ru,rp,drp
   real(8),                                intent(IN) :: dz, alphae
@@ -159,6 +157,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resE
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  integer                                 :: i,k
   
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
@@ -194,7 +193,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   
     call matrixIdir(this%imax,a,b,c,rhs)
   
-    do i=1,imax
+    do i=1,this%imax
       resE = resE + ((this%eps(i,k) - rhs(i))/(this%eps(i,k)+1.0e-20))**2.0
       this%eps(i,k) = max(rhs(i), 1.0e-8)
   
@@ -206,14 +205,14 @@ subroutine rhs_k_KE(this,putout,dimpl,rho)
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho
-  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimp
+  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
   integer ib,ie,kb,ke,i,k
   
   ib = 1
-  ie = i1-1
+  ie = this%i1-1
 
   kb = 1
-  ke = k1-1
+  ke = this%k1-1
 
   do k=kb,ke
     do i=ib,ie
@@ -228,14 +227,14 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho
-  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimp
+  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
   integer ib,ie,kb,ke,i,k 
  
   ib = 1
-  ie = i1-1
+  ie = this%i1-1
 
   kb = 1
-  ke = k1-1
+  ke = this%k1-1
 
   do k=kb,ke
     do i=ib,ie

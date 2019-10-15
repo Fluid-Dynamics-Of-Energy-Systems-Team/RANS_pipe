@@ -17,9 +17,9 @@ LIBS = -lmpi
 RM = rm -f
 
 
-PROGRAM = forced_real_VF
-SRCS    =  turbmodels_module.f90 sa_tm.f90 sst_tm.f90 math_module.f90 eosmodels.f90 common_module.f90   numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
-OBJS    =  turbmodels_module.o sa_tm.o sst_tm.o math_module.o eosmodels.o common_module.o  param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
+PROGRAM = forced_real_VF 
+SRCS    =   turbmodels_module.f90 ke_tm.f90 mk_tm.f90 vf_tm.f90 sa_tm.f90 sst_tm.f90 math_module.f90 common_module.f90  eosmodels.f90  numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
+OBJS    =   turbmodels_module.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o math_module.o eosmodels.o  common_module.o param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 
@@ -28,6 +28,12 @@ $(PROGRAM): $(OBJS)
 
 parpipe.o: parpipe.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c parpipe.f90
+vf_tm.o: vf_tm.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c vf_tm.f90
+ke_tm.o: ke_tm.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c ke_tm.f90
+mk_tm.o: mk_tm.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c mk_tm.f90
 sst_tm.o: sst_tm.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c sst_tm.f90
 sa_tm.o: sa_tm.f90 makefile

@@ -10,6 +10,12 @@ use mod_common
 use mod_eosmodels
 use mod_common2
 use sa_tm
+use sst_tm
+use mk_tm
+use vf_tm
+
+
+
 implicit none
 
 include      'mpif.h'             !> mpi stuff
@@ -51,8 +57,13 @@ call eos_model%init()
 
 !initialize turbomodel
 ! if (EOSmode.eq.0) then
-allocate(turb_model,    source=SA_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.1) allocate(turb_model,source= SA_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.2) allocate(turb_model,source= MK_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.3) allocate(turb_model,source= VF_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.4) allocate(turb_model,source=SST_TurbModel(i1, k1, imax, kmax))
+
 call turb_model%init()
+! call turb_model%init()
 
 
 
@@ -183,7 +194,6 @@ stop
 end
 
 
-
 !>******************************************************************************************
 !!      turbprop routine to estimate the eddy viscosity
 !!******************************************************************************************
@@ -210,13 +220,21 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
     enddo
   elseif (turbmod.eq.1) then
     ! call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
-    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,dRp, dru, dz, ekmttmp)
+    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,dRp,dru,dz,ekmttmp)
   elseif (turbmod.eq.2) then
     call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
   elseif (turbmod.eq.3) then
     call calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
   elseif (turbmod.eq.4) then
     call calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
+    ! turb_model%k = kNew
+    ! turb_model%om = omNew
+    ! call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,dRp,dru,dz,ekmttmp)
+    ! call turb_model%set_bc(periodic, rank, px)
+    ! kNew = turb_model%k
+    ! omNew = turb_model%om 
+    ! bF1 = turb_model%bF1
+    ! bF2 = turb_model%bF2
 
     ! Boundary condition for bF1 of sst model
     bF1(i1,:) =  bF1(imax,:)
@@ -417,17 +435,28 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
 
   resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
   if (turbmod.eq.1) then
-    ! call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
-    turb_model%nuSA = nuSAnew
-    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
-     modifDiffTerm,rank,centerBC,periodic,resSA,resK)
-    nuSAnew = turb_model%nuSA
+    call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
+    ! turb_model%nuSA = nuSAnew
+    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
+    !  modifDiffTerm,rank,centerBC,periodic,resSA,resK)
+    ! nuSAnew = turb_model%nuSA
   elseif (turbmod.eq.2) then
     call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
   elseif (turbmod.eq.3) then
     call advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
   elseif (turbmod.eq.4) then
     call advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
+    ! turb_model%k = kNew
+    ! turb_model%om = omNew
+    ! turb_model%bF1 = bF1
+    ! turb_model%bF2 = bF2
+    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
+    !  modifDiffTerm,rank,centerBC,periodic,resK,resOm)
+    ! kNew = turb_model%k
+    ! omNew = turb_model%om 
+    ! bF1 = turb_model%bF1
+    ! bF2 = turb_model%bF2
+    
   endif
 
 

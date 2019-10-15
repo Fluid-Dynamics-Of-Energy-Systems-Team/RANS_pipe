@@ -11,9 +11,9 @@ module mk_tm
   type, extends(KE_TurbModel), public :: MK_TurbModel
   contains
     procedure :: set_constants => set_constants_MK
-    procedure :: set_mut_KE => set_mut_MK
-    procedure :: advance_KE => advance_MK
-    procedure :: set_bc_KE => set_bc_MK
+    procedure :: set_mut => set_mut_MK
+    procedure :: advance => advance_MK
+    procedure :: set_bc => set_bc_MK
     procedure :: production_MK
   end type MK_TurbModel
 
@@ -32,7 +32,7 @@ subroutine set_constants_MK(this)
   this%cmu = 0.09
   this%ce1 = 1.4
   this%ce2 = 1.8
-end subroutine set_constants
+end subroutine set_constants_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
   implicit none
@@ -46,11 +46,11 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
   real(8),dimension(0:this%k1) ::   tauw(0:k1)
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
 
-  do k=1,kmax
+  do k=1,this%kmax
     km=k-1
     kp=k+1
     tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,km)+w(this%imax,k))/walldist(this%imax)
-    do i=1,imax
+    do i=1,this%imax
       im=i-1
       ip=i+1
       yp(i,k)     = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
@@ -111,10 +111,10 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
 
   ib = 1
-  ie = i1-1
+  ie = this%i1-1
 
   kb = 1
-  ke = k1-1
+  ke = this%k1-1
 
   do k=kb,ke
     kp=k+1
