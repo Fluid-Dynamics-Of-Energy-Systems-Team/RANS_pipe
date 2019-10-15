@@ -71,11 +71,11 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   enddo
 end subroutine set_mut_MK
 
-subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
-                             modification,rank,centerBC,periodic,    &
-                             residual1, residual2, residual3)
+subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      Ru,Rp,dru,drp,dz,walldist,             &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,centerBC,periodic,   &
+                      residual1, residual2, residual3)
   class(MK_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp

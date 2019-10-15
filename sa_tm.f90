@@ -71,11 +71,11 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   enddo
 end subroutine set_mut_SA
 
-subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
-                             modification,rank,centerBC,periodic,    &
-                             residual1, residual2, residual3)
+subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      Ru,Rp,dru,drp,dz,walldist,             &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,centerBC,periodic,   &
+                      residual1, residual2, residual3)
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -141,7 +141,6 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   real(8),                               intent(IN) :: dz, alphak
   integer,                               intent(IN) :: rank, modification,centerBC, periodic
   real(8),                               intent(OUT):: resSA
-
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,tempArray,dimpl,eknu,eknui,eknuk
   real(8), dimension(this%imax)           :: a,b,c,rhs
   integer :: k,i
@@ -205,7 +204,6 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
   real(8),dimension(0:this%i1),           intent(IN) :: dRu
   real(8),dimension(1:this%imax),         intent(IN) :: walldist
   real(8),                                intent(IN) :: dz
-
   real(8),dimension(0:this%i1,0:this%k1) :: Gk, Tt
   integer im,ip,km,kp,ib,ie,kb,ke,i,k
   real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,shatSA,StR
@@ -309,7 +307,6 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
   integer,                               intent(IN) :: modification
   real(8),                               intent(IN) :: dz
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: putout,dimpl
-
   integer im,ip,km,kp,ib,ie,kb,ke,i,k
   real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,r_SA,g_SA,fw_SA,shatSA
   

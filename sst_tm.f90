@@ -106,10 +106,10 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
 end subroutine set_mut_SST
 
 subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
-                             modification,rank,centerBC,periodic,    &
-                             residual1, residual2, residual3)
+                       Ru,Rp,dru,drp,dz,walldist,            &
+                       alpha1,alpha2,alpha3,                 &
+                       modification,rank,centerBC,periodic,  &
+                       residual1, residual2, residual3)
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp

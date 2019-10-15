@@ -46,9 +46,7 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8), dimension(0:this%i1),           intent(IN) :: Rp,dRp, dru
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
-
-  real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
-  real(8),dimension(0:this%k1) ::   tauw
+  real(8), dimension(0:this%k1) :: tauw
   real(8) :: StR
   integer :: im,ip,km,kp,i,k
 
@@ -81,11 +79,11 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   enddo
 end subroutine set_mut_VF
 
-subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
-                             modification,rank,centerBC,periodic,    &
-                             residual1, residual2, residual3)
+subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      Ru,Rp,dru,drp,dz,walldist,             &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,centerBC,periodic,   &
+                      residual1, residual2, residual3)
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
