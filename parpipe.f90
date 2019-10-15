@@ -13,18 +13,12 @@ use sa_tm
 use sst_tm
 use mk_tm
 use vf_tm
-
-
-
 implicit none
-
-include      'mpif.h'             !> mpi stuff
+include 'mpif.h'
 
 integer      rank,ierr,istart,noutput
-integer      iTabFoundHi,iTabFoundLo
-real*8       bulk,stress,stime,time1,time2,timer,time3,dif,adv
-real*8       newTemp,newRho,newMu,newLam,newCP,newEnth,newTemp2,enth_i1,enth_imax,fxvalue,str,str_tot
-real*8       resC,resK,resE,resV2,resOm,resSA   ! Residuals for energy, kine, eps, v2, omega, nuSA
+real*8       bulk,stress,stime,time1
+real*8       resC,resK,resE,resV2,resOm,resSA   
 real(8), dimension(0:i1) :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
 real*8       tempWall
 real :: start, finish
@@ -34,6 +28,9 @@ call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
 call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 
+resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
+
+!domain integers
 kmax    = 32/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
@@ -42,21 +39,22 @@ Mt=imax/px
 Nx=kmax*px
 Mx=kmax
 Nt=imax
-
 call initMem()
+
 
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
+if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'ph2_table.dat'))
 call eos_model%init()
 
 !initialize turbomodel
 ! if (EOSmode.eq.0) allocate(turb_model,source= Laminar_TurbModel(i1, k1, imax, kmax))
-if (turbmod.eq.1) allocate(turb_model,source= SA_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax))
-if (turbmod.eq.4) allocate(turb_model,source=SST_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax))
 call turb_model%init()
 
 
@@ -67,7 +65,6 @@ call mkgrid(rank)
 
 dtmax = 1.e-3
 dt = dtmax
-       
 istart = 1
 
 if (select_init < 2) then
@@ -90,6 +87,7 @@ if (periodic.ne.1) then
   close(29)
 endif
 
+
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -106,43 +104,42 @@ if (isothermalBC.eq.1) then
   if (rank.eq.0) print '("temperature at the wall = ",f6.3," .")',tempWall
 endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
-      
-call bound_h_upd(kin,ein,v2in,omIn,nuSAin,rank)
+
+!bound scalars
+call bound_c(rank)
+call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
+!properties
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
-
-
-call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
+!turbulent viscosity
+call calc_mu_eff(Unew,Wnew,ekme,ekmt,ekmtin,rank)
+!bound momentum
 call bound_v(Unew,Wnew,Win,rank)
       
-
-
 call chkdt(rank,istep)
-
 call cpu_time(start)
-! simulation loop
+
 do istep=istart,nstep
 
-
-  ! calculating turbulent viscosity
-  call turbprop(Unew,Wnew,ekme,ekmt,ekmtin,rank,istep)
-         
-  if (turbmod.eq.3)  then
-    call fillhm(rank)
-    call SOLVEhelm(fv2,Ru,Rp,dRu,dRp,dz,rank,Lh,centerBC)
-  endif
-  
-  call advanceScalar(resC,resK,resE,resV2,resOm,resSA,Unew,Wnew,Rnew,fv2,rank)
-         
-  call bound_h_upd(kin,ein,v2in,omIn,nuSAin,rank)
+  ! turbulent viscosity
+  call calc_mu_eff(Unew,Wnew,ekme,ekmt,ekmtin,rank)  
+  !advance scalars
+  call advanceC(resC,Unew,Wnew,Rnew,fv2,rank)
+  call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
+                     Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
+                     modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
+  !bound scalars
+  call bound_c(rank)
+  call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
+  !properties
   call state_upd(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
-  
+  !momentum
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
-
   call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
+  !bound momentum
   call bound_v(Unew,Wnew,Win,rank)
 
   !ramping isothermal wall temperature
@@ -192,19 +189,17 @@ end
 !>******************************************************************************************
 !!      turbprop routine to estimate the eddy viscosity
 !!******************************************************************************************
-subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
+subroutine calc_mu_eff(U,W,ekmetmp,ekmttmp,ekmtin,rank)
 
   use mod_param
   use mod_common
-  use mod_common2
-  
+  use mod_common2  
   implicit none
       
-  integer  rank,im,ip,km,kp,step
+  integer  rank
   real*8   tauwLoc, tauw(0:k1)
   real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
-  real*8, dimension(0:i1) :: ekmtb,ekmtf,ekmtin
-
+  real*8, dimension(0:i1) :: tmp,ekmtin
 
   if (turbmod.eq.0) then
     do k=1,kmax
@@ -213,52 +208,8 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
         ekmttmp(i,k) = 0.
       enddo
     enddo
-  elseif (turbmod.eq.1) then
-    ! call calculate_mut_SA(U,W,ekmetmp,ekmttmp,ekmtin,step)
+  else 
     call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,Rp,dRp,dru,dz,ekmttmp)
-  elseif (turbmod.eq.2) then
-    call calculate_mut_MK(U,W,ekmetmp,ekmttmp,ekmtin,step)
-    ! turb_model%k = kNew
-    ! turb_model%eps = eNew
-    ! call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,Rp,dRp,dru,dz,ekmttmp)
-
-  elseif (turbmod.eq.3) then
-    call calculate_mut_VF(U,W,ekmetmp,ekmttmp,ekmtin,step)
-    ! turb_model%k = kNew
-    ! turb_model%eps = eNew
-    ! turb_model%v2 = v2new
-    ! call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,Rp,dRp,dru,dz,ekmttmp)
-
-
-
-  elseif (turbmod.eq.4) then
-    call calculate_mut_SST(U,W,ekmetmp,ekmttmp,ekmtin,step)
-    ! turb_model%k = kNew
-    ! turb_model%om = omNew
-    ! call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,Rp,dRp,dru,dz,ekmttmp)
-    ! call turb_model%set_bc(periodic, rank, px)
-    ! kNew = turb_model%k
-    ! omNew = turb_model%om 
-    ! bF1 = turb_model%bF1
-    ! bF2 = turb_model%bF2
-
-    ! Boundary condition for bF1 of sst model
-    bF1(i1,:) =  bF1(imax,:)
-    bF1(0,:)  =  bF1(1,:)
-
-    call shiftf(bF1,ekmtf,rank)
-    call shiftb(bF1,ekmtb,rank)
-    bF1(:,0)  = ekmtf(:)
-    bF1(:,k1) = ekmtb(:)
-
-    if ((periodic.ne.1).and.(rank.eq.0)) then
-      bF1(:,0) = bF1(:,1)  ! ATTENTION
-    endif
-
-    if ((periodic.ne.1).and.(rank.eq.px-1)) then
-      bF1(:,k1) = 2.*bF1(:,kmax)-bF1(:,kmax-1)
-    endif
-
   endif
 
   sigmat = 0.9
@@ -266,21 +217,18 @@ subroutine turbprop(U,W,ekmetmp,ekmttmp,ekmtin,rank,step)
   ekmttmp(i1,:) = -ekmttmp(imax,:)
   ekmttmp(0,:)  =  ekmttmp(1,:)
 
-  call shiftf(ekmttmp,ekmtf,rank)
-  call shiftb(ekmttmp,ekmtb,rank)
-  ekmttmp(:,0)  = ekmtf(:)
-  ekmttmp(:,k1) = ekmtb(:)
+  call shiftf(ekmttmp,tmp,rank); ekmttmp(:,0)  = tmp(:);
+  call shiftb(ekmttmp,tmp,rank); ekmttmp(:,k1) = tmp(:);
 
   if ((periodic.ne.1).and.(rank.eq.0)) then
     ekmttmp(:,0) = ekmtin(:)
   endif
-
   if ((periodic.ne.1).and.(rank.eq.px-1)) then
     ekmttmp(:,k1) = 2.*ekmt(:,kmax)-ekmt(:,kmax-1)
   endif
 
   ekmetmp = ekm + ekmttmp
-end
+end 
 
 
 !>************************************************************************************
@@ -301,7 +249,7 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,rank)
+subroutine advanceC(resC,Utmp,Wtmp,Rtmp,ftmp,rank)
   use mod_param
   use mod_common
   use mod_common2
@@ -319,7 +267,7 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
 
   real*8 t1,t2,t3,t4,bc,scl
   real*8 term, adiffm, adiffp
-  real*8 resC, resK, resE, resV2, resOm, resSA
+  real*8 resC
 
 
   ! ------------------------------------------------------------------------
@@ -437,50 +385,6 @@ subroutine advanceScalar(resC,resK,resE,resV2,resOm,resSA,Utmp,Wtmp,Rtmp,ftmp,ra
 
   if (periodic.eq.1) then
     cnew = 0.0; resC=0.0;
-  endif
-
-  resK = 0.0; resE = 0.0;  resOm = 0.0; resSA = 0.0;  resV2 = 0.0;
-  if (turbmod.eq.1) then
-    ! call advanceScalar_SA(resSA,Utmp,Wtmp,Rtmp,rank)
-    turb_model%nuSA = nuSAnew
-    call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
-     modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-    nuSAnew = turb_model%nuSA
-  elseif (turbmod.eq.2) then
-    call advanceScalar_MK(resK,resE,Utmp,Wtmp,Rtmp,ftmp,rank)
-    ! turb_model%eps = eNew
-    ! turb_model%k = kNew
-    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
-    !  modifDiffTerm,rank,centerBC,periodic,resK,resE)
-    ! eNew = turb_model%eps
-    ! kNew = turb_model%k
-
-  elseif (turbmod.eq.3) then
-    call advanceScalar_VF(resK,resE,resV2,Utmp,Wtmp,Rtmp,ftmp,rank)
-    ! turb_model%eps = eNew
-    ! turb_model%k = kNew
-    ! turb_model%v2 = v2New
-    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
-    !  modifDiffTerm,rank,centerBC,periodic,resK,resE,resV2)
-    ! eNew = turb_model%eps
-    ! kNew = turb_model%k
-    ! v2New = turb_model%v2
-
-
-
-  elseif (turbmod.eq.4) then
-    call advanceScalar_SST(resK,resOm,Utmp,Wtmp,Rtmp,rank)
-    ! turb_model%k = kNew
-    ! turb_model%om = omNew
-    ! turb_model%bF1 = bF1
-    ! turb_model%bF2 = bF2
-    ! call turb_model%advance_turb(utmp,wtmp,rtmp,ekm,ekmi,ekmk,ekmt,beta,temp,Ru,Rp,dru,drp,dz,walldist,alphak,alphae, &
-    !  modifDiffTerm,rank,centerBC,periodic,resK,resOm)
-    ! kNew = turb_model%k
-    ! omNew = turb_model%om 
-    ! bF1 = turb_model%bF1
-    ! bF2 = turb_model%bF2
-    
   endif
 
 
@@ -634,23 +538,20 @@ end
 !!  bound_h equation
 !!
 !!*************************************************************************************
-subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
+subroutine bound_c(rank)
   use mod_param
   use mod_common
   use mod_common2
   implicit none
-     
-      
-      include 'mpif.h'
+  include 'mpif.h'
   integer rank
-  real*8 unin,flux,Ub,BCvalue(0:k1)
-  real*8 Sk(0:k1),kin(0:i1),ein(0:i1),v2in(0:i1),omin(0:i1),nuSAin(0:i1)
-  real*8 tmpShift(0:i1)
+  
 
+  ! Radial boundary condition for enthalpy c
 
-  !     Radial boundary condition for enthalpy c
+  ! isothermal
   if (isothermalBC.eq.1) then
-    !!!!!!!!!!!! isothermal
+    !pipe/bl
     if (centerBC.eq.1) then
       do k=0,k1
         if ((k+rank*kmax)*dz.lt.x_start_heat) then
@@ -659,19 +560,19 @@ subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
           cnew(i1,k) = 2.0*enth_wall - cnew(imax,k)
         endif
       enddo
-
+    !channel (TODO!!!)
     else
       if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
       stop
     endif
-     
+  ! isoflux   
   else
-    !!!!!!!!!!!! isoflux
     do k=0,k1
       if (rank.eq.0.and.k.lt.K_start_heat) then
         cnew(i1,:) = cnew(imax,:)
       else
         call funcNewtonSolve_upd(cnew(i1,k), cnew(imax,k))
+        !channel
         if (centerBC.eq.-1) call funcNewtonSolve_upd(cnew(0,k), cnew(1,k))
       endif
 
@@ -679,101 +580,6 @@ subroutine bound_h_upd(kin,ein,v2in,omin,nuSAin,rank)
 
   endif
   
-  call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-  !     Radial boundary condition
-  if (turbmod.eq.1) then
-    ! SA
-    nuSAnew(i1,:) = -nuSAnew(imax,:)
-
-    if (centerBC.eq.-1) then
-      nuSAnew(0,:) = -nuSAnew(1,:)
-    endif
-
-  elseif (turbmod.eq.2) then
-    ! MK
-    knew(i1,:) = -knew(imax,:)
-    BCvalue(:) = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
-    enew(i1,:) = 2.0*BCvalue(:) - enew(imax,:)
-
-    if (centerBC.eq.-1) then
-      knew(0,:)  = -knew(1,:)
-      BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
-      enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
-    endif
-
-  elseif (turbmod.eq.3) then
-    ! VF
-    knew(i1,:)  = -knew(imax,:)
-    v2new(i1,:) = -v2new(imax,:)
-    BCvalue(:)  = 2.0*ekm(imax,:)/rNew(imax,:)*knew(imax,:)/wallDist(imax)**2
-    enew(i1,:)  = 2.0*BCvalue(:) - enew(imax,:)
-
-    if (centerBC.eq.-1) then
-      knew(0,:)  = -knew(1,:)
-      v2new(0,:) = -v2new(1,:)
-      BCvalue(:) = 2.0*ekm(1,:)/rNew(1,:)*knew(1,:)/wallDist(1)**2
-      enew(0,:)  = 2.0*BCvalue(:) - enew(1,:)
-    endif
-
-  elseif (turbmod.eq.4) then
-    ! SST
-    knew(i1,:)  = -knew(imax,:)
-    BCvalue(:)  = 60.0/0.075*ekm(imax,:)/rNew(imax,:)/wallDist(imax)**2
-    omNew(i1,:) = 2.0*BCvalue(:) - omNew(imax,:)
-
-    if (centerBC.eq.-1) then
-      knew(0,:)  = -knew(1,:)
-      BCvalue(:) = 60.0/0.075*ekm(1,:)/rNew(1,:)/wallDist(1)**2
-      omNew(0,:) = 2.0*BCvalue(:) - omNew(1,:)
-    endif
-
-  endif
-
-  if (centerBC.eq.1) then
-    !     center line BC
-    cnew(0,:)    = cnew(1,:)
-    knew(0,:)    = knew(1,:)
-    enew(0,:)    = enew(1,:)
-    v2new(0,:)   = v2new(1,:)
-    omNew(0,:)   = omNew(1,:)
-    nuSAnew(0,:) = nuSAnew(1,:)
-  endif
-  !     ghost cells between CPU
-  call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
-  call shiftf(knew,   tmpShift,rank);       knew(:,0) = tmpShift(:);
-  call shiftf(enew,   tmpShift,rank);       enew(:,0) = tmpShift(:);
-  call shiftf(v2new,  tmpShift,rank);      v2new(:,0) = tmpShift(:);
-  call shiftf(omNew,  tmpShift,rank);      omNew(:,0) = tmpShift(:);
-  call shiftf(nuSAnew,tmpShift,rank);    nuSAnew(:,0) = tmpShift(:);
-
-  call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
-  call shiftb(knew,   tmpShift,rank);      knew(:,k1) = tmpShift(:);
-  call shiftb(enew,   tmpShift,rank);      enew(:,k1) = tmpShift(:);
-  call shiftb(v2new,  tmpShift,rank);     v2new(:,k1) = tmpShift(:);
-  call shiftb(omNew,  tmpShift,rank);     omNew(:,k1) = tmpShift(:);
-  call shiftb(nuSAnew,tmpShift,rank);   nuSAnew(:,k1) = tmpShift(:);
-      
-  if (periodic.eq.1) return
-
-
-  !     set inlet and outlet BC for developing flow
-  if (rank.eq.0) then
-    cnew(:,0) = 0.0
-    knew(:,0) = kin(:)
-    enew(:,0) = ein(:)
-    v2new(:,0) = v2in(:)
-    omNew(:,0) = omin(:)
-    nuSAnew(:,0) = nuSAin(:)
-  endif
-
-  if (rank.eq.px-1) then
-    cnew(:,k1) = 2.0*   cnew(:,kmax) -    cnew(:,kmax-1)
-    knew(:,k1) = 2.0*   knew(:,kmax) -    knew(:,kmax-1)
-    enew(:,k1) = 2.0*   enew(:,kmax) -    enew(:,kmax-1)
-    v2new(:,k1) = 2.0*  v2new(:,kmax) -   v2new(:,kmax-1)
-    omNew(:,k1) = 2.0*  omNew(:,kmax) -   omNew(:,kmax-1)
-    nuSAnew(:,k1) = 2.0*nuSAnew(:,kmax) - nuSAnew(:,kmax-1)
-  endif
 
 end
 

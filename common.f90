@@ -7,50 +7,40 @@ module mod_common
   real(8) pi,dpdz
 
 
-  ! KOM SST
+  !***************TURBULENCE
   real(8) sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2
   ! 0:i1,0:k1
-  real(8), dimension(:,:), allocatable :: fmu,f1,f2,ReT,yp,ReTauS,ypt,dterm,eterm,atmp,bF1
+  real(8), dimension(:,:), allocatable :: fmu,f1,f2,ReT,yp,ReTauS,ypt,dterm,eterm,bF1,Pk,Gk,Tt
   ! imax,kmax
-  real(8), dimension(:,:), allocatable :: fv2,Lh,at,LhT,bF2,cdKOM
+  real(8), dimension(:,:), allocatable :: fv2,Lh,LhT,bF2,cdKOM
 
+  !***************GRID
+  real(8) dz
   !0:i1
   real(8), dimension(:), allocatable :: Ru,Rp,y_fa,y_cv,dru,drp
-  real(8) dz
   !0:k1
   real(8),  dimension(:), allocatable :: z1,z2
   !1:imax
   real(8),  dimension(:), allocatable :: wallDist
 
+  !***************STATE PROPERTIES
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,tco,Pk,Gk,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk,Tt
+  real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk
   real(8) enth_wall
 
   real(8) dt,dtmax
   
+  !***************EQUATION VARIABLES
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
-
+  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Uold,Vold,eold,v2old,Wold,Cold,kold,h2old,nuSAold,omOld
-
+  real(8), dimension(:,:), allocatable :: Uold,Wold,rold
   !0:i1,0:k1 
   real(8), dimension(:,:), allocatable :: dUdt,dVdt,dWdt
-
-  !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: rold,rnew
-
   !imax,kmax
-  real(8), dimension(:,:), allocatable :: bdts,p,phi
-  !iwork
-  real(8), dimension(:), allocatable  :: work
-  !isave
-  real(8), dimension(:), allocatable  :: save
-  !kmax
-  real(8), dimension(:), allocatable  :: bdrs
-  !imax
-  real(8), dimension(:), allocatable  :: bdzs
-                                          
+  real(8), dimension(:,:), allocatable :: p
+               
+  !***************NUMERICAL CLUTTER                         
   !Nx
   integer, dimension(:), allocatable :: Xii
   !Nx,Mt
@@ -71,36 +61,31 @@ contains
     use mod_param
     implicit none
 
+    !TURBULENCE
     allocate(fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),    &
-             ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),atmp(0:i1,0:k1),bF1(0:i1,0:k1))
-    allocate(fv2(imax,kmax),Lh(imax,kmax),at(imax,kmax),LhT(imax,kmax),bF2(imax,kmax),cdKOM(imax,kmax))
-
+             ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),bF1(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),  &
+             Tt(0:i1,0:k1))
+    allocate(fv2(imax,kmax),Lh(imax,kmax),LhT(imax,kmax),bF2(imax,kmax),cdKOM(imax,kmax))
+    !GRID
     allocate( Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
     allocate(z1(0:k1),z2(0:k1))
     allocate(wallDist(1:imax))
-
+    !STATE VARIABLES
     allocate(ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),temp(0:i1,0:k1),  &
-             tco(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &
-             ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1),Tt(0:i1,0:k1))
-
+             peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &
+             ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1))
+    !EQUATION VARIABLES
     allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1),            &
-             Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),qcrit(0:i1,0:k1),nuSAnew(0:i1,0:k1),          &
-             omNew(0:i1,0:k1))
-
-    allocate(Uold(0:i1,0:k1),Vold(0:i1,0:k1),eold(0:i1,0:k1),v2old(0:i1,0:k1),Wold(0:i1,0:k1),             &
-             Cold(0:i1,0:k1),kold(0:i1,0:k1),h2old(0:i1,0:k1),nuSAold(0:i1,0:k1),omOld(0:i1,0:k1))
-
+             Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),nuSAnew(0:i1,0:k1),          &
+             omNew(0:i1,0:k1),rnew(0:i1,0:k1))
+    allocate(rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1))
     allocate(dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
+    allocate(p(imax,kmax))
 
-    allocate(rold(0:i1,0:k1),rnew(0:i1,0:k1))
-
-    allocate(bdts(imax,kmax),p(imax,kmax),phi(imax,kmax))
-
-    allocate(work(iwork))
-    allocate(save(isave))
-    allocate(bdrs(kmax))
-    allocate(bdzs(imax))
-
+    !NUMERICAL STUFF
+    allocate(qcrit(0:i1,0:k1))
+    
+    !NUMERICAL CLUTTER
     allocate(Xii(Nx))
     allocate(Xkk(Nx,Mt))
     allocate(Tkk(Nt))

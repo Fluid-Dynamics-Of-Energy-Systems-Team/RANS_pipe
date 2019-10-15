@@ -1,8 +1,2 @@
-mpif90 -O3 -fdefault-real-8 -ffixed-line-length-none -g  -c vf_tm.f90
-vf_tm.f90:64:32:
-
-         ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-                                1
-Error: Function ‘rp’ at (1) has no IMPLICIT type
-makefile:32: recipe for target 'vf_tm.o' failed
-make: *** [vf_tm.o] Error 1
+mpif90 -O3 -fdefault-real-8 -ffixed-line-length-none -g  -c common.f90
+mpif90 -O3 -fdefault-real-8 -ffixed-line-length-none -g  -o forced_real_VF  turbmodels_module.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o math_module.o eosmodels.o  common_module.o param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o -lmpi

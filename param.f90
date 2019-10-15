@@ -41,7 +41,7 @@ module mod_param
   !     parameter (Tw                = 4)      ! case for Tw=100K
   !     parameter (Tw                = 8)      ! case for Tw=200K
 
-  parameter (pressIsoThermal   = 2)       ! constant pressure for BL cases (2 or 4)
+  parameter (pressIsoThermal   = 1)       ! constant pressure for BL cases (2 or 4)
   !     parameter (pressIsoThermal   = 2)       ! 2MPa: pH2_2MPa_table.dat
   !     parameter (pressIsoThermal   = 4)       ! 4MPa: pH2_4MPa_table.dat
 
