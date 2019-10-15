@@ -46,10 +46,12 @@ module mod_turbmodels
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
       real(8),                                intent(OUT):: residual1,residual2, residual3
     end subroutine advance_turb_tm
-    subroutine set_bc_tm(this,periodic, rank, px)
+    subroutine set_bc_tm(this,mu,rho,walldist,centerBC,periodic,rank,px)
       import :: TurbModel
       class(TurbModel) :: this
-      integer, intent(IN) :: periodic, rank, px
+      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+      real(8),dimension(1:this%imax),        intent(IN) :: walldist
+      integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_tm
 
   end interface

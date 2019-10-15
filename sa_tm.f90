@@ -97,10 +97,37 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
   call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
 end subroutine advance_SA
 
-subroutine set_bc_SA(this, periodic, rank, px)
-    implicit none
-    class(SA_TurbModel) :: this
-    integer, intent(IN) :: periodic, rank, px
+subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
+  implicit none
+  class(SA_TurbModel) :: this
+  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+  real(8),dimension(1:this%imax),        intent(IN) :: walldist
+  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  real(8),dimension(0:this%i1) :: tmp
+  
+  this%nuSA(this%i1,:) = -this%nuSA(this%imax,:)
+
+  ! channel
+  if (centerBC.eq.-1) then
+    this%nuSA(0,:) = -this%nuSA(1,:)
+  endif
+  ! pipe/BL
+  if (centerBC.eq.1) then
+    this%nuSA(0,:) = this%nuSA(1,:)
+  endif
+
+  call shiftf(this%nuSA,tmp,rank); this%nuSA(:,0)       =tmp(:);
+  call shiftb(this%nuSA,tmp,rank); this%nuSA(:,this%k1) =tmp(:);
+
+  ! developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%nuSA(:,0) = nuSAin(:)
+  endif
+  if (rank.eq.px-1) then
+    this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
+  endif
+
 end subroutine set_bc_SA
 
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &

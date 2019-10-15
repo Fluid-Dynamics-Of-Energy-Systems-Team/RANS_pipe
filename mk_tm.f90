@@ -101,9 +101,47 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                        alpha1,modification,rank,centerBC,periodic)
 end
 
-subroutine set_bc_MK(this,periodic,rank,px)
+subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
   class(MK_TurbModel) :: this
-  integer, intent(IN) :: periodic, rank, px
+  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+  real(8),dimension(1:this%imax),        intent(IN) :: walldist
+  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  real(8),dimension(0:this%k1) :: BCvalue
+  real(8),dimension(0:this%i1) :: tmp
+
+  this%k(this%i1,:) = -this%k(this%imax,:)
+  BCvalue(:) = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
+  this%eps(this%i1,:) = 2.0*BCvalue(:) - this%eps(this%imax,:)
+
+  ! channel
+  if (centerBC.eq.-1) then
+    this%k(0,:)  = -this%k(1,:)
+    BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
+    this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
+  endif
+
+  ! pipe/BL
+  if (centerBC.eq.1) then
+    this%k  (0,:) = this%k  (1,:)
+    this%eps(0,:) = this%eps(1,:)
+  endif
+
+  call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
+  call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
+  call shiftb(this%k,  tmp,rank); this%k  (:,this%k1)=tmp(:);
+  call shiftb(this%eps,tmp,rank); this%eps(:,this%k1)=tmp(:);
+  
+  ! developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%k  (:,0) = kin(:)
+    this%eps(:,0) = ein(:)
+  endif
+  if (rank.eq.px-1) then
+    this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
+    this%eps(:,this%k1)= 2.0*this%eps(:,this%kmax)-this%eps(:,this%kmax-1)
+  endif
+
 end subroutine set_bc_MK
 
 subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)

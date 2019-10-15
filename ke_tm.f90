@@ -53,10 +53,12 @@ module ke_tm
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
       real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_KE
-    subroutine set_bc_KE(this,periodic, rank, px)
+    subroutine set_bc_KE(this,mu,rho,walldist,centerBC,periodic,rank,px)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
-      integer, intent(IN) :: periodic, rank, px
+      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+      real(8),dimension(1:this%imax),        intent(IN) :: walldist
+      integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_KE
   end interface
 

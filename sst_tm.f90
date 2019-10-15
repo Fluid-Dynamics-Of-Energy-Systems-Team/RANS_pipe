@@ -136,27 +136,56 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                         alpha2,modification,rank,centerBC,periodic)
 end subroutine advance_SST
 
-subroutine set_bc_SST(this,periodic, rank, px)
-  implicit none
+subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
   class(SST_TurbModel) :: this
-  integer, intent(IN)  :: periodic, rank, px
-  real(8), dimension(0:this%i1) :: ekmtb,ekmtf
+  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+  real(8),dimension(1:this%imax),        intent(IN) :: walldist
+  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  real(8),dimension(0:this%k1) :: BCvalue
+  real(8),dimension(0:this%i1) :: tmp
 
-  this%bF1(this%i1,:) =  this%bF1(this%imax,:)
-  this%bF1(0,:)  =  this%bF1(1,:)
 
-  call shiftf(this%bF1,ekmtf,rank)
-  call shiftb(this%bF1,ekmtb,rank)
-
-  this%bF1(:,0)  = ekmtf(:)
-  this%bF1(:,this%k1) = ekmtb(:)
-
-  if ((periodic.ne.1).and.(rank.eq.0)) then
-    this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION
+  this%k  (this%i1,:)= -this%k(this%imax,:)
+  BCvalue(:)         = 60.0/0.075*mu(this%imax,:)/rho(this%imax,:)/walldist(this%imax)**2
+  this%om (this%i1,:)= 2.0*BCvalue(:) - this%om(this%imax,:)
+  this%bF1(this%i1,:)=  this%bF1(this%imax,:)
+  
+  !channel
+  if (centerBC.eq.-1) then
+    this%k(0,:) = -this%k(1,:)
+    BCvalue(:)  = 60.0/0.075*mu(1,:)/rho(1,:)/walldist(1)**2
+    this%om(0,:)= 2.0*BCvalue(:) - this%om(1,:)
   endif
-  if ((periodic.ne.1).and.(rank.eq.px-1)) then
-    this%bF1(:,this%k1) = 2.*this%bF1(:,this%kmax)-this%bF1(:,this%kmax-1)
+
+  !pipe/BL
+  if (centerBC.eq.1) then
+    this%k (0,:) = this%k  (1,:)
+    this%om(0,:) = this%om (1,:)
+    this%bF1(0,:)= this%bF1(1,:)
   endif
+
+  call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
+  call shiftf(this%om ,tmp,rank); this%om (:,0)      =tmp(:);
+  call shiftf(this%bF1,tmp,rank); this%bF1(:,0)      =tmp(:)
+  call shiftb(this%k  ,tmp,rank); this%k  (:,this%k1)=tmp(:);
+  call shiftb(this%om ,tmp,rank); this%om (:,this%k1)=tmp(:);
+  call shiftb(this%bF1,tmp,rank); this%bF1(:,this%k1)=tmp(:)
+
+  !developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%k  (:,0) = kin(:)
+    this%om (:,0) = omin(:)
+    !this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION (THIS WAS THE ORIGINAL)
+    this%bF1(:,0) = bF1in(:) 
+  endif
+
+  if (rank.eq.px-1) then
+    this%k  (:,this%k1) = 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
+    this%om (:,this%k1) = 2.0*this%om (:,this%kmax)-this%om (:,this%kmax-1)
+    this%bF1(:,this%k1) = 2.0*this%bF1(:,this%kmax)-this%bF1(:,this%kmax-1)
+  endif
+  
 end subroutine set_bc_SST
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
