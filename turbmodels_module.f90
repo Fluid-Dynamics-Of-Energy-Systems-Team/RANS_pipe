@@ -40,7 +40,7 @@ module mod_turbmodels
     end subroutine set_mut_tm
     subroutine advance_turb_tm(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                              Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
+                             alpha1,alpha2,alpha3,                   &
                              modification,rank,centerBC,periodic,    &
                              residual1, residual2, residual3)
       import :: TurbModel
@@ -50,7 +50,7 @@ module mod_turbmodels
       real(8), dimension(1:this%i1),          intent(IN) :: walldist
       real(8),                                intent(IN) :: dz,alpha1,alpha2,alpha3
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
-      real(8),                                intent(OUT):: residual1,residual2, residual3
+      real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_turb_tm
     subroutine set_bc_tm(this,mu,rho,walldist,centerBC,periodic,rank,px)
       import :: TurbModel
@@ -74,29 +74,6 @@ module mod_turbmodels
   !   procedure :: set_mut  => set_mut_laminar
   !   procedure :: advance_turb => advance_laminar
   ! end type Laminar_TurbModel
-
-
-
-
-
-
-
-
-
-
-  ! !************************!
-  ! !         VF class       !
-  ! !************************!
-
-  ! type, extends(KE_TurbModel), public :: V2F_TurbModel
-  ! contains
-  !   procedure :: init => init_V2F
-  !   procedure :: init_mem => init_mem_V2F
-  !   procedure :: set_mut => set_mut_V2F
-  !   procedure :: advance => advance_V2F
-  ! end type V2F_TurbModel
-
-
 
 
 

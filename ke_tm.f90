@@ -39,11 +39,11 @@ module ke_tm
       real(8),                                intent(IN) :: dz
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: mut
     end subroutine set_mut_KE
-    subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                             Ru,Rp,dru,drp,dz,walldist,              &
-                             alpha1,alpha2,alpha3,                    &
-                             modification,rank,centerBC,periodic,    &
-                             residual1, residual2, residual3)
+    subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                             Ru,Rp,dru,drp,dz,walldist,          &
+                             alpha1,alpha2,alpha3,               &
+                             modification,rank,centerBC,periodic,&
+                             residual1,residual2,residual3)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -74,7 +74,19 @@ subroutine init_KE(this)
   class(KE_TurbModel) :: this
   call this%init_mem_KE()
   call this%set_constants()
+  call this%set_sol_KE()
 end subroutine init_KE
+
+subroutine init_sol_KE(this)
+  class(KE_TurbModel) :: this
+  integer :: i
+  do i=1,this%imax
+    this%k  =0.1
+    this%eps=1.0
+    this%v2 =2./3.*this%k(i,:)
+  enddo
+end subroutine init_sol_KE
+
 
 subroutine init_mem_KE(this)
   class(KE_TurbModel) :: this
