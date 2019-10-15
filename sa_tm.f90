@@ -2,6 +2,8 @@ module sa_tm
   use mod_turbmodels
   implicit none
 
+!****************************************************************************************
+
   !************************!
   !         SA class       !
   !************************!
@@ -9,10 +11,10 @@ module sa_tm
   
   contains
     procedure :: init => init_SA
-    procedure :: init_mem_SA
     procedure :: set_mut => set_mut_SA
     procedure :: advance_turb => advance_SA
     procedure :: set_bc => set_bc_SA
+    procedure :: init_mem_SA
     procedure :: solve_SA
     procedure :: production_SA
     procedure :: diffusion_SA
@@ -20,6 +22,8 @@ module sa_tm
   end type SA_TurbModel
 
 contains
+
+!****************************************************************************************
 
   !************************!
   !      SA routines      !

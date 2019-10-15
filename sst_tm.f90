@@ -2,6 +2,8 @@ module sst_tm
   use mod_turbmodels
   implicit none
 
+!****************************************************************************************
+
   !************************!
   !         SST class      !
   !************************!
@@ -14,7 +16,6 @@ module sst_tm
     procedure :: set_mut => set_mut_SST
     procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
-
     procedure :: solve_k_SST
     procedure :: solve_om_sst
     procedure :: diffusion_k_SST
@@ -25,6 +26,7 @@ module sst_tm
   end type SST_TurbModel
 
 contains
+!****************************************************************************************
 
    !************************!
    !      SST routines      !
@@ -40,9 +42,9 @@ subroutine init_mem_SST(this)
     implicit none
     class(SST_TurbModel) :: this
     allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),   &
-             this%bF1(0:this%i1,0:this%k1),this%bF2(0:this%i1,0:this%k1), &
+             this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax), &
              this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1), &
-             this%Tt (0:this%i1,0:this%k1),this%cdKOM(0:this%i1,0:this%k1))
+             this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax))
 end subroutine init_mem_SST
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,dRp,dru,dz,mut)
@@ -163,7 +165,7 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
   real(8), dimension(0:this%i1),           intent(IN) :: Rp,Ru,dRu,dRp
   real(8),                                 intent(IN) :: dz
-  real(8), dimension(0:this%i1,0:this%k1) :: div, Tt
+  real(8), dimension(0:this%i1,0:this%k1) :: div
   integer                       :: im,ip,km,kp,ib,ie,kb,ke,i,k 
   real(8)                       :: sigma_om1,sigma_om2, &
                                    beta_1,beta_2,betaStar, &
@@ -214,6 +216,8 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
               ) &
              +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz))
       this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
+
+
     enddo
   enddo
 end subroutine production_SST

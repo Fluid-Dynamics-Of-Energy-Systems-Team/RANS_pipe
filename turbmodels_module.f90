@@ -8,7 +8,7 @@ module mod_turbmodels
   
   type, abstract, public :: TurbModel
   integer i1,k1,imax,kmax
-  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2
+  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2
 
   contains
     procedure(init), deferred :: init
@@ -72,46 +72,9 @@ module mod_turbmodels
 
 
 
-  ! !************************!
-  ! !         KE class       !
-  ! !************************!
-  
-  ! type,abstract,extends(TurbModel), public :: KE_TurbModel
-  ! contains
-  !   procedure(init), deferred :: init_KE
-  !   procedure(set_mut), deferred :: set_mut_KE
-  !   procedure(advance), deferred :: advance_KE
-  ! end type KE_TurbModel
 
-  ! interface
-  !   subroutine init_KE(this)
-  !     import :: KE_TurbModel
-  !     class(KE_TurbModel) :: this
-  !   end subroutine init_KE
-  !   subroutine set_mut_KE(this, u, w, rho, mu, mut)
-  !     import :: KE_TurbModel
-  !     class(KE_TurbModel) :: this
-  !     real(8), dimension(:,:), intent(IN) :: u, w, rho, mu
-  !     real(8), dimension(:,:), intent(OUT) :: mut
-  !   end subroutine set_mut_KE
-  !   subroutine advance_KE( this, u, w, rho, mu )
-  !     import :: KE_TurbModel
-  !     class(KE_TurbModel) :: this
-  !     real(8), dimension(:,:), intent(IN) :: u, w, rho, ekm
-  !   end subroutine advance_KE
-  ! end interface
 
-  ! !************************!
-  ! !         MK class       !
-  ! !************************!
 
-  ! type, extends(KE_TurbModel), public :: MK_TurbModel
-  ! contains
-  !   procedure :: init => init_MK
-  !   procedure :: init_mem => init_mem_MK
-  !   procedure :: set_mut => set_mut_MK
-  !   procedure :: advance => advance_MK
-  ! end type MK_TurbModel
 
   ! !************************!
   ! !         VF class       !
