@@ -13,7 +13,6 @@ module ke_tm
   real(8), dimension(:),   allocatable :: epsin, kin, v2in
   real(8) :: sigmak,sigmae,ce1,ce2,cmu
   contains
-
     procedure(set_mut_KE), deferred :: set_mut
     procedure(advance_KE), deferred :: advance_turb
     procedure(set_bc_KE), deferred :: set_bc
@@ -26,7 +25,7 @@ module ke_tm
     procedure :: solve_k_KE
     procedure :: init_mem_KE
     procedure :: init_sol => init_sol_KE
-
+    procedure :: get_profile => get_profile_KE
   end type KE_TurbModel
 
   interface
@@ -67,7 +66,8 @@ module ke_tm
   end interface
 
 contains
-
+!****************************************************************************************
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !****************************************************************************************
 
   !************************!
@@ -164,6 +164,21 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   enddo
 end
 
+subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+  class(KE_TurbModel) :: this
+  integer,                               intent(IN) :: k
+  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1
+  real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
+
+  p_nuSA(:)=0
+  p_k(:)   =this%k(:,k)
+  p_eps(:) =this%eps(:,k)
+  p_v2(:)  =this%v2(:,k)
+  p_om(:)  =0
+  p_Pk(:)  =this%Pk(:,k)
+  p_bF1(:) =0
+  p_bF2(:) =0
+end subroutine get_profile_KE
 
 subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &

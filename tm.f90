@@ -18,6 +18,7 @@ module mod_turbmodels
     procedure(advance_turb_tm), deferred :: advance_turb
     procedure(set_bc_tm), deferred :: set_bc
     procedure(init_sol_tm), deferred :: init_sol
+    procedure(get_profile_tm), deferred :: get_profile
     procedure :: set_mut_bc
 
   end type TurbModel
@@ -61,6 +62,14 @@ module mod_turbmodels
       real(8),dimension(1:this%imax),        intent(IN) :: walldist
       integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_tm
+    subroutine get_profile_tm(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+      import :: TurbModel
+      class(TurbModel) :: this
+      integer,                               intent(IN) :: k
+      real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+      real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
+    
+    end subroutine get_profile_tm
   end interface
 
 !****************************************************************************************
@@ -77,6 +86,7 @@ module mod_turbmodels
     procedure :: advance_turb => advance_laminar
     procedure :: init_sol => init_sol_laminar
     procedure :: set_bc => set_bc_laminar
+    procedure :: get_profile => get_profile_laminar
   end type Laminar_TurbModel
 
 
@@ -135,6 +145,21 @@ end subroutine init_sol_laminar
 subroutine init_mem_laminar(this)
     class(Laminar_TurbModel) :: this
 end subroutine init_mem_laminar
+
+subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+    class(Laminar_TurbModel) :: this
+    integer,                               intent(IN) :: k
+    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+    real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
+    p_nuSA(:)=0;
+    p_k(:)   =0
+    p_eps(:) =0
+    p_v2(:)  =0
+    p_om(:)  =0
+    p_Pk(:)  =0
+    p_bF1(:) =0
+    p_bF2(:) =0
+end subroutine get_profile_laminar
 
 subroutine set_mut_laminar(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       class(Laminar_TurbModel) :: this

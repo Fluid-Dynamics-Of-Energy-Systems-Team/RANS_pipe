@@ -14,6 +14,7 @@ module sa_tm
     procedure :: init_sol => init_sol_SA
     procedure :: set_mut => set_mut_SA
     procedure :: advance_turb => advance_SA
+    procedure :: get_profile => get_profile_SA
     procedure :: set_bc => set_bc_SA
     procedure :: init_mem_SA
     procedure :: solve_SA
@@ -143,6 +144,21 @@ subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
 end subroutine set_bc_SA
 
+subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+  class(SA_TurbModel) :: this
+  integer,                               intent(IN) :: k
+  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+  real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
+  p_nuSA(:)=this%nuSA(:,k)
+  p_k(:)   =0
+  p_eps(:) =0
+  p_v2(:)  =0
+  p_om(:)  =0
+  p_Pk(:)  =this%Pk(:,k)
+  p_bF1(:) =0
+  p_bF2(:) =0
+  
+end subroutine get_profile_SA
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
                     alphak,modification,centerBC,periodic,rank)

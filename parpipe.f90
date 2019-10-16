@@ -142,11 +142,11 @@ do istep=istart,nstep
   if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-  if  (mod(istep,1000).eq.0)                      call outputprofile(rank)
-  if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
-  if  (mod(istep,1000).eq.0)                      call output2d_upd(rank,istep)
-  if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
-  if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
+  if  (mod(istep,1000).eq.0)                      call inflow_output_upd(rank)
+  ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
+  ! if  (mod(istep,1000).eq.0)                      call output2d_upd(rank,istep)
+  ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
+  ! if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
 
   noutput = 100
   if (rank.eq.0) then
@@ -163,8 +163,8 @@ enddo
 call cpu_time(finish)
 
 print '("Time = ",f6.3," seconds.")',finish-start
-call outputprofile(rank)
-call output2d_upd(rank,istep)
+call inflow_output_upd(rank)
+! call output2d_upd(rank,istep)
 call mpi_finalize(ierr)
 stop
 end

@@ -1,7 +1,7 @@
 module sst_tm
   use mod_turbmodels
   implicit none
-
+  
 !****************************************************************************************
 
   !************************!
@@ -18,7 +18,7 @@ module sst_tm
     procedure :: set_mut => set_mut_SST
     procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
-
+    procedure :: get_profile => get_profile_SST
     procedure :: solve_k_SST
     procedure :: solve_om_sst
     procedure :: diffusion_k_SST
@@ -29,6 +29,8 @@ module sst_tm
   end type SST_TurbModel
 
 contains
+!****************************************************************************************
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !****************************************************************************************
 
    !************************!
@@ -203,6 +205,22 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
   endif
   
 end subroutine set_bc_SST
+
+subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+    class(SST_TurbModel) :: this
+    integer,                               intent(IN) :: k
+    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+    real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
+
+    p_nuSA(:)=0
+    p_k(:)=this%k(:,k)
+    p_eps(:)=0
+    p_om(:)=this%om(:,k)
+    p_Pk(:)=this%Pk(:,k)
+    p_bF1 = this%bF1(:,k)
+    p_bF2 = this%bF2(:,k)
+
+end subroutine get_profile_SST
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   implicit none
