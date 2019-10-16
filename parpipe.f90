@@ -65,13 +65,6 @@ call mkgrid(rank)
 
 
 
-
-
-
-
-
-
-
 dtmax = 1.e-3
 dt = dtmax
 istart = 1
@@ -94,89 +87,72 @@ if (periodic.ne.1) then
   close(29)
 endif
 
-
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-tempWall = 1.0
-if (isothermalBC.eq.1) then
-  tempWall = min(max(tempWall, (temp(imax,kmax)+temp(i1,kmax))*0.5),Tw)
-  call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
-  if (Qwall.ne.0) then
-    if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
-    stop
-  else
-    if (rank.eq.0) print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
-  endif
-  if (rank.eq.0) print '("temperature at the wall = ",f6.3," .")',tempWall
-endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! tempWall = 1.0
+! if (isothermalBC.eq.1) then
+!   tempWall = min(max(tempWall, (temp(imax,kmax)+temp(i1,kmax))*0.5),Tw)
+!   call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
+!   if (Qwall.ne.0) then
+!     if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
+!     stop
+!   else
+!     if (rank.eq.0) print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
+!   endif
+!   if (rank.eq.0) print '("temperature at the wall = ",f6.3," .")',tempWall
+! endif
+! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
 
-!bound scalars
 call bound_c(rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-!properties
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
-!turbulent viscosity
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-!bound momentum
 call bound_v(Unew,Wnew,Win,rank)
-      
 call chkdt(rank,istep)
 call cpu_time(start)
 
 do istep=istart,nstep
 
-  ! turbulent viscosity
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-  !advance scalars
   call advanceC(resC,Unew,Wnew,Rnew,fv2,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
                      Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
                      modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  !bound scalars
   call bound_c(rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-  !properties
   call state_upd(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
-  !momentum
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
-  call SOLVEpois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
+  call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
-  !bound momentum
   call bound_v(Unew,Wnew,Win,rank)
 
-  !ramping isothermal wall temperature
-  if (mod(istep,2000).eq.0) then
-    if (isothermalBC.eq.1 .AND.  tempWall.lt.Tw) then
-      tempWall = min(tempWall+dTwall, Tw)
-      call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
-      if (rank.eq.0) print '("temperature at the wall ramped! = ",f6.3," .")',tempWall
-    endif
-  endif
+  ! !ramping isothermal wall temperature
+  ! if (mod(istep,2000).eq.0) then
+  !   if (isothermalBC.eq.1 .AND.  tempWall.lt.Tw) then
+  !     tempWall = min(tempWall+dTwall, Tw)
+  !     call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
+  !     if (rank.eq.0) print '("temperature at the wall ramped! = ",f6.3," .")',tempWall
+  !   endif
+  ! endif
 
-  if (mod(istep,10) .eq. 0)      call chkdiv(rank)
-
+  if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-
-  if (mod(istep,1000 ).eq.0)     call outputProfile(rank)
-  if (mod(istep,1000 ).eq.0)     call outputX_h_upd(rank,istep)
-  if (mod(istep,1000 ).eq.0)     call output2d_upd(rank,istep)
-  if (mod(istep,5000 ).eq.0)     call saveRestart(rank)
-
-  if ((periodic.eq.1) .and. mod(istep,5000).eq.0) then
-    call Inflow_output(rank,istep)
-  endif
+  if  (mod(istep,1000).eq.0)                      call outputprofile(rank)
+  if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
+  if  (mod(istep,1000).eq.0)                      call output2d_upd(rank,istep)
+  if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
+  if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
 
   noutput = 100
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
-      write(6,'(A7,9A14)') 'istep','dt','bulk', &
-        'stress','cResid','kineResid','epsResid','v2Resid','omResid','nuSAresid'
+      write(6,'(A7,9A14)') 'istep'    ,'dt'      ,'bulk'   ,'stress' ,'cResid', &
+                           'kineResid','epsResid','v2Resid','omResid','nuSAresid'
     endif
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
       write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA
@@ -185,8 +161,9 @@ do istep=istart,nstep
          
 enddo
 call cpu_time(finish)
+
 print '("Time = ",f6.3," seconds.")',finish-start
-call outputProfile(rank)
+call outputprofile(rank)
 call output2d_upd(rank,istep)
 call mpi_finalize(ierr)
 stop
@@ -519,7 +496,7 @@ end
 
 !<*************************************************************************************
 !!
-!!  bound_h equation
+!!  bound_c equation
 !!
 !!*************************************************************************************
 subroutine bound_c(rank)
@@ -530,10 +507,7 @@ subroutine bound_c(rank)
   include 'mpif.h'
   integer rank
   
-
-  ! Radial boundary condition for enthalpy c
-
-  ! isothermal
+  ! ISOTHERMAL
   if (isothermalBC.eq.1) then
     !pipe/bl
     if (centerBC.eq.1) then
@@ -549,22 +523,20 @@ subroutine bound_c(rank)
       if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
       stop
     endif
-  ! isoflux   
+  ! ISOFLUX
   else
     do k=0,k1
       if (rank.eq.0.and.k.lt.K_start_heat) then
         cnew(i1,:) = cnew(imax,:)
       else
+        !pipe/bl
         call funcNewtonSolve_upd(cnew(i1,k), cnew(imax,k))
         !channel
         if (centerBC.eq.-1) call funcNewtonSolve_upd(cnew(0,k), cnew(1,k))
       endif
-
     enddo
-
   endif
   
-
 end
 
 !>*************************************************************************************
@@ -582,7 +554,6 @@ subroutine bound_v(Ubound,Wbound,Win,rank)
   real*8 Ubound(0:i1,0:k1), Wbound(0:i1,0:k1)
   real*8 tmp(0:i1),Win(0:i1)
 
-  ! Radial Boundary condition
   ! channel
   if (centerBC.eq.-1) then 
     do k=0,k1

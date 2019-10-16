@@ -27,17 +27,12 @@ module mod_common
   !0:i1,0:k1 
   real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk
   real(8) enth_wall
-
   real(8) dt,dtmax
   
   !***************EQUATION VARIABLES
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew
-  !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Uold,Wold,rold
-  !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: dUdt,dVdt,dWdt
-  !imax,kmax
+  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew, &
+                                          Uold,Wold,rold,dUdt,dVdt,dWdt
   real(8), dimension(:,:), allocatable :: p
                
   !***************NUMERICAL CLUTTER                         
@@ -77,9 +72,8 @@ contains
     !EQUATION VARIABLES
     allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1),            &
              Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),nuSAnew(0:i1,0:k1),          &
-             omNew(0:i1,0:k1),rnew(0:i1,0:k1))
-    allocate(rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1))
-    allocate(dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
+             omNew(0:i1,0:k1),rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),             &
+             dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
     allocate(p(imax,kmax))
 
     !NUMERICAL STUFF
