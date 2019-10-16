@@ -8,7 +8,6 @@ Results_dTdx_dHdx/*
 forced_real_VF
 *.eps
 *.d
-*.csv
 /0/profX*
 /0/plot.lay
 /0/tecp*

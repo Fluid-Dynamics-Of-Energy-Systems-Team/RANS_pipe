@@ -12,7 +12,7 @@ module mod_param
   integer   Mt,Nx,Mx,Nt 
 
   parameter (CFL               = 100.0)   ! CFL number / time step
-  parameter (systemSolve       = 3)       ! 1: pipe, 2: channel 3: boundary layer !**dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe**!!
+  parameter (systemSolve       = 2)       ! 1: pipe, 2: channel 3: boundary layer !**dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe**!!
   parameter (imax              = 96)      ! radial direction
   parameter (i1                = imax + 1)
   parameter (K_start_heat      = 3)       ! for isoflux:    after home many cells in x will you start heating
