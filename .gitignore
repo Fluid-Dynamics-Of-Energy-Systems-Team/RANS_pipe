@@ -1,5 +1,5 @@
 # Created by https://www.gitignore.io/api/c++,eclipse
-
+notebooks/.*
 ### C++ ###
 # Prerequisites
 Gambit/*
