@@ -1,5 +1,7 @@
 # RANS_pipe
-RANS code to solve turbulent pipe flow with a fluid undergoing heat transfer at supercritical pressure
+RANS code to solve turbulent flows over a flat plate or through a pipe or channel with variable properties
+
+## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
      style="float: center; margin-right: 10px;" />
      
