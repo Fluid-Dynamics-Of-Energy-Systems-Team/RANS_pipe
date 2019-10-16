@@ -10,7 +10,7 @@ module mod_param
   real*8    ctheta,Fr_1
   real*8    alphac,alphak,alphae,alphav2
   integer   Mt,Nx,Mx,Nt 
-  parameter (CFL               = 100.0)      ! CFL number / time step
+  parameter (CFL               = 10.0)      ! CFL number / time step
      
   parameter (systemSolve       = 3)        ! 1: pipe, 2: channel 3: boundary layer ! dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe
 

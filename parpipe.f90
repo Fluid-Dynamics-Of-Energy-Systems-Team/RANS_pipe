@@ -9,6 +9,7 @@ use mod_param
 use mod_common
 use mod_eosmodels
 use mod_common2
+use mod_turbmodels
 use sa_tm
 use sst_tm
 use mk_tm
@@ -50,7 +51,7 @@ if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'ph2_
 call eos_model%init()
 
 !initialize turbomodel
-! if (EOSmode.eq.0) allocate(turb_model,source= Laminar_TurbModel(i1, k1, imax, kmax))
+if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax))
 if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax))
@@ -112,7 +113,7 @@ call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
 !turbulent viscosity
-call calc_mu_eff(Unew,Wnew,ekme,ekmt,ekmtin,rank)
+call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
 !bound momentum
 call bound_v(Unew,Wnew,Win,rank)
       
@@ -122,7 +123,7 @@ call cpu_time(start)
 do istep=istart,nstep
 
   ! turbulent viscosity
-  call calc_mu_eff(Unew,Wnew,ekme,ekmt,ekmtin,rank)  
+  call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
   !advance scalars
   call advanceC(resC,Unew,Wnew,Rnew,fv2,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
@@ -189,45 +190,32 @@ end
 !>******************************************************************************************
 !!      turbprop routine to estimate the eddy viscosity
 !!******************************************************************************************
-subroutine calc_mu_eff(U,W,ekmetmp,ekmttmp,ekmtin,rank)
+subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
 
   use mod_param
-  use mod_common
   use mod_common2  
   implicit none
-      
-  integer  rank
-  real*8   tauwLoc, tauw(0:k1)
-  real*8, dimension(0:i1,0:k1) :: U,W,ekmetmp,ekmttmp
-  real*8, dimension(0:i1) :: tmp,ekmtin
+  real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
+  real(8), dimension(0:i1),      intent(IN) :: mutin
+  real(8), dimension(1:imax),    intent(IN) :: walldist
+  real(8), dimension(0:i1),      intent(IN) :: Rp,dru,drp
+  integer,                       intent(IN) :: rank
+  real(8),                       intent(IN) :: dz
+  real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
+  real(8), dimension(0:k1) :: tauw(0:k1)
 
   if (turbmod.eq.0) then
     do k=1,kmax
-      tauw(k) = ekmi(imax,k)*0.5*(W(imax,k-1)+W(imax,k))/wallDist(imax)
+      tauw(k) = mui(imax,k)*0.5*(wtmp(imax,k-1)+wtmp(imax,k))/walldist(imax)
       do i=1,imax
-        ekmttmp(i,k) = 0.
+        mut(i,k) = 0.
       enddo
     enddo
   else 
-    call turb_model%set_mut(U,W,rNew,ekm,ekmi,walldist,Rp,dRp,dru,dz,ekmttmp)
+    call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   endif
-
-  sigmat = 0.9
-
-  ekmttmp(i1,:) = -ekmttmp(imax,:)
-  ekmttmp(0,:)  =  ekmttmp(1,:)
-
-  call shiftf(ekmttmp,tmp,rank); ekmttmp(:,0)  = tmp(:);
-  call shiftb(ekmttmp,tmp,rank); ekmttmp(:,k1) = tmp(:);
-
-  if ((periodic.ne.1).and.(rank.eq.0)) then
-    ekmttmp(:,0) = ekmtin(:)
-  endif
-  if ((periodic.ne.1).and.(rank.eq.px-1)) then
-    ekmttmp(:,k1) = 2.*ekmt(:,kmax)-ekmt(:,kmax-1)
-  endif
-
-  ekmetmp = ekm + ekmttmp
+  call turb_model%set_mut_bc(mut,periodic,px,rank)
+  mue = mu + mut
 end 
 
 
@@ -268,6 +256,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,ftmp,rank)
   real*8 t1,t2,t3,t4,bc,scl
   real*8 term, adiffm, adiffp
   real*8 resC
+  sigmat = 0.9
 
 
   ! ------------------------------------------------------------------------
