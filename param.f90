@@ -33,7 +33,7 @@ module mod_param
   parameter (Fr_1              =  0.0)
   parameter (EOSmode           = 0)       ! 0..IG, 1..SCCO2/sPH2
   parameter (select_init       = 0)       ! 0..std initialization, 1..read inflow , 2..read restart file
-  parameter (turbmod           = 1)       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
+  parameter (turbmod           = 3)       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
   parameter (ctheta            = 0.3)
   parameter (modVF             = 0)       ! 0..Original 1..LienKalitzin Time/Length scale VF model
   parameter (alphac            = 0.1)
