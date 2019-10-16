@@ -35,7 +35,7 @@ subroutine init_SA(this)
     implicit none
     class(SA_TurbModel) :: this
     call this%init_mem_SA()
-    call this%init_sol_SA()
+    call this%init_sol()
 end subroutine init_SA
 
 subroutine init_sol_SA(this)
@@ -43,9 +43,9 @@ subroutine init_sol_SA(this)
     class(SA_TurbModel) :: this
     integer i
     do i=1,this%imax
-      this%nuSA(this%i,:) = 0.001
+      this%nuSA(i,:) = 0.001
     enddo
-end subroutine init_mem_SA
+end subroutine init_sol_SA
 
 
 subroutine init_mem_SA(this)

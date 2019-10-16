@@ -12,6 +12,7 @@ module ke_tm
   real(8), dimension(:,:), allocatable :: Gk,Tt,f1,f2,fmu,Lh,fv2
   real(8) :: sigmak,sigmae,ce1,ce2,cmu
   contains
+
     procedure(set_mut_KE), deferred :: set_mut
     procedure(advance_KE), deferred :: advance_turb
     procedure(set_bc_KE), deferred :: set_bc
@@ -23,6 +24,8 @@ module ke_tm
     procedure :: solve_eps_KE
     procedure :: solve_k_KE
     procedure :: init_mem_KE
+    procedure :: init_sol => init_sol_KE
+
   end type KE_TurbModel
 
   interface
@@ -74,16 +77,16 @@ subroutine init_KE(this)
   class(KE_TurbModel) :: this
   call this%init_mem_KE()
   call this%set_constants()
-  call this%set_sol_KE()
+  call this%init_sol()
 end subroutine init_KE
 
 subroutine init_sol_KE(this)
   class(KE_TurbModel) :: this
   integer :: i
   do i=1,this%imax
-    this%k  =0.1
-    this%eps=1.0
-    this%v2 =2./3.*this%k(i,:)
+    this%k(i,:)  =0.1
+    this%eps(i,:)=1.0
+    this%v2(i,:) =2./3.*this%k(i,:)
   enddo
 end subroutine init_sol_KE
 

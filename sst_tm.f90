@@ -38,12 +38,11 @@ subroutine init_SST(this)
     implicit none
     class(SST_TurbModel) :: this
     call this%init_mem_SST()
-    call this%init_sol_SST()
+    call this%init_sol()
 end subroutine init_SST
 
 subroutine init_sol_SST(this)
-  import :: TurbModel
-  class(TurbModel) :: this
+  class(SST_TurbModel) :: this
   integer i
   do i=1,this%imax
     this%k(i,:)  = 0.1
