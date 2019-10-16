@@ -43,7 +43,6 @@ Nt=imax
 call initMem()
 
 
-
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
@@ -58,16 +57,24 @@ if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax))
 call turb_model%init()
 
-
-
-
+!numerical stuff
 call init_transpose
+!grid
 call mkgrid(rank)
+
+
+
+
+
+
+
+
+
+
 
 dtmax = 1.e-3
 dt = dtmax
 istart = 1
-
 if (select_init < 2) then
   call fkdat(rank)
   istart=1
@@ -76,8 +83,7 @@ else
   istart = istart+1
 endif
 
-! periodic = 1, turb flow generator
-! periodic = 2, heated pipe
+!periodic=1, turb flow generator,periodic=2, heated pipe
 if (periodic.ne.1) then
   if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
   if (turbmod.eq.1) open(29,file = 'SA/Inflow',form='unformatted')
@@ -188,10 +194,9 @@ end
 
 
 !>******************************************************************************************
-!!      turbprop routine to estimate the eddy viscosity
+!!      routine to estimate the effective viscosity
 !!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
-
   use mod_param
   use mod_common2  
   implicit none
@@ -203,17 +208,7 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
-
-  if (turbmod.eq.0) then
-    do k=1,kmax
-      tauw(k) = mui(imax,k)*0.5*(wtmp(imax,k-1)+wtmp(imax,k))/walldist(imax)
-      do i=1,imax
-        mut(i,k) = 0.
-      enddo
-    enddo
-  else 
-    call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
-  endif
+  call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
   mue = mu + mut
 end 
