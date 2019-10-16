@@ -1,6 +1,7 @@
 module mod_turbmodels
   implicit none
 
+!****************************************************************************************
 
   !************************!
   !     Abstract class     !
@@ -30,7 +31,6 @@ module mod_turbmodels
       import :: TurbModel
       class(TurbModel) :: this
     end subroutine init_sol_tm
-    
     subroutine set_mut_tm(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       import :: TurbModel
       class(TurbModel) :: this
@@ -61,9 +61,9 @@ module mod_turbmodels
       real(8),dimension(1:this%imax),        intent(IN) :: walldist
       integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_tm
-
   end interface
 
+!****************************************************************************************
 
   !************************!
   !      Laminar class     !
@@ -82,6 +82,13 @@ module mod_turbmodels
 
 
 contains
+!****************************************************************************************
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!****************************************************************************************
+
+   !************************!
+   !    Abstract routines    !
+   !************************!
 
 subroutine set_mut_bc(this,mut,periodic, px, rank)
   class(TurbModel) :: this
@@ -103,9 +110,12 @@ subroutine set_mut_bc(this,mut,periodic, px, rank)
   endif
 
 end subroutine
-!   !************************!
-!   !    Laminar routines    !
-!   !************************!
+
+!****************************************************************************************
+
+   !************************!
+   !    Laminar routines    !
+   !************************!
 
 subroutine init_laminar(this)
     class(Laminar_TurbModel) :: this
