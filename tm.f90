@@ -112,9 +112,9 @@ subroutine set_mut_bc(this,mut,periodic, px, rank)
   call shiftf(mut,tmp,rank); mut(:,0)  = tmp(:);
   call shiftb(mut,tmp,rank); mut(:,this%k1) = tmp(:);
 
-  ! if ((periodic.ne.1).and.(rank.eq.0)) then
-  !   mut(:,0) = mutin(:)
-  ! endif
+  if ((periodic.ne.1).and.(rank.eq.0)) then
+    mut(:,0) = this%mutin(:)
+  endif
   if ((periodic.ne.1).and.(rank.eq.px-1)) then
     mut(:,this%k1) = 2.*mut(:,this%kmax)-mut(:,this%kmax-1)
   endif

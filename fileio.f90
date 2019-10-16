@@ -49,7 +49,7 @@ subroutine inflow_output_upd(rank,istap) !tubstress,rank,istap)
     close(29)
 
     fname = 'Inflow_'//trim(turb_model%name)//'.csv'
-  if (systemsolve.eq.1) open(29,file='pipe/'//fname)
+    if (systemsolve.eq.1) open(29,file='pipe/'//fname)
     if (systemsolve.eq.2) open(29,file='channel/'//fname)
     if (systemsolve.eq.3) open(29,file='bl/'//fname)
   
