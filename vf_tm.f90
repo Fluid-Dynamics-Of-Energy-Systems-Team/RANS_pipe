@@ -166,7 +166,7 @@ subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
   if (rank.eq.0) then
     this%k  (:,0) = this%kin(:)
     this%eps(:,0) = this%epsin(:)
-    this%v2  (:0) = this%v2in(:)
+    this%v2  (:,0) = this%v2in(:)
   endif
   if (rank.eq.px-1) then
     this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
@@ -190,7 +190,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8), dimension(this%imax)           :: a,b,c,rhs
   integer :: i,k
       
-  dnew  = 0.0; dimpl = 0.0;
+  resV2=0.0; dnew=0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%v2,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
   call this%rhs_v2_VF(dnew,dimpl)    
