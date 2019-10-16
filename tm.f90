@@ -9,6 +9,7 @@ module mod_turbmodels
   type, abstract, public :: TurbModel
   integer i1,k1,imax,kmax
   real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2
+  real(8), dimension(:),   allocatable :: mutin, Pkin
 
   contains
     procedure(init_tm), deferred :: init

@@ -8,7 +8,7 @@ module sa_tm
   !         SA class       !
   !************************!
   type, extends(TurbModel), public :: SA_TurbModel
-  
+  real(8), dimension(:), allocatable :: nuSAin
   contains
     procedure :: init => init_SA
     procedure :: init_sol => init_sol_SA
@@ -51,8 +51,8 @@ end subroutine init_sol_SA
 subroutine init_mem_SA(this)
     implicit none
     class(SA_TurbModel) :: this
-    allocate(this%nuSA(0:this%i1, 0:this%k1))
-    allocate(this%Pk(0:this%i1, 0:this%k1))
+    allocate(this%nuSA(0:this%i1,0:this%k1),this%Pk(0:this%i1,0:this%k1))
+    allocate(this%mutin(0:this%i1),this%nuSAin(0:this%i1),this%Pkin(0:this%i1))
 end subroutine init_mem_SA
 
 subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
@@ -134,12 +134,12 @@ subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
   ! developing
   if (periodic.eq.1) return
-  ! if (rank.eq.0) then
-  !   this%nuSA(:,0) = nuSAin(:)
-  ! endif
-  ! if (rank.eq.px-1) then
-  !   this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
-  ! endif
+  if (rank.eq.0) then
+    this%nuSA(:,0) = this%nuSAin(:)
+  endif
+  if (rank.eq.px-1) then
+    this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
+  endif
 
 end subroutine set_bc_SA
 

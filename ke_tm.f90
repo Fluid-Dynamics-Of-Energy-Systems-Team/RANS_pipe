@@ -10,6 +10,7 @@ module ke_tm
   
   type,abstract,extends(TurbModel), public :: KE_TurbModel
   real(8), dimension(:,:), allocatable :: Gk,Tt,f1,f2,fmu,Lh,fv2
+  real(8), dimension(:),   allocatable :: epsin, kin, v2in
   real(8) :: sigmak,sigmae,ce1,ce2,cmu
   contains
 
@@ -99,6 +100,8 @@ subroutine init_mem_KE(this)
            this%fmu(0:this%i1,0:this%k1),this%Tt(0:this%i1,0:this%k1), &
            this%v2 (0:this%i1,0:this%k1),                              &
            this%fv2(this%imax,this%kmax),this%Lh(this%imax,this%kmax))
+  allocate(this%mutin(0:this%i1),&!this%Pkin (0:this%i1),
+           this%epsin(0:this%i1),this%kin(0:this%i1),this%v2in(0:this%i1))
 end subroutine init_mem_KE
 
 subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &

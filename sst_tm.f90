@@ -9,7 +9,8 @@ module sst_tm
   !************************!
 
   type, extends(TurbModel), public :: SST_TurbModel
-  real(8), dimension(:,:), allocatable :: Gk, cdKOM, Tt
+  real(8), dimension(:,:), allocatable :: Gk,cdKOM,Tt
+  real(8), dimension(:),   allocatable :: omin,kin,bF1in
   contains
     procedure :: init => init_SST
     procedure :: init_sol => init_sol_SST
@@ -57,6 +58,9 @@ subroutine init_mem_SST(this)
              this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax), &
              this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1), &
              this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax))
+    allocate(this%mutin(0:this%i1),this%Pkin (0:this%i1), &
+             this%bF1in(0:this%i1),                       &
+             this%omin (0:this%i1),this%kin  (0:this%i1))
 end subroutine init_mem_SST
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
@@ -185,12 +189,12 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
   !developing
   if (periodic.eq.1) return
-  ! if (rank.eq.0) then
-  !   this%k  (:,0) = kin(:)
-  !   this%om (:,0) = omin(:)
-  !   !this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION (THIS WAS THE ORIGINAL)
-  !   this%bF1(:,0) = bF1in(:) 
-  ! endif
+  if (rank.eq.0) then
+    this%k  (:,0) = this%kin(:)
+    this%om (:,0) = this%omin(:)
+    !this%bF1(:,0) = this%bF1(:,1)  ! ATTENTION (THIS WAS THE ORIGINAL)
+    this%bF1(:,0) = this%bF1in(:) 
+  endif
 
   if (rank.eq.px-1) then
     this%k  (:,this%k1) = 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
