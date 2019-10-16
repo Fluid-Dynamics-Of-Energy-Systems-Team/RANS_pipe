@@ -18,8 +18,8 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF 
-SRCS    =   turbmodels_module.f90 ke_tm.f90 mk_tm.f90 vf_tm.f90 sa_tm.f90 sst_tm.f90 math_module.f90 common_module.f90  eosmodels.f90  numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
-OBJS    =   turbmodels_module.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o math_module.o eosmodels.o  common_module.o param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
+SRCS    = tm.f90 ke_tm.f90 mk_tm.f90 vf_tm.f90 sa_tm.f90 sst_tm.f90 math_module.f90 common_module.f90  eosmodels.f90  numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
+OBJS    = tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o math_module.o eosmodels.o  common_module.o param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 
@@ -38,8 +38,8 @@ sst_tm.o: sst_tm.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c sst_tm.f90
 sa_tm.o: sa_tm.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c sa_tm.f90
-turbmodels_module.o: turbmodels_module.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c turbmodels_module.f90
+tm.o: tm.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm.f90
 eosmodels.o: eosmodels.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c eosmodels.f90
 common_module.o: common_module.f90 makefile
