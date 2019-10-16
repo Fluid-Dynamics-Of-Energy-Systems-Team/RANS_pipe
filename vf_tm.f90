@@ -115,8 +115,10 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                        alpha3,modification,rank,centerBC,periodic)
 end
 
-type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax)
-  integer, intent(in) :: i1,k1,imax,kmax
+type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax,name)
+  integer,          intent(IN) :: i1,k1,imax,kmax
+  character(len=2), intent(IN) :: name
+  init_VF_TurbModel%name=name
   init_VF_TurbModel%i1 = i1
   init_VF_TurbModel%k1 = k1
   init_VF_TurbModel%imax = imax

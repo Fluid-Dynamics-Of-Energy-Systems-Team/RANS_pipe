@@ -35,6 +35,7 @@ contains
 subroutine init_SA(this)
     implicit none
     class(SA_TurbModel) :: this
+    this%name='SA'
     call this%init_mem_SA()
     call this%init_sol()
 end subroutine init_SA

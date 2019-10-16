@@ -9,9 +9,9 @@ module mod_turbmodels
   
   type, abstract, public :: TurbModel
   integer i1,k1,imax,kmax
+  character(len=3)                     :: name
   real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2
   real(8), dimension(:),   allocatable :: mutin, Pkin
-
   contains
     procedure(init_tm), deferred :: init
     procedure(set_mut_tm), deferred :: set_mut
@@ -129,6 +129,7 @@ end subroutine
 
 subroutine init_laminar(this)
     class(Laminar_TurbModel) :: this
+    this%name='lam'
 end subroutine init_laminar
 
 subroutine set_bc_laminar(this,mu,rho,walldist,centerBC,periodic,rank,px)

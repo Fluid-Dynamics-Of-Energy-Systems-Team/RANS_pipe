@@ -40,6 +40,7 @@ contains
 subroutine init_SST(this)
     implicit none
     class(SST_TurbModel) :: this
+    this%name='SST'
     call this%init_mem_SST()
     call this%init_sol()
 end subroutine init_SST
