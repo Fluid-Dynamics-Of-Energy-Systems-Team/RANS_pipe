@@ -20,14 +20,18 @@ include 'mpif.h'
 integer      rank,ierr,istart,noutput
 real*8       bulk,stress,stime,time1
 real*8       resC,resK,resE,resV2,resOm,resSA   
-real(8), dimension(0:i1) :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
+real(8), dimension(:), allocatable :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
 real*8       tempWall
 real :: start, finish
+
+call read_parameters()
 
 call cpu_time(time1)
 call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
 call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
+
+
 
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
@@ -36,10 +40,13 @@ kmax    = 32/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
+i1 = imax+1
 Mt=imax/px
 Nx=kmax*px
 Mx=kmax
 Nt=imax
+
+allocate(Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1))
 call initMem()
 
 

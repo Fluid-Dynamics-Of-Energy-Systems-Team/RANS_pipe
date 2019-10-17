@@ -37,9 +37,9 @@ subroutine inflow_output_upd(rank,istap)
   integer           :: Re_int
 
   Re_int = int(eos_model%Re)
-  write(Re_str,'(I5.5)') ReInt
+  write(Re_str,'(I5.5)') Re_int
 
-  fname = 'Inflow_'//trim(turb_model%name)//'_'//ReString
+  fname = 'Inflow_'//trim(turb_model%name)//'_'//Re_str
   if (rank.eq.px/2) then
     k = kmax/2
     call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)

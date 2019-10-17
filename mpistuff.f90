@@ -7,7 +7,7 @@ subroutine shiftb(UT,UP,rank)
   integer itag,status(MPI_STATUS_SIZE),l
   real*8 ut(0:i1,0:k1)
   real*8 up(0:i1),UTMP(0:i1)
-  parameter (ileng=i1+1 )
+  ileng=i1+1
   itag = 11
   do i=0,i1
     utmp(i) =UT(i,1)
@@ -29,7 +29,7 @@ subroutine shiftf(UT,UP,rank)
   integer rank,ileng,rankb,rankf,ierr
   integer  itag,status(MPI_STATUS_SIZE),l
   real*8 UT(0:i1,0:k1),UP(0:i1),UTMP(0:i1)
-  parameter (ileng= i1+1)
+  ileng= i1+1
   itag = 10
   do i=0,i1
     UTMP(i) =UT(i,kmax)
@@ -52,7 +52,7 @@ subroutine pshiftb_w(UT,UP,rank)
   integer itag,status(MPI_STATUS_SIZE),l
   real*8 ut(imax,kmax)
   real*8 up(imax),UTMP(imax)
-  parameter (ileng= imax )
+  ileng= imax 
   itag = 11
   do i=1,imax
     utmp(i) =UT(i,1)
