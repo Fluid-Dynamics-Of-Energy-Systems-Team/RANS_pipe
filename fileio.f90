@@ -23,7 +23,7 @@ subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
 
 end
 
-subroutine inflow_output_upd(rank,istap) !tubstress,rank,istap)
+subroutine inflow_output_upd(rank,istap)
   use mod_param
   use mod_common
   use mod_common2
@@ -37,35 +37,33 @@ subroutine inflow_output_upd(rank,istap) !tubstress,rank,istap)
   character*5 inflow
 
   if (rank.eq.px/2) then
+    k = kmax/2
+    call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+    
+    !binary
     fname = 'Inflow_'//trim(turb_model%name)//'.dat'
     if (systemsolve.eq.1) open(29,file='pipe/'//fname, form='unformatted')
     if (systemsolve.eq.2) open(29,file='channel/'//fname, form='unformatted')
     if (systemsolve.eq.3) open(29,file='bl/'//fname, form='unformatted')
-  
-    k = kmax/2
-    call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
-
     write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk
     close(29)
 
+    !fixed width file
     fname = 'Inflow_'//trim(turb_model%name)//'.csv'
     if (systemsolve.eq.1) open(29,file='pipe/'//fname)
     if (systemsolve.eq.2) open(29,file='channel/'//fname)
     if (systemsolve.eq.3) open(29,file='bl/'//fname)
-  
     write(29, '(15a20)' ) 'y','u','w','h','T', &
                           'rho','k','eps','v2','om', &
                           'nuSA','mut','Pk','bF1','bF2'
     do i=1,imax
-      write(29, '(E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12,E20.12)') &
+      write(29, '(15E20.12)') &
                 y_cv(i),unew(i,k),Wnew(i,k),cnew(i,k),temp(i,k), &
                 rnew(i,k),p_k(i),p_eps(i),p_v2(i),p_om(i), &
                 p_nuSA(i),ekmt(i,k),p_Pk(i),p_bf1(i),p_bf2(i)
     enddo
     close(29)
   endif
-
-  
 
 end
 
