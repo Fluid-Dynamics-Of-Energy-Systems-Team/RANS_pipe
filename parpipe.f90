@@ -52,8 +52,8 @@ call initMem()
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
-if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'co2h_table.dat'))
-if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'ph2_table.dat'))
+if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
+if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
 call eos_model%init()
 
 !initialize turbomodel

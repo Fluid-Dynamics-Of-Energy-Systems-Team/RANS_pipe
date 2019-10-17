@@ -57,7 +57,7 @@ module mod_eosmodels
   
   type, extends(EOSModel), public :: Table_EOSModel
   integer ntab
-  character(len=20) filename
+  character(len=40) filename
   real(8), dimension(:), private, allocatable :: tempTab,rhoTab,betaTab, muTab,lamTab, &
                                                  cpTab,enthTab,lamocpTab, temp2Tab,    &
                                                  rho2Tab,beta2Tab, mu2Tab,lam2Tab,     &
