@@ -16,8 +16,8 @@ subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
     if (turbmod.eq.2) open(29,file='MK/Inflow',form='unformatted')
     if (turbmod.eq.3) open(29,file='VF/Inflow',form='unformatted')
     if (turbmod.eq.4) open(29,file='OM/Inflow',form='unformatted')
-    write(29) Wnew(:,kmax/2),knew(:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2),omNEW(:,kmax/2), &
-      nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk(:,kmax/2)
+    write(29) Wnew   (:,kmax/2),knew   (:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2), &
+              omNEW  (:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk   (:,kmax/2)
     close(29)
   endif
 
@@ -30,37 +30,37 @@ subroutine inflow_output_upd(rank,istap)
   implicit none
   
   integer rank,istap
-  real(8), dimension(0:i1) :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+  real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
   real(8), dimension(1:imax) :: p_bF2
   character(len=50) :: fname
-  
-  character*5 inflow
+  character(len=5)  :: Re_str
+  integer           :: Re_int
 
+  Re_int = int(eos_model%Re)
+  write(Re_str,'(I5.5)') ReInt
+
+  fname = 'Inflow_'//trim(turb_model%name)//'_'//ReString
   if (rank.eq.px/2) then
     k = kmax/2
     call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
-    
     !binary
-    fname = 'Inflow_'//trim(turb_model%name)//'.dat'
-    if (systemsolve.eq.1) open(29,file='pipe/'//fname, form='unformatted')
-    if (systemsolve.eq.2) open(29,file='channel/'//fname, form='unformatted')
-    if (systemsolve.eq.3) open(29,file='bl/'//fname, form='unformatted')
+    if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.dat',form='unformatted')
+    if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.dat',form='unformatted')
+    if (systemsolve.eq.3) open(29,file='bl/'     //trim(fname)//'.dat',form='unformatted')
     write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk
     close(29)
-
     !fixed width file
-    fname = 'Inflow_'//trim(turb_model%name)//'.csv'
-    if (systemsolve.eq.1) open(29,file='pipe/'//fname)
-    if (systemsolve.eq.2) open(29,file='channel/'//fname)
-    if (systemsolve.eq.3) open(29,file='bl/'//fname)
-    write(29, '(15a20)' ) 'y','u','w','h','T', &
-                          'rho','k','eps','v2','om', &
-                          'nuSA','mut','Pk','bF1','bF2'
+    if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')
+    if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.csv')
+    if (systemsolve.eq.3) open(29,file='bl/'     //trim(fname)//'.csv')
+    write(29, '(15a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
+                          'rho' ,'k'  ,'eps','v2' ,'om', &
+                          'nuSA','mut','Pk' ,'bF1','bF2'
     do i=1,imax
-      write(29, '(15E20.12)') &
-                y_cv(i),unew(i,k),Wnew(i,k),cnew(i,k),temp(i,k), &
-                rnew(i,k),p_k(i),p_eps(i),p_v2(i),p_om(i), &
-                p_nuSA(i),ekmt(i,k),p_Pk(i),p_bf1(i),p_bf2(i)
+      write(29, '(15E20.12)')                                           &
+                y_cv  (i)  ,unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k), &
+                rnew  (i,k),p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),   &
+                p_nuSA(i),  ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i)
     enddo
     close(29)
   endif
