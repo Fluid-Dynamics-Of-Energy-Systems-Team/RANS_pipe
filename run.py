@@ -2,18 +2,16 @@ import f90nml
 from subprocess import Popen, PIPE
 
 
-inputfile = 'new_sample.nml'
+template_f = 'input.nml'
+input_f    = 'input_new.nml'
 
 
-patch_nml=dict()
-patch_nml['input']=dict()
+adjust=dict()
+adjust['input']=dict()
+adjust['input']['eosmode']=0
 
 
-patch_nml['input']['eosmode']=0
-
-
-
-f90nml.patch('input.nml', patch_nml, inputfile)
-with Popen(['mpirun', '-np', '4', './forced_real_VF',inputfile ], stdout=PIPE, bufsize=1 ) as p:
+f90nml.patch(template_f, adjust, input_f)
+with Popen(['mpirun', '-np', '4', './forced_real_VF',input_f ], stdout=PIPE, bufsize=1 ) as p:
     for line in p.stdout:
         print(line.decode().strip())
