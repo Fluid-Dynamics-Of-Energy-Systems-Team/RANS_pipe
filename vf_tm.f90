@@ -57,13 +57,14 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
     do i=1,this%imax
       im=i-1
       ip=i+1
+      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
       StR= (2.*(((w(i,k)-w(i,km))/dz)**2. + &
         ((u(i,k)-u(im,k))/dru(i))**2. + &
         ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
         (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
         +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
       
-      this%Tt(i,k)   = max(this%k(i,k)/this%eps(i,k),6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)
+      this%Tt(i,k) = max(this%k(i,k)/this%eps(i,k),6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)
 
       ! Srsq(i,k) = Str*rNew(i,k)*0.5
       ! if (modVF.eq.1) then

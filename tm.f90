@@ -10,7 +10,7 @@ module mod_turbmodels
   type, abstract, public :: TurbModel
   integer i1,k1,imax,kmax
   character(len=3)                     :: name
-  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2
+  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2,yp
   real(8), dimension(:),   allocatable :: mutin, Pkin
   contains
     procedure(init_tm), deferred :: init
@@ -62,11 +62,11 @@ module mod_turbmodels
       real(8),dimension(1:this%imax),        intent(IN) :: walldist
       integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_tm
-    subroutine get_profile_tm(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+    subroutine get_profile_tm(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
       import :: TurbModel
       class(TurbModel) :: this
       integer,                               intent(IN) :: k
-      real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+      real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
       real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
     
     end subroutine get_profile_tm
@@ -130,6 +130,7 @@ end subroutine
 subroutine init_laminar(this)
     class(Laminar_TurbModel) :: this
     this%name='lam'
+    call this%init_mem()
 end subroutine init_laminar
 
 subroutine set_bc_laminar(this,mu,rho,walldist,centerBC,periodic,rank,px)
@@ -145,12 +146,13 @@ end subroutine init_sol_laminar
 
 subroutine init_mem_laminar(this)
     class(Laminar_TurbModel) :: this
+    allocate(this%yp(0:this%k1,0:this%i1))
 end subroutine init_mem_laminar
 
-subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
     class(Laminar_TurbModel) :: this
     integer,                               intent(IN) :: k
-    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
     real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
     p_nuSA(:)=0;
     p_k(:)   =0
@@ -160,6 +162,7 @@ subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,
     p_Pk(:)  =0
     p_bF1(:) =0
     p_bF2(:) =0
+    yp(:) = this%yp(:,k)
 end subroutine get_profile_laminar
 
 subroutine set_mut_laminar(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
@@ -169,7 +172,16 @@ subroutine set_mut_laminar(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       real(8), dimension(0:this%i1),          intent(IN) :: Rp,dRp,dru
       real(8),                                intent(IN) :: dz
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: mut
-      mut = 0
+      real(8), dimension(0:this%k1) :: tauw
+      integer :: i,k,km
+      do k=1,this%kmax
+        km=k-1
+        tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,k)+w(this%imax,k))/walldist(this%imax)
+        do i=1,this%imax
+          this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
+          mut(i,k) = 0
+        enddo
+      enddo
 end subroutine set_mut_laminar
 
 subroutine advance_laminar(this,u,w,rho,mu,mui,muk,mut,beta,temp,&

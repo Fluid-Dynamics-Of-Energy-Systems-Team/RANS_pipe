@@ -57,10 +57,11 @@ end subroutine init_sol_SST
 subroutine init_mem_SST(this)
     implicit none
     class(SST_TurbModel) :: this
-    allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),   &
-             this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax), &
-             this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1), &
-             this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax))
+    allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),    &
+             this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax),  &
+             this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1),  &
+             this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax),&
+             this%yp (0:this%i1,0:this%k1))
     allocate(this%mutin(0:this%i1),this%Pkin (0:this%i1), &
              this%bF1in(0:this%i1),                       &
              this%omin (0:this%i1),this%kin  (0:this%i1))
@@ -74,7 +75,6 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8), dimension(0:this%i1),           intent(IN) :: Rp,dRp, dru
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
-  real(8), dimension(0:this%i1,0:this%k1) :: yp
   real(8), dimension(this%k1) :: tauw
   integer  im,ip,km,kp,i,k
   real(8)  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
@@ -91,7 +91,7 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
     do i=1,this%imax
       im=i-1
       ip=i+1
-      yp(i,k)     = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
+      this%yp(i,k)     = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
       wallD     = walldist(i)
       ! Vorticity rate
       StR = ( & 
@@ -207,10 +207,10 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
   
 end subroutine set_bc_SST
 
-subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
     class(SST_TurbModel) :: this
     integer,                               intent(IN) :: k
-    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+    real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
     real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
 
     p_nuSA(:)=0
@@ -220,6 +220,7 @@ subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
     p_Pk(:)=this%Pk(:,k)
     p_bF1 = this%bF1(:,k)
     p_bF2 = this%bF2(:,k)
+    yp(:) = this%yp(:,k)
 
 end subroutine get_profile_SST
 

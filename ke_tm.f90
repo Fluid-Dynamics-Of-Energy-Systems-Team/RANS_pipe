@@ -98,7 +98,7 @@ subroutine init_mem_KE(this)
            this%Gk (0:this%i1,0:this%k1),this%Pk(0:this%i1,0:this%k1), &
            this%f1 (0:this%i1,0:this%k1),this%f2(0:this%i1,0:this%k1), &
            this%fmu(0:this%i1,0:this%k1),this%Tt(0:this%i1,0:this%k1), &
-           this%v2 (0:this%i1,0:this%k1),                              &
+           this%v2 (0:this%i1,0:this%k1),this%yp(0:this%i1,0:this%k1), &
            this%fv2(this%imax,this%kmax),this%Lh(this%imax,this%kmax))
   allocate(this%mutin(0:this%i1),&!this%Pkin (0:this%i1),
            this%epsin(0:this%i1),this%kin(0:this%i1),this%v2in(0:this%i1))
@@ -164,10 +164,10 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   enddo
 end
 
-subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   class(KE_TurbModel) :: this
   integer,                               intent(IN) :: k
-  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1
+  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1,yp
   real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
 
   p_nuSA(:)=0
@@ -178,6 +178,7 @@ subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
   p_Pk(:)  =this%Pk(:,k)
   p_bF1(:) =0
   p_bF2(:) =0
+  yp(:) = this%yp(:,k)
 end subroutine get_profile_KE
 
 subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &

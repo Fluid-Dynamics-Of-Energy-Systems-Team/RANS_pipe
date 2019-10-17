@@ -53,7 +53,7 @@ end subroutine init_sol_SA
 subroutine init_mem_SA(this)
     implicit none
     class(SA_TurbModel) :: this
-    allocate(this%nuSA(0:this%i1,0:this%k1),this%Pk(0:this%i1,0:this%k1))
+    allocate(this%nuSA(0:this%i1,0:this%k1),this%Pk(0:this%i1,0:this%k1),this%yp(0:this%i1,0:this%k1))
     allocate(this%mutin(0:this%i1),this%nuSAin(0:this%i1),this%Pkin(0:this%i1))
 end subroutine init_mem_SA
 
@@ -65,7 +65,7 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8), dimension(0:this%i1),           intent(IN) :: Rp,dRp, dru
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
-  real(8), dimension(0:this%i1,0:this%k1) :: yp
+  ! real(8), dimension(0:this%i1,0:this%k1) :: yp
   real(8), dimension(this%k1) :: tauw
   integer  im,ip,km,kp,i,k
   real*8   cv1_3,chi,fv1SA
@@ -78,7 +78,7 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
     do i=1,this%imax
       im=i-1
       ip=i+1
-      yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5 !ystar
+      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5 !ystar
       chi     = this%nuSA(i,k)/(mu(i,k)/rho(i,k))
       fv1SA   = (chi**3.0)/(chi**3.0 + cv1_3);
       mut(i,k)= min(100.0,max(0.0,rho(i,k)*this%nuSA(i,k)*fv1SA))
@@ -145,10 +145,10 @@ subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
 
 end subroutine set_bc_SA
 
-subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
+subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   class(SA_TurbModel) :: this
   integer,                               intent(IN) :: k
-  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1
+  real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
   real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
   p_nuSA(:)=this%nuSA(:,k)
   p_k(:)   =0
@@ -158,7 +158,7 @@ subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,k)
   p_Pk(:)  =this%Pk(:,k)
   p_bF1(:) =0
   p_bF2(:) =0
-  
+  yp(:)  = this%yp(:,k)
 end subroutine get_profile_SA
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
