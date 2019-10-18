@@ -14,6 +14,7 @@ module vf_tm
     procedure :: set_mut => set_mut_VF
     procedure :: advance_turb => advance_VF
     procedure :: set_bc => set_bc_VF
+    procedure :: init_w_inflow => init_w_inflow_VF
     procedure :: production_VF
     procedure :: rhs_v2_VF
     procedure :: solve_v2_VF
@@ -37,6 +38,12 @@ subroutine set_constants_VF(this)
   this%ce1    = 1.4
   this%ce2    = 1.9
 end subroutine
+
+subroutine init_w_inflow_VF(this,Re)
+  class(VF_TurbModel) :: this
+  real(8), intent(IN) :: Re
+end subroutine init_w_inflow_VF
+
 
 subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none

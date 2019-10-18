@@ -513,6 +513,7 @@ subroutine bound_c(rank)
   implicit none
   include 'mpif.h'
   integer rank
+  real*8 tmpShift(0:i1)
   
   ! ISOTHERMAL
   if (isothermalBC.eq.1) then
@@ -543,7 +544,20 @@ subroutine bound_c(rank)
       endif
     enddo
   endif
-  
+
+  if (centerBC.eq.1) then     
+    !center line BC
+    cnew(0,:)    = cnew(1,:)
+  endif
+  call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
+  call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    cnew(:,0) = 0.0
+  endif
+  if (rank.eq.px-1) then
+    cnew(:,k1) = 2.0*   cnew(:,kmax) -    cnew(:,kmax-1)
+  endif  
 end
 
 !>*************************************************************************************

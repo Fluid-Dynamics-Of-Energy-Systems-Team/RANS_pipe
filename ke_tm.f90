@@ -17,6 +17,7 @@ module ke_tm
     procedure(advance_KE), deferred :: advance_turb
     procedure(set_bc_KE), deferred :: set_bc
     procedure(set_constants), deferred :: set_constants
+    procedure(init_w_inflow_KE), deferred :: init_w_inflow
     procedure :: init => init_KE
     procedure :: rhs_k_KE
     procedure :: rhs_eps_KE
@@ -63,6 +64,11 @@ module ke_tm
       real(8),dimension(1:this%imax),        intent(IN) :: walldist
       integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_KE
+    subroutine init_w_inflow_KE(this,Re)
+      import :: KE_TurbModel
+      class(KE_TurbModel) :: this
+      real(8), intent(IN) :: Re
+    end subroutine init_w_inflow_KE
   end interface
 
 contains

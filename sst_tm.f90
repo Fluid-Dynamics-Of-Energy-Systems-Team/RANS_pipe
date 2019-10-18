@@ -19,6 +19,7 @@ module sst_tm
     procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
     procedure :: get_profile => get_profile_SST
+    procedure :: init_w_inflow => init_w_inflow_SST
     procedure :: solve_k_SST
     procedure :: solve_om_sst
     procedure :: diffusion_k_SST
@@ -66,6 +67,20 @@ subroutine init_mem_SST(this)
              this%bF1in(0:this%i1),                       &
              this%omin (0:this%i1),this%kin  (0:this%i1))
 end subroutine init_mem_SST
+
+subroutine init_w_inflow_SST(this,Re)
+    implicit none
+    class(SST_TurbModel) :: this
+    real(8), intent(IN) :: Re
+    ! if (systemsolve.eq.1) open(29,file =  'pipe/'//Inflow_//this%name,form='unformatted')
+    ! open(29,file = '/Inflow',form='unformatted')
+    ! read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+    ! close(29)
+    ! this%nuSAin(:) = 
+    ! enddo
+end subroutine init_w_inflow_SST
+
+
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none

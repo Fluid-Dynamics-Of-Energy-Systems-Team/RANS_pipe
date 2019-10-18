@@ -7,6 +7,7 @@ module sa_tm
   !************************!
   !         SA class       !
   !************************!
+
   type, extends(TurbModel), public :: SA_TurbModel
   real(8), dimension(:), allocatable :: nuSAin
   contains
@@ -16,6 +17,7 @@ module sa_tm
     procedure :: advance_turb => advance_SA
     procedure :: get_profile => get_profile_SA
     procedure :: set_bc => set_bc_SA
+    procedure :: init_w_inflow => init_w_inflow_SA
     procedure :: init_mem_SA
     procedure :: solve_SA
     procedure :: production_SA
@@ -34,7 +36,7 @@ contains
 
 subroutine init_SA(this)
     implicit none
-    class(SA_TurbModel) :: this
+    class(SA_TurbModel) :: this  
     this%name='SA'
     call this%init_mem_SA()
     call this%init_sol()
@@ -48,7 +50,17 @@ subroutine init_sol_SA(this)
       this%nuSA(i,:) = 0.001
     enddo
 end subroutine init_sol_SA
-
+subroutine init_w_inflow_SA(this,Re)
+    implicit none
+    class(SA_TurbModel) :: this
+    real(8), intent(IN) :: Re
+    ! if (systemsolve.eq.1) open(29,file =  'pipe/'//Inflow_//this%name,form='unformatted')
+    ! open(29,file = '/Inflow',form='unformatted')
+    ! read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
+    ! close(29)
+    ! this%nuSAin(:) = 
+    ! enddo
+end subroutine init_w_inflow_SA
 
 subroutine init_mem_SA(this)
     implicit none

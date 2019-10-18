@@ -19,6 +19,7 @@ module mod_turbmodels
     procedure(set_bc_tm), deferred :: set_bc
     procedure(init_sol_tm), deferred :: init_sol
     procedure(get_profile_tm), deferred :: get_profile
+    procedure(init_w_inflow_tm), deferred :: init_w_inflow
     procedure :: set_mut_bc
 
   end type TurbModel
@@ -68,8 +69,13 @@ module mod_turbmodels
       integer,                               intent(IN) :: k
       real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
       real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
-    
     end subroutine get_profile_tm
+    subroutine init_w_inflow_tm(this,Re)
+      import :: TurbModel
+      class(TurbModel) :: this
+      real(8), intent(IN) :: Re
+    end subroutine
+
   end interface
 
 !****************************************************************************************
@@ -87,6 +93,7 @@ module mod_turbmodels
     procedure :: init_sol => init_sol_laminar
     procedure :: set_bc => set_bc_laminar
     procedure :: get_profile => get_profile_laminar
+    procedure :: init_w_inflow => init_w_inflow_laminar
   end type Laminar_TurbModel
 
 
@@ -143,6 +150,12 @@ end subroutine set_bc_laminar
 subroutine init_sol_laminar(this)
     class(Laminar_TurbModel) :: this
 end subroutine init_sol_laminar
+
+subroutine init_w_inflow_laminar(this, Re)
+    class(Laminar_TurbModel) :: this
+    real(8), intent(IN) :: Re
+    this%mutin(:)=0
+end subroutine init_w_inflow_laminar
 
 subroutine init_mem_laminar(this)
     class(Laminar_TurbModel) :: this

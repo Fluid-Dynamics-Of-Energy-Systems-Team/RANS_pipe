@@ -14,6 +14,7 @@ module mk_tm
     procedure :: set_mut => set_mut_MK
     procedure :: advance_turb => advance_MK
     procedure :: set_bc => set_bc_MK
+    procedure :: init_w_inflow => init_w_inflow_MK
     procedure :: production_MK
   end type MK_TurbModel
 
@@ -45,6 +46,11 @@ subroutine set_constants_MK(this)
   this%ce1 = 1.4
   this%ce2 = 1.8
 end subroutine set_constants_MK
+
+subroutine init_w_inflow_MK(this,Re)
+  class(MK_TurbModel) :: this
+  real(8), intent(IN) :: Re
+end subroutine init_w_inflow_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   implicit none
