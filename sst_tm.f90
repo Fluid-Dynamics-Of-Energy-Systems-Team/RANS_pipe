@@ -19,6 +19,7 @@ module sst_tm
     procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
     procedure :: get_profile => get_profile_SST
+    procedure :: get_sol => get_sol_SST
     procedure :: init_w_inflow => init_w_inflow_SST
     procedure :: solve_k_SST
     procedure :: solve_om_sst
@@ -68,16 +69,27 @@ subroutine init_mem_SST(this)
              this%omin (0:this%i1),this%kin  (0:this%i1))
 end subroutine init_mem_SST
 
-subroutine init_w_inflow_SST(this,Re)
+subroutine init_w_inflow_SST(this,Re, systemsolve)
     implicit none
     class(SST_TurbModel) :: this
     real(8), intent(IN) :: Re
-    ! if (systemsolve.eq.1) open(29,file =  'pipe/'//Inflow_//this%name,form='unformatted')
-    ! open(29,file = '/Inflow',form='unformatted')
-    ! read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
-    ! close(29)
-    ! this%nuSAin(:) = 
-    ! enddo
+    integer, intent(IN) :: systemsolve
+    real(8), dimension(0:this%i1) :: dummy
+    character(len=5)  :: Re_str
+    integer           :: Re_int,k
+    Re_int = int(Re)
+    write(Re_str,'(I5.5)') Re_int
+    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+
+    read(29) dummy(:),this%kin(:),dummy(:),dummy(:),this%omin(:), &
+         dummy(:),this%mutin(:),dummy(:)
+    close(29)
+    do k=0,this%k1
+      this%om(:,k) = this%omin(:)
+      this%k(:,k) = this%kin(:)
+    enddo
 end subroutine init_w_inflow_SST
 
 
@@ -229,15 +241,29 @@ subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k
     real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
 
     p_nuSA(:)=0
-    p_k(:)=this%k(:,k)
-    p_eps(:)=0
-    p_om(:)=this%om(:,k)
-    p_Pk(:)=this%Pk(:,k)
-    p_bF1 = this%bF1(:,k)
-    p_bF2 = this%bF2(:,k)
-    yp(:) = this%yp(:,k)
+    p_k(:)   =this%k(:,k)
+    p_eps(:) =0
+    p_om(:)  =this%om(:,k)
+    p_Pk(:)  =this%Pk(:,k)
+    p_bF1(:) = this%bF1(:,k)
+    p_bF2(:) = this%bF2(:,k)
+    p_v2(:)  = 0
+    yp(:)    = this%yp(:,k)
 
 end subroutine get_profile_SST
+
+subroutine get_sol_SST(this,nuSA,k,eps,om,v2,yp)
+    class(SST_TurbModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+    nuSA=0
+    k   =this%k    
+    eps =0
+    v2  =0
+    om  =this%om
+    yp  = this%yp
+end subroutine get_sol_SST
+
+
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   implicit none

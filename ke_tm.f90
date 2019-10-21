@@ -27,6 +27,8 @@ module ke_tm
     procedure :: init_mem_KE
     procedure :: init_sol => init_sol_KE
     procedure :: get_profile => get_profile_KE
+    procedure :: get_sol => get_sol_KE
+
   end type KE_TurbModel
 
   interface
@@ -64,10 +66,11 @@ module ke_tm
       real(8),dimension(1:this%imax),        intent(IN) :: walldist
       integer,                               intent(IN) :: centerBC,periodic, rank, px
     end subroutine set_bc_KE
-    subroutine init_w_inflow_KE(this,Re)
+    subroutine init_w_inflow_KE(this,Re,systemsolve)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8), intent(IN) :: Re
+      integer, intent(IN) :: systemsolve
     end subroutine init_w_inflow_KE
   end interface
 
@@ -106,7 +109,7 @@ subroutine init_mem_KE(this)
            this%fmu(0:this%i1,0:this%k1),this%Tt(0:this%i1,0:this%k1), &
            this%v2 (0:this%i1,0:this%k1),this%yp(0:this%i1,0:this%k1), &
            this%fv2(this%imax,this%kmax),this%Lh(this%imax,this%kmax))
-  allocate(this%mutin(0:this%i1),&!this%Pkin (0:this%i1),
+  allocate(this%mutin(0:this%i1),this%Pkin (0:this%i1), &
            this%epsin(0:this%i1),this%kin(0:this%i1),this%v2in(0:this%i1))
 end subroutine init_mem_KE
 
@@ -169,6 +172,16 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
     enddo
   enddo
 end
+subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
+    class(KE_TurbModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+    nuSA=0
+    k   =this%k    
+    eps =this%eps
+    v2  =this%v2
+    om  =0
+    yp  = this%yp
+end subroutine get_sol_KE
 
 subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   class(KE_TurbModel) :: this

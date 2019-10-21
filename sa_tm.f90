@@ -16,6 +16,7 @@ module sa_tm
     procedure :: set_mut => set_mut_SA
     procedure :: advance_turb => advance_SA
     procedure :: get_profile => get_profile_SA
+    procedure :: get_sol => get_sol_SA 
     procedure :: set_bc => set_bc_SA
     procedure :: init_w_inflow => init_w_inflow_SA
     procedure :: init_mem_SA
@@ -23,6 +24,7 @@ module sa_tm
     procedure :: production_SA
     procedure :: diffusion_SA
     procedure :: rhs_SA
+
 
   end type SA_TurbModel
 
@@ -50,16 +52,26 @@ subroutine init_sol_SA(this)
       this%nuSA(i,:) = 0.001
     enddo
 end subroutine init_sol_SA
-subroutine init_w_inflow_SA(this,Re)
+
+subroutine init_w_inflow_SA(this,Re,systemsolve)
     implicit none
     class(SA_TurbModel) :: this
     real(8), intent(IN) :: Re
-    ! if (systemsolve.eq.1) open(29,file =  'pipe/'//Inflow_//this%name,form='unformatted')
-    ! open(29,file = '/Inflow',form='unformatted')
-    ! read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
-    ! close(29)
-    ! this%nuSAin(:) = 
-    ! enddo
+    integer, intent(IN) :: systemsolve
+    real(8), dimension(0:this%i1) :: dummy
+    character(len=5)  :: Re_str
+    integer           :: Re_int,i,k
+    Re_int = int(Re)
+    write(Re_str,'(I5.5)') Re_int
+    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:),this%nuSAin(:),this%mutin(:),this%pkin(:)
+    close(29)
+    do k=0,this%k1
+      this%nuSA(:,k) = this%nuSAin(:)
+      this%pk(:,k) = this%pkin(:)
+    enddo
 end subroutine init_w_inflow_SA
 
 subroutine init_mem_SA(this)
@@ -172,6 +184,19 @@ subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   p_bF2(:) =0
   yp(:)  = this%yp(:,k)
 end subroutine get_profile_SA
+
+subroutine get_sol_SA(this,nuSA,k,eps,om,v2,yp)
+    class(SA_TurbModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+    nuSA=this%nuSA
+    k   =0    
+    eps =0
+    v2  =0
+    om  =0
+    yp  = this%yp
+end subroutine get_sol_SA
+
+
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
                     alphak,modification,centerBC,periodic,rank)

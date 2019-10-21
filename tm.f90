@@ -20,6 +20,7 @@ module mod_turbmodels
     procedure(init_sol_tm), deferred :: init_sol
     procedure(get_profile_tm), deferred :: get_profile
     procedure(init_w_inflow_tm), deferred :: init_w_inflow
+    procedure(get_sol_tm), deferred :: get_sol
     procedure :: set_mut_bc
 
   end type TurbModel
@@ -70,10 +71,16 @@ module mod_turbmodels
       real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
       real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
     end subroutine get_profile_tm
-    subroutine init_w_inflow_tm(this,Re)
+    subroutine get_sol_tm(this,nuSA,k,eps,om,v2,yp)
+      import :: TurbModel
+      class(TurbModel) :: this
+      real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: nuSA,k,eps,om,v2,yp
+    end subroutine get_sol_tm
+    subroutine init_w_inflow_tm(this,Re, systemsolve)
       import :: TurbModel
       class(TurbModel) :: this
       real(8), intent(IN) :: Re
+      integer, intent(IN) :: systemsolve
     end subroutine
 
   end interface
@@ -94,6 +101,7 @@ module mod_turbmodels
     procedure :: set_bc => set_bc_laminar
     procedure :: get_profile => get_profile_laminar
     procedure :: init_w_inflow => init_w_inflow_laminar
+    procedure :: get_sol => get_sol_laminar
   end type Laminar_TurbModel
 
 
@@ -151,10 +159,22 @@ subroutine init_sol_laminar(this)
     class(Laminar_TurbModel) :: this
 end subroutine init_sol_laminar
 
-subroutine init_w_inflow_laminar(this, Re)
+subroutine init_w_inflow_laminar(this, Re, systemsolve)
     class(Laminar_TurbModel) :: this
     real(8), intent(IN) :: Re
-    this%mutin(:)=0
+    integer, intent(IN) :: systemsolve
+    real(8), dimension(0:this%i1) :: dummy
+    character(len=5)  :: Re_str
+    integer           :: Re_int
+    Re_int = int(Re)
+    write(Re_str,'(I5.5)') Re_int
+    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    
+    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
+             dummy(:),this%mutin(:),dummy(:)
+    close(29)
 end subroutine init_w_inflow_laminar
 
 subroutine init_mem_laminar(this)
@@ -167,7 +187,7 @@ subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,
     integer,                               intent(IN) :: k
     real(8),dimension(0:this%i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
     real(8),dimension(1:this%imax),        intent(OUT):: p_bF2
-    p_nuSA(:)=0;
+    p_nuSA(:)=0
     p_k(:)   =0
     p_eps(:) =0
     p_v2(:)  =0
@@ -177,6 +197,18 @@ subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,
     p_bF2(:) =0
     yp(:) = this%yp(:,k)
 end subroutine get_profile_laminar
+
+subroutine get_sol_laminar(this,nuSA,k,eps,om,v2,yp)
+    class(Laminar_TurbModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+    nuSA=0
+    k   =0    
+    eps =0
+    v2  =0
+    om  =0
+    yp  = this%yp
+end subroutine get_sol_laminar
+
 
 subroutine set_mut_laminar(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       class(Laminar_TurbModel) :: this
