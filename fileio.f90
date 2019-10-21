@@ -225,9 +225,116 @@ subroutine outputX_h_upd(rank,istap)
   return
 end
 
+
+
+subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
+                                 k, eps, v2, om,nuSA, i1, k1,rank,px)
+  implicit none 
+  include "mpif.h"
+  character(*),                  intent(IN) :: filename
+  real(8), dimension(0:i1,0:k1), intent(IN) :: x,y,u,w,rho,T,p,mu,mut,yp, &
+                                               k,eps,v2,om,nuSA
+  integer,                       intent(IN) :: i1,k1,rank,px
+  integer nvar,i,j,index,k_max,k_min,size,fh,ierr
+  integer(kind=MPI_OFFSET_KIND) disp 
+  character(len=301), dimension(:), allocatable :: lines, lines2
+  character(len=300) :: test
+  character(len=301) :: line
+  nvar = 15
+  index=1
+
+  !first core write from 0 to k1-1
+  if (rank .eq. 0) then
+    k_min = 0
+    k_max = k1-1
+    allocate(lines(1:(i1+1)*k1+1)) !+1 for header
+    disp = 0
+    size = ((i1+1)*(k1)+1)*(nvar*20+1)
+    write(test,'(15(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA' !write the header
+    write(line, '(A)') test // NEW_LINE("A")
+    lines(index) = line
+    index = index+1
+  !last core write from 1 to k1
+  else if (rank .eq. px-1) then
+    k_min = 1
+    k_max = k1
+    allocate(lines(1:(i1+1)*k1))
+    size =           (i1+1)*(k1)*(nvar*20+1)
+   disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
+  !other core write from 1 to k1-1
+  else
+    k_min = 1
+    k_max = k1-1
+    allocate(lines(1:(i1+1)*(k1-1)))
+    size =           (i1+1)*(k1-1)*(nvar*20+1)
+    disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
+  endif
+  do i = 0,i1
+    do j = k_min,k_max
+      write(test,'(15(E20.12))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
+                                k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j)
+      write(line, '(A)') test // NEW_LINE("A")
+      lines(index) = line
+      index=index+1
+    enddo
+  enddo
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, filename,MPI_MODE_WRONLY + MPI_MODE_CREATE,MPI_INFO_NULL, fh, ierr) 
+  call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
+  call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
+  call MPI_FILE_CLOSE(fh, ierr) 
+end subroutine write_mpiio_formatted
+
 !***************************************************************************************
 !   writes the output file in 2D tecplot style
 !***************************************************************************************
+
+
+subroutine output2d_upd2(rank,istap)
+  use mod_param
+  use mod_common
+  use mod_common2
+  implicit none
+  include 'mpif.h'
+  character*5 cha
+  real*8 pecletx,peclety,pecletz
+  real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
+         massfl,w_c,ndt
+  real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol
+  integer rank,istap,jstart
+  write(cha,'(I5.5)')rank
+
+  twall    = 0.0
+  massflow = 0.0
+  enthflow = 0.0
+  w_c      = 0.0
+
+  do k=1,kmax
+    do i=1,imax
+      massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
+      massflow(k) = massflow(k) + massfl
+      enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
+    enddo
+  enddo
+
+  enth_b=enthflow/massflow
+  do k=1,kmax
+    w_c=(Cnew(i1,k)+Cnew(imax,k))/2.
+    call eos_model%set_w_enth(w_c,      "T", Twall(k))
+    call eos_model%set_w_enth(enth_b(k),"T", Tbulk(k))
+  enddo
+
+  do k=0,k1
+    do i=0,i1
+      xvec(i,k)=(k+rank*kmax)*dz
+      yvec(i,k) = y_cv(i)
+    enddo
+  enddo
+  call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
+  call write_mpiio_formatted("test", xvec, yvec, unew,wnew, rnew,cnew,p,ekm, ekmt,yp_sol,     &
+                                 k_sol, eps_sol, v2_sol, om_sol,nuSA_sol, i1, k1,rank,px)
+
+end
+
 subroutine output2d_upd(rank,istap)
   use mod_param
   use mod_common
