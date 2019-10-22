@@ -5,7 +5,7 @@ notebooks/.*
 Gambit/*
 Results/*
 Results_dTdx_dHdx/*
-forced_real_VF
+run
 *.eps
 *.d
 /0/profX*

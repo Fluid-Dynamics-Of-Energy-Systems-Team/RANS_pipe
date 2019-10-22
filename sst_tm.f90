@@ -331,6 +331,7 @@ end subroutine production_SST
 subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
+  use mod_math
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -473,6 +474,7 @@ end subroutine diffusion_k_sst
 subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
+  use mod_math
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod

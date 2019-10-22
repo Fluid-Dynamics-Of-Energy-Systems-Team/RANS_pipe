@@ -4,7 +4,7 @@
 !!    This code simulates Super Critical Fluid in a
 !!    heated pipe with constant heat flux
 !!    ****************************************************
-
+use mod_math
 use mod_param
 use mod_common
 use mod_eosmodels
@@ -231,6 +231,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_common
   use mod_common2
+  use mod_math
   implicit none
       
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
@@ -391,6 +392,7 @@ end
 subroutine advance(rank)
   use mod_param
   use mod_common
+  use mod_math
   implicit none
       
   integer rank

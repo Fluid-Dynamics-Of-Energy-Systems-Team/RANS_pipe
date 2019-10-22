@@ -110,6 +110,7 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                       alpha1,alpha2,alpha3,                  &
                       modification,rank,centerBC,periodic,   &
                       residual1, residual2, residual3)
+  use mod_math
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -205,6 +206,7 @@ end subroutine set_bc_VF
 subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,dRp,dz, &
                        alphav2,modification,rank,centerBC,periodic)
+  use mod_math
   implicit none
   class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
