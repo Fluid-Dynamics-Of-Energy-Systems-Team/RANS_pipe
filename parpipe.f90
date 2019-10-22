@@ -85,11 +85,11 @@ endif
 
 !periodic=1, turb flow generator,periodic=2, heated pipe
 if (periodic.ne.1) then
-  if (turbmod.eq.0) open(29,file=  'pipe/Inflow_lam_00360.dat',form='unformatted')
-  if (turbmod.eq.1) open(29,file = 'pipe/Inflow_SA_00360.dat',form='unformatted')
-  if (turbmod.eq.2) open(29,file = 'pipe/Inflow_MK_00360.dat',form='unformatted')
-  if (turbmod.eq.3) open(29,file = 'pipe/Inflow_VF_00360.dat',form='unformatted')
-  if (turbmod.eq.4) open(29,file = 'pipe/Inflow_SST_00360.dat',form='unformatted')
+  if (turbmod.eq.0) open(29,file=  'channel/Inflow_lam_00360.dat',form='unformatted')
+  if (turbmod.eq.1) open(29,file = 'channel/Inflow_SA_00360.dat',form='unformatted')
+  if (turbmod.eq.2) open(29,file = 'channel/Inflow_MK_00360.dat',form='unformatted')
+  if (turbmod.eq.3) open(29,file = 'channel/Inflow_VF_00360.dat',form='unformatted')
+  if (turbmod.eq.4) open(29,file = 'channel/Inflow_SST_00360.dat',form='unformatted')
   read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
   close(29)
 endif
@@ -797,11 +797,11 @@ subroutine fkdat(rank)
     if (rank.eq.0)  write(*,*) 'Initializing flow with inflow = ', select_init
 
     do k=0,k1
-      if (turbmod.eq.0) open(29,file=  'pipe/Inflow_lam_00360.dat',form='unformatted')
-      if (turbmod.eq.1) open(29,file = 'pipe/Inflow_SA_00360.dat',form='unformatted')
-      if (turbmod.eq.2) open(29,file = 'pipe/Inflow_MK_00360.dat',form='unformatted')
-      if (turbmod.eq.3) open(29,file = 'pipe/Inflow_VF_00360.dat',form='unformatted')
-      if (turbmod.eq.4) open(29,file = 'pipe/Inflow_SST_00360.dat',form='unformatted')
+      if (turbmod.eq.0) open(29,file=  'channel/Inflow_lam_00360.dat',form='unformatted')
+      if (turbmod.eq.1) open(29,file = 'channel/Inflow_SA_00360.dat',form='unformatted')
+      if (turbmod.eq.2) open(29,file = 'channel/Inflow_MK_00360.dat',form='unformatted')
+      if (turbmod.eq.3) open(29,file = 'channel/Inflow_VF_00360.dat',form='unformatted')
+      if (turbmod.eq.4) open(29,file = 'channel/Inflow_SST_00360.dat',form='unformatted')
       read(29) Wnew(:,k),dummy,dummy,dummy,dummy,dummy,ekmt(:,k),dummy
       close(29)
     enddo
