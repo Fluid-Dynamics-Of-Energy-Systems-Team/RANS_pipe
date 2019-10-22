@@ -31,7 +31,7 @@ module mod_common
   
   !***************EQUATION VARIABLES
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew, &
+  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,cnew,qcrit,&!v2new,h2new,Cnew,knew,enew,,nuSAnew,omNew, &
                                           Uold,Wold,rold,dUdt,dVdt,dWdt
   real(8), dimension(:,:), allocatable :: p
                
@@ -70,9 +70,9 @@ contains
              peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &
              ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1))
     !EQUATION VARIABLES
-    allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1),            &
-             Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),nuSAnew(0:i1,0:k1),          &
-             omNew(0:i1,0:k1),rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),             &
+    allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),&!,v2new(0:i1,0:k1),h2new(0:i1,0:k1),            &
+             Cnew(0:i1,0:k1),&!knew(0:i1,0:k1),enew(0:i1,0:k1),nuSAnew(0:i1,0:k1), omNew(0:i1,0:k1),         &
+             rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),             &
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
     allocate(p(imax,kmax))
 

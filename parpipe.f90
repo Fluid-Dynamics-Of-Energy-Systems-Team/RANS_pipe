@@ -36,7 +36,7 @@ call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
 !domain integers
-kmax    = 32/px
+kmax    = 200/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
@@ -79,20 +79,22 @@ if (select_init < 2) then
   call fkdat(rank)
   istart=1
 else
-  call loadRestart(istart,rank)
+  ! call loadRestart(istart,rank)
   istart = istart+1
 endif
 
 !periodic=1, turb flow generator,periodic=2, heated pipe
 if (periodic.ne.1) then
-  if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
-  if (turbmod.eq.1) open(29,file = 'SA/Inflow',form='unformatted')
-  if (turbmod.eq.2) open(29,file = 'MK/Inflow',form='unformatted')
-  if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
-  if (turbmod.eq.4) open(29,file = 'OM/Inflow',form='unformatted')
+  if (turbmod.eq.0) open(29,file=  'pipe/Inflow_lam_00360.dat',form='unformatted')
+  if (turbmod.eq.1) open(29,file = 'pipe/Inflow_SA_00360.dat',form='unformatted')
+  if (turbmod.eq.2) open(29,file = 'pipe/Inflow_MK_00360.dat',form='unformatted')
+  if (turbmod.eq.3) open(29,file = 'pipe/Inflow_VF_00360.dat',form='unformatted')
+  if (turbmod.eq.4) open(29,file = 'pipe/Inflow_SST_00360.dat',form='unformatted')
   read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
   close(29)
 endif
+
+call turb_model%init_w_inflow(Re, systemsolve)
 
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
@@ -111,7 +113,7 @@ call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 ! endif
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
 
-call bound_c(rank)
+call bound_c(Tw, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
@@ -123,11 +125,11 @@ call cpu_time(start)
 do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-  call advanceC(resC,Unew,Wnew,Rnew,fv2,rank)
+  call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
                      Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
                      modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  call bound_c(rank)
+  call bound_c(Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   call state_upd(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
   call advance(rank)
@@ -151,7 +153,7 @@ do istep=istart,nstep
   call chkdt(rank,istep)
   if  (mod(istep,1000).eq.0)                      call inflow_output_upd(rank)
   ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
-  ! if  (mod(istep,1000).eq.0)                      call output2d_upd(rank,istep)
+  if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
   ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
   ! if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
 
@@ -170,7 +172,7 @@ enddo
 call cpu_time(finish)
 
 print '("Time = ",f6.3," seconds.")',finish-start
-call inflow_output_upd(rank)
+! call inflow_output_upd(rank)
 ! call output2d_upd(rank,istep)
 call mpi_finalize(ierr)
 stop
@@ -216,14 +218,14 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!
 !!************************************************************************************
-subroutine advanceC(resC,Utmp,Wtmp,Rtmp,ftmp,rank)
+subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_common
   use mod_common2
   implicit none
       
   real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
-  real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),ftmp(imax,kmax),sigmakSST(0:i1,0:k1)
+  real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
   real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
   real*8 cb3,Q,hbc
   integer rank,ierr
@@ -506,24 +508,28 @@ end
 !!  bound_c equation
 !!
 !!*************************************************************************************
-subroutine bound_c(rank)
+subroutine bound_c(Twalll, Qwalll, rank)
   use mod_param
   use mod_common
   use mod_common2
   implicit none
   include 'mpif.h'
-  integer rank
+  real(8), intent(IN) :: Twalll, Qwalll
+  integer, intent(IN) :: rank
+
   real*8 tmpShift(0:i1)
+  real(8)             :: enth_walll  
   
   ! ISOTHERMAL
   if (isothermalBC.eq.1) then
+    call eos_model%set_w_temp(Twalll, "H", enth_walll)
     !pipe/bl
     if (centerBC.eq.1) then
       do k=0,k1
         if ((k+rank*kmax)*dz.lt.x_start_heat) then
           cnew(i1,k) = cnew(imax,k)
         else
-          cnew(i1,k) = 2.0*enth_wall - cnew(imax,k)
+          cnew(i1,k) = 2.0*enth_walll - cnew(imax,k)
         endif
       enddo
     !channel (TODO!!!)
@@ -770,7 +776,7 @@ subroutine fkdat(rank)
 
   integer rank
   real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
-
+  real(8), dimension(0:i1) :: dummy
   character*5 inflow
 
   delta=0.5
@@ -791,12 +797,12 @@ subroutine fkdat(rank)
     if (rank.eq.0)  write(*,*) 'Initializing flow with inflow = ', select_init
 
     do k=0,k1
-      if (turbmod.eq.0) open(29,file=  '0/Inflow',form='unformatted')
-      if (turbmod.eq.1) open(29,file= 'SA/Inflow',form='unformatted')
-      if (turbmod.eq.2) open(29,file= 'MK/Inflow',form='unformatted')
-      if (turbmod.eq.3) open(29,file= 'VF/Inflow',form='unformatted')
-      if (turbmod.eq.4) open(29,file= 'OM/Inflow',form='unformatted')
-      read(29) Wnew(:,k),knew(:,k),enew(:,k),v2new(:,k),omNew(:,k),nuSAnew(:,k),ekmt(:,k),Pk(:,k)
+      if (turbmod.eq.0) open(29,file=  'pipe/Inflow_lam_00360.dat',form='unformatted')
+      if (turbmod.eq.1) open(29,file = 'pipe/Inflow_SA_00360.dat',form='unformatted')
+      if (turbmod.eq.2) open(29,file = 'pipe/Inflow_MK_00360.dat',form='unformatted')
+      if (turbmod.eq.3) open(29,file = 'pipe/Inflow_VF_00360.dat',form='unformatted')
+      if (turbmod.eq.4) open(29,file = 'pipe/Inflow_SST_00360.dat',form='unformatted')
+      read(29) Wnew(:,k),dummy,dummy,dummy,dummy,dummy,ekmt(:,k),dummy
       close(29)
     enddo
   else
@@ -816,11 +822,11 @@ subroutine fkdat(rank)
       endif
       ! TODO: BoundaryLayer: Analytical solution?
 
-      knew(i,:)  = 0.1
-      enew(i,:)  = 1.0
-      omnew(i,:) = 0.001
-      v2new(i,:) = 2./3.*knew(i,:)
-      nuSAnew(i,:) = 0.001
+      ! knew(i,:)  = 0.1
+      ! enew(i,:)  = 1.0
+      ! omnew(i,:) = 0.001
+      ! v2new(i,:) = 2./3.*knew(i,:)
+      ! nuSAnew(i,:) = 0.001
     enddo
   endif
 

@@ -1,17 +1,4 @@
 
-!!*********************************************************************
-!!     Calculate enthalpy at the wall boundary condition for isothermal
-!!********************************************************************
-subroutine funcIsothermalEnthBC_upd(Twall_bc)
-  use mod_param
-  use mod_common
-  use mod_common2
-  implicit none
-  real*8 Twall_bc
-  call eos_model%set_w_temp(Twall_bc,"H",enth_wall)
-end
-
-
 !!********************************************************************
 !!     Newton solver for wall boundary condition
 !!********************************************************************
