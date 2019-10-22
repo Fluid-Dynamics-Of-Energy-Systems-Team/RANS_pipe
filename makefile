@@ -11,15 +11,13 @@ F77 = mpif90 -O3 -fdefault-real-8 -ffixed-line-length-none
 #F77 = /opt/mvapich2/bin/mpif90 -r8 -132
 #F77 = /opt/openmpi/bin/mpif90 -r8 -132
 FC = $(F77) $(FLAGS)
-DBG = -g
+#DBG = -g
 
 LIBS = -lmpi
 RM = rm -f
 
 
 PROGRAM = forced_real_VF 
-# SRCS    = tm.f90 ke_tm.f90 mk_tm.f90 vf_tm.f90 sa_tm.f90 sst_tm.f90 math_module.f90 common_module.f90  eosmodels.f90  numerics.f90 mk.f90 vf.f90 sst.f90 sa.f90 turbmodels.f90 fileio.f math.f mpistuff.f vfft.f parpipe.f90
-# OBJS    = tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o math_module.o eosmodels.o  common_module.o param.o common.o numerics.o mk.o vf.o sst.o sa.o turbmodels.o fileio.o math.o mpistuff.o vfft.o parpipe.o
 OBJS    = math_module.o param.o math.o tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
