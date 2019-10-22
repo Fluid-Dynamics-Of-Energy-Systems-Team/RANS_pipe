@@ -35,6 +35,10 @@ call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
+dtmax = 1.e-3
+dt = dtmax
+istart = 1
+
 !domain integers
 kmax    = 32/px
 kmaxper = kmax*px/2
@@ -50,11 +54,13 @@ allocate(Win(0:i1),ekmtin(0:i1))
 
 !init memory
 call initMem()
+!numerical stuff
+call init_transpose
+
 
 !*********************!
 !  Equation of State  !
 !*********************!
-
 if (EOSmode.eq.0) allocate(eos_model,    source=   IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000,'tables/co2h_table.dat'))
 if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
@@ -63,7 +69,6 @@ call eos_model%init()
 !*********************!
 !   Turbulence model  !
 !*********************!
-
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
 if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA'))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK'))
@@ -71,21 +76,14 @@ if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
 
-
-!numerical stuff
-call init_transpose
-
 !*********************!
 !         Grid        !
 !*********************!
 call mkgrid(rank)
 
-
-
-
-dtmax = 1.e-3
-dt = dtmax
-istart = 1
+!*********************!
+!    Initialization   !
+!*********************!
 if (select_init < 2) then
   call fkdat(rank)
   istart=1
@@ -93,7 +91,6 @@ else
   ! call loadRestart(istart,rank)
   istart = istart+1
 endif
-
 !periodic=1, turb flow generator,periodic=2, heated pipe
 if (periodic.ne.1) then
   if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
@@ -104,12 +101,10 @@ if (periodic.ne.1) then
   read(29) Win(:),dummy(:),dummy(:),dummy(:),dummy(:),dummy(:),ekmtin(:),dummy(:)
   close(29)
 endif
-
 call turb_model%init_w_inflow(Re, systemsolve)
-
-
-
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
+
+
 
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! tempWall = 1.0
@@ -137,6 +132,16 @@ call bound_v(Unew,Wnew,Win,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
 
+
+
+
+
+
+
+!**************************
+!       MAIN LOOP         !
+!**************************
+
 do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
@@ -163,14 +168,11 @@ do istep=istart,nstep
   !   endif
   ! endif
 
-  if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
-
+  if  (mod(istep,10) .eq. 0)  call chkdiv(rank)
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-
-  if  (mod(istep,1000).eq.0)                      call inflow_output_upd(rank)
-  if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
-
+  if  (mod(istep,1000).eq.0)  call inflow_output_upd(rank)
+  if  (mod(istep,1000).eq.0)  call output2d_upd2(rank,istep)
   noutput = 100
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
@@ -184,13 +186,13 @@ do istep=istart,nstep
          
 enddo
 call cpu_time(finish)
-
 print '("Time = ",f6.3," seconds.")',finish-start
 call inflow_output_upd(rank)
-! call output2d_upd(rank,istep)
 call mpi_finalize(ierr)
 stop
 end
+
+
 
 
 !>******************************************************************************************

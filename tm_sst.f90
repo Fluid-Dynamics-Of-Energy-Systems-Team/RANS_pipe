@@ -40,11 +40,11 @@ contains
    !************************!
 
 subroutine init_SST(this)
-    implicit none
-    class(SST_TurbModel) :: this
-    this%name='SST'
-    call this%init_mem_SST()
-    call this%init_sol()
+  implicit none
+  class(SST_TurbModel) :: this
+  this%name='SST'
+  call this%init_mem_SST()
+  call this%init_sol()
 end subroutine init_SST
 
 subroutine init_sol_SST(this)
@@ -57,39 +57,38 @@ subroutine init_sol_SST(this)
 end subroutine init_sol_SST
 
 subroutine init_mem_SST(this)
-    implicit none
-    class(SST_TurbModel) :: this
-    allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),    &
-             this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax),  &
-             this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1),  &
-             this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax),&
-             this%yp (0:this%i1,0:this%k1))
-    allocate(this%mutin(0:this%i1),this%Pkin (0:this%i1), &
-             this%bF1in(0:this%i1),                       &
-             this%omin (0:this%i1),this%kin  (0:this%i1))
+  implicit none
+  class(SST_TurbModel) :: this
+  allocate(this%om (0:this%i1,0:this%k1),this%k(0:this%i1,0:this%k1),    &
+           this%bF1(0:this%i1,0:this%k1),this%bF2(this%imax,this%kmax),  &
+           this%Gk (0:this%i1,0:this%k1),this%Pk (0:this%i1,0:this%k1),  &
+           this%Tt (0:this%i1,0:this%k1),this%cdKOM(this%imax,this%kmax),&
+           this%yp (0:this%i1,0:this%k1))
+  allocate(this%mutin(0:this%i1),this%Pkin (0:this%i1), &
+           this%bF1in(0:this%i1),                       &
+           this%omin (0:this%i1),this%kin  (0:this%i1))
 end subroutine init_mem_SST
 
 subroutine init_w_inflow_SST(this,Re, systemsolve)
-    implicit none
-    class(SST_TurbModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
-    real(8), dimension(0:this%i1) :: dummy
-    character(len=5)  :: Re_str
-    integer           :: Re_int,k
-    Re_int = int(Re)
-    write(Re_str,'(I5.5)') Re_int
-    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+  implicit none
+  class(SST_TurbModel)          :: this
+  real(8), intent(IN)           :: Re
+  integer, intent(IN)           :: systemsolve
+  real(8), dimension(0:this%i1) :: dummy
+  character(len=5)              :: Re_str
+  integer                       :: Re_int,k
 
-    read(29) dummy(:),this%kin(:),dummy(:),dummy(:),this%omin(:), &
-         dummy(:),this%mutin(:),dummy(:)
-    close(29)
-    do k=0,this%k1
-      this%om(:,k) = this%omin(:)
-      this%k(:,k) = this%kin(:)
-    enddo
+  Re_int = int(Re)
+  write(Re_str,'(I5.5)') Re_int
+  if (systemsolve.eq.1) open(29,file = 'pipe/Inflow_'   //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve.eq.2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve.eq.3) open(29,file = 'bl/Inflow_'     //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  read(29) dummy(:),this%kin(:),dummy(:),dummy(:),this%omin(:),dummy(:),this%mutin(:),dummy(:)
+  close(29)
+  do k=0,this%k1
+    this%om(:,k) = this%omin(:)
+    this%k(:,k) = this%kin(:)
+  enddo
 end subroutine init_w_inflow_SST
 
 

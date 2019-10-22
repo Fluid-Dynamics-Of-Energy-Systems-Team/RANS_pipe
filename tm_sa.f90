@@ -55,22 +55,23 @@ end subroutine init_sol_SA
 
 subroutine init_w_inflow_SA(this,Re,systemsolve)
     implicit none
-    class(SA_TurbModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
+    class(SA_TurbModel)           :: this
+    real(8), intent(IN)           :: Re
+    integer, intent(IN)           :: systemsolve
     real(8), dimension(0:this%i1) :: dummy
-    character(len=5)  :: Re_str
-    integer           :: Re_int,i,k
+    character(len=5)              :: Re_str
+    integer                       :: Re_int,i,k
+
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
-    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve.eq.1) open(29,file = 'pipe/Inflow_'   //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve.eq.2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve.eq.3) open(29,file = 'bl/Inflow_'     //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
     read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:),this%nuSAin(:),this%mutin(:),this%pkin(:)
     close(29)
     do k=0,this%k1
-      this%nuSA(:,k) = this%nuSAin(:)
-      this%pk(:,k) = this%pkin(:)
+      this%nuSA(:,k)= this%nuSAin(:)
+      this%pk(:,k)  = this%pkin(:)
     enddo
 end subroutine init_w_inflow_SA
 

@@ -4,13 +4,14 @@ module mod_common
   public
 
   integer istep,nsteps,inlet,centerBC,numDomain
-  real(8) pi,dpdz
+  real(8) pi
+
 
   !***************TURBULENCE
   real(8) sigmat
   
   !***************GRID
-  real(8) dz
+  real(8) dz,dpdz
   real(8), dimension(:), allocatable :: Ru,Rp,y_fa,y_cv,dru,drp !0:i1
   real(8),  dimension(:), allocatable :: z1,z2 !0:k1
   real(8),  dimension(:), allocatable :: wallDist !1:imax

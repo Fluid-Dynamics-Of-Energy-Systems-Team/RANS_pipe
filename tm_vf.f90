@@ -40,19 +40,19 @@ subroutine set_constants_VF(this)
 end subroutine
 
 subroutine init_w_inflow_VF(this,Re,systemsolve)
-  class(VF_TurbModel) :: this
-  real(8), intent(IN) :: Re
-  integer, intent(IN) :: systemsolve
+  class(VF_TurbModel)           :: this
+  real(8), intent(IN)           :: Re
+  integer, intent(IN)           :: systemsolve
   real(8), dimension(0:this%i1) :: dummy
-  character(len=5)  :: Re_str
-  integer           :: Re_int,i,k
+  character(len=5)              :: Re_str
+  integer                       :: Re_int,i,k
+
   Re_int = int(Re)
   write(Re_str,'(I5.5)') Re_int
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve.eq.1) open(29,file = 'pipe/Inflow_'   //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve.eq.2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve.eq.3) open(29,file = 'bl/Inflow_'     //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
   read(29) dummy(:),this%kin(:),this%epsin(:),this%v2in(:),dummy(:),dummy(:),this%mutin(:),this%pkin(:)
-
   close(29)
   do k=0,this%k1
     this%eps(:,k) = this%epsin(:)
