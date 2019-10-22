@@ -1,3 +1,10 @@
+
+!*****************************************************************!
+!                                                                 !
+!         Outputs the profile halfway along the domain            !
+!                                                                 !
+!*****************************************************************!
+
 subroutine inflow_output_upd(rank,istap)
   use mod_param
   use mod_common
@@ -41,6 +48,12 @@ subroutine inflow_output_upd(rank,istap)
   endif
 end subroutine inflow_output_upd
 
+!*****************************************************************!
+!                                                                 !
+!       Writes the variables in a fixed width formatted file      !
+!                                                                 !
+!*****************************************************************!
+
 subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
                                  k, eps, v2, om,nuSA, i1, k1,rank,px)
   implicit none 
@@ -64,7 +77,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     allocate(lines(1:(i1+1)*k1+1)) !+1 for header
     disp = 0
     size = ((i1+1)*(k1)+1)*(nvar*20+1)
-    write(test,'(15(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA' !write the header
+    write(test,'(15(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA'
     write(line, '(A)') test // NEW_LINE("A")
     lines(index) = line
     index = index+1
@@ -97,6 +110,12 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 
 end subroutine write_mpiio_formatted
+
+!*****************************************************************!
+!                                                                 !
+!       Outputs the variables in a fixed width formatted file     !
+!                                                                 !
+!*****************************************************************!
 
 subroutine output2d_upd2(rank,istap)
   use mod_param
