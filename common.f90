@@ -8,12 +8,8 @@ module mod_common
 
 
   !***************TURBULENCE
-  real(8) sigmat,sigmak,sigmae,cmu,ce1,ce2,sigmah2
-  ! 0:i1,0:k1
-  real(8), dimension(:,:), allocatable :: fmu,f1,f2,ReT,yp,ReTauS,ypt,dterm,eterm,bF1,Pk,Gk,Tt
-  ! imax,kmax
-  real(8), dimension(:,:), allocatable :: fv2,Lh,LhT,bF2,cdKOM
-
+  real(8) sigmat
+  
   !***************GRID
   real(8) dz
   !0:i1
@@ -31,7 +27,7 @@ module mod_common
   
   !***************EQUATION VARIABLES
   !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,v2new,h2new,Cnew,knew,enew,qcrit,nuSAnew,omNew, &
+  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,Cnew,qcrit, &
                                           Uold,Wold,rold,dUdt,dVdt,dWdt
   real(8), dimension(:,:), allocatable :: p
                
@@ -56,11 +52,7 @@ contains
     use mod_param
     implicit none
 
-    !TURBULENCE
-    allocate(fmu(0:i1,0:k1),f1(0:i1,0:k1),f2(0:i1,0:k1),ReT(0:i1,0:k1),yp(0:i1,0:k1),ReTauS(0:i1,0:k1),    &
-             ypt(0:i1,0:k1),dterm(0:i1,0:k1),eterm(0:i1,0:k1),bF1(0:i1,0:k1),Pk(0:i1,0:k1),Gk(0:i1,0:k1),  &
-             Tt(0:i1,0:k1))
-    allocate(fv2(imax,kmax),Lh(imax,kmax),LhT(imax,kmax),bF2(imax,kmax),cdKOM(imax,kmax))
+
     !GRID
     allocate( Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
     allocate(z1(0:k1),z2(0:k1))
@@ -70,9 +62,9 @@ contains
              peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &
              ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1))
     !EQUATION VARIABLES
-    allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),v2new(0:i1,0:k1),h2new(0:i1,0:k1),            &
-             Cnew(0:i1,0:k1),knew(0:i1,0:k1),enew(0:i1,0:k1),nuSAnew(0:i1,0:k1),          &
-             omNew(0:i1,0:k1),rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),             &
+    allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),           &
+             Cnew(0:i1,0:k1),         &
+             rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),             &
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
     allocate(p(imax,kmax))
 
