@@ -4,11 +4,11 @@
 !!    This code simulates Super Critical Fluid in a
 !!    heated pipe with constant heat flux
 !!    ****************************************************
-use mod_math
 use mod_param
 use mod_common
-use mod_eosmodels
 use mod_common2
+use mod_math
+use mod_eosmodels
 use mod_tm
 use mod_tm_mk
 use mod_tm_sa
@@ -18,15 +18,14 @@ use mod_tm_vf
 implicit none
 include 'mpif.h'
 
-integer      rank,ierr,istart,noutput
-real*8       bulk,stress,stime,time1
-real*8       resC,resK,resE,resV2,resOm,resSA   
+integer :: rank,ierr,istart,noutput
+real(8) :: bulk,stress,stime,time1
+real(8) :: resC,resK,resE,resV2,resOm,resSA   
+real(8) :: tempWall
+real(8) :: start, finish
 real(8), dimension(:), allocatable :: Win,ekmtin,dummy
-real*8       tempWall
-real :: start, finish
 
 call read_parameters()
-
 call cpu_time(time1)
 call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
@@ -46,18 +45,25 @@ Mt=imax/px
 Nx=kmax*px
 Mx=kmax
 Nt=imax
-
 allocate(Win(0:i1),ekmtin(0:i1))
+
+
+!init memory
 call initMem()
 
+!*********************!
+!  Equation of State  !
+!*********************!
 
-!initialize EOS
-if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
-if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
+if (EOSmode.eq.0) allocate(eos_model,    source=   IG_EOSModel(Re,Pr))
+if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000,'tables/co2h_table.dat'))
 if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
 call eos_model%init()
 
-!initialize turbomodel
+!*********************!
+!   Turbulence model  !
+!*********************!
+
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
 if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA'))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK'))
@@ -66,11 +72,12 @@ if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kma
 call turb_model%init()
 
 
-
-
 !numerical stuff
 call init_transpose
-!grid
+
+!*********************!
+!         Grid        !
+!*********************!
 call mkgrid(rank)
 
 
@@ -99,6 +106,9 @@ if (periodic.ne.1) then
 endif
 
 call turb_model%init_w_inflow(Re, systemsolve)
+
+
+
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -118,16 +128,11 @@ call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
 call bound_c(rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
+call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);            !necessary to call it twice
+
 rold = rnew
+
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-
-! do k=0,k1
-!   ekmt(:,k) = ekmtin(:)
-!   wnew(:,k) = win(:)
-! enddo
-
-
 call bound_v(Unew,Wnew,Win,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
@@ -159,13 +164,12 @@ do istep=istart,nstep
   ! endif
 
   if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
+
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
+
   if  (mod(istep,1000).eq.0)                      call inflow_output_upd(rank)
-  ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
   if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
-  ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
-  ! if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
 
   noutput = 100
   if (rank.eq.0) then
