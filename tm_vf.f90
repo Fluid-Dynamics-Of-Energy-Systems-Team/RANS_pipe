@@ -1,5 +1,5 @@
-module vf_tm
-  use ke_tm
+module mod_tm_vf
+  use mod_tm_ke
   implicit none
 
 !****************************************************************************************

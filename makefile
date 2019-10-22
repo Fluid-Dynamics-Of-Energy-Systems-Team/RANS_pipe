@@ -7,8 +7,7 @@ RM = rm -f
 
 
 PROGRAM = run 
-#SRCS    = tm.f90 ke_tm.f90 mk_tm.f90 vf_tm.f90 sa_tm.f90 sst_tm.f90 math.f90 common_module.f90  eosmodels.f90  numerics.f90  fileio.f mpistuff.f vfft.f main.f90
-OBJS    = param.o math.o tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o main.o
+OBJS    = param.o math.o tm.o tm_ke.o tm_mk.o tm_vf.o tm_sa.o tm_sst.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o main.o
 
 all: $(PROGRAM)
 
@@ -17,16 +16,16 @@ $(PROGRAM): $(OBJS)
 
 main.o: main.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c main.f90
-vf_tm.o: vf_tm.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c vf_tm.f90
-ke_tm.o: ke_tm.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c ke_tm.f90
-mk_tm.o: mk_tm.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c mk_tm.f90
-sst_tm.o: sst_tm.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sst_tm.f90
-sa_tm.o: sa_tm.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sa_tm.f90
+tm_vf.o: tm_vf.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm_vf.f90
+tm_ke.o: tm_ke.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm_ke.f90
+tm_mk.o: tm_mk.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm_mk.f90
+tm_sst.o: tm_sst.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm_sst.f90
+tm_sa.o: tm_sa.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c tm_sa.f90
 tm.o: tm.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c tm.f90
 eosmodels.o: eosmodels.f90 makefile

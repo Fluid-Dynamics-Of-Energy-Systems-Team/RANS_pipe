@@ -1,5 +1,5 @@
-module mk_tm
-  use ke_tm
+module mod_tm_mk
+  use mod_tm_ke
   implicit none
 
 !****************************************************************************************
@@ -226,4 +226,4 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   enddo
 end subroutine production_MK
 
-end module mk_tm
+end module mod_tm_mk

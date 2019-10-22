@@ -9,11 +9,12 @@ use mod_param
 use mod_common
 use mod_eosmodels
 use mod_common2
-use mod_turbmodels
-use sa_tm
-use sst_tm
-use mk_tm
-use vf_tm
+use mod_tm
+use mod_tm_mk
+use mod_tm_sa
+use mod_tm_sst
+use mod_tm_vf
+
 implicit none
 include 'mpif.h'
 

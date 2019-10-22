@@ -1,5 +1,5 @@
-module sst_tm
-  use mod_turbmodels
+module mod_tm_sst
+  use mod_tm
   implicit none
   
 !****************************************************************************************
@@ -634,4 +634,4 @@ end subroutine diffusion_om_SST
 
 
 
-end module sst_tm
+end module mod_tm_sst

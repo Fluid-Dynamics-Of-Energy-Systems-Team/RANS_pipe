@@ -1,5 +1,5 @@
 module mod_common2
-  use mod_turbmodels
+  use mod_tm
   use mod_eosmodels
 
   class(EOSModel),  allocatable :: eos_model

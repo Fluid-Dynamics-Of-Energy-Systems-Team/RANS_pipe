@@ -1,5 +1,5 @@
-module sa_tm
-  use mod_turbmodels
+module mod_tm_sa
+  use mod_tm
   implicit none
 
 !****************************************************************************************
@@ -425,4 +425,4 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
 end subroutine rhs_SA
 
 
-end module sa_tm
+end module mod_tm_sa
