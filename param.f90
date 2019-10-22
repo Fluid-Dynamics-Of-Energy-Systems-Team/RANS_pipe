@@ -3,7 +3,7 @@ module mod_param
   public
 
   integer   i,k,imax,kmax,i1,k1,iwork,isave,px,nTab,LoD
-  integer   EOSmode,periodic,kmaxper,k1Old
+  integer   EOSmode,periodic,kmaxper
   integer   nstep,K_start_heat,x_start_heat,select_init,systemSolve
   integer   turbmod,modifDiffTerm,modVF,isothermalBC,pressIsoThermal
   real*8    Re,Pr,Qwall,CFL,Tw,dTwall

@@ -40,15 +40,11 @@ dt = dtmax
 istart = 1
 
 !domain integers
-kmax    = 32/px
+kmax    = 200/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
-k1old   = k1
 i1 = imax+1
-Mt=imax/px
-Nx=kmax*px
-Mx=kmax
-Nt=imax
+
 allocate(Win(0:i1),ekmtin(0:i1))
 
 
@@ -92,20 +88,27 @@ else
   istart = istart+1
 endif
 !periodic=1, turb flow generator,periodic=2, heated pipe
-if (periodic.ne.1) then
-  if (turbmod.eq.0) open(29,file =  '0/Inflow',form='unformatted')
-  if (turbmod.eq.1) open(29,file = 'pipe/Inflow_SA_00360.dat',form='unformatted')
-  if (turbmod.eq.2) open(29,file = 'MK/Inflow',form='unformatted')
-  if (turbmod.eq.3) open(29,file = 'VF/Inflow',form='unformatted')
-  if (turbmod.eq.4) open(29,file = 'OM/Inflow',form='unformatted')
+! if (periodic.ne.1) then
+if (turbmod.eq.0) open(29,file ='pipe/Inflow_lam_00360.dat',form='unformatted')
+if (turbmod.eq.1) open(29,file= 'pipe/Inflow_SA_00360.dat',form='unformatted')
+if (turbmod.eq.2) open(29,file= 'pipe/Inflow_MK_00360.dat',form='unformatted')
+if (turbmod.eq.3) open(29,file= 'pipe/Inflow_VF_00360.dat',form='unformatted')
+if (turbmod.eq.4) open(29,file= 'pipe/Inflow_SST_00360.dat',form='unformatted')
   read(29) Win(:),dummy(:),dummy(:),dummy(:),dummy(:),dummy(:),ekmtin(:),dummy(:)
   close(29)
-endif
+! endif
 call turb_model%init_w_inflow(Re, systemsolve)
+! cnew=0
+! cold=0
+! do k=0,k1
+!   ! ekmt(:,k)=ekmtin(:)
+!   wnew(:,k)=win(:)
+! enddo
+!write(*,*) cnew
+! cnew = 0
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
-
-
+! stop
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! tempWall = 1.0
 ! if (isothermalBC.eq.1) then
@@ -121,8 +124,10 @@ call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 ! endif
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
 
-call bound_c(rank)
+call bound_c(Tw,rank)
+! cnew = 0
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
+
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);            !necessary to call it twice
 
 rold = rnew
@@ -131,7 +136,6 @@ call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist
 call bound_v(Unew,Wnew,Win,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
-
 
 
 
@@ -149,7 +153,12 @@ do istep=istart,nstep
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
                      Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
                      modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  call bound_c(rank)
+  call bound_c(Tw,rank)
+  if  (mod(istep,10) .eq. 0) then
+    call output2d_upd2(rank,istep)
+    call mpi_finalize(ierr)
+stop
+  endif
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   call state_upd(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
   call advance(rank)
@@ -173,7 +182,7 @@ do istep=istart,nstep
   call chkdt(rank,istep)
   if  (mod(istep,1000).eq.0)  call inflow_output_upd(rank)
   if  (mod(istep,1000).eq.0)  call output2d_upd2(rank,istep)
-  noutput = 100
+  noutput = 1
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
       write(6,'(A7,9A14)') 'istep'    ,'dt'      ,'bulk'   ,'stress' ,'cResid', &
@@ -212,6 +221,7 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8), dimension(0:k1) :: tauw(0:k1)
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
+
   mue = mu + mut
 end 
 
@@ -253,9 +263,8 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
 
   real*8 t1,t2,t3,t4,bc,scl
   real*8 term, adiffm, adiffp
-  real*8 resC
+  real*8 resC, sigmat
   sigmat = 0.9
-
 
   ! ------------------------------------------------------------------------
   !     ENTHAPLY ENTHAPLY ENTHAPLY ENTHAPLY
@@ -526,17 +535,20 @@ end
 !!  bound_c equation
 !!
 !!*************************************************************************************
-subroutine bound_c(rank)
+subroutine bound_c(Twall,rank)
   use mod_param
   use mod_common
   use mod_common2
   implicit none
   include 'mpif.h'
-  integer rank
+  real(8), intent(IN) :: Twall
+  integer, intent(IN) :: rank
   real*8 tmpShift(0:i1)
-  
+  real(8) enth_wall
+
   ! ISOTHERMAL
   if (isothermalBC.eq.1) then
+    call eos_model%set_w_temp(Twall, "H", enth_wall)
     !pipe/bl
     if (centerBC.eq.1) then
       do k=0,k1
@@ -571,6 +583,7 @@ subroutine bound_c(rank)
   endif
   call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
   call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
+
   if (periodic.eq.1) return
   if (rank.eq.0) then
     cnew(:,0) = 0.0
@@ -811,7 +824,7 @@ subroutine fkdat(rank)
     if (rank.eq.0)  write(*,*) 'Initializing flow with inflow = ', select_init
 
     do k=0,k1
-      if (turbmod.eq.0) open(29,file=  '0/Inflow',form='unformatted')
+      if (turbmod.eq.0) open(29,file= 'pipe/Inflow_lam_00360.dat',form='unformatted')
       if (turbmod.eq.1) open(29,file= 'pipe/Inflow_SA_00360.dat',form='unformatted')
       if (turbmod.eq.2) open(29,file= 'pipe/Inflow_MK_00360.dat',form='unformatted')
       if (turbmod.eq.3) open(29,file= 'pipe/Inflow_VF_00360.dat',form='unformatted')

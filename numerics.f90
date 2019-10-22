@@ -1,15 +1,15 @@
 
-!!*********************************************************************
-!!     Calculate enthalpy at the wall boundary condition for isothermal
-!!********************************************************************
-subroutine funcIsothermalEnthBC_upd(Twall_bc)
-  use mod_param
-  use mod_common
-  use mod_common2
-  implicit none
-  real*8 Twall_bc
-  call eos_model%set_w_temp(Twall_bc,"H",enth_wall)
-end
+! !!*********************************************************************
+! !!     Calculate enthalpy at the wall boundary condition for isothermal
+! !!********************************************************************
+! subroutine funcIsothermalEnthBC_upd(Twall_bc)
+!   use mod_param
+!   use mod_common
+!   use mod_common2
+!   implicit none
+!   real*8 Twall_bc
+!   call eos_model%set_w_temp(Twall_bc,"H",enth_wall)
+! end
 
 
 !!********************************************************************
@@ -127,13 +127,14 @@ subroutine state_upd(enth,rho,mu,lam,tp,be,istap,rank)
   do k=0,kmax
     do i=0,imax
       enthface = 0.5*(enth(i,k)+enth(i+1,k))
-      call eos_model%set_w_enth(enthface,"C", Cpi(i,k))
+      call eos_model%set_w_enth(enthface,"C", cpi(i,k))
       call eos_model%set_w_enth(enthface,"L", ekhi(i,k))
       call eos_model%set_w_enth(enthface,"V", ekmi(i,k)) 
       enthface = 0.5*(enth(i,k)+enth(i,k+1))
-      call eos_model%set_w_enth(enthface,"C", Cpk(i,k))
+      call eos_model%set_w_enth(enthface,"C", cpk(i,k))
       call eos_model%set_w_enth(enthface,"L", ekhk(i,k))
       call eos_model%set_w_enth(enthface,"V", ekmk(i,k)) 
+      
     enddo
   enddo
   return
