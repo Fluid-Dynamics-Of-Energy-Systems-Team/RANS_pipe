@@ -12,7 +12,7 @@
 
       parameter (px                = 4)        ! number of cores
       parameter (imax              = 96)       ! radial direction
-      parameter (kmax              = 200/px)    ! 384/px)   ! axial direction
+      parameter (kmax              = 32/px)    ! 384/px)   ! axial direction
       parameter (kmaxper           = kmax*px/2)
       parameter (i1                = imax + 1)
       parameter (k1                = kmax + 1)
@@ -29,7 +29,7 @@
       parameter (nstep             = 100000)
 
       parameter (LoD               = 30)      ! pH2= 30
-      parameter (periodic          = 2)               ! 1..periodic, 2..developing 
+      parameter (periodic          = 1)               ! 1..periodic, 2..developing 
      
       parameter (Re                = 360)
       parameter (Pr                = 3.19457)
