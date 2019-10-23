@@ -18,7 +18,7 @@ RM = rm -f
 
 
 PROGRAM = forced_real_VF 
-OBJS    = math_module.o param.o math.o tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o parpipe.o
+OBJS    = math_module.o  param.o mesh.o math.o tm.o ke_tm.o mk_tm.o vf_tm.o sa_tm.o sst_tm.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o parpipe.o
 
 all: $(PROGRAM)
 
@@ -47,6 +47,8 @@ math_module.o: math_module.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c math_module.f90
 numerics.o: numerics.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c numerics.f90
+mesh.o : mesh.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c mesh.f90
 mk.o: mk.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c mk.f90
 vf.o: vf.f90 param.f90 makefile

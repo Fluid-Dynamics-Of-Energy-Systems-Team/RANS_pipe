@@ -8,6 +8,7 @@
 use mod_param
 use mod_common
 use mod_eosmodels
+use mod_mesh
 use mod_common2
 use mod_turbmodels
 use sa_tm
@@ -20,8 +21,8 @@ include 'mpif.h'
 integer      rank,ierr,istart,noutput
 real*8       bulk,stress,stime,time1
 real*8       resC,resK,resE,resV2,resOm,resSA   
-real(8), dimension(:), allocatable :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
 real*8       tempWall
+
 real :: start, finish
 
 call read_parameters()
@@ -47,7 +48,6 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
-allocate(Win(0:i1),kin(0:i1),ekmtin(0:i1))
 call initMem()
 
 
@@ -67,9 +67,9 @@ call turb_model%init()
 
 !numerical stuff
 call init_transpose
-!grid
-call mkgrid(rank)
 
+!grid
+call mkgrid(i1,k1,imax,kmax,LOD, Re,px,rank, systemSolve)
 
 
 
@@ -79,9 +79,8 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew, unew, ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
+
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
-
-
 call bound_c(Tw, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
@@ -186,6 +185,7 @@ end
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_common
+  use mod_mesh
   use mod_common2
   implicit none
       
@@ -201,7 +201,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
 
   real*8 t1,t2,t3,t4,bc,scl
   real*8 term, adiffm, adiffp
-  real*8 resC
+  real*8 resC, sigmat
   sigmat = 0.9
 
 
@@ -277,7 +277,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
 
         call matrixIdir(imax,a,b,c,rhs)
 
-        do i=1,imax
+        do i=1,imax-1
           !resC = resC + (cnew(i,k) - rhs(i))**2.0
           resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
           cnew(i,k) = max(rhs(i), 0.0)
@@ -346,6 +346,7 @@ end
 !!*************************************************************************************
 subroutine advance(rank)
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none
       
@@ -476,6 +477,7 @@ end
 subroutine bound_c(Twalll, Qwalll, rank)
   use mod_param
   use mod_common
+  use mod_mesh
   use mod_common2
   implicit none
   include 'mpif.h'
@@ -535,16 +537,17 @@ end
 !!      bound_v(Ubound,Wbound,Win,rank)
 !!
 !!*************************************************************************************
-subroutine bound_v(Ubound,Wbound,Win,rank)
+subroutine bound_v(Ubound,Wbound,W_in,rank)
 
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none  
   include 'mpif.h'
 
   integer rank
   real*8 Ubound(0:i1,0:k1), Wbound(0:i1,0:k1)
-  real*8 tmp(0:i1),Win(0:i1)
+  real*8 tmp(0:i1),W_in(0:i1)
 
   ! channel
   if (centerBC.eq.-1) then 
@@ -576,7 +579,7 @@ subroutine bound_v(Ubound,Wbound,Win,rank)
   if (periodic.eq. 1) return
   if (rank.eq.0) then
     Ubound(:,0) = 0.0
-    Wbound(:,0) = Win(:)
+    Wbound(:,0) = W_in(:)
   endif
   if (rank.eq.px-1)then
     ubound(:,k1) = 2.*ubound(:,kmax)-ubound(:,kmax-1)
@@ -600,8 +603,9 @@ end
 !!     j=jmax and the values at j=j1 equal to the values at j=1.
 !!
 !!*************************************************************************************
-subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
+subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none
 
@@ -612,7 +616,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
   integer rank,ierr
   real*8  y1,y2,y3,y4
   real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
-          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
+          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),W_in(0:i1)
   real*8 Ub,flux,flux_tot,deltaW,rhob,wfunc,wr(1:imax)
   real*8 tmp(0:i1)
   integer ib,ie,kb,ke
@@ -651,7 +655,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
   if (rank.eq.0) then
     Rbound(:,0) = 1.0
     Ubound(:,0) = 0.0
-    Wbound(:,0) = Win(:)
+    Wbound(:,0) = W_in(:)
   endif
 
   wr = 0
@@ -736,8 +740,6 @@ end
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
-  ! use mod_param
-  ! use mod_common
   use mod_common2
   implicit none
   integer,                        intent(IN) :: rank, systemsolve, i1,k1, select_init
@@ -746,14 +748,24 @@ subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, d
   real(8), dimension(0:i1, 0:k1), intent(OUT):: w, u, mut
   real(8), dimension(0:i1),       intent(OUT):: win, mutin
   real(8), dimension(0:i1) :: dummy
-  character(len=5)  :: Re_str
-  character(len=7)  :: case
-  integer           :: Re_int, i,k, imax
-  real(8)           :: gridSize
+  character(len=5)         :: Re_str
+  character(len=7)         :: case
+  integer                  :: Re_int, i,k, imax
+  real(8)                  :: gridSize
     
   imax = i1-1
-  ! inialize from inflow profile=
-  if (select_init.eq.1) then
+
+  !initialize with laminar solution
+  if (select_init.eq.0) then
+    if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
+    gridSize = y_fa(imax)
+    do i=1,imax         
+      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
+      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              ! channel
+      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) ! bl
+    enddo
+  ! inialize from inflow profile
+  else
     if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
     if (systemsolve .eq. 1) case = "pipe"
     if (systemsolve .eq. 2) case = "channel"
@@ -764,21 +776,13 @@ subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, d
     read(29) win(:),dummy,dummy,dummy,dummy,dummy,mutin(:),dummy
     close(29)
     do k=0,k1
+      u(:,k) = 0
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
     enddo
     call turb_model%init_w_inflow(Re, systemsolve)
-
-  !initialize with laminar analytical solution
-  else
-    if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
-    gridSize = y_fa(imax)
-    do i=1,imax         
-      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
-      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              ! channel
-      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) ! bl
-    enddo
   endif
+  
 end subroutine initialize_solution
 
 
@@ -788,6 +792,7 @@ end subroutine initialize_solution
 !!*************************************************************************************
 subroutine cmpinf(Bulk,Stress)
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none
      

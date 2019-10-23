@@ -26,6 +26,7 @@
 subroutine inflow_output_upd(rank,istap)
   use mod_param
   use mod_common
+  use mod_mesh
   use mod_common2
   implicit none
   
@@ -271,7 +272,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   endif
   do i = 0,i1
     do j = k_min,k_max
-      write(test,'(15(E20.12))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
+      write(test,'(15(E20.10e3))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
                                 k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
@@ -292,6 +293,7 @@ end subroutine write_mpiio_formatted
 subroutine output2d_upd2(rank,istap)
   use mod_param
   use mod_common
+  use mod_mesh
   use mod_common2
   implicit none
   include 'mpif.h'
