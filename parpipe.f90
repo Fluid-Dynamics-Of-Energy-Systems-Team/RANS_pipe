@@ -50,46 +50,52 @@ Nt=imax
 
 call initMem()
 
+!****************************!
+!     INITIALIZATION         !
+!****************************!
 
-!initialize EOS
+!equation of state
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
 if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
 call eos_model%init()
-
-!initialize turbomodel
+!turbulence model
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
 if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA'))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK'))
 if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF'))
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
-
 !numerical stuff
 call init_transpose
-
 !grid
 call mkgrid(i1,k1,imax,kmax,LOD, Re,px,rank, systemSolve)
+!solution 
+call initialize_solution(rank,wnew, unew, ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
+!properties
+call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
+!bc enthalpy
+call bound_c(Tw, Qwall,rank)
+!bc turb
+call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
+!properties
+call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
+!turbulent viscosity
+call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
+!bc velocity
+call bound_v(Unew,Wnew,Win,rank)
 
 
+!****************************!
+!        MAIN LOOP           !
+!****************************!
 
 dtmax = 1.e-3
 dt = dtmax
 istart = 1
-
-!initialize solution 
-call initialize_solution(rank,wnew, unew, ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
-
-call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
-call bound_c(Tw, Qwall,rank)
-call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
 rold = rnew
-call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-call bound_v(Unew,Wnew,Win,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
-
 do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
@@ -111,10 +117,7 @@ do istep=istart,nstep
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,1000).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
-  ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
-  if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
-  ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
-  ! if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
+  if  ( mod(istep,1000).eq.0)                       call output2d_upd2(rank,istep)
 
   noutput = 100
   if (rank.eq.0) then
@@ -131,8 +134,7 @@ enddo
 call cpu_time(finish)
 
 print '("Time = ",f6.3," seconds.")',finish-start
-! call inflow_output_upd(rank)
-! call output2d_upd(rank,istep)
+call output2d_upd2(rank,istep)
 call mpi_finalize(ierr)
 stop
 end
@@ -153,14 +155,9 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
-
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
-
-  ! mut=0
   mue = mu + mut
-
-  
 end 
 
 

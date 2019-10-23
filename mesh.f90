@@ -21,7 +21,7 @@ subroutine mkgrid(i1,k1,imax,kmax,LOD, Re,px,rank, systemSolve)
   real*8  pii,y,y1,y2,fA,fB,fC,fact,gridSize
   integer i,k
   !GRID
-  allocate( Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
+  allocate(Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
   allocate(z1(0:k1),z2(0:k1))
   allocate(wallDist(1:imax))
   
@@ -62,8 +62,7 @@ subroutine mkgrid(i1,k1,imax,kmax,LOD, Re,px,rank, systemSolve)
     stop
   endif
 
-      
-
+    
   do i = 1,imax
     fact = (i-0.)/(imax-0.)
     ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
