@@ -2,16 +2,16 @@ module mod_param
   implicit none
   public
 
-  integer   i,k,imax,kmax,i1,k1,iwork,isave,px,nTab,LoD
+  integer   i,k,imax,kmax,i1,k1,iwork,isave,px,nTab, kelem
   integer   EOSmode,periodic,kmaxper,k1Old
   integer   nstep,K_start_heat,x_start_heat,select_init,systemSolve
   integer   turbmod,modifDiffTerm,modVF,profiling,isothermalBC,pressIsoThermal
-  real*8    Re,Pr,Qwall,CFL,Tw,dTwall
+  real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD
   real*8    ctheta,Fr_1
   real*8    alphac,alphak,alphae,alphav2
   integer   Mt,Nx,Mx,Nt 
 
-  NAMELIST /input/ CFL, systemsolve, imax, K_start_heat, x_start_heat,      &
+  NAMELIST /input/ CFL, systemsolve, imax, K_start_heat, kelem, x_start_heat,      &
                  iwork, isave, nTab, nstep, LoD, periodic, Re, Pr, Qwall, &
                  isothermalBC, Tw, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &

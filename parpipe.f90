@@ -36,7 +36,8 @@ call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
 !domain integers
-kmax    = 200/px
+
+kmax    = kelem/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
 k1old   = k1
@@ -46,7 +47,7 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
-allocate(Win(0:i1),kin(0:i1),ein(0:i1),ekmtin(0:i1),v2in(0:i1),omIn(0:i1),nuSAin(0:i1))
+allocate(Win(0:i1),kin(0:i1),ekmtin(0:i1))
 call initMem()
 
 
@@ -75,43 +76,11 @@ call mkgrid(rank)
 dtmax = 1.e-3
 dt = dtmax
 istart = 1
-if (select_init < 2) then
-  call fkdat(rank)
-  istart=1
-else
-  ! call loadRestart(istart,rank)
-  istart = istart+1
-endif
 
-!periodic=1, turb flow generator,periodic=2, heated pipe
-if (periodic.ne.1) then
-  if (turbmod.eq.0) open(29,file=  'channel/Inflow_lam_00360.dat',form='unformatted')
-  if (turbmod.eq.1) open(29,file = 'channel/Inflow_SA_00360.dat',form='unformatted')
-  if (turbmod.eq.2) open(29,file = 'channel/Inflow_MK_00360.dat',form='unformatted')
-  if (turbmod.eq.3) open(29,file = 'channel/Inflow_VF_00360.dat',form='unformatted')
-  if (turbmod.eq.4) open(29,file = 'channel/Inflow_SST_00360.dat',form='unformatted')
-  read(29) Win(:),kin(:),ein(:),v2in(:),omIn(:),nuSAin(:),ekmtin(:),Pk(:,0)
-  close(29)
-endif
-
-call turb_model%init_w_inflow(Re, systemsolve)
-
+!initialize solution 
+call initialize_solution(rank,wnew, unew, ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
 call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
 
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! tempWall = 1.0
-! if (isothermalBC.eq.1) then
-!   tempWall = min(max(tempWall, (temp(imax,kmax)+temp(i1,kmax))*0.5),Tw)
-!   call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
-!   if (Qwall.ne.0) then
-!     if (rank.eq.0) print '("Isothermal BC, Qwall should be 0  but it is ",f6.3,"... stopping")',Qwall
-!     stop
-!   else
-!     if (rank.eq.0) print*,"*************SOLVING AN ISOTHERMAL WALL*************!"
-!   endif
-!   if (rank.eq.0) print '("temperature at the wall = ",f6.3," .")',tempWall
-! endif
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ss
 
 call bound_c(Tw, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
@@ -139,19 +108,10 @@ do istep=istart,nstep
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,rank)
 
-  ! !ramping isothermal wall temperature
-  ! if (mod(istep,2000).eq.0) then
-  !   if (isothermalBC.eq.1 .AND.  tempWall.lt.Tw) then
-  !     tempWall = min(tempWall+dTwall, Tw)
-  !     call funcIsothermalEnthBC_upd(tempWall) ! calc. enthalpy at the wall (isothermal BC)
-  !     if (rank.eq.0) print '("temperature at the wall ramped! = ",f6.3," .")',tempWall
-  !   endif
-  ! endif
-
   if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-  if  (mod(istep,1000).eq.0)                      call inflow_output_upd(rank)
+  if  ((mod(istep,1000).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
   ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
   if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
   ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
@@ -194,9 +154,14 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
+
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
+
+  ! mut=0
   mue = mu + mut
+
+  
 end 
 
 
@@ -769,70 +734,52 @@ end
 !!           fkdat(rank)
 !!
 !!*************************************************************************************
-subroutine fkdat(rank)
-  use mod_param
-  use mod_common
+
+subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
+  ! use mod_param
+  ! use mod_common
+  use mod_common2
   implicit none
-
-  integer rank
-  real*8 yplus,t1,t2,t3,in,chl,ran,Wvel,delta,gridSize
+  integer,                        intent(IN) :: rank, systemsolve, i1,k1, select_init
+  real(8),                        intent(IN) :: dpdz, Re
+  real(8), dimension(0:i1),       intent(IN) :: y_cv, y_fa
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: w, u, mut
+  real(8), dimension(0:i1),       intent(OUT):: win, mutin
   real(8), dimension(0:i1) :: dummy
-  character*5 inflow
-
-  delta=0.5
-  t1=3.5
-  t2=5.
-  t3=360.00
-  Unew =0.
-  Uold =0.
-  Cnew =0.
-
-  gridSize = y_fa(imax)
-  rold =1.
-  rnew =1.
-
-
+  character(len=5)  :: Re_str
+  character(len=7)  :: case
+  integer           :: Re_int, i,k, imax
+  real(8)           :: gridSize
+    
+  imax = i1-1
+  ! inialize from inflow profile=
   if (select_init.eq.1) then
-    !initialized from inflow
-    if (rank.eq.0)  write(*,*) 'Initializing flow with inflow = ', select_init
-
+    if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
+    if (systemsolve .eq. 1) case = "pipe"
+    if (systemsolve .eq. 2) case = "channel"
+    if (systemsolve .eq. 3) case = "bl"
+    Re_int = int(Re)
+    write(Re_str,'(I5.5)') Re_int
+    open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_'//Re_str//'.dat',form='unformatted')
+    read(29) win(:),dummy,dummy,dummy,dummy,dummy,mutin(:),dummy
+    close(29)
     do k=0,k1
-      if (turbmod.eq.0) open(29,file=  'channel/Inflow_lam_00360.dat',form='unformatted')
-      if (turbmod.eq.1) open(29,file = 'channel/Inflow_SA_00360.dat',form='unformatted')
-      if (turbmod.eq.2) open(29,file = 'channel/Inflow_MK_00360.dat',form='unformatted')
-      if (turbmod.eq.3) open(29,file = 'channel/Inflow_VF_00360.dat',form='unformatted')
-      if (turbmod.eq.4) open(29,file = 'channel/Inflow_SST_00360.dat',form='unformatted')
-      read(29) Wnew(:,k),dummy,dummy,dummy,dummy,dummy,ekmt(:,k),dummy
-      close(29)
+      w(:,k)  = win(:)
+      mut(:,k)= mutin(:)
     enddo
+    call turb_model%init_w_inflow(Re, systemsolve)
+
+  !initialize with laminar analytical solution
   else
-    !initialized from scratch values
-    if (rank.eq.0)  write(*,*) 'Initializing flow from scratch = ', select_init
-
-    do i=1,imax
-                            
-      if (numDomain.eq.-1) then
-        if (centerBC.eq.-1) then     ! channel
-          Wnew(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))
-        elseif (centerBC.eq.1) then ! boundary layer
-          Wnew(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i)))
-        endif
-      else                           ! pipe
-        Wnew(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)
-      endif
-      ! TODO: BoundaryLayer: Analytical solution?
-
-      ! knew(i,:)  = 0.1
-      ! enew(i,:)  = 1.0
-      ! omnew(i,:) = 0.001
-      ! v2new(i,:) = 2./3.*knew(i,:)
-      ! nuSAnew(i,:) = 0.001
+    if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
+    gridSize = y_fa(imax)
+    do i=1,imax         
+      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
+      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              ! channel
+      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) ! bl
     enddo
   endif
-
-
-end
-      
+end subroutine initialize_solution
 
 
 !>*************************************************************************************

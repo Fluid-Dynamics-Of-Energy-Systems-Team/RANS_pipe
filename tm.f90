@@ -225,9 +225,9 @@ subroutine set_mut_laminar(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
         tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,k)+w(this%imax,k))/walldist(this%imax)
         do i=1,this%imax
           this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
-          mut(i,k) = 0
         enddo
       enddo
+      mut = 0
 end subroutine set_mut_laminar
 
 subroutine advance_laminar(this,u,w,rho,mu,mui,muk,mut,beta,temp,&

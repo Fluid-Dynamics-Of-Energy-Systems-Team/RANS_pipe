@@ -393,34 +393,53 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
 
   kb = 1
   ke = this%k1-1
-
-  do k=kb,ke
-    kp=k+1
-    km=k-1
-    do i=ib,ie
-      ip=i+1
-      im=i-1
-              
-      shatSA = this%Pk(i,k)/(cb1*nuSA(i,k))
-      ! destruction term in SA model
-      r_SA         = min(nuSA(i,k)/(kappa_2*(walldist(i)**2.0)*shatSA), 10.0)
-      g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
-      fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
-      ! gustavo: i think this is not correct
-      !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
-      dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
-      if ((modification == 1) .or. (modification == 2)) then
-      ! source term
-      ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-        putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
-          (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-          +(((nuSA(i,kp)*(rho(i,kp)**0.5)) - (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
-      else
-        putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
-          ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dz))**2.0  )
-      endif
+  if ((modification == 1) .or. (modification == 2)) then
+    do k=kb,ke
+      kp=k+1
+      km=k-1
+      do i=ib,ie
+        ip=i+1
+        im=i-1
+                
+        shatSA = this%Pk(i,k)/(cb1*nuSA(i,k))
+        ! destruction term in SA model
+        r_SA         = min(nuSA(i,k)/(kappa_2*(walldist(i)**2.0)*shatSA), 10.0)
+        g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+        fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+        ! gustavo: i think this is not correct
+        !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
+        dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
+        ! source term
+        ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
+            (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
+            +(((nuSA(i,kp)*(rho(i,kp)**0.5)) - (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+      enddo
     enddo
-  enddo
+  else
+        do k=kb,ke
+      kp=k+1
+      km=k-1
+      do i=ib,ie
+        ip=i+1
+        im=i-1
+
+        shatSA = this%Pk(i,k)/(cb1*nuSA(i,k))
+        ! destruction term in SA model
+        r_SA         = min(nuSA(i,k)/(kappa_2*(walldist(i)**2.0)*shatSA), 10.0)
+        g_SA         = r_SA + cw2*((r_SA**6.0) - r_SA)
+        fw_SA        = g_SA*(((1.0 + cw3_6)/(g_SA**6.0 + cw3_6))**(1.0/6.0))
+        ! gustavo: i think this is not correct
+        !destrSA(i,k) = cw1/rho(i,k)*fw_SA*nuSAtmp(i,k)/(wallDist(i)**2)
+        dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
+        ! source term
+        ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
+            ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dz))**2.0  )
+      enddo
+    enddo
+
+  endif
 end subroutine rhs_SA
 
 
