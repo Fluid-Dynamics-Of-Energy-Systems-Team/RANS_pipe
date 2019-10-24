@@ -337,7 +337,7 @@ C***ROUTINES CALLED  VRFFTI
 C***END PROLOGUE  VCOSQI
       DIMENSION       WSAVE(*)
 C***FIRST EXECUTABLE STATEMENT  VCOSQI
-      PIH = 0.5*PIMACH(1.0)
+      PIH = 0.5*PIMACH()
       DT = PIH/REAL(N)
       FK = 0.
       DO 101 K=1,N
@@ -562,7 +562,7 @@ C***ROUTINES CALLED  VRFFTI
 C***END PROLOGUE  VCOSTI
       DIMENSION       WSAVE(*)
 C***FIRST EXECUTABLE STATEMENT  VCOSTI
-      PI = PIMACH(1.0)
+      PI = PIMACH()
       IF (N .LE. 3) RETURN
       NM1 = N-1
       NP1 = N+1
@@ -624,7 +624,7 @@ C     VRFFTPK, VERSION 1, AUGUST 1985
 C
       DIMENSION  CC(MDIMC,IDO,3,L1)    ,CH(MDIMC,IDO,L1,3),
      1                WA1(IDO)   ,WA2(IDO)
-      ARG=2.*PIMACH(1.0)/3.
+      ARG=2.*PIMACH()/3.
       TAUR=COS(ARG)
       TAUI=SIN(ARG)
       DO 101 K=1,L1
@@ -746,7 +746,7 @@ C     VRFFTPK, VERSION 1, AUGUST 1985
 C
       DIMENSION  CC(MDIMC,IDO,5,L1)    ,CH(MDIMC,IDO,L1,5),
      1             WA1(IDO)     ,WA2(IDO)     ,WA3(IDO)     ,WA4(IDO)
-      ARG=2.*PIMACH(1.0)/5.
+      ARG=2.*PIMACH()/5.
       TR11=COS(ARG)
       TI11=SIN(ARG)
       TR12=COS(2.*ARG)
@@ -858,7 +858,7 @@ C
       DIMENSION    CH(MDIMC,IDO,L1,IP)    ,CC(MDIMC,IDO,IP,L1) ,
      1           C1(MDIMC,IDO,L1,IP)     ,C2(MDIMC,IDL1,IP),
      2                CH2(MDIMC,IDL1,IP)       ,WA(IDO)
-      TPI=2.*PIMACH(1.0)
+      TPI=2.*PIMACH()
       ARG = TPI/FLOAT(IP)
       DCP = COS(ARG)
       DSP = SIN(ARG)
@@ -1092,7 +1092,7 @@ C     VRFFTPK, VERSION 1, AUGUST 1985
 C
       DIMENSION   CH(MDIMC,IDO,3,L1)  ,CC(MDIMC,IDO,L1,3)     ,
      1                WA1(IDO)     ,WA2(IDO)
-      ARG=2.*PIMACH(1.0)/3.
+      ARG=2.*PIMACH()/3.
       TAUR=COS(ARG)
       TAUI=SIN(ARG)
       DO 101 K=1,L1
@@ -1220,7 +1220,7 @@ C     VRFFTPK, VERSION 1, AUGUST 1985
 C
       DIMENSION  CC(MDIMC,IDO,L1,5)    ,CH(MDIMC,IDO,5,L1)     ,
      1           WA1(IDO)     ,WA2(IDO)     ,WA3(IDO)     ,WA4(IDO)
-      ARG=2.*PIMACH(1.0)/5.
+      ARG=2.*PIMACH()/5.
       TR11=COS(ARG)
       TI11=SIN(ARG)
       TR12=COS(2.*ARG)
@@ -1338,7 +1338,7 @@ C
       DIMENSION     CH(MDIMC,IDO,L1,IP)   ,CC(MDIMC,IDO,IP,L1)  ,
      1            C1(MDIMC,IDO,L1,IP)    ,C2(MDIMC,IDL1,IP),
      2                CH2(MDIMC,IDL1,IP)           ,WA(IDO)
-      TPI=2.*PIMACH(1.0)
+      TPI=2.*PIMACH()
       ARG = TPI/FLOAT(IP)
       DCP = COS(ARG)
       DSP = SIN(ARG)
@@ -2106,7 +2106,7 @@ C
   107 IF (NL .NE. 1) GO TO 104
       FAC(1) = N
       FAC(2) = NF
-      TPI = 2.*PIMACH(1.0)
+      TPI = 2.*PIMACH()
       ARGH = TPI/FLOAT(N)
       IS = 0
       NFM1 = NF-1
@@ -2578,7 +2578,7 @@ C***ROUTINES CALLED  VRFFTI
 C***END PROLOGUE  VSINTI
       DIMENSION       WSAVE(*)
 C***FIRST EXECUTABLE STATEMENT  SINTI
-      PI = PIMACH(1.0)
+      PI = PIMACH()
       IF (N .LE. 1) RETURN
       NP1 = N+1
       NS2 = N/2
