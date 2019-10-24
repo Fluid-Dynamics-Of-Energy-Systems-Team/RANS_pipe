@@ -6,7 +6,7 @@ RM = rm -f
 
 
 PROGRAM = run 
-OBJS    = param.o math.o  tm.o tm_ke.o tm_mk.o tm_vf.o tm_sa.o tm_sst.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o main.o
+OBJS    = param.o math.o tm.o eosmodels.o mesh.o  tm_ke.o tm_mk.o tm_vf.o tm_sa.o tm_sst.o   common.o numerics.o  fileio.o mpistuff.o vfft.o main.o
 
 all: $(PROGRAM)
 
@@ -27,10 +27,10 @@ tm_sa.o: tm_sa.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c tm_sa.f90
 tm.o: tm.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c tm.f90
+mesh.o: mesh.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c mesh.f90
 eosmodels.o: eosmodels.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c eosmodels.f90
-common_module.o: common_module.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c common_module.f90
 numerics.o: numerics.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c numerics.f90
 fileio.o: fileio.f90 param.f90 makefile

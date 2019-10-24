@@ -279,6 +279,9 @@ SUBROUTINE SOLVEhelm(rhs,Ru,Rp,dRu,dRp,dz,rank,hterm,centerBC)
   return
 end
 
+!*******************************************************************
+!    Matrix inversion
+!*******************************************************************
 subroutine matrixIdir(imax,A,B,C,RHS)
   implicit none
   integer imax,i

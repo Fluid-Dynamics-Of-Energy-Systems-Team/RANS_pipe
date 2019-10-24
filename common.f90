@@ -1,27 +1,19 @@
 module mod_common
+  use mod_turbmodels
+  use mod_eosmodels
   implicit none
 
   public
 
-  integer istep,nsteps,inlet,centerBC,numDomain
-  real(8) pi
+
+  integer istep,nsteps,inlet
 
 
-  !***************TURBULENCE
+
   
-  !***************GRID
-  real(8) dz,dpdz
-  !0:i1
-  real(8), dimension(:), allocatable :: Ru,Rp,y_fa,y_cv,dru,drp
-  !0:k1
-  real(8),  dimension(:), allocatable :: z1,z2
-  !1:imax
-  real(8),  dimension(:), allocatable :: wallDist
-
   !***************STATE PROPERTIES
   !0:i1,0:k1 
   real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk
-  real(8) enth_wall
   real(8) dt,dtmax
   
   !***************EQUATION VARIABLES
@@ -51,11 +43,6 @@ contains
   subroutine initMem()
     use mod_param
     implicit none
-
-    !GRID
-    allocate( Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
-    allocate(z1(0:k1),z2(0:k1))
-    allocate(wallDist(1:imax))
     !STATE VARIABLES
     allocate(ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),temp(0:i1,0:k1),  &
              peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &

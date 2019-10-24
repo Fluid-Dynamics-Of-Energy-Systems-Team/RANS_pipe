@@ -22,7 +22,6 @@ module mod_turbmodels
     procedure(init_w_inflow_tm), deferred :: init_w_inflow
     procedure(get_sol_tm), deferred :: get_sol
     procedure :: set_mut_bc
-
   end type TurbModel
 
   interface
@@ -85,6 +84,7 @@ module mod_turbmodels
 
   end interface
 
+class(TurbModel), allocatable :: turb_model
 !****************************************************************************************
 
   !************************!

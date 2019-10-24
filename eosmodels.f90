@@ -5,7 +5,7 @@ module mod_eosmodels
   !************************!
   !     Abstract class     !
   !************************!
-  
+
   type, abstract, public :: EOSModel
   real(8) Re, Pr
   contains
@@ -35,7 +35,9 @@ module mod_eosmodels
     end subroutine set_w_temp
   end interface
 
+class(EOSModel),  allocatable :: eos_model
 !****************************************************************************************
+
 
   !************************!
   !     Ideal Gas class    !

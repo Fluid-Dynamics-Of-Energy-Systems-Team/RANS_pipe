@@ -4,9 +4,9 @@ module mod_param
 
   integer   i,k,imax,kmax,i1,k1,iwork,isave,px,nTab, kelem
   integer   EOSmode,periodic,kmaxper,k1Old
-  integer   nstep,K_start_heat,x_start_heat,select_init,systemSolve
+  integer   nstep,K_start_heat,select_init,systemSolve
   integer   turbmod,modifDiffTerm,modVF,profiling,isothermalBC,pressIsoThermal
-  real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD
+  real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD,x_start_heat
   real*8    ctheta,Fr_1
   real*8    alphac,alphak,alphae,alphav2
   integer   Mt,Nx,Mx,Nt 

@@ -4,6 +4,7 @@
 !!********************************************************************
 subroutine funcNewtonSolve_upd(enth_i1, enth_imax)
   use mod_param
+  use mod_mesh
   implicit none
   real*8 enth_i1, enth_imax
   if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
@@ -13,6 +14,7 @@ end
 subroutine funcNewtonSolveIG(enth_i1, enth_imax)
 use mod_param
 use mod_common
+use mod_mesh
 implicit none
 
 real*8 enth_i1, enth_imax, ekh_imax
@@ -58,13 +60,13 @@ subroutine funcNewtonSolveRG_upd(enth_i1, enth_imax)
   endif
 end
 
-!>********************************************************************
+!!********************************************************************
 !!     function for wall boundary condition used by Newton solver
 !!********************************************************************
 subroutine funcNewtonBC_upd(enth, enthIMAX, fxValue)
   use mod_param
+  use mod_mesh
   use mod_common
-  use mod_common2
   implicit none
   real*8 enth,lamOcpinter,enthIMAX,fxValue
   call eos_model%set_w_enth(0.5*(enth+enthIMAX), 'L', lamocpinter)
@@ -72,14 +74,13 @@ subroutine funcNewtonBC_upd(enth, enthIMAX, fxValue)
   fxValue = enth - enthIMAX - dRp(imax)*Qwall/lamocpinter 
 end
 
-!>********************************************************************
+!!********************************************************************
 !!     Updates the thermodynamic properties
 !!********************************************************************
-subroutine state_upd(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be,rank)
+subroutine state_upd(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be)
   use mod_param
-  use mod_common2
+  use mod_eosmodels
   implicit none
-  integer,                        intent(IN) :: rank
   real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
                                                 lam,lami,lamk,cp,cpk,cpi,tp,be
   real(8) :: enthface
@@ -113,12 +114,13 @@ end subroutine state_upd
 
 
 
-!>********************************************************************
+!!********************************************************************
 !!     poisson solver
 !!********************************************************************
 subroutine fillps(rank)
   use mod_param
   use mod_common
+  use mod_mesh
   implicit none
 
   include 'mpif.h'
@@ -149,19 +151,13 @@ subroutine fillps(rank)
 
 end
 
-
-
-
-
-
-
-
-!>********************************************************************
+!!********************************************************************
 !!     correc
 !!********************************************************************
 subroutine correc(rank,setold)
   use mod_param
   use mod_common
+  use mod_mesh
   implicit none
       
   integer rank,setold
@@ -212,21 +208,17 @@ subroutine correc(rank,setold)
 
   endif
 
-
   rold = rnew
-
 
 end
 
-
-
-
-!>********************************************************************
+!!********************************************************************
 !!     chkdt
 !!********************************************************************
 subroutine chkdt(rank,istap)
   use mod_param
   use mod_common
+  use mod_mesh
   implicit none
       
       include 'mpif.h'
@@ -250,15 +242,13 @@ subroutine chkdt(rank,istap)
 
 end
 
-
-
-
-!>********************************************************************
+!!********************************************************************
 !!     chkdiv
 !!********************************************************************
 subroutine chkdiv(rank)
   use mod_param
   use mod_common
+  use mod_mesh
   implicit none
       
       include 'mpif.h'
@@ -280,7 +270,7 @@ subroutine chkdiv(rank)
         (Wnew(i,k)*rhokp-Wnew(i,k-1)*rhokm)*dru(i)+ &
         (rNew(i,k)-rold(i,k))/dt*dru(i)*dz
 
-      !     if (abs(div).gt.10e-6) write(6,*) i,k+kmax*rank,div
+        ! if (abs(div).gt.10e-10) write(6,*) i,k+kmax*rank,div
 
       divbar = divbar+div
       div    = abs(div)
@@ -291,7 +281,6 @@ subroutine chkdiv(rank)
   call mpi_allreduce(divbar,divbar_tot,1,mpi_real8,mpi_max,mpi_comm_world,ierr)
   call mpi_allreduce(divmax,divmax_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 
-
 !     if (rank.eq.0) write(6,100) divbar_tot,divmax_tot
 ! 100  format('Mass_loss/gain:Tot= ',e15.4,' Max= ',e15.4)
 
@@ -301,124 +290,7 @@ end
 
 
 
-
-!>********************************************************************
-!!     mkgrid
 !!********************************************************************
-subroutine mkgrid(rank)
-  use mod_param
-  use mod_common
-  implicit none
-  
-  integer rank
-  real*8  delta(imax),Yplus,X,rmax,drr,Rei
-  real*8  pii,y,y1,y2,fA,fB,fC,fact,gridSize
-
-  !     const = 0.25
-  !      const = 0.65
-  !     const = 0.50
-  !******************************************************************
-  pi    = 4.0*atan(1.0)
-  Rei   = 1.0/Re
-  dz    = 1.0*LoD/(kmax*px)
-  ru(0) = 0
-
-  fA = 0.12
-  fB = 2.4
-  if (systemSolve.eq.1) then
-    numDomain = 1
-    centerBC  = 1
-    gridSize = 0.5
-    dpdz =4.0
-    if (rank.eq.0) print*,"************* SOLVING A PIPE FLOW *************!"
-    write(*,*) centerBC
-  elseif (systemSolve.eq.2) then
-    numDomain = -1
-    centerBC  = -1
-    gridSize  = 2.0
-    fA = 0.5
-    fB = 4.6
-    dpdz= 1.0
-    if (rank.eq.0) print*,"************* SOLVING A CHANNEL FLOW *************!"
-  elseif (systemSolve.eq.3) then
-    numDomain = -1
-    centerBC  = 1
-    gridSize = 1.0
-    dpdz= 1.0
-    if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
-  else
-    if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")',systemSolve
-    stop
-  endif
-
-      
-
-  do i = 1,imax
-    fact = (i-0.)/(imax-0.)
-    ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
-    ru(i) = ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
-    delta(i)=0.5*(ru(i)-ru(i-1))
-  enddo
-
-  do i=0,imax
-    ru(i)=ru(i)/ru(imax)*gridSize
-  enddo
-
-  do i = 1 , imax
-    Rp(i)  = (Ru(i)+Ru(i-1))/2.0
-    dru(i) = (Ru(i)-Ru(i-1))
-  enddo
-
-  dru(i1) = dru(imax)
-  Ru(i1) = Ru(imax) + dru(i1)
-  Rp(i1) = Ru(imax) + dru(i1)/2.0
-  dru(0)  = dru(1)
-  Rp(0)  = Ru(0) - dru(0)/2.0
-
-  do i = 0,imax
-    drp(i) = Rp(i+1) - Rp(i)
-  enddo
-
-  if (centerBC.eq.-1) then ! two walls
-    do i = 1,imax
-      if (rp(i).le.1) then
-        wallDist(i) = rp(i)
-      else
-        wallDist(i) = gridSize-rp(i)
-      endif
-    enddo
-  else ! one wall
-    do i = 1,imax
-      wallDist(i) = gridSize - rp(i)
-    enddo
-  endif
-  do i=0,i1
-    y_cv(i)=rp(i)
-    y_fa(i)=ru(i)
-  enddo
-
-  if (numDomain.eq.-1) then
-    do i=0,i1
-      ru(i)=1.0
-      rp(i)=1.0
-    enddo
-  endif
-
-  if (rank.eq.0) then
-    open(11,file = 'grid.txt')
-    write(11,*) Re, imax
-    do i=1,imax
-      Yplus = wallDist(i)*Re
-      write(11,'(i5,4F12.6)') i,yplus,y_fa(i),y_cv(i),delta(max(1,i))
-    enddo
-    close(11)
-  endif
-  return
-end
-
-
-
-!>********************************************************************
 !!     readOldGrid
 !!********************************************************************
 subroutine readOldGrid(rank)
@@ -439,7 +311,7 @@ subroutine readOldGrid(rank)
 end
 
 
-!>********************************************************************
+!!********************************************************************
 !!     diffusion term in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
@@ -485,11 +357,8 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
   endif
 end
 
-
-
-
      
-!>*****************************************************************
+!!*****************************************************************
 !!     
 !!     diffu calculates the diffusion of u-velocity, which is
 !!     the velocity in the radial direction.
@@ -611,9 +480,7 @@ subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
 end
 
 
-
-
-!>*****************************************************************
+!!*****************************************************************
 !!     
 !!     diffw calculates the diffusion of w-velocity, which is
 !!     the velocity in the axial direction.
@@ -716,10 +583,7 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
 end
 
 
-
-
-    
-!>********************************************************************
+!!********************************************************************
 !!     
 !!     advecc calculates the advection for a scalar variable, which is
 !!     situated in the center point of the grid cell.
@@ -883,7 +747,7 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
 end
 
 
-!>********************************************************************
+!!********************************************************************
 !!     
 !!     advecu calculates the advection of the u-velocity, which is
 !!     the velocity in the radial direction.
@@ -960,7 +824,7 @@ end
 
 
 
-!>********************************************************************
+!!********************************************************************
 !!     
 !!     advecw calculates the advection of the w-velocity, which is
 !!     the velocity in the axial direction.

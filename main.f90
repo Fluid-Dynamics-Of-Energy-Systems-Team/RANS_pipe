@@ -7,9 +7,9 @@
 
 use mod_param
 use mod_math
+use mod_mesh
 use mod_common
 use mod_eosmodels
-use mod_common2
 use mod_turbmodels
 use sa_tm
 use sst_tm
@@ -78,16 +78,14 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew, unew, cnew,ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
-
-call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank);
-
-
-call bound_c(Tw, Qwall,rank)
+call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
+call bound_c(cnew, Tw, Qwall, dz, centerBC,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank) ! necessary to call it twice
+call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
+
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-call bound_v(Unew,Wnew,Win,rank)
+call bound_v(Unew,Wnew,Win,centerBC,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
 
@@ -98,17 +96,17 @@ do istep=istart,nstep
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                                Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
                                modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  call bound_c(Tw, Qwall,rank)
+  call bound_c(Cnew, Tw, Qwall, dz, centerBC,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-  call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank);
+  call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
   call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
-  call bound_v(Unew,Wnew,Win,rank)
+  call bound_v(Unew,Wnew,Win,centerBC,rank)
 
-  if  (mod(istep,10) .eq. 0)      call chkdiv(rank)
+  if   (mod(istep,10) .eq. 0) call chkdiv(rank)
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,1000).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
@@ -139,7 +137,7 @@ end
 !!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
   use mod_param
-  use mod_common2  
+  use mod_common
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
   real(8), dimension(0:i1),      intent(IN) :: mutin
@@ -181,8 +179,8 @@ end
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_math
+  use mod_mesh
   use mod_common
-  use mod_common2
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
@@ -360,6 +358,7 @@ end
 subroutine advance(rank)
   use mod_param
   use mod_math
+  use mod_mesh
   use mod_common
   implicit none
       
@@ -479,124 +478,116 @@ subroutine advance(rank)
 
 end
 
-
-
-
-!<*************************************************************************************
+!!*************************************************************************************
 !!
-!!  bound_c equation
+!!  Apply the boundary conditions for the energy equation
 !!
 !!*************************************************************************************
-subroutine bound_c(Twalll, Qwalll, rank)
+subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
   use mod_param
-  use mod_common
-  use mod_common2
+  use mod_eosmodels
   implicit none
   include 'mpif.h'
-  real(8), intent(IN) :: Twalll, Qwalll
-  integer, intent(IN) :: rank
-
-  real*8 tmpShift(0:i1)
-  real(8)             :: enth_walll  
+  real(8),                       intent(IN) :: Twall, Qwalll,dz
+  integer,                       intent(IN) :: centerBC, rank
+  real(8), dimension(0:i1,0:k1), intent(OUT):: c
+  real(8), dimension(0:i1) :: tmp
+  real(8)                  :: enth_wall  
   
-  ! ISOTHERMAL
+  !isothermal
   if (isothermalBC.eq.1) then
-    call eos_model%set_w_temp(Twalll, "H", enth_walll)
-    !pipe/bl
-    ! if (centerBC.eq.1) then
+    call eos_model%set_w_temp(Twall, "H", enth_wall)
     do k=0,k1
       if ((k+rank*kmax)*dz.lt.x_start_heat) then
-        cnew(i1,k) = cnew(imax,k)
+        c(i1,k) = c(imax,k)
       else
-        cnew(i1,k) = 2.0*enth_walll - cnew(imax,k)
-        if (centerBC.eq.-1) cnew(0,k) = 2.0*enth_walll - cnew(1,k) !channel
+        if (centerBC.eq.-1) c(0,k) =  2.0*enth_wall - c(1,k)    !channel
+                            c(i1,k) = 2.0*enth_wall - c(imax,k) !pipe/bl
       endif
     enddo
-    !channel (TODO!!!)
-    ! else
-    !   if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
-    !   stop
-    ! endif
-  ! ISOFLUX
+
+  !isoflux
   else
     do k=0,k1
       if (rank.eq.0.and.k.lt.K_start_heat) then
-        cnew(i1,k) = cnew(imax,k)
+        c(i1,k) = c(imax,k)
       else
-        call funcNewtonSolve_upd(cnew(i1,k), cnew(imax,k)) !pipe/bl
-        if (centerBC.eq.-1) call funcNewtonSolve_upd(cnew(0,k), cnew(1,k)) !channel
+        if (centerBC.eq.-1) call funcNewtonSolve_upd(c(0,k), c(1,k))     !channel
+                            call funcNewtonSolve_upd(c(i1,k), c(imax,k)) !pipe/bl
       endif
     enddo
   endif
 
+  !pipe/bl
   if (centerBC.eq.1) then     
-    !center line BC
-    cnew(0,:)    = cnew(1,:)
+    c(0,:)    = c(1,:)
   endif
-  call shiftf(cnew,   tmpShift,rank);       cnew(:,0) = tmpShift(:);
-  call shiftb(cnew,   tmpShift,rank);      cnew(:,k1) = tmpShift(:);
+
+  call shiftf(c,   tmp,rank);       c(:,0) = tmp(:);
+  call shiftb(c,   tmp,rank);      c(:,k1) = tmp(:);
+
+  !developing 
   if (periodic.eq.1) return
   if (rank.eq.0) then
-    cnew(:,0) = 0.0
+    c(:,0) = 0.0
   endif
   if (rank.eq.px-1) then
-    cnew(:,k1) = 2.0*   cnew(:,kmax) -    cnew(:,kmax-1)
+    c(:,k1) = 2.0*   c(:,kmax) -    c(:,kmax-1)
   endif  
-end
+end subroutine bound_c
 
-!>*************************************************************************************
-!!      bound_v(Ubound,Wbound,Win,rank)
+!!*************************************************************************************
+!!
+!!  Apply the boundary conditions for the velocity
 !!
 !!*************************************************************************************
-subroutine bound_v(Ubound,Wbound,W_in,rank)
-
+subroutine bound_v(u,w,win,centerBC,rank)
   use mod_param
-  use mod_common
   implicit none  
   include 'mpif.h'
-
-  integer rank
-  real*8 Ubound(0:i1,0:k1), Wbound(0:i1,0:k1)
-  real*8 tmp(0:i1),W_in(0:i1)
+  integer,                       intent(IN) :: centerBC, rank
+  real(8), dimension(0:i1),      intent(IN) :: win
+  real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
+  real(8), dimension(0:i1)                  :: tmp
 
   ! channel
   if (centerBC.eq.-1) then 
     do k=0,k1
-      Ubound(1,k)    =   0.0
-      Ubound(0,k)    = - Ubound(2,k)
-      Ubound(imax,k) =   0.0
-      Ubound(i1,k)   = - Ubound(imax-1,k)
-      Wbound(0,k)   = - Wbound(1,k)
-      Wbound(i1,k)  = - Wbound(imax,k)
+      u(1,k)    =   0.0
+      u(0,k)    = - u(2,k)
+      u(imax,k) =   0.0
+      u(i1,k)   = - u(imax-1,k)
+      w(0,k)    = - w(1,k)
+      w(i1,k)   = - w(imax,k)
     enddo
   !pipe/BL
   else
     do k=0,k1
-      Ubound(0,k)    =   Ubound(1,k)
-      Ubound(imax,k) =   0.0
-      Ubound(i1,k)   = - Ubound(imax-1,k)
-      Wbound(0,k)   =   Wbound(1,k)
-      Wbound(i1,k)  = - Wbound(imax,k)
+      u(0,k)    =   u(1,k)
+      u(imax,k) =   0.0
+      u(i1,k)   = - u(imax-1,k)
+      w(0,k)    =   w(1,k)
+      w(i1,k)   = - w(imax,k)
     enddo
   endif
 
-  call shiftf(Ubound,tmp,rank);     Ubound(:,0)  = tmp(:);
-  call shiftf(Wbound,tmp,rank);     Wbound(:,0)  = tmp(:);
-  call shiftb(Ubound,tmp,rank);     Ubound(:,k1) = tmp(:);
-  call shiftb(Wbound,tmp,rank);     Wbound(:,k1) = tmp(:);
+  call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
+  call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
+  call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
+  call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
+  if (periodic.eq. 1) return
 
   !developing
-  if (periodic.eq. 1) return
   if (rank.eq.0) then
-    Ubound(:,0) = 0.0
-    Wbound(:,0) = W_in(:)
+    u(:,0) = 0.0
+    w(:,0) = win(:)
   endif
   if (rank.eq.px-1)then
-    ubound(:,k1) = 2.*ubound(:,kmax)-ubound(:,kmax-1)
-    wbound(:,k1) = 2.*wbound(:,kmax)-wbound(:,kmax-1)
+    u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
+    w(:,k1) = 2.*w(:,kmax)-w(:,kmax-1)
   endif
+end subroutine bound_v
 
-end
 
 
 
@@ -615,6 +606,7 @@ end
 !!*************************************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none
 
@@ -744,20 +736,18 @@ end
 
 !>*************************************************************************************
 !!
-!!           fkdat(rank)
+!!           initialize the solution
 !!
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
-  ! use mod_param
-  ! use mod_common
-  use mod_common2
+  use mod_turbmodels
   implicit none
-  integer,                        intent(IN) :: rank, systemsolve, i1,k1, select_init
-  real(8),                        intent(IN) :: dpdz, Re
-  real(8), dimension(0:i1),       intent(IN) :: y_cv, y_fa
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: w, u, c,mut
-  real(8), dimension(0:i1),       intent(OUT):: win, mutin
+  integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
+  real(8),                        intent(IN) :: dpdz,Re
+  real(8), dimension(0:i1),       intent(IN) :: y_cv,y_fa
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut
+  real(8), dimension(0:i1),       intent(OUT):: win,mutin
   real(8), dimension(0:i1) :: dummy
   character(len=5)  :: Re_str
   character(len=7)  :: case
@@ -789,8 +779,8 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
     gridSize = y_fa(imax)
     do i=1,imax         
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
-      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              ! channel
-      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) ! bl
+      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
+      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
     enddo
   endif
 end subroutine initialize_solution
@@ -802,6 +792,7 @@ end subroutine initialize_solution
 !!*************************************************************************************
 subroutine cmpinf(Bulk,Stress)
   use mod_param
+  use mod_mesh
   use mod_common
   implicit none
      
