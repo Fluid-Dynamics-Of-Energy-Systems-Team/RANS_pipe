@@ -1,34 +1,10 @@
 # Created by https://www.gitignore.io/api/c++,eclipse
 notebooks/.*
+run
 ### C++ ###
 # Prerequisites
-Gambit/*
-Results/*
-Results_dTdx_dHdx/*
-forced_real_VF
 *.eps
 *.d
-/0/profX*
-/0/plot.lay
-/0/tecp*
-/LS/profX*
-/LS/tecp*
-/SA/profX*
-/SA/tecp*
-/SA/heat*
-/SA/Restart/*
-/OM/profX*
-/OM/tecp*
-/OM/heat*
-/OM/Restart/*
-/MK/profX*
-/MK/tecp*
-/MK/heat*
-/MK/Restart*
-/VF/profX*
-/VF/tecp*
-/VF/heat*
-/VF/Restart*
 # Compiled Object files
 */*.slo
 */*.lo
