@@ -55,6 +55,14 @@ subroutine mkgrid(rank)
     fA = 0.12
     fB = 2.4
     dpdz      = 1.0
+    elseif (systemSolve.eq.4) then
+    if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
+    numDomain = -1
+    centerBC  = 1
+    gridSize  = 1.0
+    fA = 0.12
+    fB = 2.4
+    dpdz      = 1.0
   else
     if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")', systemSolve
     stop

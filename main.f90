@@ -284,10 +284,16 @@ subroutine bound_v(u,w,win,centerBC,rank)
   else
     do k=0,k1
       u(0,k)    =   u(1,k)
-      u(imax,k) =   0.0
-      u(i1,k)   = - u(imax-1,k)
       w(0,k)    =   w(1,k)
-      w(i1,k)   = - w(imax,k)
+      if (systemsolve .ne. 4) then !NOTE HERE IS SOMETHING ADJUSTED
+        u(imax,k) =   0.0
+        u(i1,k)   = - u(imax-1,k)
+        w(i1,k)   = - w(imax,k)
+      else
+        u(imax,k)=   u(imax-1,k)
+        u(i1,k)  =  u(imax,k)
+        w(i1,k)  = w(imax,k)
+      endif
     enddo
   endif
 
@@ -341,7 +347,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       Wbound(i,kmax) = 2.0*W_out(i,kmax-1) - W_out(i,kmax-2)
       Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
     enddo
-    Wbound(i1,kmax) = -Wbound(imax,kmax)
+    if (systemsolve .ne. 4) then !NOTE HERE IS CHANGED
+      Wbound(i1,kmax) = -Wbound(imax,kmax)
+    else
+      Wbound(i1,kmax) = Wbound(imax,kmax)
+    endif
     Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
   endif
 
@@ -375,7 +385,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
     do i=1,imax
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
-    Wbound(i1,kmax) = -Wbound(imax,kmax)
+    if (systemsolve .ne. 4) then !NOTE HERE IS CHANGED
+      Wbound(i1,kmax) = -Wbound(imax,kmax)   
+    else
+      Wbound(i1,kmax) = Wbound(imax,kmax)
+    endif
     Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
     ! flux = 0
     ! do i=1,imax
@@ -430,6 +444,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
+      if (systemsolve.eq.4) w  = 180.0;u=0;  win=180;!bl
     enddo
   endif
 end subroutine initialize_solution
@@ -601,6 +616,10 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     cnew = 0.0; resC=0.0;
   endif
 
+  if (systemsolve .eq.4) then !NOTE HERE IS SOMEHTING ADJUSTED
+    cnew = 0.0; resC=0.0;
+  endif    
+
 end
 
 
@@ -685,8 +704,11 @@ subroutine advance(rank)
         bu(i) = bu(i)/rhob + 1.0
         cu(i) = cu(i)/rhoc
       enddo
-
-      i = imax-1; cu(i) = 0.0
+      if (systemsolve .ne. 4) then           !NOTE: HERE THE START OF THE ASDJUSTMENT
+        i = imax-1; cu(i) = 0.0              ! wall
+      else
+        i = imax-1; bu(i) = bu(i) + cu(i)    !symmetry
+      endif
       i = 1;      bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
       
 
@@ -728,9 +750,12 @@ subroutine advance(rank)
       b(i) = b(i)/rhob + 1.0
       c(i) = c(i)/rhoc
     enddo
-
-    i=imax; b(i) = b(i) - c(i)              ! BC at wall: zero vel: subtract one c
-    i=1;    b(i) = b(i) + centerBC*a(i)     ! BC at wall: zero vel: subtract one a
+    if (systemsolve .ne. 4) then              !NOTE: HERE THE START OF THE ASDJUSTMENT
+      i=imax; b(i) = b(i) - c(i)              ! BC at wall: zero vel: subtract one c
+    else
+      i=imax; b(i) = b(i) + c(i)
+    endif
+    i=1;    b(i) = b(i) + centerBC*a(i)     ! BC at center: zero vel or symmetry 
 
     do i=1,imax
       rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
