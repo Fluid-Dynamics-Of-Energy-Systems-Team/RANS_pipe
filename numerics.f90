@@ -4,22 +4,12 @@
 !!********************************************************************
 subroutine funcNewtonSolve_upd(enth_i1, enth_imax)
   use mod_param
+  use mod_eos
   use mod_mesh
   implicit none
   real*8 enth_i1, enth_imax
-  if (EOSmode.eq.0) call funcNewtonSolveIG(enth_i1, enth_imax)
+  if (EOSmode.eq.0) call eos_model%set_enth_w_qwall(qwall, enth_imax, drp(imax), enth_i1)
   if (EOSmode.eq.1) call funcNewtonSolveRG_upd(enth_i1, enth_imax)
-end
-
-subroutine funcNewtonSolveIG(enth_i1, enth_imax)
-use mod_param
-use mod_common
-use mod_mesh
-implicit none
-
-real*8 enth_i1, enth_imax, ekh_imax
-  ekh_imax = 1./(Re*Pr)
-  enth_i1 = enth_imax + dRp(imax)*Qwall/(ekh_imax*Re*Pr) ! new
 end
 
 
@@ -49,9 +39,8 @@ subroutine funcNewtonSolveRG_upd(enth_i1, enth_imax)
       fxValue = 0.0
       success = 0
     endif
-
+    
     nIterNewton = nIterNewton + 1
-    ! write (*,*) 'newton iter: ', nIterNewton,enth_i1,enth_imax,fxValue
   enddo
 
   if (success.eq.0) then

@@ -12,6 +12,7 @@ module mod_eos
     procedure(init), deferred :: init
     procedure(set_w_enth), deferred :: set_w_enth
     procedure(set_w_temp), deferred :: set_w_temp
+    procedure(set_enth_w_qwall), deferred :: set_enth_w_qwall
   end type EOSModel
 
   interface
@@ -33,6 +34,12 @@ module mod_eos
       character(len=1), intent(IN) :: prop
       real(8), intent(OUT) :: output
     end subroutine set_w_temp
+    subroutine set_enth_w_qwall( this, qwall, enth_in, drp, enth_out )
+      import :: EOSModel
+      class(EOSModel) :: this
+      real(8), intent(IN) :: qwall, enth_in,drp
+      real(8), intent(OUT) :: enth_out
+    end subroutine set_enth_w_qwall
   end interface
 
 class(EOSModel),  allocatable :: eos_model
@@ -48,6 +55,7 @@ class(EOSModel),  allocatable :: eos_model
     procedure :: init => initialize_ig
     procedure :: set_w_enth => set_w_enth_ig
     procedure :: set_w_temp => set_w_temp_ig
+    procedure :: set_enth_w_qwall => set_enth_w_qwall_ig
 
   end type IG_EOSModel
 
@@ -68,6 +76,7 @@ class(EOSModel),  allocatable :: eos_model
     procedure :: init => initialize_table
     procedure :: set_w_enth => set_w_enth_table
     procedure :: set_w_temp => set_w_temp_table
+    procedure :: set_enth_w_qwall => set_enth_w_qwall_table
     procedure, private :: allocate_mem => allocate_mem
     procedure, private :: read_table => read_table
     procedure, private :: calc_interp_coeff => calc_interp_coeff
@@ -125,6 +134,16 @@ contains
         write(*,*) "Property doesn't exist!!!"
     end select
   end subroutine set_w_temp_ig
+
+  subroutine set_enth_w_qwall_ig(this, qwall, enth_in, drp, enth_out)
+    implicit none
+    class(IG_EOSModel) :: this
+    real(8), intent(IN) :: qwall, enth_in, drp
+    real(8), intent(OUT) :: enth_out
+    real(8) ::  ekh_imax
+    call this%set_w_enth(enth_in,"L",ekh_imax)
+    enth_out = enth_in + drp*qwall/(ekh_imax*this%Re*this%Pr) 
+  end subroutine set_enth_w_qwall_ig
   
 !****************************************************************************************
 
@@ -221,5 +240,13 @@ contains
     call spline(this%enthTab,this%tempTab,  this%nTab,this%temp2Tab)
     call spline(this%enthTab,this%betaTab,  this%nTab,this%beta2Tab)
   end subroutine calc_interp_coeff
+
+  subroutine set_enth_w_qwall_table(this, qwall, enth_in, drp, enth_out)
+    implicit none
+    class(Table_EOSModel) :: this
+    real(8), intent(IN) :: qwall, enth_in, drp
+    real(8), intent(OUT) :: enth_out
+    real(8) ::  ekh_imax 
+  end subroutine set_enth_w_qwall_table
 
 end module mod_eos
