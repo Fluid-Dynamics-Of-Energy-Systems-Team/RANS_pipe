@@ -231,8 +231,32 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
             
 
     else
-      if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
-      stop
+      do k=1,kmax
+        do i=1,imax
+          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+        enddo
+
+        i=1
+        ! b(i)=b(i)+a(i)
+        rhs(i) = dnew(i,k) - a(i)*cNew(0,k) + (1-alphac)*b(i)*cNew(i,k)
+   
+        i=imax
+        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
+
+        call matrixIdir(imax,a,b,c,rhs)
+   
+        do i=1,imax
+          !resC = resC + (cnew(i,k) - rhs(i))**2.0
+          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+          cnew(i,k) = max(rhs(i), 0.0)
+        enddo
+               
+      enddo
+      ! if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
+      ! stop
     endif
      
   else
@@ -479,29 +503,28 @@ subroutine bound_c(Twalll, Qwalll, rank)
   if (isothermalBC.eq.1) then
     call eos_model%set_w_temp(Twalll, "H", enth_walll)
     !pipe/bl
-    if (centerBC.eq.1) then
-      do k=0,k1
-        if ((k+rank*kmax)*dz.lt.x_start_heat) then
-          cnew(i1,k) = cnew(imax,k)
-        else
-          cnew(i1,k) = 2.0*enth_walll - cnew(imax,k)
-        endif
-      enddo
+    ! if (centerBC.eq.1) then
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        cnew(i1,k) = cnew(imax,k)
+      else
+        cnew(i1,k) = 2.0*enth_walll - cnew(imax,k)
+        if (centerBC.eq.-1) cnew(0,k) = 2.0*enth_walll - cnew(1,k) !channel
+      endif
+    enddo
     !channel (TODO!!!)
-    else
-      if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
-      stop
-    endif
+    ! else
+    !   if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
+    !   stop
+    ! endif
   ! ISOFLUX
   else
     do k=0,k1
       if (rank.eq.0.and.k.lt.K_start_heat) then
-        cnew(i1,:) = cnew(imax,:)
+        cnew(i1,k) = cnew(imax,k)
       else
-        !pipe/bl
-        call funcNewtonSolve_upd(cnew(i1,k), cnew(imax,k))
-        !channel
-        if (centerBC.eq.-1) call funcNewtonSolve_upd(cnew(0,k), cnew(1,k))
+        call funcNewtonSolve_upd(cnew(i1,k), cnew(imax,k)) !pipe/bl
+        if (centerBC.eq.-1) call funcNewtonSolve_upd(cnew(0,k), cnew(1,k)) !channel
       endif
     enddo
   endif

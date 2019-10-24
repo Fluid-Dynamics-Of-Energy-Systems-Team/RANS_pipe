@@ -65,7 +65,6 @@ contains
              rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1), &
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
     allocate(Win(0:i1),ekmtin(0:i1))
-
     allocate(p(imax,kmax))
 
     !NUMERICAL STUFF

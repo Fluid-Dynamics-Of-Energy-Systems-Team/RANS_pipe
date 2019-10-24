@@ -57,10 +57,10 @@ subroutine inflow_output_upd(rank,istap)
                           'rho' ,'k'  ,'eps','v2' ,'om', &
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
     do i=1,imax
-      write(29, '(16E20.12)')                                           &
-                y_cv  (i)  , unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k), &
-                rnew  (i,k),p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),   &
-                p_nuSA(i),  ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i)
+      write(29, '(16E20.12)')                                            &
+                y_cv  (i)  ,unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
+                rnew  (i,k),p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &
+                p_nuSA(i)  ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i)
     enddo
     close(29)
   endif
@@ -271,7 +271,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   endif
   do i = 0,i1
     do j = k_min,k_max
-      write(test,'(15(E20.12))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
+      write(test,'(15(E20.10e3))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
                                 k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
