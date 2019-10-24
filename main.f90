@@ -8,8 +8,8 @@ use mod_param
 use mod_math
 use mod_mesh
 use mod_common
-use mod_eosmodels
-use mod_turbmodels
+use mod_eos
+use mod_tm
 use sa_tm
 use sst_tm
 use mk_tm
@@ -146,7 +146,7 @@ end
 !!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
   use mod_param
-  use mod_turbmodels
+  use mod_tm
 
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
@@ -168,7 +168,7 @@ end subroutine calc_mu_eff
 !!*************************************************************************************
 subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
   use mod_param
-  use mod_eosmodels
+  use mod_eos
   implicit none
   include 'mpif.h'
   real(8),                       intent(IN) :: Twall, Qwalll,dz
@@ -351,7 +351,7 @@ end subroutine bound_m
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
-  use mod_turbmodels
+  use mod_tm
   implicit none
   integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
   real(8),                        intent(IN) :: dpdz,Re

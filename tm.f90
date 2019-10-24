@@ -1,4 +1,4 @@
-module mod_turbmodels
+module mod_tm
   implicit none
 
 !****************************************************************************************
@@ -247,4 +247,4 @@ end subroutine advance_laminar
 
 
 
-end module mod_turbmodels
+end module mod_tm

@@ -1,5 +1,5 @@
 module ke_tm
-  use mod_turbmodels
+  use mod_tm
   implicit none
 
 !****************************************************************************************

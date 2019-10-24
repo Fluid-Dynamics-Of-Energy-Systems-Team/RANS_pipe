@@ -66,7 +66,7 @@ end
 subroutine funcNewtonBC_upd(enth, enthIMAX, fxValue)
   use mod_param
   use mod_mesh
-  use mod_eosmodels
+  use mod_eos
   implicit none
   real*8 enth,lamOcpinter,enthIMAX,fxValue
   call eos_model%set_w_enth(0.5*(enth+enthIMAX), 'L', lamocpinter)
@@ -79,7 +79,7 @@ end
 !!********************************************************************
 subroutine state_upd(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be)
   use mod_param
-  use mod_eosmodels
+  use mod_eos
   implicit none
   real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
                                                 lam,lami,lamk,cp,cpk,cpi,tp,be

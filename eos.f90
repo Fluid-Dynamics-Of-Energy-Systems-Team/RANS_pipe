@@ -1,4 +1,4 @@
-module mod_eosmodels
+module mod_eos
   implicit none
 !****************************************************************************************
   
@@ -222,4 +222,4 @@ contains
     call spline(this%enthTab,this%betaTab,  this%nTab,this%beta2Tab)
   end subroutine calc_interp_coeff
 
-end module mod_eosmodels
+end module mod_eos
