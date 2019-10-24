@@ -234,8 +234,8 @@ subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
       if (rank.eq.0.and.k.lt.K_start_heat) then
         c(i1,k) = c(imax,k)
       else
-        if (centerBC.eq.-1) call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),c(0,k))    !channel
-                            call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k))!pipe/bl
+        if (centerBC.eq.-1) call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),   c(0,k))  !channel
+                            call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k)) !pipe/bl
       endif
     enddo
   endif
