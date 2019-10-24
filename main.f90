@@ -141,8 +141,7 @@ end
 !***********************************************************************************************************************************
 
 
-
-!>******************************************************************************************
+!!******************************************************************************************
 !!      routine to estimate the effective viscosity
 !!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
@@ -162,7 +161,7 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
   mue = mu + mut  
-end 
+end subroutine calc_mu_eff
 
 !!*************************************************************************************
 !!  Apply the boundary conditions for the energy equation
@@ -270,339 +269,8 @@ subroutine bound_v(u,w,win,centerBC,rank)
   endif
 end subroutine bound_v
 
-!>************************************************************************************
-!!
-!!     Performes time integration with second order
-!!     Adams-Bashforth scheme, i.e
-!!
-!!
-!!     n+1     n
-!!     dU     U     - U                               n
-!!     ---- = ------------ = 1.5*( -ADV + DIFF + Force)     -
-!!     dt        dt                                   n-1
-!!     0.5*( -ADV + DIFF + Force)
-!!
-!!     This scheme is weakly instabel for pure advection,
-!!     and therefore a very small amount of physical diffusion
-!!     is necessary.
-!!     The timestep is limited (see routine chkdt)
-!!
-!!************************************************************************************
-subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
-  use mod_param
-  use mod_math
-  use mod_mesh
-  use mod_common
-  implicit none
-  real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
-  integer,                       intent(IN) :: rank
-  real(8),                       intent(OUT) :: resC
-  real(8), dimension(0:i1,0:k1) :: dnew,dimpl
-  real(8), dimension(imax)      :: a,b,c,rhs
-  real(8)                       :: sigmat,Q
-  
-  sigmat = 0.9
-
-
-  ! ------------------------------------------------------------------------
-  !     ENTHAPLY ENTHAPLY ENTHAPLY ENTHAPLY
-  ! ------------------------------------------------------------------------
-  resC  = 0.0
-  dnew=0.0; dimpl = 0.0;
-  call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-  call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
-
-  if (isothermalBC.eq.1) then
-    !!!!!!!!! isothermal wall
-    if (centerBC.eq.1) then
-      do k=1,kmax
-        do i=1,imax
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-
-        i=1
-        b(i)=b(i)+a(i)
-         
-        i=imax
-        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
-
-        call matrixIdir(imax,a,b,c,rhs)
-   
-        do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-               
-      enddo
-            
-
-    else
-      do k=1,kmax
-        do i=1,imax
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-
-        i=1
-        ! b(i)=b(i)+a(i)
-        rhs(i) = dnew(i,k) - a(i)*cNew(0,k) + (1-alphac)*b(i)*cNew(i,k)
-   
-        i=imax
-        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
-
-        call matrixIdir(imax,a,b,c,rhs)
-   
-        do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-               
-      enddo
-      ! if (rank.eq.0) print '("Isothermal boundary condition coded only for 1 wall.... stopping")'
-      ! stop
-    endif
-     
-  else
-    !!!!!!!!! isoflux
-    if (centerBC.eq.-1) then  ! wall both sides!!!!
-      do k=1,kmax
-        if (rank.eq.0.and.k.lt.K_start_heat) then
-          Q=0.0
-        else
-          Q=Qwall
-        endif
-
-        do i=1,imax-1
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-   
-        i=1
-        a(i)   = 0.0
-        c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-        i=imax
-        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i)   =  0.0
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-        call matrixIdir(imax,a,b,c,rhs)
-
-        do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-      enddo
-    else if (centerBC.eq.1) then
-      do k=1,kmax
-        if (rank.eq.0.and.k.lt.K_start_heat) then
-          Q=0.0
-        else
-          Q=Qwall
-        endif
-
-        do i=1,imax-1
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-
-        i=1
-        b(i)=b(i)+a(i)
-         
-        i=imax
-        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i)   =  0.0
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-        call matrixIdir(imax,a,b,c,rhs)
-   
-        do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-      enddo
-    endif
-  endif
-
-
-  if (periodic.eq.1) then
-    cnew = 0.0; resC=0.0;
-  endif
-
-
-
-end
-
-
-!>*************************************************************************************
-!!
-!!     Performes time integration with second order 
-!!     Adams-Bashforth scheme, i.e
-!!     
-!!     
-!!     n+1     n
-!!     dU     U     - U                               n
-!!     ---- = ------------ = 1.5*( -ADV + DIFF + Force)     -
-!!     dt        dt                                   n-1
-!!     0.5*( -ADV + DIFF + Force)
-!!     
-!!     This scheme is weakly instabel for pure advection,
-!!     and therefore a very small amount of physical diffusion
-!!     is necessary.
-!!     The timestep is limited (see routine chkdt)
 !!*************************************************************************************
-subroutine advance(rank)
-  use mod_param
-  use mod_math
-  use mod_mesh
-  use mod_common
-  implicit none
-      
-  integer rank
-  real*8, dimension(imax)   :: a, b, c, rhs
-  real*8, dimension(imax-1) :: au, bu, cu, rhsu
-  real*8 dnew(0:i1,0:k1)
-  real*8 dif,alpha,rhoa,rhob,rhoc
-
-  dif=0.0
-
-  !>********************************************************************
-  !!     CALCULATE advection, diffusion and Force in r-direction
-  !!     at the old(n-1) and new(n) timelevels
-  !!********************************************************************
-  dnew = 0.0
-  call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
-  call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain) ! new
-
-  if (centerBC == -1) then
-    do k=1,kmax
-      do i=1,imax-1
-        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
-        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
-        bu(i) = -au(i)-cu(i)
-        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
-        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
-        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
-        au(i) = au(i)/rhoa
-        bu(i) = bu(i)/rhob + 1.0
-        cu(i) = cu(i)/rhoc
-      enddo
-   
-      i = imax-1;    cu(i) = 0.0
-      i = 1;
-      au(i+1) = 0.0           ! BC wall
-   
-      do i=1,imax-1
-        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
-      enddo
-   
-      call matrixIdir(imax-1,au,bu,cu,rhsu)
-      do i=1,imax-1
-        dUdt(i,k)=rhsu(i)
-      enddo
-    enddo
-  elseif (centerBC == 1) then
-    do k=1,kmax
-      do i=1,imax-1
-        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
-        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
-        bu(i) = -au(i)-cu(i)
-        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
-        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
-        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
-        au(i) = au(i)/rhoa
-        bu(i) = bu(i)/rhob + 1.0
-        cu(i) = cu(i)/rhoc
-      enddo
-
-      i = imax-1;    cu(i) = 0.0
-      i = 1;
-      bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
-   
-      do i=1,imax-1
-        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
-      enddo
-   
-      call matrixIdir(imax-1,au,bu,cu,rhsu)
-      do i=1,imax-1
-        dUdt(i,k)=rhsu(i)
-      enddo
-    enddo
-  endif
-
-  !********************************************************************
-  !     CALCULATE advection, diffusion and Force in z-direction
-  !     at the old(n-1) and new(n) timelevels
-  !********************************************************************
-
-  dnew = 0.0
-  call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
-  call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain)  ! new
-
-  if (periodic.eq.1) dnew = dnew + dpdz
-
-  if (Qwall.ne.0) then
-    dnew(1:imax,1:kmax) = dnew(1:imax,1:kmax) + 0.5*(Rnew(1:imax,1:kmax)+Rnew(1:imax,2:kmax+1))*Fr_1
-  endif
-
-  do k=1,kmax
-    do i=1,imax
-      a(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i-1,k)+ekme(i-1,k+1))*Ru(i-1)/(dRp(i-1)*Rp(i)*dru(i))
-      c(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i+1,k)+ekme(i+1,k+1))*Ru(i  )/(dRp(i  )*Rp(i)*dru(i))
-      b(i) = -a(i)-c(i)
-      rhoa = 0.5*(rnew(i-1,k+1)+rnew(i-1,k))
-      rhoc = 0.5*(rnew(i+1,k+1)+rnew(i+1,k))
-      rhob = 0.5*(rnew(i  ,k+1)+rnew(i  ,k))
-      a(i) = a(i)/rhoa
-      b(i) = b(i)/rhob + 1.0
-      c(i) = c(i)/rhoc
-    enddo
-
-    i=imax;    b(i) = b(i) - c(i)    ! BC at wall: zero vel: subtract one c
-    i = 1;     b(i) = b(i) + centerBC*a(i)     ! BC at wall: zero vel: subtract one a
-
-    do i=1,imax
-      rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
-    enddo
-
-    call matrixIdir(imax,a,b,c,rhs)
-    do i=1,imax
-      dWdt(i,k)=rhs(i)
-    enddo
-  enddo
-
-
-end
-
-
-
-!>*************************************************************************************
-!!
-!!     Subroutine bound sets the boundary conditions for all variables,
-!!     except for the diffusion coefficients. These are set in submod.
-!!     The common boundary conditions for the pressure are set in mkgrid.
-!!
-!!     Set boundary conditions for j=0 and j=j1. Because of the
-!!     fact that the index j denotes the tangential direction,
-!!     we have to set the values at j=0 equal to the values at
-!!     j=jmax and the values at j=j1 equal to the values at j=1.
-!!
+!!   Apply the boundary conditions for the velocity using the mass flux
 !!*************************************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   use mod_param
@@ -676,12 +344,10 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
     ! enddo
     ! write(*,*) "flux out: ", flux
   endif
-end
+end subroutine bound_m
 
 !!*************************************************************************************
-!!
 !!           initialize the solution
-!!
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
@@ -728,6 +394,318 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
     enddo
   endif
 end subroutine initialize_solution
+
+
+
+!>************************************************************************************
+!!
+!!     Performes time integration with second order
+!!     Adams-Bashforth scheme, i.e
+!!
+!!
+!!     n+1     n
+!!     dU     U     - U                               n
+!!     ---- = ------------ = 1.5*( -ADV + DIFF + Force)     -
+!!     dt        dt                                   n-1
+!!     0.5*( -ADV + DIFF + Force)
+!!
+!!     This scheme is weakly instabel for pure advection,
+!!     and therefore a very small amount of physical diffusion
+!!     is necessary.
+!!     The timestep is limited (see routine chkdt)
+!!
+!!************************************************************************************
+subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
+  use mod_param
+  use mod_math
+  use mod_mesh
+  use mod_common
+  implicit none
+  real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
+  integer,                       intent(IN) :: rank
+  real(8),                       intent(OUT) :: resC
+  real(8), dimension(0:i1,0:k1) :: dnew,dimpl
+  real(8), dimension(imax)      :: a,b,c,rhs
+  real(8)                       :: sigmat,Q
+  
+  sigmat = 0.9 !turbulent prandtl
+  resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
+
+  call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
+
+  !---------------------------------------   ISOTHERMAL
+  if (isothermalBC.eq.1) then
+    !pipe/bl
+    if (centerBC.eq.1) then
+      do k=1,kmax
+        do i=1,imax
+          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+        enddo
+
+        i=1
+        b(i)=b(i)+a(i)
+         
+        i=imax
+        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
+
+        call matrixIdir(imax,a,b,c,rhs)
+   
+        do i=1,imax
+          !resC = resC + (cnew(i,k) - rhs(i))**2.0
+          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+          cnew(i,k) = max(rhs(i), 0.0)
+        enddo
+               
+      enddo
+    !channel
+    else
+      do k=1,kmax
+        do i=1,imax
+          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+        enddo
+
+        i=1
+        rhs(i) = dnew(i,k) - a(i)*cNew(0,k) + (1-alphac)*b(i)*cNew(i,k)
+        
+        i=imax
+        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
+
+        call matrixIdir(imax,a,b,c,rhs)
+   
+        do i=1,imax
+          !resC = resC + (cnew(i,k) - rhs(i))**2.0
+          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+          cnew(i,k) = max(rhs(i), 0.0)
+        enddo    
+      enddo
+    endif
+  !---------------------------------------   ISOFLUX
+  else
+    !pipe/bl
+    if (centerBC.eq.1) then
+      do k=1,kmax
+        if (rank.eq.0.and.k.lt.K_start_heat) then
+          Q=0.0
+        else
+          Q=Qwall
+        endif
+
+        do i=1,imax-1
+          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+        enddo
+
+        i=1
+        b(i)=b(i)+a(i)
+         
+        i=imax
+        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+        c(i)   =  0.0
+        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+        call matrixIdir(imax,a,b,c,rhs)
+   
+        do i=1,imax
+          !resC = resC + (cnew(i,k) - rhs(i))**2.0
+          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+          cnew(i,k) = max(rhs(i), 0.0)
+        enddo
+      enddo
+    !channel
+    else
+      do k=1,kmax
+        if (rank.eq.0.and.k.lt.K_start_heat) then
+          Q=0.0
+        else
+          Q=Qwall
+        endif
+
+        do i=1,imax-1
+          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
+          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+        enddo
+   
+        i=1
+        a(i)   = 0.0
+        c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
+        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+        i=imax
+        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+        c(i)   =  0.0
+        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
+        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
+
+        call matrixIdir(imax,a,b,c,rhs)
+
+        do i=1,imax
+          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+          cnew(i,k) = max(rhs(i), 0.0)
+        enddo
+      enddo
+    endif
+  endif
+
+  if (periodic.eq.1) then
+    cnew = 0.0; resC=0.0;
+  endif
+
+end
+
+
+!>*************************************************************************************
+!!
+!!     Performes time integration with second order 
+!!     Adams-Bashforth scheme, i.e
+!!     
+!!     
+!!     n+1     n
+!!     dU     U     - U                               n
+!!     ---- = ------------ = 1.5*( -ADV + DIFF + Force)     -
+!!     dt        dt                                   n-1
+!!     0.5*( -ADV + DIFF + Force)
+!!     
+!!     This scheme is weakly instabel for pure advection,
+!!     and therefore a very small amount of physical diffusion
+!!     is necessary.
+!!     The timestep is limited (see routine chkdt)
+!!*************************************************************************************
+subroutine advance(rank)
+  use mod_param
+  use mod_math
+  use mod_mesh
+  use mod_common
+  implicit none
+      
+  integer rank
+  real*8, dimension(imax)   :: a, b, c, rhs
+  real*8, dimension(imax-1) :: au, bu, cu, rhsu
+  real*8 dnew(0:i1,0:k1)
+  real*8 dif,alpha,rhoa,rhob,rhoc
+
+  dif=0.0
+
+  !>********************************************************************
+  !!     CALCULATE advection, diffusion and Force in r-direction
+  !!     at the old(n-1) and new(n) timelevels
+  !!********************************************************************
+  dnew = 0.0
+  call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
+  call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain) ! new
+
+  !channel
+  if (centerBC == -1) then
+    do k=1,kmax
+      do i=1,imax-1
+        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+        bu(i) = -au(i)-cu(i)
+        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+        au(i) = au(i)/rhoa
+        bu(i) = bu(i)/rhob + 1.0
+        cu(i) = cu(i)/rhoc
+      enddo
+   
+      i = imax-1; cu(i)   = 0.0
+      i = 1;      au(i+1) = 0.0           ! BC wall
+   
+      do i=1,imax-1
+        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+      enddo
+   
+      call matrixIdir(imax-1,au,bu,cu,rhsu)
+      do i=1,imax-1
+        dUdt(i,k)=rhsu(i)
+      enddo
+    enddo
+  !bl/pipe
+  elseif (centerBC == 1) then
+    do k=1,kmax
+      do i=1,imax-1
+        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+        bu(i) = -au(i)-cu(i)
+        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+        au(i) = au(i)/rhoa
+        bu(i) = bu(i)/rhob + 1.0
+        cu(i) = cu(i)/rhoc
+      enddo
+
+      i = imax-1; cu(i) = 0.0
+      i = 1;      bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
+      
+
+      do i=1,imax-1
+        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
+      enddo
+   
+      call matrixIdir(imax-1,au,bu,cu,rhsu)
+      do i=1,imax-1
+        dUdt(i,k)=rhsu(i)
+      enddo
+    enddo
+  endif
+
+  !********************************************************************
+  !     CALCULATE advection, diffusion and Force in z-direction
+  !     at the old(n-1) and new(n) timelevels
+  !********************************************************************
+
+  dnew = 0.0
+  call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
+  call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain)  ! new
+
+  if (periodic.eq.1) dnew = dnew + dpdz
+
+  if (Qwall.ne.0) then
+    dnew(1:imax,1:kmax) = dnew(1:imax,1:kmax) + 0.5*(Rnew(1:imax,1:kmax)+Rnew(1:imax,2:kmax+1))*Fr_1
+  endif
+
+  do k=1,kmax
+    do i=1,imax
+      a(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i-1,k)+ekme(i-1,k+1))*Ru(i-1)/(dRp(i-1)*Rp(i)*dru(i))
+      c(i) = -0.25*dt*(ekme(i,k)+ekme(i,k+1)+ekme(i+1,k)+ekme(i+1,k+1))*Ru(i  )/(dRp(i  )*Rp(i)*dru(i))
+      b(i) = -a(i)-c(i)
+      rhoa = 0.5*(rnew(i-1,k+1)+rnew(i-1,k))
+      rhoc = 0.5*(rnew(i+1,k+1)+rnew(i+1,k))
+      rhob = 0.5*(rnew(i  ,k+1)+rnew(i  ,k))
+      a(i) = a(i)/rhoa
+      b(i) = b(i)/rhob + 1.0
+      c(i) = c(i)/rhoc
+    enddo
+
+    i=imax; b(i) = b(i) - c(i)              ! BC at wall: zero vel: subtract one c
+    i=1;    b(i) = b(i) + centerBC*a(i)     ! BC at wall: zero vel: subtract one a
+
+    do i=1,imax
+      rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
+    enddo
+
+    call matrixIdir(imax,a,b,c,rhs)
+    do i=1,imax
+      dWdt(i,k)=rhs(i)
+    enddo
+  enddo
+
+end
+
+
 
 
 !>*************************************************************************************
