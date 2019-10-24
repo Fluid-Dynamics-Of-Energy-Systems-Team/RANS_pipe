@@ -6,15 +6,15 @@ RM = rm -f
 
 
 PROGRAM = run 
-OBJS    = math_module.o param.o math.o tm.o tm_ke.o tm_mk.o tm_vf.o tm_sa.o tm_sst.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o parpipe.o
+OBJS    = math_module.o param.o math.o tm.o tm_ke.o tm_mk.o tm_vf.o tm_sa.o tm_sst.o eosmodels.o  common_module.o common.o numerics.o  fileio.o mpistuff.o vfft.o main.o
 
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJS)
 	$(F77) $(DBG) $(FLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 
-parpipe.o: parpipe.f90 param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c parpipe.f90
+main.o: main.f90 param.f90 makefile
+	$(F77) $(DBG) $(FLAGS) -c main.f90
 tm_vf.o: tm_vf.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c tm_vf.f90
 tm_ke.o: tm_ke.f90 makefile
@@ -35,16 +35,6 @@ math_module.o: math_module.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c math_module.f90
 numerics.o: numerics.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c numerics.f90
-mk.o: mk.f90 param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c mk.f90
-vf.o: vf.f90 param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c vf.f90
-sa.o: sa.f90 param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sa.f90
-sst.o: sst.f90 param.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c sst.f90
-turbmodels.o: param.f90 turbmodels.f90 makefile
-	$(F77) $(DBG) $(FLAGS) -c turbmodels.f90
 fileio.o: fileio.f90 param.f90 makefile
 	$(F77) $(DBG) $(FLAGS) -c fileio.f90
 math.o: math.f90 param.f90 makefile
@@ -57,12 +47,8 @@ param.o: param.f90
 	$(F77) $(DBG) $(FLAGS) -c param.f90
 common.o: common.f90
 	$(F77) $(DBG) $(FLAGS) -c common.f90
-
-
-
 changeCPU: changeNcpu.o
 	$(F77) $(FLAGS) -o changeCPU changeNcpu.o $(LIBS)
-
 changeCPU.o: changeCPU.f90 param.f90 makefile
 	$(F77) $(FLAGS) -c changeCPU.f90
 
