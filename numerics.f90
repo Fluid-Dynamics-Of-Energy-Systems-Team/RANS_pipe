@@ -1,44 +1,4 @@
 !!********************************************************************
-!!     Updates the thermodynamic properties
-!!********************************************************************
-subroutine state_upd(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be)
-  use mod_param
-  use mod_eos
-  implicit none
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
-                                                lam,lami,lamk,cp,cpk,cpi,tp,be
-  real(8) :: enthface
-  !centers
-  do k=0,k1
-    do i=0,i1
-        call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
-        call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
-        call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
-        call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
-        call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
-        call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
-    enddo
-  enddo
-  !faces
-  do k=0,kmax
-    do i=0,imax
-      enthface = 0.5*(enth(i,k)+enth(i+1,k))
-      call eos_model%set_w_enth(enthface,"C", cpi(i,k))
-      call eos_model%set_w_enth(enthface,"L", lami(i,k))
-      call eos_model%set_w_enth(enthface,"V", mui(i,k)) 
-      enthface = 0.5*(enth(i,k)+enth(i,k+1))
-      call eos_model%set_w_enth(enthface,"C", cpk(i,k))
-      call eos_model%set_w_enth(enthface,"L", lamk(i,k))
-      call eos_model%set_w_enth(enthface,"V", muk(i,k)) 
-    enddo
-  enddo
-  return
-end subroutine state_upd
-
-
-
-
-!!********************************************************************
 !!     poisson solver
 !!********************************************************************
 subroutine fillps(rank)
@@ -209,10 +169,6 @@ subroutine chkdiv(rank)
 ! 100  format('Mass_loss/gain:Tot= ',e15.4,' Max= ',e15.4)
 
 end
-
-
-
-
 
 !!********************************************************************
 !!     readOldGrid

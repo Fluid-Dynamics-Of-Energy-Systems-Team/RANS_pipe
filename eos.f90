@@ -245,12 +245,10 @@ contains
   subroutine set_enth_w_qwall_table(this, qwall, enth_in, drp, enth_out)
     implicit none
     class(Table_EOSModel) :: this
-    real(8), intent(IN) :: qwall,drp
-    real(8), intent(OUT) :: enth_out,enth_in
-    real(8) ::  ekh_imax 
-
-    integer niter,success
-    real*8  error, error1
+    real(8), intent(IN)   :: qwall,drp
+    real(8), intent(OUT)  :: enth_out,enth_in
+    integer :: niter,success
+    real(8) :: error, error1
     success = 1
     error = 1000.0
     niter = 0
