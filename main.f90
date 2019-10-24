@@ -1,8 +1,7 @@
-
-!>    ****************************************************
+!!    ****************************************************
 !!    Main file of the code
 !!    This code simulates Super Critical Fluid in a
-!!    heated pipe with constant heat flux
+!!    heated pipe/channel/bl with constant heat flux/isothermal wall
 !!    ****************************************************
 
 use mod_param
@@ -18,25 +17,22 @@ use vf_tm
 implicit none
 include 'mpif.h'
 
-integer      rank,ierr,istart,noutput
-real*8       bulk,stress,stime,time1
-real*8       resC,resK,resE,resV2,resOm,resSA   
-real*8       tempWall
-real :: start, finish
+integer ::  rank,ierr,istart,noutput
+real(8) ::  bulk,stress,stime,time1
+real(8) ::  resC,resK,resE,resV2,resOm,resSA   
+real(8) ::  start, finish
+resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
+!read parameters
 call read_parameters()
 
+!initalize mpi
 call cpu_time(time1)
 call mpi_init(ierr)
 call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
 call mpi_comm_size(MPI_COMM_WORLD,px,ierr)
 
-
-
-resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
-
 !domain integers
-
 kmax    = kelem/px
 kmaxper = kmax*px/2
 k1      = kmax + 1
@@ -47,8 +43,12 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
-call initMem()
+!***************************!
+!      INITIALIZATION       !
+!***************************!
 
+!initialize variables
+call initMem()
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
@@ -64,12 +64,11 @@ if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
 
-!numerical stuff
+!initialize numerical
 call init_transpose
-!grid
+
+!initialize grid
 call mkgrid(rank)
-
-
 
 
 dtmax = 1.e-3
@@ -77,7 +76,7 @@ dt = dtmax
 istart = 1
 
 !initialize solution 
-call initialize_solution(rank,wnew, unew, cnew,ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
+call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
 call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 call bound_c(cnew, Tw, Qwall, dz, centerBC,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
@@ -88,6 +87,11 @@ call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist
 call bound_v(Unew,Wnew,Win,centerBC,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
+
+
+!***************************!
+!        MAIN LOOP          !
+!***************************!
 
 do istep=istart,nstep
 
@@ -131,6 +135,12 @@ call mpi_finalize(ierr)
 stop
 end
 
+!***********************************************************************************************************************************
+!***********************************************************************************************************************************
+!***********************************************************************************************************************************
+!***********************************************************************************************************************************
+
+
 
 !>******************************************************************************************
 !!      routine to estimate the effective viscosity
@@ -148,11 +158,117 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
+
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
   mue = mu + mut  
 end 
 
+!!*************************************************************************************
+!!  Apply the boundary conditions for the energy equation
+!!*************************************************************************************
+subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
+  use mod_param
+  use mod_eosmodels
+  implicit none
+  include 'mpif.h'
+  real(8),                       intent(IN) :: Twall, Qwalll,dz
+  integer,                       intent(IN) :: centerBC, rank
+  real(8), dimension(0:i1,0:k1), intent(OUT):: c
+  real(8), dimension(0:i1) :: tmp
+  real(8)                  :: enth_wall  
+  
+  !isothermal
+  if (isothermalBC.eq.1) then
+    call eos_model%set_w_temp(Twall, "H", enth_wall)
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        c(i1,k) = c(imax,k)
+      else
+        if (centerBC.eq.-1) c(0,k) =  2.0*enth_wall - c(1,k)    !channel
+                            c(i1,k) = 2.0*enth_wall - c(imax,k) !pipe/bl
+      endif
+    enddo
+
+  !isoflux
+  else
+    do k=0,k1
+      if (rank.eq.0.and.k.lt.K_start_heat) then
+        c(i1,k) = c(imax,k)
+      else
+        if (centerBC.eq.-1) call funcNewtonSolve_upd(c(0,k), c(1,k))     !channel
+                            call funcNewtonSolve_upd(c(i1,k), c(imax,k)) !pipe/bl
+      endif
+    enddo
+  endif
+
+  !pipe/bl
+  if (centerBC.eq.1) then     
+    c(0,:)    = c(1,:)
+  endif
+
+  call shiftf(c,tmp,rank);  c(:,0) = tmp(:);
+  call shiftb(c,tmp,rank); c(:,k1) = tmp(:);
+
+  !developing 
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    c(:,0) = 0.0
+  endif
+  if (rank.eq.px-1) then
+    c(:,k1) = 2.0*   c(:,kmax) -    c(:,kmax-1)
+  endif  
+end subroutine bound_c
+
+!!*************************************************************************************
+!!  Apply the boundary conditions for the velocity
+!!*************************************************************************************
+subroutine bound_v(u,w,win,centerBC,rank)
+  use mod_param
+  implicit none  
+  include 'mpif.h'
+  integer,                       intent(IN) :: centerBC, rank
+  real(8), dimension(0:i1),      intent(IN) :: win
+  real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
+  real(8), dimension(0:i1)                  :: tmp
+
+  ! channel
+  if (centerBC.eq.-1) then 
+    do k=0,k1
+      u(1,k)    =   0.0
+      u(0,k)    = - u(2,k)
+      u(imax,k) =   0.0
+      u(i1,k)   = - u(imax-1,k)
+      w(0,k)    = - w(1,k)
+      w(i1,k)   = - w(imax,k)
+    enddo
+  !pipe/BL
+  else
+    do k=0,k1
+      u(0,k)    =   u(1,k)
+      u(imax,k) =   0.0
+      u(i1,k)   = - u(imax-1,k)
+      w(0,k)    =   w(1,k)
+      w(i1,k)   = - w(imax,k)
+    enddo
+  endif
+
+  call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
+  call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
+  call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
+  call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
+  if (periodic.eq. 1) return
+
+  !developing
+  if (rank.eq.0) then
+    u(:,0) = 0.0
+    w(:,0) = win(:)
+  endif
+  if (rank.eq.px-1)then
+    u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
+    w(:,k1) = 2.*w(:,kmax)-w(:,kmax-1)
+  endif
+end subroutine bound_v
 
 !>************************************************************************************
 !!
@@ -474,118 +590,6 @@ subroutine advance(rank)
 
 end
 
-!!*************************************************************************************
-!!
-!!  Apply the boundary conditions for the energy equation
-!!
-!!*************************************************************************************
-subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
-  use mod_param
-  use mod_eosmodels
-  implicit none
-  include 'mpif.h'
-  real(8),                       intent(IN) :: Twall, Qwalll,dz
-  integer,                       intent(IN) :: centerBC, rank
-  real(8), dimension(0:i1,0:k1), intent(OUT):: c
-  real(8), dimension(0:i1) :: tmp
-  real(8)                  :: enth_wall  
-  
-  !isothermal
-  if (isothermalBC.eq.1) then
-    call eos_model%set_w_temp(Twall, "H", enth_wall)
-    do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
-        c(i1,k) = c(imax,k)
-      else
-        if (centerBC.eq.-1) c(0,k) =  2.0*enth_wall - c(1,k)    !channel
-                            c(i1,k) = 2.0*enth_wall - c(imax,k) !pipe/bl
-      endif
-    enddo
-
-  !isoflux
-  else
-    do k=0,k1
-      if (rank.eq.0.and.k.lt.K_start_heat) then
-        c(i1,k) = c(imax,k)
-      else
-        if (centerBC.eq.-1) call funcNewtonSolve_upd(c(0,k), c(1,k))     !channel
-                            call funcNewtonSolve_upd(c(i1,k), c(imax,k)) !pipe/bl
-      endif
-    enddo
-  endif
-
-  !pipe/bl
-  if (centerBC.eq.1) then     
-    c(0,:)    = c(1,:)
-  endif
-
-  call shiftf(c,   tmp,rank);       c(:,0) = tmp(:);
-  call shiftb(c,   tmp,rank);      c(:,k1) = tmp(:);
-
-  !developing 
-  if (periodic.eq.1) return
-  if (rank.eq.0) then
-    c(:,0) = 0.0
-  endif
-  if (rank.eq.px-1) then
-    c(:,k1) = 2.0*   c(:,kmax) -    c(:,kmax-1)
-  endif  
-end subroutine bound_c
-
-!!*************************************************************************************
-!!
-!!  Apply the boundary conditions for the velocity
-!!
-!!*************************************************************************************
-subroutine bound_v(u,w,win,centerBC,rank)
-  use mod_param
-  implicit none  
-  include 'mpif.h'
-  integer,                       intent(IN) :: centerBC, rank
-  real(8), dimension(0:i1),      intent(IN) :: win
-  real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
-  real(8), dimension(0:i1)                  :: tmp
-
-  ! channel
-  if (centerBC.eq.-1) then 
-    do k=0,k1
-      u(1,k)    =   0.0
-      u(0,k)    = - u(2,k)
-      u(imax,k) =   0.0
-      u(i1,k)   = - u(imax-1,k)
-      w(0,k)    = - w(1,k)
-      w(i1,k)   = - w(imax,k)
-    enddo
-  !pipe/BL
-  else
-    do k=0,k1
-      u(0,k)    =   u(1,k)
-      u(imax,k) =   0.0
-      u(i1,k)   = - u(imax-1,k)
-      w(0,k)    =   w(1,k)
-      w(i1,k)   = - w(imax,k)
-    enddo
-  endif
-
-  call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
-  call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
-  call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
-  call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
-  if (periodic.eq. 1) return
-
-  !developing
-  if (rank.eq.0) then
-    u(:,0) = 0.0
-    w(:,0) = win(:)
-  endif
-  if (rank.eq.px-1)then
-    u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
-    w(:,k1) = 2.*w(:,kmax)-w(:,kmax-1)
-  endif
-end subroutine bound_v
-
-
-
 
 
 !>*************************************************************************************
@@ -605,55 +609,17 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   use mod_mesh
   use mod_common
   implicit none
-
-      include 'mpif.h'
-  character*5 inflow
-  !
-  real*8  W_out(0:i1,0:k1)
-  integer rank,ierr
-  real*8  y1,y2,y3,y4
-  real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
-          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),W_in(0:i1)
-  real*8 Ub,flux,flux_tot,deltaW,rhob,wfunc,wr(1:imax)
-  real*8 tmp(0:i1)
-  integer ib,ie,kb,ke
-
-  !channel
-  if (centerBC.eq.-1) then ! channal bc
-    do k=0,k1
-      Ubound(1,k)    =   0.0
-      Ubound(0,k)    = - Ubound(2,k)
-      Ubound(imax,k) =   0.0
-      Ubound(i1,k)   = - Ubound(imax-1,k)
-      Wbound(0,k)   = - Wbound(1,k)
-      Wbound(i1,k)  = - Wbound(imax,k)
-    enddo
-  !pipe/BL
-  else
-    do k=0,k1
-      Ubound(0,k)    =   Ubound(1,k)
-      Ubound(imax,k) =   0.0
-      Ubound(i1,k)   = - Ubound(imax-1,k)
-
-      Wbound(0,k)   =   Wbound(1,k)
-      Wbound(i1,k)  = - Wbound(imax,k)
-    enddo
-  endif
-
-  call shiftf(Ubound,tmp,rank);     Ubound(:,0)  = tmp(:);
-  call shiftf(Wbound,tmp,rank);     Wbound(:,0)  = tmp(:);
-  call shiftb(Ubound,tmp,rank);     Ubound(:,k1) = tmp(:);
-  call shiftb(Wbound,tmp,rank);     Wbound(:,k1) = tmp(:);
-
-
-  !developing
-  if (periodic.eq.1) return
-
-  if (rank.eq.0) then
-    Rbound(:,0) = 1.0
-    Ubound(:,0) = 0.0
-    Wbound(:,0) = W_in(:)
-  endif
+  include 'mpif.h'
+  integer,                       intent(IN) :: rank
+  real(8), dimension(0:i1,0:k1), intent(IN) :: rbound
+  real(8), dimension(0:i1),      intent(IN) :: W_in  
+  real(8), dimension(0:i1,0:k1), intent(OUT):: ubound, wbound, w_out
+  real(8), dimension(0:i1) :: tmp
+  real(8), dimension(1:imax) :: wr
+  integer :: ierr
+  real(8) :: Ub,flux,flux_tot,deltaW,wfunc
+  
+  call bound_v(ubound,wbound,W_in,centerBC,rank)
 
   wr = 0
   Ub = 0.
@@ -664,14 +630,12 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       wr(i) = W_out(i,kmax)
       Ub = max(Ub,2.0*Wbound(i,kmax)/(Rbound(i,kmax)+Rbound(i,k1)))
     enddo
-
     do i=0,i1
       Wbound(i,kmax) = 2.0*W_out(i,kmax-1) - W_out(i,kmax-2)
       Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
     enddo
-
     Wbound(i1,kmax) = -Wbound(imax,kmax)
-    Wbound(0,kmax)  = centerBC*Wbound(1,kmax)
+    Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
   endif
 
   !     compute drho/dt*dvol
@@ -697,32 +661,21 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
     enddo
   endif
 
-  !      write(*,*) "delta flux: ", flux
-
   call mpi_allreduce(flux,flux_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-
 
   if (rank.eq.px-1)then
     deltaW = (flux_tot)/wfunc
-    !     write(*,*)'------------------------',deltaW
     do i=1,imax
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
     Wbound(i1,kmax) = -Wbound(imax,kmax)
-    Wbound(0,kmax)  = centerBC*Wbound(1,kmax)
-
-  !         flux = 0
-  !         do i=1,imax
-  !            flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
-  !         enddo
-  !         write(*,*) "flux out: ", flux
-
+    Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
+    ! flux = 0
+    ! do i=1,imax
+    !    flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
+    ! enddo
+    ! write(*,*) "flux out: ", flux
   endif
-
-
-
-
-  return
 end
 
 !!*************************************************************************************

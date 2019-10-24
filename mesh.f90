@@ -2,9 +2,9 @@ module mod_mesh
   !***************GRID
   real(8) :: dz,dpdz
   real(8), dimension(:), allocatable :: Ru,Rp,y_fa,y_cv,dru,drp !0:i1
-  real(8), dimension(:), allocatable :: z1,z2 !0:k1
-  real(8), dimension(:), allocatable :: wallDist !1:imax
-  integer :: centerBC,numDomain
+  real(8), dimension(:), allocatable :: z1,z2                   !0:k1
+  real(8), dimension(:), allocatable :: wallDist                !1:imax
+  integer                            :: centerBC,numDomain
 
 contains
 !!********************************************************************
@@ -93,7 +93,8 @@ subroutine mkgrid(rank)
     do i = 1,imax
       if (rp(i).le.1) then
         wallDist(i) = rp(i)
-      else
+      else!channel
+  
         wallDist(i) = gridSize-rp(i)
       endif
     enddo
