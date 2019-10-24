@@ -78,7 +78,7 @@ istart = 1
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
 call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
-call bound_c(cnew, Tw, Qwall, dz, centerBC,rank)
+call bound_c(cnew, Tw, Qwall, drp,dz, centerBC,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
 call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
 
@@ -100,7 +100,7 @@ do istep=istart,nstep
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                                Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
                                modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  call bound_c(Cnew, Tw, Qwall, dz, centerBC,rank)
+  call bound_c(Cnew, Tw, Qwall, drp,dz, centerBC,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
@@ -166,14 +166,17 @@ end subroutine calc_mu_eff
 !!*************************************************************************************
 !!  Apply the boundary conditions for the energy equation
 !!*************************************************************************************
-subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
+subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   use mod_param
   use mod_eos
+  ! use mod_mesh
   implicit none
   include 'mpif.h'
   real(8),                       intent(IN) :: Twall, Qwalll,dz
+  real(8), dimension(0:i1),      intent(IN) :: drp
   integer,                       intent(IN) :: centerBC, rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: c
+
   real(8), dimension(0:i1) :: tmp
   real(8)                  :: enth_wall  
   
@@ -195,8 +198,8 @@ subroutine bound_c(c, Twall, Qwalll, dz, centerBC,rank)
       if (rank.eq.0.and.k.lt.K_start_heat) then
         c(i1,k) = c(imax,k)
       else
-        if (centerBC.eq.-1) call funcNewtonSolve_upd(c(0,k), c(1,k))     !channel
-                            call funcNewtonSolve_upd(c(i1,k), c(imax,k)) !pipe/bl
+        if (centerBC.eq.-1) call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),c(0,k))    !channel
+                            call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k))!pipe/bl
       endif
     enddo
   endif

@@ -37,8 +37,8 @@ module mod_eos
     subroutine set_enth_w_qwall( this, qwall, enth_in, drp, enth_out )
       import :: EOSModel
       class(EOSModel) :: this
-      real(8), intent(IN) :: qwall, enth_in,drp
-      real(8), intent(OUT) :: enth_out
+      real(8), intent(IN) :: qwall,drp
+      real(8), intent(OUT) :: enth_out, enth_in
     end subroutine set_enth_w_qwall
   end interface
 
@@ -80,6 +80,7 @@ class(EOSModel),  allocatable :: eos_model
     procedure, private :: allocate_mem => allocate_mem
     procedure, private :: read_table => read_table
     procedure, private :: calc_interp_coeff => calc_interp_coeff
+    procedure :: check_qwall
   end type Table_EOSModel
 
 
@@ -138,8 +139,8 @@ contains
   subroutine set_enth_w_qwall_ig(this, qwall, enth_in, drp, enth_out)
     implicit none
     class(IG_EOSModel) :: this
-    real(8), intent(IN) :: qwall, enth_in, drp
-    real(8), intent(OUT) :: enth_out
+    real(8), intent(IN) :: qwall, drp
+    real(8), intent(OUT) :: enth_out,enth_in
     real(8) ::  ekh_imax
     call this%set_w_enth(enth_in,"L",ekh_imax)
     enth_out = enth_in + drp*qwall/(ekh_imax*this%Re*this%Pr) 
@@ -244,9 +245,46 @@ contains
   subroutine set_enth_w_qwall_table(this, qwall, enth_in, drp, enth_out)
     implicit none
     class(Table_EOSModel) :: this
-    real(8), intent(IN) :: qwall, enth_in, drp
-    real(8), intent(OUT) :: enth_out
+    real(8), intent(IN) :: qwall,drp
+    real(8), intent(OUT) :: enth_out,enth_in
     real(8) ::  ekh_imax 
+
+    integer niter,success
+    real*8  error, error1
+    success = 1
+    error = 1000.0
+    niter = 0
+
+    if (enth_in.gt.2)    enth_in =  2.0
+    if (enth_in.lt.-0.1) enth_in = -0.1
+    enth_out = enth_in
+
+    do while (abs(error).gt.1.0e-10)
+      call this%check_qwall(qwall,enth_in, drp, enth_out, error)
+      call this%check_qwall(qwall,enth_in, drp, enth_out+1.0e-8, error1)
+      enth_out = enth_out - error/((error1-error)/1.0e-8)
+      if (niter.gt.200) then
+        error = 0.0
+        success = 0
+      endif
+      niter = niter + 1
+    enddo
+
+    if (success.eq.0) then
+      write (*,*) 'newton didnt converge, enthimax= ',enth_in,', ', niter, ', ', enth_out
+    stop
+    endif
   end subroutine set_enth_w_qwall_table
+
+  subroutine check_qwall(this, qwall, enth_in, drp, enth_found, error)
+    implicit none
+    class(Table_EOSModel) :: this
+    real(8), intent(IN)   :: qwall, enth_in, enth_found, drp
+    real(8), intent(OUT)  :: error
+    real(8) :: lamocpinter
+    call this%set_w_enth(0.5*(enth_in+enth_found), 'L', lamocpinter)
+    lamocpinter = lamocpinter*(this%Re*this%Pr)
+    error = enth_found - enth_in - drp*qwall/lamocpinter 
+  end subroutine check_qwall
 
 end module mod_eos
