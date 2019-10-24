@@ -6,6 +6,7 @@
 !!    ****************************************************
 
 use mod_param
+use mod_math
 use mod_common
 use mod_eosmodels
 use mod_common2
@@ -20,7 +21,6 @@ include 'mpif.h'
 integer      rank,ierr,istart,noutput
 real*8       bulk,stress,stime,time1
 real*8       resC,resK,resE,resV2,resOm,resSA   
-real(8), dimension(:), allocatable :: Win,kin,ein,ekmtin,v2in,omIn,nuSAin
 real*8       tempWall
 real :: start, finish
 
@@ -47,7 +47,6 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
-allocate(Win(0:i1),kin(0:i1),ekmtin(0:i1))
 call initMem()
 
 
@@ -78,13 +77,14 @@ dt = dtmax
 istart = 1
 
 !initialize solution 
-call initialize_solution(rank,wnew, unew, ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
-call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);
+call initialize_solution(rank,wnew, unew, cnew,ekmt, win, ekmtin, i1,k1, y_fa, y_cv, dpdz,Re,systemsolve, select_init)
+
+call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank);
 
 
 call bound_c(Tw, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-call state_upd(cnew,rnew,ekm,ekh,temp,beta,istart,rank);! necessary to call it twice
+call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank) ! necessary to call it twice
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
 call bound_v(Unew,Wnew,Win,rank)
@@ -95,12 +95,12 @@ do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
   call advanceC(resC,Unew,Wnew,Rnew,rank)
-  call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp, &
-                     Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2, &
-                     modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
+  call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
+                               Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
+                               modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
   call bound_c(Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
-  call state_upd(cnew,rnew,ekm,ekh,temp,beta,istep,rank)
+  call state_upd(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta,istart,rank);
   call advance(rank)
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
@@ -112,10 +112,7 @@ do istep=istart,nstep
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,1000).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
-  ! if  (mod(istep,1000).eq.0)                      call outputX_h_upd(rank,istep)
-  if  (mod(istep,1000).eq.0)                      call output2d_upd2(rank,istep)
-  ! if  (mod(istep,5000).eq.0)                      call saveRestart(rank)
-  ! if ((mod(istep,5000).eq.0).and.(periodic.eq.1)) call inflow_output(rank,istep)
+  if   (mod(istep,1000).eq.0)                       call output2d_upd2(rank,istep)
 
   noutput = 100
   if (rank.eq.0) then
@@ -130,10 +127,8 @@ do istep=istart,nstep
          
 enddo
 call cpu_time(finish)
-
 print '("Time = ",f6.3," seconds.")',finish-start
-! call inflow_output_upd(rank)
-! call output2d_upd(rank,istep)
+call output2d_upd2(rank,istep)
 call mpi_finalize(ierr)
 stop
 end
@@ -185,23 +180,17 @@ end
 !!************************************************************************************
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
+  use mod_math
   use mod_common
   use mod_common2
   implicit none
-      
-  real*8 dnew(0:i1,0:k1),tempArray(0:i1,0:k1),dimpl(0:i1,0:k1),tscl
-  real*8 Utmp(0:i1,0:k1),Wtmp(0:i1,0:k1),Rtmp(0:i1,0:k1),sigmakSST(0:i1,0:k1)
-  real*8 rho2(0:i1,0:k1), rho3(0:i1,0:k1), eknu(0:i1,0:k1),eknui(0:i1,0:k1),eknuk(0:i1,0:k1)
-  real*8 cb3,Q,hbc
-  integer rank,ierr
-  real*8     a  (imax)
-  real*8     b  (imax)
-  real*8     c  (imax)
-  real*8     rhs(imax)
-
-  real*8 t1,t2,t3,t4,bc,scl
-  real*8 term, adiffm, adiffp
-  real*8 resC
+  real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
+  integer,                       intent(IN) :: rank
+  real(8),                       intent(OUT) :: resC
+  real(8), dimension(0:i1,0:k1) :: dnew,dimpl
+  real(8), dimension(imax)      :: a,b,c,rhs
+  real(8)                       :: sigmat,Q
+  
   sigmat = 0.9
 
 
@@ -346,6 +335,7 @@ end
 !!*************************************************************************************
 subroutine advance(rank)
   use mod_param
+  use mod_math
   use mod_common
   implicit none
       
@@ -535,7 +525,7 @@ end
 !!      bound_v(Ubound,Wbound,Win,rank)
 !!
 !!*************************************************************************************
-subroutine bound_v(Ubound,Wbound,Win,rank)
+subroutine bound_v(Ubound,Wbound,W_in,rank)
 
   use mod_param
   use mod_common
@@ -544,7 +534,7 @@ subroutine bound_v(Ubound,Wbound,Win,rank)
 
   integer rank
   real*8 Ubound(0:i1,0:k1), Wbound(0:i1,0:k1)
-  real*8 tmp(0:i1),Win(0:i1)
+  real*8 tmp(0:i1),W_in(0:i1)
 
   ! channel
   if (centerBC.eq.-1) then 
@@ -576,7 +566,7 @@ subroutine bound_v(Ubound,Wbound,Win,rank)
   if (periodic.eq. 1) return
   if (rank.eq.0) then
     Ubound(:,0) = 0.0
-    Wbound(:,0) = Win(:)
+    Wbound(:,0) = W_in(:)
   endif
   if (rank.eq.px-1)then
     ubound(:,k1) = 2.*ubound(:,kmax)-ubound(:,kmax-1)
@@ -600,7 +590,7 @@ end
 !!     j=jmax and the values at j=j1 equal to the values at j=1.
 !!
 !!*************************************************************************************
-subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
+subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   use mod_param
   use mod_common
   implicit none
@@ -612,7 +602,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
   integer rank,ierr
   real*8  y1,y2,y3,y4
   real*8  Ubound(0:i1,0:k1),Vbound(0:i1,0:k1), &
-          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),Win(0:i1)
+          Wbound(0:i1,0:k1),Rbound(0:i1,0:k1),W_in(0:i1)
   real*8 Ub,flux,flux_tot,deltaW,rhob,wfunc,wr(1:imax)
   real*8 tmp(0:i1)
   integer ib,ie,kb,ke
@@ -651,7 +641,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,Win,rank)
   if (rank.eq.0) then
     Rbound(:,0) = 1.0
     Ubound(:,0) = 0.0
-    Wbound(:,0) = Win(:)
+    Wbound(:,0) = W_in(:)
   endif
 
   wr = 0
@@ -735,7 +725,7 @@ end
 !!
 !!*************************************************************************************
 
-subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
+subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
   ! use mod_param
   ! use mod_common
   use mod_common2
@@ -743,7 +733,7 @@ subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, d
   integer,                        intent(IN) :: rank, systemsolve, i1,k1, select_init
   real(8),                        intent(IN) :: dpdz, Re
   real(8), dimension(0:i1),       intent(IN) :: y_cv, y_fa
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: w, u, mut
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: w, u, c,mut
   real(8), dimension(0:i1),       intent(OUT):: win, mutin
   real(8), dimension(0:i1) :: dummy
   character(len=5)  :: Re_str
@@ -766,6 +756,7 @@ subroutine initialize_solution(rank, w, u, mut, win, mutin, i1,k1, y_fa, y_cv, d
     do k=0,k1
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
+      c(:,k)= 0
     enddo
     call turb_model%init_w_inflow(Re, systemsolve)
 

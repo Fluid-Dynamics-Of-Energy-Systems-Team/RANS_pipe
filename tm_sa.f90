@@ -200,6 +200,7 @@ end subroutine get_sol_SA
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
                     alphak,modification,centerBC,periodic,rank)
+  use mod_math
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho,mu,mui,muk,rho_mod

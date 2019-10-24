@@ -116,6 +116,7 @@ end subroutine init_mem_KE
 subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
+  use mod_math
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -203,6 +204,7 @@ end subroutine get_profile_KE
 subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
+  use mod_math
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod

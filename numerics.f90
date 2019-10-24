@@ -73,58 +73,41 @@ subroutine funcNewtonBC_upd(enth, enthIMAX, fxValue)
 end
 
 !>********************************************************************
-!!     PIG equation of state
+!!     Updates the thermodynamic properties
 !!********************************************************************
-subroutine state_upd(enth,rho,mu,lam,tp,be,istap,rank)
+subroutine state_upd(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be,rank)
   use mod_param
   use mod_common2
-  use mod_common
   implicit none
-  integer istap, rank
-  real(8) enth(0:i1,0:k1),rho(0:i1,0:k1),mu (0:i1,0:k1), &
-          lam(0:i1,0:k1),tp(0:i1,0:k1),be(0:i1,0:k1)
-  real    enthface
-
-  if(isothermalBC.eq.1) then
-    do k=0,k1
-      do i=0,i1
-          call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
-          call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
-          call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
-          call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
-          call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
-          call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
-      enddo
+  integer,                        intent(IN) :: rank
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
+                                                lam,lami,lamk,cp,cpk,cpi,tp,be
+  real(8) :: enthface
+  !centers
+  do k=0,k1
+    do i=0,i1
+        call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
+        call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
+        call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
+        call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
+        call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
+        call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
     enddo
-  else 
-    do k=0,k1
-      call funcNewtonSolve_upd(enth(i1,k), enth(imax,k))
-      if (rank.eq.0.and.k.lt.K_start_heat) enth(i1,k)=enth(imax,k)
-      do i=0,i1
-          call eos_model%set_w_enth(enth(i,k),"D", rho(i,k))
-          call eos_model%set_w_enth(enth(i,k),"V", mu(i,k))
-          call eos_model%set_w_enth(enth(i,k),"C", Cp(i,k))
-          call eos_model%set_w_enth(enth(i,k),"L", lam(i,k))
-          call eos_model%set_w_enth(enth(i,k),"T", tp(i,k))
-          call eos_model%set_w_enth(enth(i,k),"B", be(i,k)) 
-      enddo
-    enddo
-  endif
-
+  enddo
+  !faces
   do k=0,kmax
     do i=0,imax
       enthface = 0.5*(enth(i,k)+enth(i+1,k))
-      call eos_model%set_w_enth(enthface,"C", Cpi(i,k))
-      call eos_model%set_w_enth(enthface,"L", ekhi(i,k))
-      call eos_model%set_w_enth(enthface,"V", ekmi(i,k)) 
+      call eos_model%set_w_enth(enthface,"C", cpi(i,k))
+      call eos_model%set_w_enth(enthface,"L", lami(i,k))
+      call eos_model%set_w_enth(enthface,"V", mui(i,k)) 
       enthface = 0.5*(enth(i,k)+enth(i,k+1))
-      call eos_model%set_w_enth(enthface,"C", Cpk(i,k))
-      call eos_model%set_w_enth(enthface,"L", ekhk(i,k))
-      call eos_model%set_w_enth(enthface,"V", ekmk(i,k)) 
+      call eos_model%set_w_enth(enthface,"C", cpk(i,k))
+      call eos_model%set_w_enth(enthface,"L", lamk(i,k))
+      call eos_model%set_w_enth(enthface,"V", muk(i,k)) 
     enddo
   enddo
   return
-
 end subroutine state_upd
 
 
