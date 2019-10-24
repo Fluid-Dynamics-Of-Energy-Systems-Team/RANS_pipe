@@ -1,6 +1,6 @@
 module mod_common
-  use mod_turbmodels
-  use mod_eosmodels
+  ! use mod_turbmodels
+  ! use mod_eosmodels
   implicit none
 
   public

@@ -137,7 +137,8 @@ end
 !!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
   use mod_param
-  use mod_common
+  use mod_turbmodels
+
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
   real(8), dimension(0:i1),      intent(IN) :: mutin
@@ -147,14 +148,9 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist
   real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
-
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
-
-  ! mut=0
-  mue = mu + mut
-
-  
+  mue = mu + mut  
 end 
 
 
@@ -729,12 +725,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   return
 end
 
-
-
-
-
-
-!>*************************************************************************************
+!!*************************************************************************************
 !!
 !!           initialize the solution
 !!

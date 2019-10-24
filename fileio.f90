@@ -25,6 +25,8 @@
 
 subroutine inflow_output_upd(rank,istap)
   use mod_param
+  use mod_turbmodels
+  use mod_eosmodels
   use mod_common
   use mod_mesh
   implicit none
@@ -294,6 +296,8 @@ subroutine output2d_upd2(rank,istap)
   use mod_param
   use mod_common
   use mod_mesh
+  use mod_turbmodels
+  use mod_eosmodels
   implicit none
   include 'mpif.h'
   character*5 cha
