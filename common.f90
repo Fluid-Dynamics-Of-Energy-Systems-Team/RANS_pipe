@@ -7,49 +7,35 @@ module mod_common
 
 
   integer istep,nsteps,inlet
-
-
-
-  
-  !***************STATE PROPERTIES
-  !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: ekm,ekmt,ekme,ekh,cp,temp,peclet,beta,ekhi,ekhk,ekmi,ekmk,cpi,cpk
+  real(8), dimension(:,:), allocatable :: ekmt,ekme,temp,peclet,beta, &
+                                          ekh,ekhi,ekhk, & 
+                                          ekm,ekmi,ekmk, &
+                                          cp,cpi,cpk
   real(8) dt,dtmax
+  real(8), dimension(:,:), allocatable :: Unew,Wnew,rnew,cnew,qcrit, &
+                                          Uold,Wold,rold,dUdt,dVdt,dWdt,p
+  real(8), dimension(:),   allocatable :: Win,ekmtin
   
-  !***************EQUATION VARIABLES
-  !0:i1,0:k1 
-  real(8), dimension(:,:), allocatable :: Unew,Vnew,Wnew,rnew,cnew,qcrit,&
-                                          Uold,Wold,rold,dUdt,dVdt,dWdt
-  real(8), dimension(:,:), allocatable :: p
-  real(8), dimension(:), allocatable   :: Win,ekmtin
-      
-  !***************NUMERICAL CLUTTER                         
-  !Nx
-  integer, dimension(:), allocatable :: Xii
-  !Nx,Mt
-  integer, dimension(:,:), allocatable :: Xkk
-  !Nt
-  integer, dimension(:), allocatable :: Tkk
-  !Nt,Mx
-  integer, dimension(:,:), allocatable :: Tii
-  !Mt,Nx
-  real(8), dimension(:,:), allocatable :: W1, W2
-  !Mx,Nt
-  real(8), dimension(:,:), allocatable :: W1t, W2t
-
-    
+  integer, dimension(:),   allocatable :: Xii     !Nx
+  integer, dimension(:,:), allocatable :: Xkk     !Nx,Mt
+  integer, dimension(:),   allocatable :: Tkk     !Nt
+  integer, dimension(:,:), allocatable :: Tii     !Nt,Mx
+  real(8), dimension(:,:), allocatable :: W1, W2  !Mt,Nx
+  real(8), dimension(:,:), allocatable :: W1t, W2t!Mx,Nt
+  
 contains
 
   subroutine initMem()
     use mod_param
     implicit none
     !STATE VARIABLES
-    allocate(ekm(0:i1,0:k1),ekmt(0:i1,0:k1),ekme(0:i1,0:k1),ekh(0:i1,0:k1),cp(0:i1,0:k1),temp(0:i1,0:k1),  &
-             peclet(0:i1,0:k1),beta(0:i1,0:k1),ekhi(0:i1,0:k1), &
-             ekhk(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1),cpi(0:i1,0:k1),cpk(0:i1,0:k1))
+    allocate(ekmt(0:i1,0:k1),ekme(0:i1,0:k1),temp(0:i1,0:k1),peclet(0:i1,0:k1),beta(0:i1,0:k1), &
+              ekh(0:i1,0:k1),ekhi(0:i1,0:k1),ekhk(0:i1,0:k1), &
+              ekm(0:i1,0:k1),ekmi(0:i1,0:k1),ekmk(0:i1,0:k1), &
+               cp(0:i1,0:k1), cpi(0:i1,0:k1), cpk(0:i1,0:k1))
     !EQUATION VARIABLES
-    allocate(Unew(0:i1,0:k1),Vnew(0:i1,0:k1),Wnew(0:i1,0:k1),Cnew(0:i1,0:k1), &
-             rnew(0:i1,0:k1),rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1), &
+    allocate(rnew(0:i1,0:k1),Unew(0:i1,0:k1),Wnew(0:i1,0:k1),Cnew(0:i1,0:k1), &
+             rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),                 &
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1))
     allocate(Win(0:i1),ekmtin(0:i1))
     allocate(p(imax,kmax))
