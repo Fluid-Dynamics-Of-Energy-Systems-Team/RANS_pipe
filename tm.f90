@@ -179,7 +179,7 @@ end subroutine init_w_inflow_laminar
 
 subroutine init_mem_laminar(this)
     class(Laminar_TurbModel) :: this
-    allocate(this%yp(0:this%k1,0:this%i1))
+    allocate(this%yp(0:this%i1,0:this%k1))
     allocate(this%mutin(0:this%i1))
 end subroutine init_mem_laminar
 

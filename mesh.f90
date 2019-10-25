@@ -61,7 +61,7 @@ subroutine mkgrid(rank)
     centerBC  = 1
     gridSize  = 1.0
     fA = 0.12
-    fB = 2.4
+    fB = 3.4
     dpdz      = 1.0
   else
     if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")', systemSolve
