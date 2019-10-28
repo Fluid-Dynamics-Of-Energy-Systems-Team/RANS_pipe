@@ -88,7 +88,6 @@ call bound_v(Unew,Wnew,Win,centerBC,rank)
 call chkdt(rank,istep)
 call cpu_time(start)
 
-
 !***************************!
 !        MAIN LOOP          !
 !***************************!
@@ -96,21 +95,22 @@ call cpu_time(start)
 do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-  !call advanceC(resC,Unew,Wnew,Rnew,rank)
-  !call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
-  !                             Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
-  !                             modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
+  call advanceC(resC,Unew,Wnew,Rnew,rank)
+  call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
+                              Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
+                              modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
   call bound_c(Cnew, Tw, Qwall, drp,dz, centerBC,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
+
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
   call fillps(rank)
   call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
-  call bound_v(Unew,Wnew,Win,centerBC,rank)
 
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
+
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
@@ -273,8 +273,7 @@ subroutine bound_v(u,w,win,centerBC,rank)
   ! channel
   if (centerBC.eq.-1) then 
     do k=0,k1
-      u(1,k)    =   0.0
-      u(0,k)    = - u(2,k)
+      u(0,k)    =   0.0 !NOTE CHANGE BY SIMONE
       u(imax,k) =   0.0
       u(i1,k)   = - u(imax-1,k)
       w(0,k)    = - w(1,k)
@@ -283,19 +282,18 @@ subroutine bound_v(u,w,win,centerBC,rank)
   !pipe/BL
   else
     do k=0,k1
-      u(0,k)    =   u(1,k) !symmetry
-      w(0,k)    =   w(1,k) !symmetry
-      !walll
+      u(0,k) = 0.0 !NOTE CHANGE BY SIMONE
+      w(0,k) = w(1,k) !symmetry
+      !wall
       if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
         u(imax,k) =   0.0         !wall
         u(i1,k)   = - u(imax-1,k) !wall
         w(i1,k)   = - w(imax,k)   !wall
+      !symmetry
       else
-        u(imax,k)= u(imax-1,k)  !symmetry
-        u(i1,k)  = u(imax,k)    !symmetry
-        ! u(imax,k)= 0.0            !wall
-        ! u(i1,k)  = -u(imax-1,k)   !wall
-        w(i1,k)  = w(imax,k)      !symmtery
+        u(imax,k)= 0.0          !wall
+        u(i1,k)  = -u(imax-1,k) !wall
+        w(i1,k)  = w(imax,k)    !symmetry
       endif
     enddo
   endif
@@ -336,7 +334,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
   call bound_v(ubound,wbound,W_in,centerBC,rank)
-
+  
   wr = 0
   Ub = 0.
   flux = 0.0
@@ -347,19 +345,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       Ub = max(Ub,2.0*Wbound(i,kmax)/(Rbound(i,kmax)+Rbound(i,k1)))
     enddo
     do i=0,i1
-      Wbound(i,kmax) = 2.0*W_out(i,kmax-1) - W_out(i,kmax-2)
+      Wbound(i,kmax) = 2.0*Wbound(i,kmax-1) - Wbound(i,kmax-2) !NOTE: CHANGE WITH SIMONE
       Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
     enddo
-
-    if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-      Wbound(i1,kmax) = -Wbound(imax,kmax) !wall
-    else
-      Wbound(i1,kmax) = Wbound(imax,kmax)   !symetry
-    endif
-    Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
   endif
-
-  !     compute drho/dt*dvol
+  !compute drho/dt*dvol
   do k=1,kmax
     do i=1,imax
       flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
@@ -389,17 +379,6 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
     do i=1,imax
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
-    if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-      Wbound(i1,kmax) = -Wbound(imax,kmax)   
-    else
-      Wbound(i1,kmax) = Wbound(imax,kmax)
-    endif
-    Wbound(0,kmax)  = centerBC*Wbound(1,kmax) !either symmetry or wall
-    ! flux = 0
-    ! do i=1,imax
-    !    flux = flux - Wbound(i,kmax)*dru(i)*rp(i)
-    ! enddo
-    ! write(*,*) "flux out: ", flux
   endif
 end subroutine bound_m
 
@@ -448,7 +427,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
-      if (systemsolve.eq.4) w  = 10;u=0;  win=10;!bl
+      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1;!bl
     enddo
   endif
 end subroutine initialize_solution
@@ -538,7 +517,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
         call matrixIdir(imax,a,b,c,rhs)
    
         do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
           resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
           cnew(i,k) = max(rhs(i), 0.0)
         enddo    
@@ -573,7 +551,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
         call matrixIdir(imax,a,b,c,rhs)
    
         do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
           resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
           cnew(i,k) = max(rhs(i), 0.0)
         enddo
@@ -682,8 +659,8 @@ subroutine advance(rank)
         cu(i) = cu(i)/rhoc
       enddo
    
-      i = imax-1; cu(i)   = 0.0
-      i = 1;      au(i+1) = 0.0           ! BC wall
+      i = imax-1; cu(i)   = 0.0           ! BC wall
+      i = 1;      au(i)   = 0.0           ! BC wall
    
       do i=1,imax-1
         rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
@@ -712,9 +689,8 @@ subroutine advance(rank)
        i = imax-1; cu(i) = 0.0              ! wall
       else
        i = imax-1; bu(i) = bu(i) + cu(i)    !symmetry
-       ! i = imax-1; cu(i) = 0.0              ! wall
       endif
-      i = 1;      bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
+      i = 1;       bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
       
 
       do i=1,imax-1
@@ -756,11 +732,11 @@ subroutine advance(rank)
       c(i) = c(i)/rhoc
     enddo
     if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-      i=imax; b(i) = b(i) - c(i)              ! BC at wall: zero vel: subtract one c
+      i=imax; b(i) = b(i) - c(i)            !BC at wall: zero vel: subtract one c
     else
       i=imax; b(i) = b(i) + c(i)            !symmetry at wall
     endif
-    i=1;    b(i) = b(i) + centerBC*a(i)     ! BC at center: zero vel or symmetry 
+    i=1;    b(i) = b(i) + centerBC*a(i)     !BC at center: zero vel or symmetry 
 
     do i=1,imax
       rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5

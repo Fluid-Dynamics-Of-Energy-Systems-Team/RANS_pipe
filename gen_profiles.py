@@ -10,15 +10,15 @@ adjust=dict()
 adjust['input']=dict()
 
 turbmodels = np.arange(1,5)
-systemsolve = np.arange(1,4)
+systemsolve = np.arange(2,4)
 for tm in turbmodels:
     for ss in systemsolve:
         adjust['input']['systemSolve']=ss
         adjust['input']['turbmod']=tm
         adjust['input']['periodic']=1
         adjust['input']['EOSmode']=0
-        adjust['input']['select_init']=0
-        adjust['input']['imax']=192
+        adjust['input']['select_init']=1
+        adjust['input']['imax']=96
         adjust['input']['isothermalBC']=0
         adjust['input']['Qwall']=0
         f90nml.patch(template_f, adjust, input_f)
