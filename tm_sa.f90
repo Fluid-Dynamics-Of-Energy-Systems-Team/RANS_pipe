@@ -137,23 +137,28 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
 end subroutine advance_SA
 
 subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
   real(8),dimension(1:this%imax),        intent(IN) :: walldist
   integer,                               intent(IN) :: centerBC,periodic, rank, px
   real(8),dimension(0:this%i1) :: tmp
-  
-  this%nuSA(this%i1,:) = -this%nuSA(this%imax,:)
+  integer :: k
+  do k = 0,this%kmax 
+    this%nuSA(0,k)       = bot_bcnovalue(k)*this%nuSA(1,k)         !symmetry or 0 value
+    this%nuSA(this%i1,k) = top_bcnovalue(k)*this%nuSA(this%imax,k) !symmetry or 0 value
+  enddo  
+  ! this%nuSA(this%i1,:) = -this%nuSA(this%imax,:)
 
   ! channel
-  if (centerBC.eq.-1) then
-    this%nuSA(0,:) = -this%nuSA(1,:)
-  endif
-  ! pipe/BL
-  if (centerBC.eq.1) then
-    this%nuSA(0,:) = this%nuSA(1,:)
-  endif
+  ! if (centerBC.eq.-1) then
+  !   this%nuSA(0,:) = -this%nuSA(1,:)
+  ! endif
+  ! ! pipe/BL
+  ! if (centerBC.eq.1) then
+  !   this%nuSA(0,:) = this%nuSA(1,:)
+  ! endif
 
   call shiftf(this%nuSA,tmp,rank); this%nuSA(:,0)       =tmp(:);
   call shiftb(this%nuSA,tmp,rank); this%nuSA(:,this%k1) =tmp(:);
@@ -201,6 +206,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
                     alphak,modification,centerBC,periodic,rank)
   use mod_math
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho,mu,mui,muk,rho_mod
@@ -243,21 +249,25 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
       c(i) = (eknui(i  ,k)+0.5*(this%nuSA(i,k)+this%nuSA(i+1,k)))/cb3*((0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5)
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho_mod(i,k)
 
-      b(i) = ((-a(i)-c(i))*(rho_mod(i,k)**0.5)+dimpl(i,k))/alphak
+      b(i) = ((-a(i)-c(i))*(rho_mod(i,k)**0.5)+dimpl(i,k))!/alphak
 
       a(i) = a(i)*(rho_mod(i-1,k)**0.5)
       c(i) = c(i)*(rho_mod(i+1,k)**0.5)
 
-      rhs(i) = dnew(i,k) + (1-alphak)*b(i)*this%nuSA(i,k)
+      rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%nuSA(i,k)
     enddo
 
     i=1
-    b(i) = b(i)+centerBC*a(i)
+    !b(i) = b(i)+centerBC*a(i) 
+    b(i) = b(i)+bot_bcnovalue(k)*a(i)
+    rhs(i) = dnew(i,k)+((1-alphak)/alphak)*b(i)*this%nuSA(i,k)
+    
     i=this%imax
-    b(i) = b(i) - (c(i) /alphak)
-
-    rhs(i) = dnew(i,k) + (1-alphak)*b(i)*this%nuSA(i,k)
-    call matrixIdir(this%imax,a,b,c,rhs)
+    !b(i) = b(i)-c(i)
+    b(i) = b(i)+top_bcnovalue(k)*c(i)
+    rhs(i) = dnew(i,k)+((1-alphak)/alphak)*b(i)*this%nuSA(i,k)
+  
+    call matrixIdir(this%imax,a,b/alphak,c,rhs)
     do i=1,this%imax
       resSA = resSA + ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
       this%nuSA(i,k) = max(rhs(i), 1.0e-8)

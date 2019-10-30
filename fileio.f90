@@ -58,7 +58,7 @@ subroutine inflow_output_upd(rank,istap)
     write(29, '(16a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
                           'rho' ,'k'  ,'eps','v2' ,'om', &
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
-    do i=1,imax
+    do i=0,i1
       write(29, '(16E20.12)')                                            &
                 y_cv  (i)  ,unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
                 rnew  (i,k),p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &

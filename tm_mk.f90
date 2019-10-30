@@ -127,29 +127,43 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
 end
 
 subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
+  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  implicit none
   class(MK_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
   real(8),dimension(1:this%imax),        intent(IN) :: walldist
   integer,                               intent(IN) :: centerBC,periodic, rank, px
   real(8),dimension(0:this%k1) :: BCvalue
   real(8),dimension(0:this%i1) :: tmp
+  real(8) :: topBCvalue, botBCvalue
+  integer :: k
 
-  this%k(this%i1,:) = -this%k(this%imax,:)
-  BCvalue(:) = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
-  this%eps(this%i1,:) = 2.0*BCvalue(:) - this%eps(this%imax,:)
+  do k = 0,this%k1 
+    this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
+    this%k(this%i1,k)   = top_bcnovalue(k)*this%k(this%imax,k) !symmetry or 0 value
+    botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                          !bcvalue
+    this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))         +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value
+    topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                          !bcvalue
+    this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) +bot_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
+  enddo
 
-  ! channel
-  if (centerBC.eq.-1) then
-    this%k(0,:)  = -this%k(1,:)
-    BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
-    this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
-  endif
 
-  ! pipe/BL
-  if (centerBC.eq.1) then
-    this%k  (0,:) = this%k  (1,:)
-    this%eps(0,:) = this%eps(1,:)
-  endif
+  ! this%k(this%i1,:) = -this%k(this%imax,:)
+  ! BCvalue(:) = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
+  ! this%eps(this%i1,:) = 2.0*BCvalue(:) - this%eps(this%imax,:)
+
+  ! ! channel
+  ! if (centerBC.eq.-1) then
+  !   this%k(0,:)  = -this%k(1,:)
+  !   BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
+  !   this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
+  ! endif
+
+  ! ! pipe/BL
+  ! if (centerBC.eq.1) then
+  !   this%k  (0,:) = this%k  (1,:)
+  !   this%eps(0,:) = this%eps(1,:)
+  ! endif
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);

@@ -117,6 +117,7 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
   use mod_math
+  use mod_mesh, only : bot_bcnovalue, top_bcnovalue
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -150,22 +151,27 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       endif
 
-      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
+      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))
 
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
 
-      rhs(i) = dnew(i,k) + (1-alphak)*b(i)*this%k(i,k)
+      rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
     enddo
 
-    i=1
-    b(i) = b(i) + centerBC*a(i)
-           
-    i=this%imax
-    b(i) = b(i) - (c(i) /alphak)
-    rhs(i) = dnew(i,k) + (1-alphak)*b(i)*this%k(i,k)
 
-    call matrixIdir(this%imax,a,b,c,rhs)
+     i=1
+     b(i) = b(i) + bot_bcnovalue(k)*a(i)
+     ! b(i) = b(i) + centerBC*a(i)
+     rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
+       
+     i=this%imax
+     b(i) = b(i) + top_bcnovalue(k)*c(i)
+     
+     ! b(i) = b(i) - c(i)
+     rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
+
+     call matrixIdir(this%imax,a,b/alphak,c,rhs)
 
     do i=1,this%imax
       resK = resK + ((this%k(i,k) - rhs(i))/(this%k(i,k)+1.0e-20))**2.0
@@ -205,6 +211,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
   use mod_math
+  use mod_mesh, only : bot_bcvalue, top_bcvalue
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -231,24 +238,30 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
       c(i) = (mui(i  ,k)+0.5*(mut(i,k)+mut(i+1,k))/this%sigmae)/sqrt(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)
   
-      b(i) = ((-a(i)-c(i))*(rho_mod(i,k)**1.5) + dimpl(i,k)  )/alphae
-  
+      b(i) = ((-a(i)-c(i))*(rho_mod(i,k)**1.5) + dimpl(i,k)  )  
       a(i) = a(i)*(rho_mod(i-1,k)**1.5)
       c(i) = c(i)*(rho_mod(i+1,k)**1.5)
-  
-      rhs(i) = dnew(i,k) + (1-alphae)*b(i)*this%eps(i,k)
+      rhs(i) = dnew(i,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)
+
     enddo
+
     i=1
-    if (centerBC.eq.-1) then
-      rhs(i) = dnew(i,k) - a(i)*this%eps(i-1,k) + (1-alphae)*b(i)*this%eps(i,k)
-    else
-      b(i)=b(i)+a(i)
-    endif
+    b(i) = b(i)+bot_bcvalue(k)*a(i)
+    rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%eps(i-1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
+    ! if (centerBC.eq.-1) then
+    !   rhs(i) = dnew(i,k) - a(i)*this%eps(i-1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k) !wall with value
+    ! else
+    !   b(i)=b(i)+a(i)
+    !   rhs(i) = dnew(i,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)                        !symmetry 
+    ! endif
 
     i=this%imax
-    rhs(i) = dnew(i,k) - c(i)*this%eps(i+1,k) + (1-alphae)*b(i)*this%eps(i,k)
+    b(i) = b(i)+top_bcvalue(k)*c(i)
+    rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%eps(i+1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
+    ! rhs(i) = dnew(i,k) - c(i)*this%eps(i+1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
+    
   
-    call matrixIdir(this%imax,a,b,c,rhs)
+    call matrixIdir(this%imax,a,b/alphae,c,rhs)
   
     do i=1,this%imax
       resE = resE + ((this%eps(i,k) - rhs(i))/(this%eps(i,k)+1.0e-20))**2.0

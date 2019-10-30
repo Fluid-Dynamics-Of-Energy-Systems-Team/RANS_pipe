@@ -5,6 +5,7 @@ module mod_mesh
   real(8), dimension(:), allocatable :: z1,z2                   !0:k1
   real(8), dimension(:), allocatable :: wallDist                !1:imax
   integer                            :: centerBC,numDomain
+  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue
 
 contains
 !!********************************************************************
@@ -21,6 +22,7 @@ subroutine mkgrid(rank)
   allocate(Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
   allocate(z1(0:k1),z2(0:k1))
   allocate(wallDist(1:imax))
+  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1))
 
   
   pi    = 4.0*atan(1.0)
@@ -37,6 +39,11 @@ subroutine mkgrid(rank)
     fA = 0.12
     fB = 2.4
     dpdz      = 4.0
+    bot_bcnovalue(:) = 1 !symmetry
+    top_bcnovalue(:) = -1 !wall
+    bot_bcvalue(:)   = 1 ! symmetry
+    top_bcvalue(:)   = 0 ! wall
+    
   !channel
   elseif (systemSolve.eq.2) then
     if (rank.eq.0) print*,"************* SOLVING A CHANNEL FLOW *************!"
@@ -46,6 +53,10 @@ subroutine mkgrid(rank)
     fA        = 0.5
     fB        = 4.6
     dpdz      = 1.0
+    bot_bcnovalue(:) = -1 ! wall
+    top_bcnovalue(:) = -1 ! wall
+    bot_bcvalue(:) = 0 ! wall
+    top_bcvalue(:) = 0 ! wall
   !bl
   elseif (systemSolve.eq.3) then
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
@@ -55,6 +66,11 @@ subroutine mkgrid(rank)
     fA = 0.12
     fB = 2.4
     dpdz      = 1.0
+    bot_bcnovalue(:) = 1 !symmetry
+    top_bcnovalue(:) = -1 !wall
+    bot_bcvalue(:)   = 1 ! symmetry
+    top_bcvalue(:)   = 0 ! wall
+    
     elseif (systemSolve.eq.4) then
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
     numDomain = -1

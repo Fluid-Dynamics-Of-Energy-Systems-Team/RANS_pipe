@@ -153,33 +153,47 @@ type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax,name)
 end function init_VF_TurbModel
 
 subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
+  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  implicit none
   class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
   real(8),dimension(1:this%imax),        intent(IN) :: walldist
   integer,                               intent(IN) :: centerBC,periodic, rank, px
   real(8),dimension(0:this%k1) :: BCvalue
   real(8),dimension(0:this%i1) :: tmp
-  
+  integer :: k  
+  real(8) :: topBCvalue, botBCvalue
 
-  this%k (this%i1,:) = -this%k (this%imax,:)
-  this%v2(this%i1,:) = -this%v2(this%imax,:)
-  BCvalue(:)  = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
-  this%eps(this%i1,:)  = 2.0*BCvalue(:) - this%eps(this%imax,:)
+  do k = 0,this%k1 
+    this%k(0,k)       = bot_bcnovalue(k)*this%k(1,k)          !symmetry or 0 value
+    this%k(this%i1,k) = top_bcnovalue(k)*this%k(this%imax,k)  !symmetry or 0 value
+    this%v2(0,k)      = bot_bcnovalue(k)*this%v2(1,k)         !symmetry or 0 value
+    this%v2(this%i1,k)= top_bcnovalue(k)*this%v2(this%imax,k) !symmetry or 0 value
+    botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                       !bcvalue
+    this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k)) + bot_bcvalue(k)*this%eps(1,k)               !symmetry or bc value
+    topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                       !bcvalue
+    this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) + bot_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
+  enddo
 
-  ! channel
-  if (centerBC.eq.-1) then
-    this%k(0,:)  = -this%k(1,:)
-    this%v2(0,:) = -this%v2(1,:)
-    BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
-    this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
-  endif
+  ! this%k (this%i1,:) = -this%k (this%imax,:)
+  ! this%v2(this%i1,:) = -this%v2(this%imax,:)
+  ! BCvalue(:)  = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
+  ! this%eps(this%i1,:)  = 2.0*BCvalue(:) - this%eps(this%imax,:)
 
-  ! pipe/BL
-  if (centerBC.eq.1) then
-    this%k  (0,:)= this%k  (1,:)
-    this%eps(0,:)= this%eps(1,:)
-    this%v2 (0,:)= this%v2 (1,:)
-  endif  
+  ! ! channel
+  ! if (centerBC.eq.-1) then
+  !   this%k(0,:)  = -this%k(1,:)
+  !   this%v2(0,:) = -this%v2(1,:)
+  !   BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
+  !   this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
+  ! endif
+
+  ! ! pipe/BL
+  ! if (centerBC.eq.1) then
+  !   this%k  (0,:)= this%k  (1,:)
+  !   this%eps(0,:)= this%eps(1,:)
+  !   this%v2 (0,:)= this%v2 (1,:)
+  ! endif  
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
@@ -207,6 +221,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,dRp,dz, &
                        alphav2,modification,rank,centerBC,periodic)
   use mod_math
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   implicit none
   class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -241,22 +256,23 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       endif
 
-      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphav2
-
+      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
-
-      rhs(i) =  dnew(i,k) + (1-alphav2)*b(i)*this%v2(i,k)
+      rhs(i) =  dnew(i,k) + ((1-alphav2)/alphav2)*b(i)*this%v2(i,k)
     enddo
 
     i=1
-    b(i)=b(i)+centerBC*a(i)
+    ! b(i)=b(i)+centerBC*a(i)!*alphav2
+    b(i)=b(i)+bot_bcnovalue(k)*a(i)
+    rhs(i) = dnew(i,k) + ((1-alphav2)/alphav2)*b(i)*this%v2(i,k)
 
     i=this%imax
-    b(i) = b(i) - (c(i) /alphav2)
-    rhs(i) = dnew(i,k) + (1-alphav2)*b(i)*this%v2(i,k)
+    ! b(i) = b(i) - c(i)
+    b(i)=b(i)+top_bcnovalue(k)*a(i)
+    rhs(i) = dnew(i,k) + ((1-alphav2)/alphav2)*b(i)*this%v2(i,k)
 
-    call matrixIdir(this%imax,a,b,c,rhs)
+    call matrixIdir(this%imax,a,b/alphav2,c,rhs)
 
     do i=1,this%imax
       resV2 = resV2 + ((this%v2(i,k) - rhs(i))/(this%v2(i,k)+1.0e-20))**2.0

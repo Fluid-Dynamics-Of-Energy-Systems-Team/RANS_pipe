@@ -183,32 +183,44 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
 end subroutine advance_SST
 
 subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
+  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
   real(8),dimension(1:this%imax),        intent(IN) :: walldist
   integer,                               intent(IN) :: centerBC,periodic, rank, px
   real(8),dimension(0:this%k1) :: BCvalue
   real(8),dimension(0:this%i1) :: tmp
+  real(8) :: botBCvalue, topBCvalue
+  integer :: k
 
+  do k = 0,this%k1
+    this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
+    this%k(this%i1,k)   = top_bcnovalue(k)*this%k(this%imax,k) !symmetry or 0 value
+    botBCvalue = 60.0/0.075*mu(1,k)/rho(1,k)/walldist(1)**2                                                           !bcvalue bot
+    this%om(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%om(1,k))         + bot_bcvalue(k)*this%om(1,k)         !symmetry or bc value
+    topBCvalue = 60.0/0.075*mu(this%imax,k)/rho(this%imax,k)/walldist(this%imax)**2                                   !bcvalue top
+    this%om(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%om(this%imax,k)) + bot_bcvalue(k)*this%om(this%imax,k) !symmetry or bc value
+  enddo
 
-  this%k  (this%i1,:)= -this%k(this%imax,:)
-  BCvalue(:)         = 60.0/0.075*mu(this%imax,:)/rho(this%imax,:)/walldist(this%imax)**2
-  this%om (this%i1,:)= 2.0*BCvalue(:) - this%om(this%imax,:)
-  this%bF1(this%i1,:)=  this%bF1(this%imax,:)
+  ! this%k  (this%i1,:)= -this%k(this%imax,:)
+  ! BCvalue(:)         = 60.0/0.075*mu(this%imax,:)/rho(this%imax,:)/walldist(this%imax)**2
+  ! this%om (this%i1,:)= 2.0*BCvalue(:) - this%om(this%imax,:)
+  ! this%bF1(this%i1,:)=  this%bF1(this%imax,:)
   
-  !channel
-  if (centerBC.eq.-1) then
-    this%k(0,:) = -this%k(1,:)
-    BCvalue(:)  = 60.0/0.075*mu(1,:)/rho(1,:)/walldist(1)**2
-    this%om(0,:)= 2.0*BCvalue(:) - this%om(1,:)
-  endif
+  ! !channel
+  ! if (centerBC.eq.-1) then
+  !   this%k(0,:) = -this%k(1,:)
+  !   BCvalue(:)  = 60.0/0.075*mu(1,:)/rho(1,:)/walldist(1)**2
+  !   this%om(0,:)= 2.0*BCvalue(:) - this%om(1,:)
+  ! endif
 
-  !pipe/BL
-  if (centerBC.eq.1) then
-    this%k (0,:) = this%k  (1,:)
-    this%om(0,:) = this%om (1,:)
-    this%bF1(0,:)= this%bF1(1,:)
-  endif
+  ! !pipe/BL
+  ! if (centerBC.eq.1) then
+  !   this%k (0,:) = this%k  (1,:)
+  !   this%om(0,:) = this%om (1,:)
+  !   this%bF1(0,:)= this%bF1(1,:)
+  ! endif
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%om ,tmp,rank); this%om (:,0)      =tmp(:);
@@ -332,6 +344,7 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
   use mod_math
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -370,24 +383,23 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       endif
 
-      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))/alphak
-
+      b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
-
-      rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*this%k(i,k)
+      rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k)
     enddo 
 
     i=1
-    b(i) = b(i)+centerBC*a(i)
+    ! b(i) = b(i)+centerBC*a(i)
+    b(i) = b(i)+bot_bcnovalue(k)*a(i)
+    rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k) 
 
     i=this%imax
-    b(i) = b(i) - (c(i) /alphak)
-    !b(i) = (rho3(i,k)*(-(a(i)/rho3(i-1,k))-(c(i)/rho3(i+1,k))) - c(i) + dimpl(i,k) )/alphak
-    !b(i) = (rho3(i,k)*(-a(i)-c(i)) - rho3(i+1,k)*c(i) + dimpl(i,k) )/alphak
-    rhs(i) = dnew(i,k)  + (1-alphak)*b(i)*this%k(i,k)
+    ! b(i) = b(i) - c(i)
+    b(i) = b(i)+top_bcnovalue(k)*c(i)
+    rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k)
 
-    call matrixIdir(this%imax,a,b,c,rhs)
+    call matrixIdir(this%imax,a,b/alphak,c,rhs)
 
     do i=1,this%imax
       resK = resK + ((this%k(i,k) - rhs(i))/(this%k(i,k)+1.0e-20))**2.0
@@ -475,6 +487,7 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
   use mod_math
+  use mod_mesh, only : top_bcvalue, bot_bcvalue
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
@@ -485,7 +498,6 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl,sigmakSST
   real(8), dimension(this%imax) :: a,b,c,rhs
   integer i,k
-
   resOm = 0.0
 
   dnew=0.0; dimpl = 0.0;
@@ -506,25 +518,30 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
       c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
   
-      b(i) = ((-a(i)-c(i))*rho_mod(i,k)**0.5 + dimpl(i,k))/alphae
+      b(i) = ((-a(i)-c(i))*rho_mod(i,k)**0.5 + dimpl(i,k))
   
       a(i) = a(i)*rho_mod(i-1,k)**0.5
       c(i) = c(i)*rho_mod(i+1,k)**0.5
   
-      rhs(i) = dnew(i,k)  + (1-alphae)*b(i)*this%om(i,k)
+      rhs(i) = dnew(i,k)  + ((1-alphae)/alphae)*b(i)*this%om(i,k)
     enddo
   
     i=1
-    if (centerBC.eq.-1) then
-      rhs(i) = dnew(i,k) - a(i)*this%om(i-1,k) + (1-alphae)*b(i)*this%om(i,k)
-    else
-      b(i)=b(i)+a(i)
-    endif
+    b(i)=b(i)+bot_bcvalue(k)*a(i)
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue(k))*a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
+    
+    ! if (centerBC.eq.-1) then
+    !   rhs(i) = dnew(i,k) - a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
+    ! else
+    !   b(i)=b(i)+a(i) !symmetry
+    ! endif
 
     i = this%imax
-    rhs(i) = dnew(i,k) - c(i)*this%om(i+1,k) + (1-alphae)*(b(i)*this%om(i,k))
+    b(i)=b(i)+top_bcvalue(k)*c(i)
+    rhs(i) = dnew(i,k) - (1-top_bcvalue(k))*c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
+    ! rhs(i) = dnew(i,k) - c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*(b(i)*this%om(i,k)) !wall
   
-    call matrixIdir(this%imax,a,b,c,rhs)
+    call matrixIdir(this%imax,a,b/alphae,c,rhs)
   
     do i=1,this%imax
       resOm = resOm + ((this%om(i,k) - rhs(i))/(this%om(i,k)+1.0e-20))**2.0
