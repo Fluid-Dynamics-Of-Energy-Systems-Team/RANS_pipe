@@ -446,8 +446,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
-  !---------------------------------------   ISOTHERMAL
-  !if (isothermalBC.eq.1) then
   do k=1,kmax
     do i=1,imax
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
@@ -457,12 +455,12 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     enddo
 
     i=1
-    b(i)=b(i)+bot_bcvalue1(k)*a(i)
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
+    b(i)=b(i)+bot_bcvalue1(k)*a(i) !symmetry or nothing
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) !nothing or value
 
     i=imax
-    b(i)=b(i)+top_bcvalue1(k)*c(i)
-    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
+    b(i)=b(i)+top_bcvalue1(k)*c(i) !symmetry or nothing
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) !nothing or value
 
     call matrixIdir(imax,a,b/alphac,c,rhs)
 
@@ -475,7 +473,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   if (periodic.eq.1) then
     cnew = 0.0; resC=0.0;
   endif
-  
+
 end
 
 
