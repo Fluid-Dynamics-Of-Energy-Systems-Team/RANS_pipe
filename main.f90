@@ -447,111 +447,35 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
 
   !---------------------------------------   ISOTHERMAL
-  if (isothermalBC.eq.1) then
-    do k=1,kmax
-      do i=1,imax
-        a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-        b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
-        rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-      enddo
-
-      i=1
-      b(i)=b(i)+bot_bcvalue1(k)*a(i)
-      rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
-
-      i=imax
-      b(i)=b(i)+top_bcvalue1(k)*c(i)
-      rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
-
-      call matrixIdir(imax,a,b/alphac,c,rhs)
- 
-      do i=1,imax
-        resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-        cnew(i,k) = max(rhs(i), 0.0)
-      enddo    
+  !if (isothermalBC.eq.1) then
+  do k=1,kmax
+    do i=1,imax
+      a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+      c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+      b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  ! BUG
     enddo
 
-  !---------------------------------------   ISOFLUX
-  else
-    !pipe/bl
-    if (centerBC.eq.1) then
-      do k=1,kmax
-        if (rank.eq.0.and.k.lt.K_start_heat) then
-          Q=0.0
-        else
-          Q=Qwall
-        endif
+    i=1
+    b(i)=b(i)+bot_bcvalue1(k)*a(i)
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
 
-        do i=1,imax-1
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
-          rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
+    i=imax
+    b(i)=b(i)+top_bcvalue1(k)*c(i)
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
 
-        i=1
-        b(i)=b(i)+a(i)
-         
-        i=imax
-        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i) = 0 
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )
-        ! b(i) =   b(i) + (top_bcvalue1(k))*c(i)
-        rhs(i) = dnew(i,k) + (1-top_bcvalue1(k))*Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + ((1-alphac)/alphac)*b(i)*cnew(i,k)
-        call matrixIdir(imax,a,b/alphac,c,rhs)
-   
-        do i=1,imax
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-      enddo
-    !channel
-    else
-      do k=1,kmax
-        if (rank.eq.0.and.k.lt.K_start_heat) then
-          Q=0.0
-        else
-          Q=Qwall
-        endif
+    call matrixIdir(imax,a,b/alphac,c,rhs)
 
-        do i=1,imax-1
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-   
-        i=1
-        a(i)   = 0.0
-        c(i)   = -Ru(i )*(ekhi(i ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i )*Rp(i)*dru(i))/Rtmp(i,k)
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-        i=imax
-        a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i)   =  0.0
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-
-        call matrixIdir(imax,a,b,c,rhs)
-
-        do i=1,imax
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-      enddo
-    endif
-  endif
+    do i=1,imax
+      resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+      cnew(i,k) = max(rhs(i), 0.0)
+    enddo    
+  enddo
 
   if (periodic.eq.1) then
     cnew = 0.0; resC=0.0;
   endif
-
-  ! if (systemsolve .eq.4) then !NOTE HERE IS SOMEHTING ADJUSTED
-  !   cnew = 0.0; resC=0.0;
-  ! endif    
-
+  
 end
 
 
