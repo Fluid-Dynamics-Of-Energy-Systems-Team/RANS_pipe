@@ -205,6 +205,7 @@ end subroutine calc_mu_eff
 subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   use mod_param
   use mod_eos
+  use mod_mesh, only : top_bcvalue1, bot_bcvalue1
   ! use mod_mesh
   implicit none
   include 'mpif.h'
@@ -216,33 +217,27 @@ subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   real(8), dimension(0:i1) :: tmp
   real(8)                  :: enth_wall  
   
+
   !isothermal
   if (isothermalBC.eq.1) then
     call eos_model%set_w_temp(Twall, "H", enth_wall)
-    do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
-        c(i1,k) = c(imax,k)
-      else
-        if (centerBC.eq.-1) c(0,k) =  2.0*enth_wall - c(1,k)    !channel
-                            c(i1,k) = 2.0*enth_wall - c(imax,k) !pipe/bl
-      endif
-    enddo
+    c(0,:) = (1-bot_bcvalue1(:))*(2.0*enth_wall - c(1,:))   +bot_bcvalue1(k)*c(1,:)    !pipe/bl
+    c(i1,:)= (1-top_bcvalue1(:))*(2.0*enth_wall - c(imax,:))+top_bcvalue1(k)*c(imax,:) !pipe/bl
 
   !isoflux
   else
     do k=0,k1
-      if (rank.eq.0.and.k.lt.K_start_heat) then
-        c(i1,k) = c(imax,k)
+      if (top_bcvalue1(k) .eq. 1) then
+        c(i1,k) = c(imax,k)!symmetry
       else
-        if (centerBC.eq.-1) call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),   c(0,k))  !channel
-                            call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k)) !pipe/bl
+        call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k)) !heatflux
+      endif
+      if (bot_bcvalue1(k) .eq. 1) then
+        c(0,k) = c(1,k) !symmetry
+      else
+        call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),   c(0,k))  !heatflux
       endif
     enddo
-  endif
-
-  !pipe/bl
-  if (centerBC.eq.1) then     
-    c(0,:)    = c(1,:)
   endif
 
   call shiftf(c,tmp,rank);  c(:,0) = tmp(:);
@@ -263,6 +258,7 @@ end subroutine bound_c
 !!*************************************************************************************
 subroutine bound_v(u,w,win,centerBC,rank)
   use mod_param
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   implicit none  
   include 'mpif.h'
   integer,                       intent(IN) :: centerBC, rank
@@ -270,34 +266,12 @@ subroutine bound_v(u,w,win,centerBC,rank)
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
 
-  ! channel
-  if (centerBC.eq.-1) then 
-    do k=0,k1
-      u(0,k)    =   0.0 !NOTE CHANGE BY SIMONE
-      u(imax,k) =   0.0
-      u(i1,k)   = - u(imax-1,k)
-      w(0,k)    = - w(1,k)
-      w(i1,k)   = - w(imax,k)
-    enddo
-  !pipe/BL
-  else
-    do k=0,k1
-      u(0,k) = 0.0 !NOTE CHANGE BY SIMONE
-      w(0,k) = w(1,k) !symmetry
-      !wall
-      if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-        u(imax,k) =   0.0         !wall
-        u(i1,k)   = - u(imax-1,k) !wall
-        w(i1,k)   = - w(imax,k)   !wall
-      !symmetry
-      else
-        u(imax,k)= 0.0          !wall
-        u(i1,k)  = -u(imax-1,k) !wall
-        w(i1,k)  = w(imax,k)    !symmetry
-      endif
-    enddo
-  endif
-
+  u(0,:)    =   0.0 !NOTE CHANGE BY SIMONE
+  u(imax,:) =   0.0
+  u(i1,:)   = - u(imax-1,:)
+  w(0,:)    = bot_bcnovalue(k)*w(1,k)
+  w(i1,:)   = top_bcnovalue(k)*w(imax,k)
+  
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
@@ -474,55 +448,30 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
 
   !---------------------------------------   ISOTHERMAL
   if (isothermalBC.eq.1) then
-    !pipe/bl
-    if (centerBC.eq.1) then
-      do k=1,kmax
-        do i=1,imax
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
-
-        i=1
-        b(i)=b(i)+a(i)
-         
-        i=imax
-        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
-
-        call matrixIdir(imax,a,b,c,rhs)
-   
-        do i=1,imax
-          !resC = resC + (cnew(i,k) - rhs(i))**2.0
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo
-               
+    do k=1,kmax
+      do i=1,imax
+        a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+        c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+        b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
+        rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
       enddo
-    !channel
-    else
-      do k=1,kmax
-        do i=1,imax
-          a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-          c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
-        enddo
 
-        i=1
-        rhs(i) = dnew(i,k) - a(i)*cNew(0,k) + (1-alphac)*b(i)*cNew(i,k)
-        
-        i=imax
-        rhs(i) = dnew(i,k) - c(i)*cNew(i1,k) + (1-alphac)*b(i)*cNew(i,k)
+      i=1
+      b(i)=b(i)+bot_bcvalue1(k)*a(i)
+      rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
 
-        call matrixIdir(imax,a,b,c,rhs)
-   
-        do i=1,imax
-          resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
-          cnew(i,k) = max(rhs(i), 0.0)
-        enddo    
-      enddo
-    endif
+      i=imax
+      b(i)=b(i)+top_bcvalue1(k)*c(i)
+      rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k)
+
+      call matrixIdir(imax,a,b/alphac,c,rhs)
+ 
+      do i=1,imax
+        resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+        cnew(i,k) = max(rhs(i), 0.0)
+      enddo    
+    enddo
+
   !---------------------------------------   ISOFLUX
   else
     !pipe/bl
@@ -537,8 +486,8 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
         do i=1,imax-1
           a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
           c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-          b(i) = (-a(i)-c(i) + dimpl(i,k) )/alphac        ! BUG
-          rhs(i) = dnew(i,k) + (1-alphac)*b(i)*cnew(i,k)  ! BUG
+          b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
+          rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  ! BUG
         enddo
 
         i=1
@@ -546,10 +495,11 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
          
         i=imax
         a(i)   = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-        c(i)   =  0.0
-        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )/alphac
-        rhs(i) = dnew(i,k) + Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + (1-alphac)*b(i)*cnew(i,k)
-        call matrixIdir(imax,a,b,c,rhs)
+        c(i) = 0 
+        b(i)   =  (-a(i)-c(i) + dimpl(i,k) )
+        ! b(i) =   b(i) + (top_bcvalue1(k))*c(i)
+        rhs(i) = dnew(i,k) + (1-top_bcvalue1(k))*Ru(i)*Q/(Re*Pr*Rtmp(i,k)*Rp(i)*dru(i)) + ((1-alphac)/alphac)*b(i)*cnew(i,k)
+        call matrixIdir(imax,a,b/alphac,c,rhs)
    
         do i=1,imax
           resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
@@ -598,9 +548,9 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     cnew = 0.0; resC=0.0;
   endif
 
-  if (systemsolve .eq.4) then !NOTE HERE IS SOMEHTING ADJUSTED
-    cnew = 0.0; resC=0.0;
-  endif    
+  ! if (systemsolve .eq.4) then !NOTE HERE IS SOMEHTING ADJUSTED
+  !   cnew = 0.0; resC=0.0;
+  ! endif    
 
 end
 

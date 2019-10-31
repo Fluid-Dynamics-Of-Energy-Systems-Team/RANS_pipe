@@ -5,7 +5,7 @@ module mod_mesh
   real(8), dimension(:), allocatable :: z1,z2                   !0:k1
   real(8), dimension(:), allocatable :: wallDist                !1:imax
   integer                            :: centerBC,numDomain
-  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue
+  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1
 
 contains
 !!********************************************************************
@@ -22,7 +22,7 @@ subroutine mkgrid(rank)
   allocate(Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
   allocate(z1(0:k1),z2(0:k1))
   allocate(wallDist(1:imax))
-  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1))
+  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1),top_bcvalue1(0:k1), bot_bcvalue1(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1))
 
   
   pi    = 4.0*atan(1.0)
@@ -39,11 +39,27 @@ subroutine mkgrid(rank)
     fA = 0.12
     fB = 2.4
     dpdz      = 4.0
+
+    !bc for the momentum and turbulence
     bot_bcnovalue(:) = 1 !symmetry
     top_bcnovalue(:) =-1 !wall
     bot_bcvalue(:)   = 1 ! symmetry
     top_bcvalue(:)   = 0 ! wall
     
+
+
+    ! bc for the temperature
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+      else
+        top_bcvalue1(k) =0 ! heat flux or isothermal
+      endif
+    enddo
+    bot_bcvalue1(:)   = 1 ! symmetry
+
+
+
   !channel
   elseif (systemSolve.eq.2) then
     if (rank.eq.0) print*,"************* SOLVING A CHANNEL FLOW *************!"
@@ -57,6 +73,19 @@ subroutine mkgrid(rank)
     top_bcnovalue(:) =-1 ! wall
     bot_bcvalue(:)   = 0 ! wall
     top_bcvalue(:)   = 0 ! wall
+
+
+    ! bc for the temperature
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+        bot_bcvalue1(k) =1 ! no heat flux (symmetry)
+      else
+        top_bcvalue1(k) =0 ! heat flux or isothermal
+        bot_bcvalue1(k) =0 ! heat flux or isothermal
+      endif
+    enddo
+
   !bl
   elseif (systemSolve.eq.3) then
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
@@ -72,6 +101,17 @@ subroutine mkgrid(rank)
     top_bcnovalue(:) =-1 !wall
     top_bcvalue(:)   = 0 ! wall
     
+    ! bc for the temperature
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+      else
+        top_bcvalue1(k) =0 ! heat flux or isothermal
+      endif
+    enddo
+    bot_bcvalue1(:)   = 1 ! symmetry
+
+
     elseif (systemSolve.eq.4) then
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
     numDomain = -1
