@@ -200,7 +200,7 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
     botBCvalue = 60.0/0.075*mu(1,k)/rho(1,k)/walldist(1)**2                                                           !bcvalue bot
     this%om(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%om(1,k))         + bot_bcvalue(k)*this%om(1,k)         !symmetry or bc value
     topBCvalue = 60.0/0.075*mu(this%imax,k)/rho(this%imax,k)/walldist(this%imax)**2                                   !bcvalue top
-    this%om(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%om(this%imax,k)) + bot_bcvalue(k)*this%om(this%imax,k) !symmetry or bc value
+    this%om(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%om(this%imax,k)) + top_bcvalue(k)*this%om(this%imax,k) !symmetry or bc value
   enddo
 
   ! this%k  (this%i1,:)= -this%k(this%imax,:)

@@ -144,7 +144,7 @@ subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
     botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                          !bcvalue
     this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))         +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value
     topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                          !bcvalue
-    this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) +bot_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
+    this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) +top_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
   enddo
 
 

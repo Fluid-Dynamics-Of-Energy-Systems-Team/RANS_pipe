@@ -334,7 +334,6 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
   call bound_v(ubound,wbound,W_in,centerBC,rank)
-  
   wr = 0
   Ub = 0.
   flux = 0.0
@@ -380,6 +379,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
   endif
+
+
 end subroutine bound_m
 
 !!*************************************************************************************
@@ -685,12 +686,8 @@ subroutine advance(rank)
         bu(i) = bu(i)/rhob + 1.0
         cu(i) = cu(i)/rhoc
       enddo
-      if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-       i = imax-1; cu(i) = 0.0              ! wall
-      else
-       i = imax-1; bu(i) = bu(i) + cu(i)    !symmetry
-      endif
-      i = 1;       bu(i) = bu(i) + au(i)    ! BC at center: Neumann: cancel coeff a
+      i = imax-1; cu(i) = 0.0              ! wall/symmetry
+      i = 1;      au(i)   = 0.0!           ! wall/symmetry
       
 
       do i=1,imax-1
