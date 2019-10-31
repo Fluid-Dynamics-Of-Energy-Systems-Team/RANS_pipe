@@ -6,7 +6,6 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 * Name of outputfile in input file
 * Write out residuals
 * Clean up the advanceC
-* Clean up the advance
 
 
 

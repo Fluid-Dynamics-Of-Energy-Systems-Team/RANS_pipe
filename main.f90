@@ -645,61 +645,31 @@ subroutine advance(rank)
   call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
   call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDomain) ! new
 
-  !channel
-  if (centerBC == -1) then
-    do k=1,kmax
-      do i=1,imax-1
-        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
-        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
-        bu(i) = -au(i)-cu(i)
-        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
-        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
-        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
-        au(i) = au(i)/rhoa
-        bu(i) = bu(i)/rhob + 1.0
-        cu(i) = cu(i)/rhoc
-      enddo
-   
-      i = imax-1; cu(i)   = 0.0           ! BC wall
-      i = 1;      au(i)   = 0.0           ! BC wall
-   
-      do i=1,imax-1
-        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
-      enddo
-   
-      call matrixIdir(imax-1,au,bu,cu,rhsu)
-      do i=1,imax-1
-        dUdt(i,k)=rhsu(i)
-      enddo
+  do k=1,kmax
+    do i=1,imax-1
+      au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
+      cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
+      bu(i) = -au(i)-cu(i)
+      rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
+      rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
+      rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
+      au(i) = au(i)/rhoa
+      bu(i) = bu(i)/rhob + 1.0
+      cu(i) = cu(i)/rhoc
     enddo
-  !bl/pipe
-  elseif (centerBC == 1) then
-    do k=1,kmax
-      do i=1,imax-1
-        au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
-        cu(i) = -dt*ekme(i+1,k)*Rp(i+1)/(dRp(i)*Ru(i)*dru(i+1))
-        bu(i) = -au(i)-cu(i)
-        rhoa = 0.5*(rnew(i  ,k)+rnew(i-1,k))
-        rhoc = 0.5*(rnew(i+1,k)+rnew(i+2,k))
-        rhob = 0.5*(rnew(i+1,k)+rnew(i  ,k))
-        au(i) = au(i)/rhoa
-        bu(i) = bu(i)/rhob + 1.0
-        cu(i) = cu(i)/rhoc
-      enddo
-      i = imax-1; cu(i) = 0.0              ! wall/symmetry
-      i = 1;      au(i)   = 0.0!           ! wall/symmetry
-      
-
-      do i=1,imax-1
-        rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
-      enddo
-   
-      call matrixIdir(imax-1,au,bu,cu,rhsu)
-      do i=1,imax-1
-        dUdt(i,k)=rhsu(i)
-      enddo
+ 
+    i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
+    i = 1;      au(i)   = 0.0           ! BC wall and symmetry
+ 
+    do i=1,imax-1
+      rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
     enddo
-  endif
+ 
+    call matrixIdir(imax-1,au,bu,cu,rhsu)
+    do i=1,imax-1
+      dUdt(i,k)=rhsu(i)
+    enddo
+  enddo
 
   !********************************************************************
   !     CALCULATE advection, diffusion and Force in z-direction
@@ -728,12 +698,9 @@ subroutine advance(rank)
       b(i) = b(i)/rhob + 1.0
       c(i) = c(i)/rhoc
     enddo
-    if ((systemsolve .ne. 4) .or. ((rank.eq.0.and.k.gt.K_start_heat) .or. (rank.gt.0))) then !NOTE HERE IS SOMETHING ADJUSTED
-      i=imax; b(i) = b(i) - c(i)            !BC at wall: zero vel: subtract one c
-    else
-      i=imax; b(i) = b(i) + c(i)            !symmetry at wall
-    endif
-    i=1;    b(i) = b(i) + centerBC*a(i)     !BC at center: zero vel or symmetry 
+
+    i=1;    b(i) = b(i) + bot_bcnovalue(k)*a(i)   !BC wall or symmetry
+    i=imax; b(i) = b(i) + top_bcnovalue(k)*c(i)   !BC wall or symmetry
 
     do i=1,imax
       rhs(i) = dt*dnew(i,k) + Wnew(i,k)*(Rnew(i,k)+Rnew(i,k+1))*0.5
