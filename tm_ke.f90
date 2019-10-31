@@ -93,10 +93,12 @@ end subroutine init_KE
 subroutine init_sol_KE(this)
   class(KE_TurbModel) :: this
   integer :: i
-  do i=1,this%imax
-    this%k(i,:)  =0.1
-    this%eps(i,:)=1.0
+  do i=0,this%i1
+    this%k(i,:)  =0.0
+    this%eps(i,:)=0.0
     this%v2(i,:) =2./3.*this%k(i,:)
+    this%Pk(i,:) = 0 
+    this%Gk(i,:) = 0
   enddo
 end subroutine init_sol_KE
 
@@ -161,14 +163,11 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
 
 
      i=1
-     b(i) = b(i) + bot_bcnovalue(k)*a(i)
-     ! b(i) = b(i) + centerBC*a(i)
+     b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
      rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
        
      i=this%imax
      b(i) = b(i) + top_bcnovalue(k)*c(i)
-     
-     ! b(i) = b(i) - c(i)
      rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
 
      call matrixIdir(this%imax,a,b/alphak,c,rhs)
@@ -248,19 +247,11 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
     i=1
     b(i) = b(i)+bot_bcvalue(k)*a(i)
     rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%eps(i-1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
-    ! if (centerBC.eq.-1) then
-    !   rhs(i) = dnew(i,k) - a(i)*this%eps(i-1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k) !wall with value
-    ! else
-    !   b(i)=b(i)+a(i)
-    !   rhs(i) = dnew(i,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)                        !symmetry 
-    ! endif
 
     i=this%imax
     b(i) = b(i)+top_bcvalue(k)*c(i)
     rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%eps(i+1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
-    ! rhs(i) = dnew(i,k) - c(i)*this%eps(i+1,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)   !wall with value
-    
-  
+      
     call matrixIdir(this%imax,a,b/alphae,c,rhs)
   
     do i=1,this%imax

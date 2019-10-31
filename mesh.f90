@@ -40,7 +40,7 @@ subroutine mkgrid(rank)
     fB = 2.4
     dpdz      = 4.0
     bot_bcnovalue(:) = 1 !symmetry
-    top_bcnovalue(:) = -1 !wall
+    top_bcnovalue(:) =-1 !wall
     bot_bcvalue(:)   = 1 ! symmetry
     top_bcvalue(:)   = 0 ! wall
     
@@ -53,10 +53,10 @@ subroutine mkgrid(rank)
     fA        = 0.5
     fB        = 4.6
     dpdz      = 1.0
-    bot_bcnovalue(:) = -1 ! wall
-    top_bcnovalue(:) = -1 ! wall
-    bot_bcvalue(:) = 0 ! wall
-    top_bcvalue(:) = 0 ! wall
+    bot_bcnovalue(:) =-1 ! wall
+    top_bcnovalue(:) =-1 ! wall
+    bot_bcvalue(:)   = 0 ! wall
+    top_bcvalue(:)   = 0 ! wall
   !bl
   elseif (systemSolve.eq.3) then
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
@@ -67,8 +67,9 @@ subroutine mkgrid(rank)
     fB = 2.4
     dpdz      = 1.0
     bot_bcnovalue(:) = 1 !symmetry
-    top_bcnovalue(:) = -1 !wall
     bot_bcvalue(:)   = 1 ! symmetry
+
+    top_bcnovalue(:) =-1 !wall
     top_bcvalue(:)   = 0 ! wall
     
     elseif (systemSolve.eq.4) then
@@ -79,6 +80,22 @@ subroutine mkgrid(rank)
     fA = 0.12
     fB = 3.4
     dpdz      = 1.0
+    
+    do k=0,k1
+      if ((rank.eq.0) .and. (k.le.K_start_heat)) then
+        top_bcnovalue(k) =1 !symmetry
+        top_bcvalue(k)   =1 !symmetry
+      else
+        top_bcnovalue(k) =-1 !wall
+        top_bcvalue(k)   = 0 ! wall
+      endif
+    enddo
+        
+
+    bot_bcvalue(:)   = 1 ! symmetry
+    bot_bcnovalue(:) = 1 !symmetry
+    
+    
   else
     if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")', systemSolve
     stop

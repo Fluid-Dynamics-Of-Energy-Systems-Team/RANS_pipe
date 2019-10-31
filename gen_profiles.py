@@ -10,7 +10,7 @@ adjust=dict()
 adjust['input']=dict()
 
 turbmodels = np.arange(1,5)
-systemsolve = np.arange(2,4)
+systemsolve = np.arange(1,2)
 for tm in turbmodels:
     for ss in systemsolve:
         adjust['input']['systemSolve']=ss
