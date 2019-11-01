@@ -11,6 +11,7 @@ OBJS += math.o
 OBJS += eos.o
 OBJS += mesh.o
 OBJS += tm.o tm_ke.o tm_mk.o tm_sa.o tm_vf.o tm_sst.o
+OBJS += tdm.o
 OBJS += numerics.o
 OBJS += fileio.o
 OBJS += mpistuff.o vfft.o
