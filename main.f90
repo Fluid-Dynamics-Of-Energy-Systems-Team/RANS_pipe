@@ -66,7 +66,7 @@ if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kma
 call turb_model%init()
 
 !initialize turbulent diffusivit turb_model
-allocate(turbdiff_model,source=ConstantPrandtl_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+allocate(turbdiff_model,source=CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
 
 
 !initialize numerical
