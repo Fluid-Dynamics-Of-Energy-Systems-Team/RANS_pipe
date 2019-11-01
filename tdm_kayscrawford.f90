@@ -8,7 +8,7 @@ module Prt_tdm
   !    Var Prt class     !
   !************************!
   
-  type,abstract,extends(TurbDiffModel), public :: VarPrt_Kays_TurbDiffModel
+  type,abstract,extends(TurbDiffModel), public :: VarPrt_KaysCrawford_TurbDiffModel
   real(8), dimension(:,:), allocatable :: Prt,Pr,mut_mu
   
   contains
@@ -16,12 +16,12 @@ module Prt_tdm
     procedure :: set_alphat  => set_alphat_VarPrt
     procedure :: init_mem_VarPrt
 
-  end type VarPrt_Kays_TurbDiffModel
+  end type VarPrt_KaysCrawford_TurbDiffModel
 
 contains
   subroutine init_VarPrt(this)
     implicit none
-    class(VarPrt_Kays_TurbDiffModel) :: this  
+    class(VarPrt_KaysCrawford_TurbDiffModel) :: this  
     call this%init_mem_VarPrt()
   end subroutine init_VarPrt
 
@@ -33,7 +33,7 @@ end subroutine init_mem_VarPrt
 
 subroutine set_alphat_VarPrt(this,mu,lam_cp,alphat)
   implicit none
-  class(VarPrt_Kays_TurbDiffModel) :: this
+  class(VarPrt_KaysCrawford_TurbDiffModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mu, lam_cp !lam_cp==ekh in the code
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
 
@@ -53,12 +53,7 @@ subroutine set_alphat_VarPrt(this,mu,lam_cp,alphat)
       mut_mu(i,k)= mut(i,k)/mu(i,k)
       
       ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
-      PeT      = mut_mu(i,k)*Pr(i,k)
-      if (mut_mu(i,k).lt.0.2) then
-        Prt(i,k) = 1.07 
-      else
-        Prt(i,k) = (2.0/PeT)+0.85
-      end
+      Prt(i,k)= 1/(c1+c2*mut_mu(i,k)+c3*(mut_mu(i,k)**2.0)*(1-exp(c4/mut_mu(i,k))))
       !!!!!!!!!!!!!!!!!
       alphat(i,k)= mut(i,k)/Prt(i,k)
     enddo

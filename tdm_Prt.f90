@@ -56,7 +56,8 @@ subroutine set_alphat_VarPrt(this,Prtmodel,mu,lam_cp,alphat)
       Pr(i,k)= mu(i,k)/lam_cp(i,k)
       mut_mu(i,k)= mut(i,k)/mu(i,k)
       
-      ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
+      ! Approximation of the turbulent Prandlt number 
+      !W.M. Kays, M.E. Crawford, Convective Heat and Mass Transfer, McGraw-Hill Inc, New York, 1993.)
       if(Prtmodel.eq.1) then
         Prt(i,k)= 1/(c1+c2*mut_mu(i,k)+c3*(mut_mu(i,k)**2.0)*(1-exp(c4/mut_mu(i,k))))
 
@@ -67,8 +68,17 @@ subroutine set_alphat_VarPrt(this,Prtmodel,mu,lam_cp,alphat)
         Agam     = ((2/Prtinf)-2*gam)**0.5
         Prt(i,k) = (gam+3.0*PeT*Agam-((3.0*PeT)**2.0)*(1-exp(-Agam/(3.0*PeT))))**(-1.0)
 
-      ! Approximation of the turbulent Prandlt number (Tang et al IJHMT 2016) 
+      ! Approximation of the turbulent Prandlt number (W. Kays Turb. Pr, Where are we? 1992)
       elseif (Prtmodel.eq.3) then
+        PeT      = mut_mu(i,k)*Pr(i,k)
+        if (mut_mu(i,k).lt.0.2) then
+          Prt(i,k) = 1.07 
+        else
+          Prt(i,k) = (2.0/PeT)+0.85
+        end
+
+      ! Approximation of the turbulent Prandlt number (Tang et al IJHMT 2016) 
+      elseif (Prtmodel.eq.4) then
         if (mut_mu(i,k).lt.0.2) then
           Prt(i,k) = 1.0 
         elseif (mut_mu(i,k).le.10.) then
