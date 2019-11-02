@@ -14,7 +14,7 @@ use sa_tm
 use sst_tm
 use mk_tm
 use vf_tm
-use mod_td
+use mod_tdm
 implicit none
 include 'mpif.h'
 
@@ -437,7 +437,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_math
   use mod_mesh
   use mod_common
-  use mod_td
+  use mod_tdm
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
@@ -448,7 +448,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   
   sigmat = 0.9 !turbulent prandtl
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
-  call turbdiff_model%set_alphat(ekmt, alphat)
+  call turbdiff_model%set_alphat(ekmt,ekh,ekm,alphat)
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
 !  call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1,Rtmp,Ru,Rp,dru,dz,rank,0)

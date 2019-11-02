@@ -1,4 +1,4 @@
-module mod_td
+module mod_tdm
   implicit none
 
 !****************************************************************************************
@@ -21,10 +21,10 @@ module mod_td
       class(TurbDiffModel) :: this
     end subroutine init_tdm
 
-    subroutine set_alphat_tdm(this, mut, alphat)
+    subroutine set_alphat_tdm(this,mut,lam_cp,mu,alphat)
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut
+      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp, mu
       real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     end subroutine set_alphat_tdm
 
@@ -50,11 +50,11 @@ contains
     class(CPrt_TurbDiffModel) :: this
   end subroutine init_constprt
 
-  subroutine set_alphat_constprt(this, mut, alphat)
+  subroutine set_alphat_constprt(this,mut,lam_cp,mu, alphat)
     class(CPrt_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut
+    real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp,mu
     real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     alphat = mut/this%Prt
   end subroutine set_alphat_constprt
 
-end module mod_td
+end module mod_tdm
