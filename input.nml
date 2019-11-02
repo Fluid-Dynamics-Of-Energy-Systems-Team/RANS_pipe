@@ -1,7 +1,7 @@
 &input
   CFL               = 100,     ! CFL number / time step
   systemSolve       = 2,       ! 1: pipe, 2: channel 3: boundary layer !**dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe**!!
-  imax              = 192,     ! radial direction
+  imax              = 96,     ! radial direction
   kelem             = 240,     ! axial direction
   K_start_heat      = 10,      ! for isoflux:    after home many cells in x will you start heating
   x_start_heat      = 5,       ! for isothermal: lenght at which you start heating
@@ -29,5 +29,6 @@
   alphae            = 0.1, 
   alphav2           = 0.1, 
   modifDiffTerm     = 1,       ! 0..Standard, 1..invSLS, 2..Aupoix
+  turbdiffmod       =2,
 /
 

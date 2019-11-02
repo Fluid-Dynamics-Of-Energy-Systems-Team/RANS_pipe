@@ -15,6 +15,7 @@ use sst_tm
 use mk_tm
 use vf_tm
 use mod_tdm
+use vp_tdm
 implicit none
 include 'mpif.h'
 
@@ -65,8 +66,13 @@ if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
 
-!initialize turbulent diffusivit turb_model
-allocate(turbdiff_model,source=CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+!initialize turbulent diffusivity model
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=        CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'))
+if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'))
+if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'))
+if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'))
+call turbdiff_model%init()
 
 
 !initialize numerical
@@ -100,6 +106,7 @@ call cpu_time(start)
 do istep=istart,nstep
 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
+  call turbdiff_model%set_alphat(ekmt,ekh,ekm,alphat)
   call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
@@ -446,9 +453,8 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   real(8), dimension(imax)      :: a,b,c,rhs
   real(8)                       :: sigmat,Q
   
-  sigmat = 0.9 !turbulent prandtl
+  ! sigmat = 0.9 !turbulent prandtl
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
-  call turbdiff_model%set_alphat(ekmt,ekh,ekm,alphat)
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
 !  call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1,Rtmp,Ru,Rp,dru,dz,rank,0)
