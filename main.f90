@@ -58,7 +58,7 @@ if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tabl
 if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
 call eos_model%init()
 
-!initialize turbomodel
+!initialize turbulent viscosity model
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
 if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA'))
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK'))
@@ -278,11 +278,11 @@ subroutine bound_v(u,w,win,centerBC,rank)
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
 
-  u(0,:)    =   0.0 !NOTE CHANGE BY SIMONE
-  u(imax,:) =   0.0
+  u(0,:)    =   0.0 !wall and symmetry
+  u(imax,:) =   0.0 !wall and symmetry
   u(i1,:)   = - u(imax-1,:)
-  w(0,:)    = bot_bcnovalue(k)*w(1,k)
-  w(i1,:)   = top_bcnovalue(k)*w(imax,k)
+  w(0,:)    = bot_bcnovalue(k)*w(1,k)    !wall or symmetry
+  w(i1,:)   = top_bcnovalue(k)*w(imax,k) !wall or symmetry
   
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
@@ -453,21 +453,16 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   real(8), dimension(imax)      :: a,b,c,rhs
   real(8)                       :: sigmat,Q
   
-  ! sigmat = 0.9 !turbulent prandtl
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-!  call diffc(dnew,cnew,ekh,ekhi,ekhk,ekmt,sigmat,Rtmp,Ru,Rp,dru,dz,rank,0)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1,Rtmp,Ru,Rp,dru,dz,rank,0)
 
   do k=1,kmax
     do i=1,imax
-      !a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(ekmt(i,k)+ekmt(i-1,k))/sigmat)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-      !c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(ekmt(i,k)+ekmt(i+1,k))/sigmat)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-      
-      b(i) = (-a(i)-c(i) + dimpl(i,k) )        ! BUG
-      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  ! BUG
+            b(i) = (-a(i)-c(i) + dimpl(i,k) )        
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  
     enddo
 
     i=1

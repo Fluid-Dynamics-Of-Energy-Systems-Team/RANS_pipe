@@ -9,13 +9,13 @@ module mod_param
   real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD,x_start_heat
   real*8    ctheta,Fr_1
   real*8    alphac,alphak,alphae,alphav2
-  integer   Mt,Nx,Mx,Nt 
+  integer   Mt,Nx,Mx,Nt , turbdiffmod
 
   NAMELIST /input/ CFL, systemsolve, imax, K_start_heat, kelem, x_start_heat,      &
                  iwork, isave, nTab, nstep, LoD, periodic, Re, Pr, Qwall, &
                  isothermalBC, Tw, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &
-                 alphav2, modifDiffTerm
+                 alphav2, modifDiffTerm, turbdiffmod
 
 contains
 
