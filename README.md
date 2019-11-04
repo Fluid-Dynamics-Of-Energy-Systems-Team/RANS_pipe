@@ -1,5 +1,17 @@
 # RANS_pipe
 RANS code to solve turbulent flows over a flat plate or through a pipe or channel with variable properties
+
+## References 
+### Turbulent viscosity models
+
+
+### Turbulent heat flux models
+* [Tang](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
+* [Kays](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
+* [Kays & Crawford](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
+* [Irrenfried](https://www.sciencedirect.com/science/article/pii/S0142727X17304083?via%3Dihub)
+
+
 ## To Do
 
 * Restart from file
