@@ -91,7 +91,7 @@ contains
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
-        this%Prt(i,k)= 1/(c1+c2*this%mut_mu(i,k)+c3*(this%mut_mu(i,k)**2.0)*(1-exp(c4/this%mut_mu(i,k))))
+        this%Prt(i,k)= 1/(c1+c2*this%mut_mu(i,k)+c3*(this%mut_mu(i,k)**2.0)*(1-exp(-c4/this%mut_mu(i,k))))
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
       enddo
     enddo
