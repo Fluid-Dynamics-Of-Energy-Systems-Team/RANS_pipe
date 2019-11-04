@@ -91,7 +91,7 @@ contains
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
-        this%Prt(i,k)= 1/(c1+c2*this%mut_mu(i,k)+c3*(this%mut_mu(i,k)**2.0)*(1-exp(-c4/this%mut_mu(i,k))))
+        this%Prt(i,k)= 1/(c1+c2*this%mut_mu(i,k)+c3*(this%mut_mu(i,k)**2.0)*(1-exp(c4/this%mut_mu(i,k))))
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
       enddo
     enddo
@@ -107,13 +107,7 @@ contains
     real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
     real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
     integer :: i,k
-    real(8) :: c1,c2,c3,c4, PeT
-
-    ! constant for kays
-    c1 = 0.5882
-    c2 = 0.228
-    c3 =-0.0441
-    c4 =-5.165
+    real(8) :: PeT
 
     do k=1,this%kmax
       do i=1,this%imax
