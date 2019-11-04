@@ -16,12 +16,10 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 * [2 equations](https://www.infona.pl/resource/bwmeta1.element.baztech-article-BAT3-0010-0041)
 
 ## To Do
-
+* Implement two equation models for the turbulent heat flux
 * Restart from file
 * Name of outputfile in input file
 * Write out residuals
-* Clean up the advanceC
-
 
 
 ## Results
