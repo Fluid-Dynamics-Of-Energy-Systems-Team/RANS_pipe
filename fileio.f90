@@ -335,7 +335,7 @@ subroutine output2d_upd2(rank,istap)
     enddo
   enddo
   call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
-  call write_mpiio_formatted("test", xvec, yvec, unew,wnew, rnew,cnew,p,ekm, ekmt,yp_sol,     &
+  call write_mpiio_formatted(trim(output_fname), xvec, yvec, unew,wnew, rnew,cnew,p,ekm, ekmt,yp_sol,     &
                                  k_sol, eps_sol, v2_sol, om_sol,nuSA_sol, i1, k1,rank,px)
 
 end

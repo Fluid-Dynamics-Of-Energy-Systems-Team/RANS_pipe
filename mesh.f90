@@ -135,6 +135,17 @@ subroutine mkgrid(rank)
     bot_bcvalue(:)   = 1 ! symmetry
     bot_bcnovalue(:) = 1 !symmetry
     
+    ! bc for the temperature
+    do k=0,k1
+      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+      else
+        top_bcvalue1(k) =0 ! heat flux or isothermal
+      endif
+    enddo
+    bot_bcvalue1(:)   = 1 ! symmetry
+
+
     
   else
     if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")', systemSolve

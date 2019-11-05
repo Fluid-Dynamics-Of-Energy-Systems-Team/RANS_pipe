@@ -45,6 +45,9 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
+! call mpi_finalize(ierr)
+! stop
+
 !***************************!
 !      INITIALIZATION       !
 !***************************!
@@ -82,7 +85,7 @@ call init_transpose
 call mkgrid(rank)
 
 
-dtmax = 1.e-3
+dtmax = 1e-2
 dt = dtmax
 istart = 1
 
@@ -277,13 +280,16 @@ subroutine bound_v(u,w,win,centerBC,rank)
   real(8), dimension(0:i1),      intent(IN) :: win
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
-
+  ! integer :: k
   u(0,:)    =   0.0 !wall and symmetry
   u(imax,:) =   0.0 !wall and symmetry
   u(i1,:)   = - u(imax-1,:)
-  w(0,:)    = bot_bcnovalue(k)*w(1,k)    !wall or symmetry
-  w(i1,:)   = top_bcnovalue(k)*w(imax,k) !wall or symmetry
-  
+
+  do k=0,k1
+    w(0,k)    = bot_bcnovalue(k)*w(1,k)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
+    w(i1,k)   = top_bcnovalue(k)*w(imax,k) !wall or symmetry
+  enddo
+    
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
@@ -365,6 +371,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
   endif
+  call bound_v(ubound,w_out,W_in,centerBC,rank)
+
 
 
 end subroutine bound_m
