@@ -230,19 +230,20 @@ end
 
 
 subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
-                                 k, eps, v2, om,nuSA, i1, k1,rank,px)
+                                 k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
   implicit none 
   include "mpif.h"
   character(*),                  intent(IN) :: filename
   real(8), dimension(0:i1,0:k1), intent(IN) :: x,y,u,w,rho,T,p,mu,mut,yp, &
-                                               k,eps,v2,om,nuSA
+                                               k,eps,v2,om,nuSA, &
+                                               res_nuSA
   integer,                       intent(IN) :: i1,k1,rank,px
   integer nvar,i,j,index,k_max,k_min,size,fh,ierr
   integer(kind=MPI_OFFSET_KIND) disp 
-  character(len=301), dimension(:), allocatable :: lines, lines2
-  character(len=300) :: test
-  character(len=301) :: line
-  nvar = 15
+  character(len=321), dimension(:), allocatable :: lines, lines2
+  character(len=320) :: test
+  character(len=321) :: line
+  nvar = 16
   index=1
 
   !first core write from 0 to k1-1
@@ -252,7 +253,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     allocate(lines(1:(i1+1)*k1+1)) !+1 for header
     disp = 0
     size = ((i1+1)*(k1)+1)*(nvar*20+1)
-    write(test,'(15(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA' !write the header
+    write(test,'(16(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA','res_nuSA' !write the header
     write(line, '(A)') test // NEW_LINE("A")
     lines(index) = line
     index = index+1
@@ -273,9 +274,9 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   endif
   do i = 0,i1
     do j = k_min,k_max
-      write(test,'(15(E20.10e3))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),  &
+      write(test,'(16(E20.10e3))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),  &
                                    T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
-                                   k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j)
+                                   k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j), res_nuSA(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
       index=index+1
@@ -336,7 +337,7 @@ subroutine output2d_upd2(rank,istap)
   enddo
   call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
   call write_mpiio_formatted(trim(output_fname), xvec, yvec, unew,wnew, rnew,cnew,p,ekm, ekmt,yp_sol,     &
-                                 k_sol, eps_sol, v2_sol, om_sol,nuSA_sol, i1, k1,rank,px)
+                                 k_sol, eps_sol, v2_sol, om_sol,nuSA_sol,res_nuSA, i1, k1,rank,px)
 
 end
 

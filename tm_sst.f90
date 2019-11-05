@@ -50,9 +50,15 @@ end subroutine init_SST
 subroutine init_sol_SST(this)
   class(SST_TurbModel) :: this
   integer i
-  do i=1,this%imax
-    this%k(i,:)  = 0.01!0.1
+
+  do i=0,this%i1
+    this%k(i,:)  = 0.0!0.1
     this%om(i,:)  = 1.0
+    this%bF1(i,:)  = 1.0
+    this%kin = 0.0
+    this%omin = 1.0
+    this%bF1in = 1.0
+    this%mutin = this%kin/this%omin
   enddo
 end subroutine init_sol_SST
 
@@ -389,15 +395,13 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
       rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k)
-    enddo 
-
+    enddo
+    
     i=1
-    ! b(i) = b(i)+centerBC*a(i)
     b(i) = b(i)+bot_bcnovalue(k)*a(i)
     rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k) 
 
     i=this%imax
-    ! b(i) = b(i) - c(i)
     b(i) = b(i)+top_bcnovalue(k)*c(i)
     rhs(i) = dnew(i,k)  + ((1-alphak)/alphak)*b(i)*this%k(i,k)
 

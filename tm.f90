@@ -122,8 +122,8 @@ subroutine set_mut_bc(this,mut,periodic, px, rank)
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT) :: mut
   real(8), dimension(0:this%i1) :: tmp
   
-  mut(this%i1,:) = top_bcnovalue*mut(this%imax,:)
-  mut(0,:)  =  bot_bcnovalue*mut(1,:)
+  mut(this%i1,:) = top_bcnovalue(:)*mut(this%imax,:)
+  mut(0,:)       = bot_bcnovalue(:)*mut(1,:)
 
   call shiftf(mut,tmp,rank); mut(:,0)  = tmp(:);
   call shiftb(mut,tmp,rank); mut(:,this%k1) = tmp(:);

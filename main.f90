@@ -422,7 +422,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
-      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1;!bl
+      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1; !bl
     enddo
   endif
 end subroutine initialize_solution

@@ -207,6 +207,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     alphak,modification,centerBC,periodic,rank)
   use mod_math
   use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+  use mod_common, only : res_nuSA
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u, w, rho,mu,mui,muk,rho_mod
@@ -270,6 +271,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
     call matrixIdir(this%imax,a,b/alphak,c,rhs)
     do i=1,this%imax
       resSA = resSA + ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
+      res_nuSA(:,k) = ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
       this%nuSA(i,k) = max(rhs(i), 1.0e-8)
     enddo
   enddo
