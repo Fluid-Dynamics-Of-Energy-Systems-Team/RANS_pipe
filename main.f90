@@ -390,7 +390,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
     enddo
   endif
 
-  !compute mf out to the bot
+  !compute mf out to the bot (used for the bl)
   do k=1,kmax
       flux = flux + Ubound(0,k)*dz
   enddo
@@ -589,8 +589,8 @@ subroutine advance(rank)
     enddo
  
     i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
-    !ubot_bcvalue=1: au(i)=0 and bu(i)=bu(i), ubot_bcvalue=0: au(i)=au(i), bu(i)=bu(i)+au(i)
     i=1;   bu(i) = bu(i) + (1-ubot_bcvalue(k))*au(i); au(i) = (1-ubot_bcvalue(k))*au(i) !symmetry with 0 or with the derivative
+    !ubot_bcvalue=1: au(i)=0 and bu(i)=bu(i), ubot_bcvalue=0: au(i)=au(i), bu(i)=bu(i)+au(i)
    
     call matrixIdir(imax-1,au,bu,cu,rhsu)
     do i=1,imax-1

@@ -5,7 +5,8 @@ module mod_mesh
   real(8), dimension(:), allocatable :: z1,z2                   !0:k1
   real(8), dimension(:), allocatable :: wallDist                !1:imax
   integer                            :: centerBC,numDomain
-  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1
+  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1,&
+                                        ubot_bcvalue
 
 contains
 !!********************************************************************
@@ -22,7 +23,8 @@ subroutine mkgrid(rank)
   allocate(Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
   allocate(z1(0:k1),z2(0:k1))
   allocate(wallDist(1:imax))
-  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1),top_bcvalue1(0:k1), bot_bcvalue1(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1))
+  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1),top_bcvalue1(0:k1), bot_bcvalue1(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1), &
+    ubot_bcvalue(0:k1))
 
   
   pi    = 4.0*atan(1.0)
@@ -45,6 +47,7 @@ subroutine mkgrid(rank)
     top_bcnovalue(:) =-1 !wall
     bot_bcvalue(:)   = 1 ! symmetry
     top_bcvalue(:)   = 0 ! wall
+    ubot_bcvalue(:)  = 1
     
 
 
@@ -73,6 +76,8 @@ subroutine mkgrid(rank)
     top_bcnovalue(:) =-1 ! wall
     bot_bcvalue(:)   = 0 ! wall
     top_bcvalue(:)   = 0 ! wall
+    ubot_bcvalue(:)  = 1 ! 1: set the u value to zero at the wall
+    
 
 
     ! bc for the temperature
@@ -100,6 +105,8 @@ subroutine mkgrid(rank)
 
     top_bcnovalue(:) =-1 !wall
     top_bcvalue(:)   = 0 ! wall
+    ubot_bcvalue(:)  = 1 ! 0: set the wall to du/dy =0
+    
     
     ! bc for the temperature
     do k=0,k1
@@ -116,9 +123,10 @@ subroutine mkgrid(rank)
     if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
     numDomain = -1
     centerBC  = 1
-    gridSize  = 1.0
+
+    gridSize  = 1
     fA = 0.12
-    fB = 3.4
+    fB = 3.0
     dpdz      = 1.0
     
     do k=0,k1
@@ -130,7 +138,7 @@ subroutine mkgrid(rank)
         top_bcvalue(k)   = 0 ! wall
       endif
     enddo
-        
+    ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
 
     bot_bcvalue(:)   = 1 ! symmetry
     bot_bcnovalue(:) = 1 !symmetry

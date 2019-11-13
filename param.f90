@@ -7,7 +7,7 @@ module mod_param
   integer   nstep,K_start_heat,select_init,systemSolve
   integer   turbmod,modifDiffTerm,modVF,profiling,isothermalBC,pressIsoThermal
   real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD,x_start_heat
-  real*8    ctheta,Fr_1
+  real*8    ctheta,Fr_1, dtmax
   real*8    alphac,alphak,alphae,alphav2
   integer   Mt,Nx,Mx,Nt , turbdiffmod
   character(len=40) output_fname
@@ -16,7 +16,7 @@ module mod_param
                  iwork, isave, nTab, nstep, LoD, periodic, Re, Pr, Qwall, &
                  isothermalBC, Tw, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &
-                 alphav2, modifDiffTerm, turbdiffmod, output_fname
+                 alphav2, modifDiffTerm, turbdiffmod, output_fname, dtmax
 
 contains
 
