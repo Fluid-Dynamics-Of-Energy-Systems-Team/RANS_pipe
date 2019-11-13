@@ -48,8 +48,10 @@ subroutine init_sol_SA(this)
     implicit none
     class(SA_TurbModel) :: this
     integer i
-    do i=1,this%imax
-      this%nuSA(i,:) = 0.001
+    do i=0,this%i1
+      this%nuSA(i,:) = 0.0
+      this%nuSAin(i) = 0.0
+      this%pkin(i)   = 0.0
     enddo
 end subroutine init_sol_SA
 
@@ -167,9 +169,12 @@ subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
   if (periodic.eq.1) return
   if (rank.eq.0) then
     this%nuSA(:,0) = this%nuSAin(:)
+    this%Pk(:,0) = this%pkin(:)
   endif
   if (rank.eq.px-1) then
     this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
+    this%pk(:,this%k1) = 2.0*this%pk(:,this%kmax) - this%pk(:,this%kmax-1)
+
   endif
 
 end subroutine set_bc_SA

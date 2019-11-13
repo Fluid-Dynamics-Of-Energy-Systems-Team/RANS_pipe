@@ -301,13 +301,11 @@ subroutine output2d_upd2(rank,istap)
   use mod_eos
   implicit none
   include 'mpif.h'
-  character*5 cha
   real*8 pecletx,peclety,pecletz
   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
          massfl,w_c,ndt
   real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol
   integer rank,istap,jstart
-  write(cha,'(I5.5)')rank
 
   twall    = 0.0
   massflow = 0.0
@@ -331,6 +329,7 @@ subroutine output2d_upd2(rank,istap)
 
   do k=0,k1
     do i=0,i1
+      ! write(*,*) dz
       xvec(i,k)=(k+rank*kmax)*dz
       yvec(i,k) = y_cv(i)
     enddo
@@ -341,61 +340,58 @@ subroutine output2d_upd2(rank,istap)
 
 end
 
-! subroutine output2d_upd(rank,istap)
-!   use mod_param
-!   use mod_common
-!   use mod_common2
-!   implicit none
-!   include 'mpif.h'
-!   character*5 cha
-!   real*8 pecletx,peclety,pecletz
-!   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
-!          massfl,w_c,ndt
-!   integer rank,istap,jstart
-!   write(cha,'(I5.5)')rank
+subroutine output2d_upd(rank,istap)
+  use mod_param
+  use mod_mesh
+  use mod_common
+  ! use mod_common2
+  implicit none
+  include 'mpif.h'
+  character*5 cha
+  real*8 pecletx,peclety,pecletz
+  real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
+         massfl,w_c,ndt
+  integer rank,istap,jstart
+  write(cha,'(I5.5)')rank
 
 
-!   twall    = 0.0
-!   massflow = 0.0
-!   enthflow = 0.0
-!   w_c      = 0.0
+  ! twall    = 0.0
+  ! massflow = 0.0
+  ! enthflow = 0.0
+  ! w_c      = 0.0
 
-!   do k=1,kmax
-!     do i=1,imax
-!       massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
-!       massflow(k) = massflow(k) + massfl
-!       enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
-!     enddo
-!   enddo
+  ! do k=1,kmax
+  !   do i=1,imax
+  !     massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
+  !     massflow(k) = massflow(k) + massfl
+  !     enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
+  !   enddo
+  ! enddo
 
-!   enth_b=enthflow/massflow
-!   do k=1,kmax
-!     w_c=(Cnew(i1,k)+Cnew(imax,k))/2.
-!     call eos_model%set_w_enth(w_c,      "T", Twall(k))
-!     call eos_model%set_w_enth(enth_b(k),"T", Tbulk(k))
-!   enddo
+  ! enth_b=enthflow/massflow
+  ! do k=1,kmax
+  !   w_c=(Cnew(i1,k)+Cnew(imax,k))/2.
+  !   call eos_model%set_w_enth(w_c,      "T", Twall(k))
+  !   call eos_model%set_w_enth(enth_b(k),"T", Tbulk(k))
+  ! enddo
 
-!   if (turbmod.eq.0) open(15,file='0/tecp.'//cha)
-!   if (turbmod.eq.1) open(15,file='SA/tecp.'//cha)
-!   if (turbmod.eq.2) open(15,file='MK/tecp.'//cha)
-!   if (turbmod.eq.3) open(15,file='VF/tecp.'//cha)
-!   if (turbmod.eq.4) open(15,file='OM/tecp.'//cha)
-
-!   if (rank.eq.0) then
-!     write(15,*) 'VARIABLES ="X","Y","U","W","P","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
-!     write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
-!   endif
-
-!   do k=0,k1
-!     do i=0,i1
-!       write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, y_cv(i), &
-!         0.5*(unew(max(i-1,0),k)+unew(i,k)), &
-!         Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), temp(i,k), &
-!         knew(i,k),enew(i,k),v2new(i,k), &
-!         omNew(i,k),nuSAnew(i,k),yp(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
-!     enddo
-!   enddo
+  open(15,file=cha)
   
-!   close(15)
+  ! if (rank.eq.0) then
+  !   write(15,*) 'VARIABLES ="X","Y","U","W","P","C","T","k","eps", "v2","omega","nuSA","yplus","RHO","Pe","mu","mut"'
+  !   write(15,*) 'ZONE I=  ', imax+2,' J=  ',(kmax+2)*px,' F=POINT '
+  ! endif
 
-! end
+  do k=0,k1
+    do i=0,i1
+      write(15,'(17ES24.10E3)')  (k+rank*kmax)*dz, y_cv(i), &
+        unew(i,k), &
+        Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), cnew(i,k), &
+        cnew(i,k),cnew(i,k),cnew(i,k), &
+        cnew(i,k),cnew(i,k),cnew(i,k),rnew(i,k),peclet(i,k),ekm(i,k),ekmt(i,k)
+    enddo
+  enddo
+  
+  close(15)
+
+end

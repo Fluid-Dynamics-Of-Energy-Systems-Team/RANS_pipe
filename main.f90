@@ -23,6 +23,8 @@ integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1
 real(8) ::  resC,resK,resE,resV2,resOm,resSA   
 real(8) ::  start, finish
+
+
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
 !read parameters
@@ -45,9 +47,6 @@ Nx=kmax*px
 Mx=kmax
 Nt=imax
 
-! call mpi_finalize(ierr)
-! stop
-
 !***************************!
 !      INITIALIZATION       !
 !***************************!
@@ -59,7 +58,7 @@ call initMem()
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
 if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
-call eos_model%init()
+call eos_model%init() 
 
 !initialize turbulent viscosity model
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
@@ -77,7 +76,6 @@ if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'))
 call turbdiff_model%init()
 
-
 !initialize numerical
 call init_transpose
 
@@ -85,7 +83,6 @@ call init_transpose
 call mkgrid(rank)
 
 
-dtmax = 1e-2
 dt = dtmax
 istart = 1
 
@@ -98,7 +95,7 @@ call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! nec
 
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-call bound_v(Unew,Wnew,Win,centerBC,rank)
+call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
 
@@ -119,17 +116,19 @@ do istep=istart,nstep
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
 
-  call bound_m(dUdt,dWdt,wnew,rnew,Win,rank)
+  call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
   call fillps(rank)
   call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
-
+  call bound_v(Unew,Wnew,Win,centerBC,rank, istep)
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-  if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank)
-  if   (mod(istep,500).eq.0)                       call output2d_upd2(rank,istep)
+  if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
+  if   (mod(istep,500).eq.0) call output2d_upd2(rank,istep);  call calc_displacement(wnew,dis,rank);
+  ! call calc_vvelocity(wnew, kmax, rank)!call output2d_upd(rank,istep); !call mpi_finalize(ierr);stop;
+
 
   noutput = 100
   if (rank.eq.0) then
@@ -268,31 +267,68 @@ subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   endif  
 end subroutine bound_c
 
+subroutine calc_displacement(w, dis2, rank)
+  use mod_param, only : i1, k1, imax,kmax,K_start_heat,Re   !,! kmax
+  use mod_mesh, only : drp, dz, dru
+  implicit none
+  
+  real(8), dimension(0:i1,0:k1), intent(IN) :: w
+  integer, intent(IN) :: rank
+
+  real(8), dimension(0:k1) :: dis, dis2
+  real(8) :: flux, dy, wavg,x, flux1
+  character*5 cha
+  integer i,k
+
+  do k=0,k1
+    flux = 0.
+    flux1 = 0.
+    do i=1,imax
+      flux1 = flux1 + (1-w(i,k))*dru(i)
+      flux = flux + w(i,k)*(1-w(i,k))*dru(i)
+    enddo
+    dis(k)=flux
+    dis2(k)=flux1
+  enddo
+
+  write(cha,'(I5.5)')rank
+  open(15, STATUS='REPLACE',file='test'//cha)
+  do k=0,k1-1
+    x = (k+rank*kmax)*dz - (K_start_heat)*dz-(1/2)*dz
+    write(15,'(6ES24.10E3)')  x, dis(k),dis2(k), 0.664*sqrt(x/Re),1.72*sqrt(x/Re), real(k)
+  enddo
+  close(15)
+  ! stop
+end subroutine
+
+
+
 !!*************************************************************************************
 !!  Apply the boundary conditions for the velocity
 !!*************************************************************************************
-subroutine bound_v(u,w,win,centerBC,rank)
+subroutine bound_v(u,w,win,centerBC,rank, step)
   use mod_param
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue, ubot_bcvalue, dz
   implicit none  
   include 'mpif.h'
-  integer,                       intent(IN) :: centerBC, rank
+  integer,                       intent(IN) :: centerBC, rank, step
   real(8), dimension(0:i1),      intent(IN) :: win
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
-  ! integer :: k
-  u(0,:)    =   0.0 !wall and symmetry
-  u(imax,:) =   0.0 !wall and symmetry
+  real(8) :: x, vfs, vfsm
+  real(8), dimension(0:k1) :: dis
+
+  u(0,:)    =  (1-ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
+  u(imax,:) =   0.0                       !wall and symmetry
   u(i1,:)   = - u(imax-1,:)
 
-  do k=0,k1
-    w(0,k)    = bot_bcnovalue(k)*w(1,k)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
-    w(i1,k)   = top_bcnovalue(k)*w(imax,k) !wall or symmetry
-  enddo
+  w(0,:)    = bot_bcnovalue(:)*w(1,:)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
+  w(i1,:)   = top_bcnovalue(:)*w(imax,:) !wall or symmetry
+  
     
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
-  call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
+  call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
   call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
   if (periodic.eq. 1) return
 
@@ -310,13 +346,13 @@ end subroutine bound_v
 !!*************************************************************************************
 !!   Apply the boundary conditions for the velocity using the mass flux
 !!************************  *************************************************************
-subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
+subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   use mod_param
   use mod_mesh
   use mod_common
   implicit none
   include 'mpif.h'
-  integer,                       intent(IN) :: rank
+  integer,                       intent(IN) :: rank, step
   real(8), dimension(0:i1,0:k1), intent(IN) :: rbound
   real(8), dimension(0:i1),      intent(IN) :: W_in  
   real(8), dimension(0:i1,0:k1), intent(OUT):: ubound, wbound, w_out
@@ -325,7 +361,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
   integer :: ierr
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
-  call bound_v(ubound,wbound,W_in,centerBC,rank)
+  call bound_v(ubound,wbound,W_in,centerBC,rank, step)
   wr = 0
   Ub = 0.
   flux = 0.0
@@ -354,6 +390,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
     enddo
   endif
 
+  !compute mf out to the bot
+  do k=1,kmax
+      flux = flux + Ubound(0,k)*dz
+  enddo
+
   if (rank.eq.px-1)then
     Ub = 0
     wfunc = 0
@@ -371,9 +412,6 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank)
       Wbound(i,kmax) = Wbound(i,kmax) + deltaW*wr(i) ! based on averaged outflow velocity
     enddo
   endif
-  call bound_v(ubound,w_out,W_in,centerBC,rank)
-
-
 
 end subroutine bound_m
 
@@ -469,7 +507,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     do i=1,imax
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-            b(i) = (-a(i)-c(i) + dimpl(i,k) )        
+      b(i) = (-a(i)-c(i) + dimpl(i,k) )        
       rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  
     enddo
 
@@ -525,7 +563,7 @@ subroutine advance(rank)
   real*8, dimension(imax-1) :: au, bu, cu, rhsu
   real*8 dnew(0:i1,0:k1)
   real*8 dif,alpha,rhoa,rhob,rhoc
-
+  real*8 x
   dif=0.0
 
   !>********************************************************************
@@ -547,15 +585,13 @@ subroutine advance(rank)
       au(i) = au(i)/rhoa
       bu(i) = bu(i)/rhob + 1.0
       cu(i) = cu(i)/rhoc
-    enddo
- 
-    i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
-    i = 1;      au(i)   = 0.0           ! BC wall and symmetry
- 
-    do i=1,imax-1
       rhsu(i) = dt*dnew(i,k) + Unew(i,k)*(Rnew(i+1,k)+Rnew(i,k))*0.5
     enddo
  
+    i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
+    !ubot_bcvalue=1: au(i)=0 and bu(i)=bu(i), ubot_bcvalue=0: au(i)=au(i), bu(i)=bu(i)+au(i)
+    i=1;   bu(i) = bu(i) + (1-ubot_bcvalue(k))*au(i); au(i) = (1-ubot_bcvalue(k))*au(i) !symmetry with 0 or with the derivative
+   
     call matrixIdir(imax-1,au,bu,cu,rhsu)
     do i=1,imax-1
       dUdt(i,k)=rhsu(i)

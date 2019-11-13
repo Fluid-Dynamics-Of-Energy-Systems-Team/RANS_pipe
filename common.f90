@@ -9,10 +9,10 @@ module mod_common
                                           ekh,ekhi,ekhk, & 
                                           ekm,ekmi,ekmk, &
                                           cp,cpi,cpk,alphat
-  real(8) dt,dtmax
+  real(8) dt
   real(8), dimension(:,:), allocatable :: Unew,Wnew,rnew,cnew,qcrit, &
                                           Uold,Wold,rold,dUdt,dVdt,dWdt,p,res_nuSA
-  real(8), dimension(:),   allocatable :: Win,ekmtin
+  real(8), dimension(:),   allocatable :: Win,ekmtin, dis
   
   integer, dimension(:),   allocatable :: Xii     !Nx
   integer, dimension(:,:), allocatable :: Xkk     !Nx,Mt
@@ -37,6 +37,7 @@ contains
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1),                 &
              res_nuSA(0:i1,0:k1))
     allocate(Win(0:i1),ekmtin(0:i1))
+    allocate(dis(0:k1))
     allocate(p(imax,kmax))
 
     !NUMERICAL STUFF

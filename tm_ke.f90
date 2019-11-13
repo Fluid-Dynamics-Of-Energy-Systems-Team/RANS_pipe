@@ -96,9 +96,13 @@ subroutine init_sol_KE(this)
   do i=0,this%i1
     this%k(i,:)  =0.0
     this%eps(i,:)=0.0
-    this%v2(i,:) =2./3.*this%k(i,:)
+    this%v2(i,:) =2./3.*this%k(i,:)    
     this%Pk(i,:) = 0 
     this%Gk(i,:) = 0
+    this%kin(i) = 0.0
+    this%epsin(i) = 0.0
+    this%v2in(i) =2./3.*this%kin(i)
+    this%Pkin(i) = 0 
   enddo
 end subroutine init_sol_KE
 
