@@ -35,6 +35,114 @@ subroutine fillps(rank)
 
 end
 
+subroutine calc_momentum_thickness(w, w_fs, dru, i1,imax, mom_thickness)
+  implicit none
+  real(8), dimension(0:i1),   intent(IN) :: w
+  real(8), dimension(1:imax), intent(IN) :: dru
+  real(8),                    intent(IN) :: w_fs
+  integer,                    intent(IN) :: i1, imax
+  real(8),                    intent(OUT):: mom_thickness
+  integer :: i
+  mom_thickness = 0.
+  do i=1,imax
+    mom_thickness = mom_thickness + (w(i)/w_fs)*(1.-(w(i)/w_fs))*dru(i)
+  enddo
+end subroutine
+
+subroutine calc_displacement_thickness(w, w_fs, dru, i1, imax, dis_thickness)
+  implicit none
+  integer,                    intent(IN) :: i1, imax
+  real(8), dimension(0:i1),   intent(IN) :: w
+  real(8), dimension(1:imax), intent(IN) :: dru
+  real(8),                    intent(IN) :: w_fs
+  real(8),                    intent(OUT):: dis_thickness
+  integer :: i
+  dis_thickness = 0.
+  do i=1,imax
+    dis_thickness = dis_thickness + (1.-(w(i)/w_fs))*dru(i)
+  enddo
+end subroutine
+
+subroutine calc_bl_thickness(w, w_fs, y_vec, i1, imax, bl_thickness)
+  use mod_math, only : spline, splint
+  implicit none
+  integer,                  intent(IN) :: i1, imax
+  real(8), dimension(0:i1), intent(IN) :: w
+  real(8), dimension(0:i1), intent(IN) :: y_vec
+  real(8),                  intent(IN) :: w_fs
+  real(8),                  intent(OUT):: bl_thickness
+  real(8), dimension(:),allocatable :: w_int, y_int, y2_int
+  integer :: i, elem
+  integer :: tabkhi,tabklo = 0 
+  real(8), dimension(0:i1) :: w_inv, y_inv
+
+  !inverse beause bl is at top
+  do i=0, i1
+    w_inv(i) = w(i1-i)
+    y_inv(i) = 1-y_vec(i1-i)
+  enddo
+  !make sure that the w is monotonically increasing
+  elem = i1-1
+  do i=1,i1
+    if (w_inv(i) < w_inv(i-1)) then
+      elem = i+1
+      exit
+    endif
+  enddo
+  
+  allocate(w_int(1:elem), y_int(1:elem), y2_int(1:elem))
+  w_int(1:elem) = w_inv(0:elem-1)
+  y_int(1:elem) = y_inv(0:elem-1)
+
+  !interpolate the velocity to find the y coordinate
+  call spline(w_int,y_int,  elem,y2_int)
+  call splint(w_int,y_int, y2_int,  elem,0.99*w_fs,bl_thickness,tabkhi,tabklo)
+ 
+end subroutine
+
+subroutine calc_shear_stress(w, mui,drp, i1,imax,stress)
+  implicit none
+  integer,                  intent(IN) :: i1,imax
+  real(8), dimension(0:i1), intent(IN) :: w,mui, drp
+  real(8),                  intent(OUT):: stress
+  stress = mui(imax)*((w(imax)-w(i1))/drp(imax))
+end subroutine
+
+subroutine calc_skin_friction(w, mui,drp,rho_fs, w_fs,i1,imax, sfriction)
+  implicit none
+  integer,                  intent(IN) :: i1,imax
+  real(8), dimension(0:i1), intent(IN) :: w,mui, drp
+  real(8),                  intent(IN) :: rho_fs, w_fs
+  real(8),                  intent(OUT):: sfriction
+  real(8)                              :: stress
+  call calc_shear_stress(w,mui,drp,i1,imax, stress)
+  sfriction = stress/(0.5*rho_fs*w_fs*w_fs)
+end subroutine
+
+subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
+                          mom_th, dis_th, bl_th, stress,sfriction)
+  use mod_param, only : k1,i1,imax
+  use mod_mesh, only : top_bcnovalue, y_cv, drp, dru
+  implicit none
+  real(8), dimension(0:i1,0:k1), intent(IN) :: w, mui
+  real(8), intent(IN) :: rho_fs, w_fs
+  real(8), dimension(0:k1), intent(OUT) :: mom_th, dis_th, bl_th, stress, sfriction
+  integer :: k
+
+  do k=0,k1
+    if (top_bcnovalue(k) .eq. -1) then
+      call calc_momentum_thickness(w(:,k),w_fs,dru, i1, imax, mom_th(k))
+      call calc_displacement_thickness(w(:,k), w_fs,dru, i1, imax, dis_th(k))
+      call calc_bl_thickness(w(:,k), w_fs, y_cv, i1, imax, bl_th(k))
+      bl_th(k) = 0
+      call calc_shear_stress(w(:,k), mui(:,k),drp, i1,imax, stress(k))
+      call calc_skin_friction(w(:,k), mui(:,k),drp, rho_fs, w_fs,i1,imax, sfriction(k))
+    else
+      mom_th(k)=0; dis_th(k)=0; bl_th(k)=0; stress(k)=0; sfriction(k)=0;
+    endif
+  enddo
+end subroutine
+
 !!********************************************************************
 !!     correc
 !!********************************************************************
