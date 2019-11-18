@@ -24,7 +24,7 @@
 ! end
 subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
-  use mod_param, only : k1, kmax, K_start_heat, filename2,px,i1
+  use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1
   use mod_mesh, only : dz
   implicit none
   include "mpif.h"
@@ -78,7 +78,7 @@ subroutine write_output_bl(rank, istap)
       index=index+1
   enddo
 
-  call MPI_FILE_OPEN(MPI_COMM_WORLD, filename2,MPI_MODE_WRONLY + MPI_MODE_CREATE,MPI_INFO_NULL, fh, ierr) 
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, output_fname_bl,MPI_MODE_WRONLY + MPI_MODE_CREATE,MPI_INFO_NULL, fh, ierr) 
   call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 

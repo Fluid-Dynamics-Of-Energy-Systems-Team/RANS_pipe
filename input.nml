@@ -32,6 +32,6 @@
   turbdiffmod       = 1,
   output_fname      = "laminarbl.csv",
   dtmax             = 0.01,
-  filename2 = "test.csv",
+  output_fname_bl   = "test.csv",
 /
 
