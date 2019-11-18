@@ -52,6 +52,7 @@ subroutine init_sol_SA(this)
       this%nuSA(i,:) = 0.0
       this%nuSAin(i) = 0.0
       this%pkin(i)   = 0.0
+      this%mutin(i)  = 0.0
     enddo
 end subroutine init_sol_SA
 
@@ -276,7 +277,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
     call matrixIdir(this%imax,a,b/alphak,c,rhs)
     do i=1,this%imax
       resSA = resSA + ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
-      res_nuSA(:,k) = ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
+      res_nuSA(i,k) = ((this%nuSA(i,k) - rhs(i))/(this%nuSA(i,k)+1.0e-20))**2.0
       this%nuSA(i,k) = max(rhs(i), 1.0e-8)
     enddo
   enddo

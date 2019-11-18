@@ -126,7 +126,12 @@ do istep=istart,nstep
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
-  if   (mod(istep,500).eq.0) call output2d_upd2(rank,istep);  call calc_displacement(wnew,dis,rank);
+  if   (mod(istep,500).eq.0) then
+    call output2d_upd2(rank,istep) 
+    call write_output_bl(rank,istep)
+    !wnew, ekmi, 1., 1., mom_thickness, dis_thickness, bl_thickness, wstress,sfriction)
+    !write(*,*) dis_thickness(20), mom_thickness(20), wstress(20), sfriction(20)
+  endif
   ! call calc_vvelocity(wnew, kmax, rank)!call output2d_upd(rank,istep); !call mpi_finalize(ierr);stop;
 
 
@@ -329,7 +334,6 @@ subroutine bound_v(u,w,win,centerBC,rank, step)
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
-  call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
   if (periodic.eq. 1) return
 
   !developing
@@ -460,7 +464,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
-      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1; !bl
+      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1; mutin=0!bl
     enddo
   endif
 end subroutine initialize_solution
@@ -589,7 +593,7 @@ subroutine advance(rank)
     enddo
  
     i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
-    i=1;   bu(i) = bu(i) + (1-ubot_bcvalue(k))*au(i); au(i) = (1-ubot_bcvalue(k))*au(i) !symmetry with 0 or with the derivative
+    i=1;   bu(i) = bu(i) + (1.-ubot_bcvalue(k))*au(i); au(i) = (1.-ubot_bcvalue(k))*au(i) !symmetry with 0 or with the derivative
     !ubot_bcvalue=1: au(i)=0 and bu(i)=bu(i), ubot_bcvalue=0: au(i)=au(i), bu(i)=bu(i)+au(i)
    
     call matrixIdir(imax-1,au,bu,cu,rhsu)

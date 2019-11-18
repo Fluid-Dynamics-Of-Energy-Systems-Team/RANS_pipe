@@ -13,6 +13,9 @@ module mod_common
   real(8), dimension(:,:), allocatable :: Unew,Wnew,rnew,cnew,qcrit, &
                                           Uold,Wold,rold,dUdt,dVdt,dWdt,p,res_nuSA
   real(8), dimension(:),   allocatable :: Win,ekmtin, dis
+
+
+  real(8), dimension(:), allocatable :: wstress, sfriction, mom_thickness, dis_thickness, bl_thickness
   
   integer, dimension(:),   allocatable :: Xii     !Nx
   integer, dimension(:,:), allocatable :: Xkk     !Nx,Mt
@@ -51,6 +54,7 @@ contains
     allocate(W1t(Mx,Nt),W2t(Mx,Nt))
     allocate(W1(Mt,Nx),W2(Mt,Nx))
 
+    allocate(wstress(0:k1),sfriction(0:k1),mom_thickness(0:k1),dis_thickness(0:k1),bl_thickness(0:k1))
   end
 
 end module mod_common

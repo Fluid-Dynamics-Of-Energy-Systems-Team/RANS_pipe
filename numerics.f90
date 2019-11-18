@@ -79,25 +79,19 @@ subroutine calc_bl_thickness(w, w_fs, y_vec, i1, imax, bl_thickness)
   !inverse beause bl is at top
   do i=0, i1
     w_inv(i) = w(i1-i)
-    y_inv(i) = 1-y_vec(i1-i)
+    y_inv(i) = 1.-y_vec(i1-i)
   enddo
   !make sure that the w is monotonically increasing
-  elem = i1-1
   do i=1,i1
-    if (w_inv(i) < w_inv(i-1)) then
-      elem = i+1
+     if (w_inv(i) .ge. 0.99*w_fs) then
+      elem = i
       exit
-    endif
-  enddo
-  
-  allocate(w_int(1:elem), y_int(1:elem), y2_int(1:elem))
-  w_int(1:elem) = w_inv(0:elem-1)
-  y_int(1:elem) = y_inv(0:elem-1)
-
-  !interpolate the velocity to find the y coordinate
-  call spline(w_int,y_int,  elem,y2_int)
-  call splint(w_int,y_int, y2_int,  elem,0.99*w_fs,bl_thickness,tabkhi,tabklo)
+     endif
+ enddo
  
+ bl_thickness = y_inv(elem-1)+(0.99*w_fs-w_inv(elem-1))* &
+               ((y_inv(elem)-y_inv(elem-1))/(w_inv(elem) -w_inv(elem-1)))
+   
 end subroutine
 
 subroutine calc_shear_stress(w, mui,drp, i1,imax,stress)
@@ -134,7 +128,6 @@ subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
       call calc_momentum_thickness(w(:,k),w_fs,dru, i1, imax, mom_th(k))
       call calc_displacement_thickness(w(:,k), w_fs,dru, i1, imax, dis_th(k))
       call calc_bl_thickness(w(:,k), w_fs, y_cv, i1, imax, bl_th(k))
-      bl_th(k) = 0
       call calc_shear_stress(w(:,k), mui(:,k),drp, i1,imax, stress(k))
       call calc_skin_friction(w(:,k), mui(:,k),drp, rho_fs, w_fs,i1,imax, sfriction(k))
     else
@@ -183,7 +176,7 @@ subroutine correc(rank,setold)
       do i=0,imax
         dudt(i,k)=dUdt(i,k)/(0.5*(rnew(i,k)+rnew(i+1,k))) !dudt(i,k)=dUdt(i,k)/(0.5*(drdt(i,k)+drdt(i+1,k)))
         dwdt(i,k)=dWdt(i,k)/(0.5*(rnew(i,k)+rnew(i,k+1))) !dwdt(i,k)=dWdt(i,k)/(0.5*(drdt(i,k)+drdt(i,k+1)))
-      enddo
+      enddo 
     enddo
   endif
       

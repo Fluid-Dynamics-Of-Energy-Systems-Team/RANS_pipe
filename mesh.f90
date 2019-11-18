@@ -126,7 +126,7 @@ subroutine mkgrid(rank)
 
     gridSize  = 1
     fA = 0.12
-    fB = 3.0
+    fB = 2.4
     dpdz      = 1.0
     
     do k=0,k1

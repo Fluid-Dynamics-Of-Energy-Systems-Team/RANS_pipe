@@ -22,6 +22,68 @@
 !   endif
 
 ! end
+subroutine write_output_bl(rank, istap)
+  use mod_common, only : wnew, ekmi, unew
+  use mod_param, only : k1, kmax, K_start_heat, filename2,px,i1
+  use mod_mesh, only : dz
+  implicit none
+  include "mpif.h"
+  integer, intent(IN) :: rank, istap
+  real(8), dimension(0:k1) :: mom_th, dis_th, bl_th, wstress, sfriction,x
+  integer(kind=MPI_OFFSET_KIND) disp 
+  character(len=141), dimension(:), allocatable :: lines, lines2
+  character(len=140) :: test
+  character(len=141) :: line
+  integer :: index, nvar, k, fh,ierr, k_max, k_min,size
+
+  nvar = 7
+  index=1
+  call postprocess_bl(wnew, ekmi, 1., 1., mom_th, dis_th, bl_th, wstress,sfriction)
+
+  do k=0,k1
+      x(k)=(k+rank*kmax)*dz - K_start_heat*dz
+  enddo
+ 
+ !first core write from 0 to k1-1
+  if (rank .eq. 0) then
+    k_min = 0
+    k_max = k1-1
+    allocate(lines(1:k1+1)) !+1 for header
+    disp = 0
+    size = (k1+1)*(nvar*20+1)
+    write(test,'(7(A20))') 'x','tau','Cf','blth','momth','disth','vinf'
+    write(line, '(A)') test // NEW_LINE("A")
+    lines(index) = line
+    index = index+1
+  !last core write from 1 to k1
+  else if (rank .eq. px-1) then
+    k_min = 1
+    k_max = k1
+    allocate(lines(1:k1))
+    size =           (k1)*(nvar*20+1)
+   disp = (k1+1)*(nvar*20+1) + (rank-1)*(k1-1)*(nvar*20+1)
+  !other core write from 1 to k1-1
+  else
+    k_min = 1
+    k_max = k1-1
+    allocate(lines(1:(k1-1)))
+    size =           (k1-1)*(nvar*20+1)
+    disp = (k1+1)*(nvar*20+1) + (rank-1)*(k1-1)*(nvar*20+1)
+  endif
+  do k = k_min,k_max
+      write(test,'(7(E20.10e3))') x(k), wstress(k),sfriction(k),bl_th(k),mom_th(k),  &
+                                   dis_th(k), -unew(0,k)
+      write(line, '(A)') test // NEW_LINE("A")
+      lines(index) = line
+      index=index+1
+  enddo
+
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, filename2,MPI_MODE_WRONLY + MPI_MODE_CREATE,MPI_INFO_NULL, fh, ierr) 
+  call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
+  call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
+  call MPI_FILE_CLOSE(fh, ierr) 
+end subroutine
+
 
 subroutine inflow_output_upd(rank,istap)
   use mod_param
@@ -257,12 +319,12 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     write(line, '(A)') test // NEW_LINE("A")
     lines(index) = line
     index = index+1
-  !last core write from 1 to k1
+  !last core write from 1 to kmax
   else if (rank .eq. px-1) then
     k_min = 1
-    k_max = k1
-    allocate(lines(1:(i1+1)*k1))
-    size =           (i1+1)*(k1)*(nvar*20+1)
+    k_max = k1-1
+    allocate(lines(1:(i1+1)*k1-1))
+    size =           (i1+1)*(k1-1)*(nvar*20+1)
    disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
   !other core write from 1 to k1-1
   else
@@ -274,7 +336,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   endif
   do i = 0,i1
     do j = k_min,k_max
-      write(test,'(16(E20.10e3))') x(i,j), y(i,j),u(i,j),w(i,j),rho(i,j),  &
+      write(test,'(16(E20.10e3))') x(i,j), y(i,j),u(i,j),(w(i,j)+w(i,j+1))/2.,rho(i,j),  &
                                    T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
                                    k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j), res_nuSA(i,j)
       write(line, '(A)') test // NEW_LINE("A")
@@ -330,7 +392,7 @@ subroutine output2d_upd2(rank,istap)
   do k=0,k1
     do i=0,i1
       ! write(*,*) dz
-      xvec(i,k)=(k+rank*kmax)*dz
+      xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
       yvec(i,k) = y_cv(i)
     enddo
   enddo
