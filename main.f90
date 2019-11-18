@@ -128,12 +128,8 @@ do istep=istart,nstep
   if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
   if   (mod(istep,500).eq.0) then
     call output2d_upd2(rank,istep) 
-    call write_output_bl(rank,istep)
-    !wnew, ekmi, 1., 1., mom_thickness, dis_thickness, bl_thickness, wstress,sfriction)
-    !write(*,*) dis_thickness(20), mom_thickness(20), wstress(20), sfriction(20)
+    if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
   endif
-  ! call calc_vvelocity(wnew, kmax, rank)!call output2d_upd(rank,istep); !call mpi_finalize(ierr);stop;
-
 
   noutput = 100
   if (rank.eq.0) then

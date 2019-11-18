@@ -1,3 +1,5 @@
+#python script to generate the periodic inflow profiles
+
 import f90nml
 from subprocess import Popen, PIPE
 import numpy as np
@@ -10,13 +12,14 @@ adjust=dict()
 adjust['input']=dict()
 
 turbmodels = np.arange(1,5)
-systemsolve = np.arange(1,2)
+systemsolve = np.arange(1,3)
 for tm in turbmodels:
     for ss in systemsolve:
         adjust['input']['systemSolve']=ss
         adjust['input']['turbmod']=tm
         adjust['input']['periodic']=1
         adjust['input']['EOSmode']=0
+        adjust['input']['Re']=360
         adjust['input']['select_init']=1
         adjust['input']['imax']=96
         adjust['input']['isothermalBC']=0
