@@ -289,10 +289,81 @@ end
 !   return
 ! end
 
+subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
+                                 k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
+  use mod_param, only : LoD
+  implicit none 
+  include "mpif.h"
+  character(*),                  intent(IN) :: filename
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: x,y,u,w,rho,T,p,mu,mut,yp, &
+                                               k,eps,v2,om,nuSA, &
+                                               res_nuSA
+  integer,                       intent(IN) :: i1,k1,rank,px
+  integer nvar,i,j,index,k_max,k_min,size,fh,ierr
+  integer(kind=MPI_OFFSET_KIND) disp 
+  character(len=321), dimension(:), allocatable :: lines, lines2
+  character(len=320) :: test
+  character(len=321) :: line
+  real(8) :: x_v, y_v
+  nvar = 16
+  index=1
 
+  !first core write from 0 to kmax
+  if (rank .eq. 0) then
+    k_min = 0
+    k_max = k1-1
+    allocate(lines(1:(i1+1)*k1+1)) !+1 for header
+    disp = 0
+    size = ((i1+1)*(k1)+1)*(nvar*20+1)
+  !last core write from 1 to k1
+  else if (rank .eq. px-1) then
+    k_min = 1
+    k_max = k1
+    allocate(lines(1:(i1+1)*k1))
+    size =           (i1+1)*(k1)*(nvar*20+1)
+   disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
+  !other core write from 1 to kmax
+  else
+    k_min = 1
+    k_max = k1-1
+    allocate(lines(1:(i1+1)*(k1-1)))
+    size =           (i1+1)*(k1-1)*(nvar*20+1)
+    disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
+  endif
+
+  call MPI_FILE_OPEN(MPI_COMM_WORLD, filename,MPI_MODE_RDONLY,MPI_INFO_NULL, fh, ierr) 
+  call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
+  call MPI_FILE_READ(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
+  call MPI_FILE_CLOSE(fh, ierr)
+  if (rank .eq. 0) index=2
+  
+
+  do i = 0,i1
+    do j = k_min,k_max
+      read(lines(index)(1  :20) ,*) x   (i,j)
+      read(lines(index)(21 :40) ,*) y   (i,j)
+      read(lines(index)(41 :60) ,*) u   (i,j)
+      read(lines(index)(61 :80) ,*) w   (i,j)
+      read(lines(index)(81 :100),*) rho (i,j)
+      read(lines(index)(101:120),*) T   (i,j)
+      read(lines(index)(121:140),*) p   (i,j)
+      read(lines(index)(141:160),*) mu  (i,j)
+      read(lines(index)(161:180),*) mut (i,j)
+      read(lines(index)(181:200),*) yp  (i,j)
+      read(lines(index)(201:220),*) k   (i,j)
+      read(lines(index)(221:240),*) eps (i,j)
+      read(lines(index)(241:260),*) v2  (i,j)
+      read(lines(index)(261:280),*) om  (i,j)
+      read(lines(index)(281:300),*) nuSA(i,j)      
+      read(lines(index)(301:320),*) res_nuSA(i,j)      
+      index=index+1
+    enddo
+  enddo
+end subroutine read_mpiio_formatted
 
 subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
                                  k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
+  use mod_param, only : LoD
   implicit none 
   include "mpif.h"
   character(*),                  intent(IN) :: filename
@@ -305,10 +376,11 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   character(len=321), dimension(:), allocatable :: lines, lines2
   character(len=320) :: test
   character(len=321) :: line
+  real(8) :: x_v, y_v
   nvar = 16
   index=1
 
-  !first core write from 0 to k1-1
+  !first core write from 0 to kmax
   if (rank .eq. 0) then
     k_min = 0
     k_max = k1-1
@@ -319,14 +391,14 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     write(line, '(A)') test // NEW_LINE("A")
     lines(index) = line
     index = index+1
-  !last core write from 1 to kmax
+  !last core write from 1 to k1
   else if (rank .eq. px-1) then
     k_min = 1
-    k_max = k1-1
-    allocate(lines(1:(i1+1)*k1-1))
-    size =           (i1+1)*(k1-1)*(nvar*20+1)
+    k_max = k1
+    allocate(lines(1:(i1+1)*k1))
+    size =           (i1+1)*(k1)*(nvar*20+1)
    disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
-  !other core write from 1 to k1-1
+  !other core write from 1 to kmax
   else
     k_min = 1
     k_max = k1-1
@@ -335,10 +407,11 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
   endif
   do i = 0,i1
-    do j = k_min,k_max
-      write(test,'(16(E20.10e3))') x(i,j), y(i,j),u(i,j),(w(i,j)+w(i,j+1))/2.,rho(i,j),  &
-                                   T(i,j),p(i,j),mu(i,j),mut(i,j),yp(i,j), &
-                                   k(i,j),eps(i,j),v2(i,j),om(i,j),nuSA(i,j), res_nuSA(i,j)
+    do j = k_min,k_max      
+      y_v = min(1., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
+      x_v = min(LoD,max(0.,x(i,j))) !takes the LOD or zero in case the x is negative
+      write(test,'(16(E20.10e3))') x_v, y_v,u(i,j),w(i,j),rho(i,j),T(i,j), p(i,j), mu(i,j), mut(i,j), &
+                                   yp(i,j),k(i,j), eps(i,j), v2(i,j), om(i,j), nuSA(i,j), res_nuSA(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
       index=index+1
@@ -349,6 +422,91 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 
 end subroutine write_mpiio_formatted
+
+subroutine set_scalar_to_coords(vector, i1, k1, output)
+  implicit None
+  integer, intent(IN) :: i1, k1
+  real(8), dimension(0:i1,0:k1), intent(IN) :: vector
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: output
+  real(8), dimension(0:i1) :: tmp
+  integer :: i,k
+
+  do k=0,k1
+    if (k .eq. 0) then
+      tmp = (vector(:,0)+ vector(:,1))/2.
+    else if (k .eq. k1) then
+      tmp = (vector(:,k1-1)+ vector(:,k1))/2.
+    else
+      tmp = vector(:,k)
+    endif
+    do i=0,i1
+      if (i .eq. 0) then
+        output(i,k) = (tmp(i)+tmp(i+1))/2.
+      else if (i .eq. i1) then
+        output(i,k) = (tmp(i1-1)+tmp(i1))/2.
+      else
+        output(i,k) = tmp(i)
+      endif
+    enddo
+  enddo
+end subroutine set_scalar_to_coords
+
+subroutine set_wvector_to_coords(vector, i1, k1, output)
+implicit None
+  integer, intent(IN) :: i1, k1
+  real(8), dimension(0:i1,0:k1), intent(IN) :: vector
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: output
+  real(8), dimension(0:i1) :: tmp
+  integer :: i,k
+  do k=0,k1
+    if (k .eq. 0) then
+      tmp = vector(:,0) 
+    else if (k .eq. k1) then
+      tmp = vector(:,k1-1)
+    else
+      tmp = (vector(:,k)+vector(:,k-1))/2.
+    endif
+    do i=0,i1
+      if (i .eq. 0) then
+        output(i,k) = (tmp(i)+tmp(i+1))/2.
+      else if (i .eq. i1) then
+        output(i,k) = (tmp(i1-1)+tmp(i1))/2.
+      else
+        output(i,k) = tmp(i)
+      endif
+    enddo
+  enddo
+end subroutine set_wvector_to_coords
+
+subroutine set_uvector_to_coords(vector, i1,k1,output)
+implicit None
+  integer, intent(IN) :: i1, k1
+  real(8), dimension(0:i1,0:k1), intent(IN) :: vector
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: output
+  real(8), dimension(0:i1) :: tmp
+  integer :: i,k
+  do k=0,k1
+    if (k .eq. 0) then
+      tmp = (vector(:,0) + vector(:,1))/2.0
+    else if (k .eq. k1) then
+      tmp = (vector(:,k1-1) + vector(:,k1))/2.0
+    else
+      tmp = vector(:,k)
+    endif
+    do i=0,i1
+      if (i .eq. 0) then
+        output(i,k) = tmp(i)
+      else if (i .eq. i1) then
+        output(i,k) = tmp(i1-1)
+      else
+        output(i,k) = (tmp(i)+tmp(i-1))/2.0
+      endif
+    enddo
+  enddo
+end subroutine set_uvector_to_coords
+
+
+
 
 !***************************************************************************************
 !   writes the output file in 2D tecplot style
@@ -368,6 +526,9 @@ subroutine output2d_upd2(rank,istap)
          massfl,w_c,ndt
   real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol
   integer rank,istap,jstart
+  real(8), dimension(0:i1,0:k1) :: x_plt, y_plt, u_plt,w_plt, rho_plt, c_plt, p_plt, mu_plt, mut_plt, &
+                                   k_plt, eps_plt, v2_plt, om_plt, nuSA_plt
+  
 
   twall    = 0.0
   massflow = 0.0
@@ -397,9 +558,22 @@ subroutine output2d_upd2(rank,istap)
     enddo
   enddo
   call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
-  call write_mpiio_formatted(trim(output_fname), xvec, yvec, unew,wnew, rnew,cnew,p,ekm, ekmt,yp_sol,     &
-                                 k_sol, eps_sol, v2_sol, om_sol,nuSA_sol,res_nuSA, i1, k1,rank,px)
 
+  call set_uvector_to_coords(unew,i1,k1,u_plt)
+  call set_wvector_to_coords(wnew,i1,k1,w_plt)
+  call set_scalar_to_coords (rnew,i1,k1,rho_plt)
+  call set_scalar_to_coords (cnew,i1,k1,c_plt)
+  call set_scalar_to_coords (p,i1,k1,p_plt)
+  call set_scalar_to_coords (ekm,i1,k1,mu_plt)
+  call set_scalar_to_coords (ekmt,i1,k1,mut_plt)
+  call set_scalar_to_coords (k_sol,i1,k1,k_plt)
+  call set_scalar_to_coords (eps_sol,i1,k1,eps_plt)
+  call set_scalar_to_coords (v2_sol,i1,k1,v2_plt)
+  call set_scalar_to_coords (om_sol,i1,k1,om_plt)
+  call set_scalar_to_coords (nuSA_sol,i1,k1,nuSA_plt)
+  
+  call write_mpiio_formatted(trim(output_fname), xvec, yvec, u_plt,w_plt, rho_plt,c_plt,p_plt,mu_plt, mut_plt,yp_sol,     &
+                                 k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,res_nuSA, i1, k1,rank,px)
 end
 
 subroutine output2d_upd(rank,istap)

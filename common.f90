@@ -11,7 +11,7 @@ module mod_common
                                           cp,cpi,cpk,alphat
   real(8) dt
   real(8), dimension(:,:), allocatable :: Unew,Wnew,rnew,cnew,qcrit, &
-                                          Uold,Wold,rold,dUdt,dVdt,dWdt,p,res_nuSA
+                                          Uold,Wold,rold,dUdt,dVdt,dWdt,p,res_nuSA,dummy
   real(8), dimension(:),   allocatable :: Win,ekmtin, dis
 
 
@@ -38,7 +38,7 @@ contains
     allocate(rnew(0:i1,0:k1),Unew(0:i1,0:k1),Wnew(0:i1,0:k1),Cnew(0:i1,0:k1), &
              rold(0:i1,0:k1),Uold(0:i1,0:k1),Wold(0:i1,0:k1),                 &
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1),                 &
-             res_nuSA(0:i1,0:k1))
+             res_nuSA(0:i1,0:k1),dummy(0:i1,0:k1))
     allocate(Win(0:i1),ekmtin(0:i1))
     allocate(dis(0:k1))
     allocate(p(imax,kmax))

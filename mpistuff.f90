@@ -43,6 +43,53 @@ subroutine shiftf(UT,UP,rank)
     MPI_COMM_WORLD,status,ierr)
 end
 
+subroutine shiftb1(UT,UP,rank,i1,k1)
+  use mod_param, only : px
+  use mod_common
+  implicit none
+  include 'mpif.h'
+  integer rank,ileng,rankb,rankf,ierr,i,k,i1,k1,kmax
+  integer itag,status(MPI_STATUS_SIZE),l
+  real*8 ut(0:i1,0:k1)
+  real*8 up(0:i1),UTMP(0:i1)
+  ileng=i1+1
+  itag = 11
+  kmax = k1-1
+  do i=0,i1
+    utmp(i) =UT(i,1)
+  enddo
+  rankf=rank+1
+  rankb=rank-1
+  if(rank.eq.px-1)rankf=0
+  if(rank.eq.   0)rankb=px-1
+  call mpi_sendrecv(utmp ,ileng,MPI_REAL8,rankb,itag, &
+    up,ileng,MPI_REAL8,rankf,itag, &
+    MPI_COMM_WORLD,status,ierr)
+end
+
+subroutine shiftf1(UT,UP,rank,i1,k1)
+  use mod_param, only : px
+  use mod_common
+  implicit none
+  include 'mpif.h'
+  integer rank,ileng,rankb,rankf,ierr,i,k,i1,k1,kmax
+  integer  itag,status(MPI_STATUS_SIZE),l
+  real*8 UT(0:i1,0:k1),UP(0:i1),UTMP(0:i1)
+  ileng= i1+1
+  itag = 10
+  kmax = k1-1
+  do i=0,i1
+    UTMP(i) =UT(i,kmax)
+  enddo
+  rankf=rank+1
+  rankb=rank-1
+  if(rank.eq.px-1)rankf=0
+  if(rank.eq.   0)rankb=px-1
+  call mpi_sendrecv(utmp ,ileng,MPI_REAL8,rankf,itag, &
+    up,ileng,MPI_REAL8,rankb,itag, &
+    MPI_COMM_WORLD,status,ierr)
+end
+
 subroutine pshiftb_w(UT,UP,rank)
   use mod_param
   use mod_common

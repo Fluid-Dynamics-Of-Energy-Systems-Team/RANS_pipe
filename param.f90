@@ -10,13 +10,13 @@ module mod_param
   real*8    ctheta,Fr_1, dtmax
   real*8    alphac,alphak,alphae,alphav2
   integer   Mt,Nx,Mx,Nt , turbdiffmod
-  character(len=40) output_fname, output_fname_bl
+  character(len=40) output_fname, output_fname_bl, read_fname
 
   NAMELIST /input/ CFL, systemsolve, imax, K_start_heat, kelem, x_start_heat,      &
                  iwork, isave, nTab, nstep, LoD, periodic, Re, Pr, Qwall, &
                  isothermalBC, Tw, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &
-                 alphav2, modifDiffTerm, turbdiffmod, output_fname, dtmax, output_fname_bl
+                 alphav2, modifDiffTerm, turbdiffmod, output_fname, dtmax, output_fname_bl, read_fname
 
 contains
 

@@ -136,6 +136,110 @@ subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
   enddo
 end subroutine
 
+  subroutine interpolate_vector(x_old, y_old, x_new, y_new, i1_old, k1_old, i1, k1, vector, output,rank)
+  use mod_math, only : spline, splint
+  implicit none
+  integer, intent(IN) :: i1_old, i1, k1_old, k1, rank
+  real(8), dimension(0:i1_old, 0:k1_old), intent(IN) :: vector, x_old, y_old
+  real(8), dimension(0:i1, 0:k1), intent(IN) :: output, x_new, y_new
+  real(8), dimension(0:i1_old) :: vectory2  
+  real(8), dimension(0:k1_old) :: vectorx2  
+  real(8), dimension(0:i1) :: tmpvecy
+  real(8), dimension(0:i1,0:k1_old) :: tmpvec
+  integer :: k,i
+
+  integer :: tabkhi,tabklo = 0
+
+  ! interpolate on the new y coordinates same x coords
+  do k=0,k1_old
+    call spline(y_old(:,k),vector(:,k),i1_old+1,vectory2)
+    do i=0,i1
+      call splint(y_old(:,k),vector(:,k),vectory2,i1_old+1,y_new(i,1),tmpvec(i,k),tabkhi,tabklo)
+    enddo
+  enddo
+
+ !interpolate on hte new x coordinates with the already interpolated y coords
+  do i=0,i1
+    call spline(x_old(1,:),tmpvec(i,:),k1_old+1,vectorx2)
+      do k=0,k1
+      call splint(x_old(1,:),tmpvec(i,:),vectorx2,k1_old+1,x_new(i,k),output(i,k),tabkhi,tabklo)
+    enddo
+  enddo
+
+end subroutine interpolate_vector
+
+subroutine interpolate_solution(i1_old, k1_old, rank, px)
+  use mod_common, only : wnew, unew, rnew, ekm, ekmt
+  use mod_mesh, only : y_cv, y_fa, dz
+  use mod_param, only : read_fname,i1,k1, kmax
+  implicit none
+  integer,                  intent(IN) :: rank, px, i1_old, k1_old
+  real(8),dimension(0:i1_old,0:k1_old) :: xold,yold,uold,wold,dummy,rold, ekmold, ekmtold,cold, pold
+  real(8),dimension(0:i1,0:k1) :: xw, x, yu, y
+  real(8), dimension(0:i1_old) :: tmp
+  integer ::  i,k
+
+  ! k1_old = kelem_old/px
+  call read_mpiio_formatted(trim(read_fname), xold, yold, uold,wold, rold,cold,pold,ekmold, ekmtold,dummy,     &
+                                 dummy, dummy, dummy, dummy,dummy,dummy, i1_old, k1_old,rank,px)
+
+  !interpolate on the y values of the new grid
+  do k=0,k1
+    do i=0,i1
+      x(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
+      y(i,k) = y_cv(i)
+      xw(i,k)=(k+rank*kmax)*dz
+      yu(i,k) = y_fa(i)
+    enddo
+  enddo
+  ! set the boundary coordinates
+  yold(:,k1_old) = yold(:,k1_old-1)
+  yold(:,0) = yold(:,1)
+
+
+  ! xold(:,k1_old) =xold(1,:)-xold(1,:) 
+  ! call shiftf(xold,tmp,rank);     xold(:,0) = tmp(:);
+  xold(:,k1_old) = xold(:,k1_old-1)+(xold(:,k1_old-1)-xold(:,k1_old-2))
+  if (rank .ne. 0 ) then
+    xold(:,0) = xold(:,1)-(xold(:,2)-xold(:,1))
+  endif
+
+  call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
+  call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
+  call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
+  call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
+  
+    !developing
+  if (rank.eq.0) then
+    uold(:,0) = 0.0
+    wold(:,0) = 1.
+  endif
+  if (rank.eq.px-1)then
+    uold(:,k1) = 2.*uold(:,kmax)-uold(:,kmax-1)
+    wold(:,k1) = 2.*wold(:,kmax)-wold(:,kmax-1)
+  endif
+
+  ! do k=0,k1_old
+  !   do i=0,i1_old
+  !     ! if ((rank .eq. 2) .and. (k .eq. k1_old)) then
+  !        write(*,*) xold(1,k)
+  !     ! endif
+  !   enddo
+  ! enddo
+
+  ! enddo
+  ! enddo
+
+  ! call interpolate_vector(xold,yold,x,yu,i1_old, k1_old,i1,k1,uold, unew,rank)
+  call interpolate_vector(xold,yold,xw,y,i1_old, k1_old,i1,k1,wold, wnew,rank)  
+  ! call interpolate_vector(xold,yold,x,y,i1_old, k1_old,i1,k1, rold, rnew,rank)
+  ! call interpolate_vector(xold,yold,x,y,i1_old, k1_old,i1,k1, ekmold, ekm,rank)
+  ! call interpolate_vector(xold,yold,x,y,i1_old, k1_old,i1,k1, ekmtold, ekmt,rank)
+  
+
+
+end subroutine
+
 !!********************************************************************
 !!     correc
 !!********************************************************************

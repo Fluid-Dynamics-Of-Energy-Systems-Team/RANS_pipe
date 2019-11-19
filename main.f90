@@ -23,7 +23,7 @@ integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1
 real(8) ::  resC,resK,resE,resV2,resOm,resSA   
 real(8) ::  start, finish
-
+real(8) :: resU, resW
 
 resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
 
@@ -53,6 +53,9 @@ Nt=imax
 
 !initialize variables
 call initMem()
+
+
+
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
@@ -88,6 +91,18 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
+
+call interpolate_solution(96+1, 100/px+1, rank, px)
+call output2d_upd(rank,px)
+! call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
+
+call output2d_upd2(rank,istep)
+call mpi_finalize(ierr)
+stop
+! call output2d_upd2(rank,istep)
+! call mpi_finalize(ierr)
+! stop
+
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 call bound_c(cnew, Tw, Qwall, drp,dz, centerBC,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
@@ -126,25 +141,33 @@ do istep=istart,nstep
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
   if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
+
   if   (mod(istep,500).eq.0) then
     call output2d_upd2(rank,istep) 
     if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
   endif
-
+  
+  !write the screen output
   noutput = 100
+  if (mod(istep,noutput) .eq. 0) then 
+    call  calc_residual(unew, uold, wnew, wold, resU, resW)
+    if ((resU .le. 1e-12) .and. (resW .le. 1e-12)) exit
+  endif
+      
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
       write(6,'(A7,9A14)') 'istep'    ,'dt'      ,'bulk'   ,'stress' ,'cResid', &
                            'kineResid','epsResid','v2Resid','omResid','nuSAresid'
     endif
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
-      write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resOm,resSA
+      write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resU,resW
     endif
   end if
          
 enddo
 call cpu_time(finish)
 print '("Time = ",f6.3," seconds.")',finish-start
+if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
 call output2d_upd2(rank,istep)
 call mpi_finalize(ierr)
 stop
@@ -154,7 +177,33 @@ end
 !***********************************************************************************************************************************
 !***********************************************************************************************************************************
 !***********************************************************************************************************************************
+subroutine get_max_2D(vector, sizei, sizek, max_global)
+  implicit none
+   include 'mpif.h'
+  integer ierr,rank
+  integer, intent(IN) :: sizei,sizek
+  real(8), dimension(0:sizei,0:sizek), intent(IN) :: vector
+  real(8), intent(OUT) ::  max_global 
+  real(8) :: max_local
+  integer :: i,k
+  max_local = 1e-100
+  do i=0,sizei
+    do k=0,sizek
+      if (vector(i,k) > max_local) then
+        max_local = vector(i,k)
+      endif
+    enddo
+  enddo
+  call mpi_allreduce(max_local,max_global,1,mpi_real8,mpi_max,mpi_comm_world,ierr)
+end subroutine get_max_2D
 
+subroutine calc_residual(unew, uold, wnew, wold, resU, resW)
+  use mod_param, only: k1, i1
+  real(8), dimension(0:i1,0:k1), intent(IN) :: unew,uold,wNew,wold
+  real(8), intent(OUT) :: resW, resU
+  call get_max_2D(unew-uold, i1,k1,resU)
+  call get_max_2D(wnew-wold, i1,k1,resW)
+end subroutine  calc_residual
 !!********************************************************************
 !!     Calculates the thermodynamic properties
 !!********************************************************************
@@ -330,6 +379,7 @@ subroutine bound_v(u,w,win,centerBC,rank, step)
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
+  call shiftb(w,tmp,rank);     w(:,k1)  = tmp(:);
   if (periodic.eq. 1) return
 
   !developing
