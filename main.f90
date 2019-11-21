@@ -92,13 +92,15 @@ istart = 1
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
 
-call interpolate_solution(96+1, 100/px+1, rank, px)
-call output2d_upd(rank,px)
-! call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
+! if (restart .eq. 1 then) call interpolate_solution(imax_old, kelem/px+1, rank, px)
+  
 
-call output2d_upd2(rank,istep)
-call mpi_finalize(ierr)
-stop
+! call output2d_upd(rank,px)
+! ! call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
+
+! call output2d_upd2(rank,istep)
+! call mpi_finalize(ierr)
+! stop
 ! call output2d_upd2(rank,istep)
 ! call mpi_finalize(ierr)
 ! stop
@@ -471,7 +473,9 @@ end subroutine bound_m
 
 subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
   use mod_tm
+  use mod_param, only : imax_old, kelem_old,px
   implicit none
+  include "mpif.h"
   integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
   real(8),                        intent(IN) :: dpdz,Re
   real(8), dimension(0:i1),       intent(IN) :: y_cv,y_fa
@@ -503,6 +507,8 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
     call turb_model%init_w_inflow(Re, systemsolve)
 
   !initialize with laminar analytical solution
+  else if (select_init .eq. 2) then
+    call interpolate_solution(imax_old+1, (kelem_old/px)+1, rank, px)
   else
     if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
     gridSize = y_fa(imax)

@@ -338,8 +338,8 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   if (rank .eq. 0) index=2
   
 
-  do i = 0,i1
-    do j = k_min,k_max
+  do j = k_min,k_max
+    do i = 0,i1
       read(lines(index)(1  :20) ,*) x   (i,j)
       read(lines(index)(21 :40) ,*) y   (i,j)
       read(lines(index)(41 :60) ,*) u   (i,j)
@@ -406,8 +406,8 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     size =           (i1+1)*(k1-1)*(nvar*20+1)
     disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
   endif
-  do i = 0,i1
-    do j = k_min,k_max      
+  do j = k_min,k_max      
+    do i = 0,i1
       y_v = min(1., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
       x_v = min(LoD,max(0.,x(i,j))) !takes the LOD or zero in case the x is negative
       write(test,'(16(E20.10e3))') x_v, y_v,u(i,j),w(i,j),rho(i,j),T(i,j), p(i,j), mu(i,j), mut(i,j), &

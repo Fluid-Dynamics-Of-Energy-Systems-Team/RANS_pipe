@@ -1,8 +1,8 @@
 &input
   CFL               = 10,     ! CFL number / time step
   systemSolve       = 4       ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
-  imax              = 768,    ! radial direction
-  kelem             = 800,     ! axial direction
+  imax              = 192,   ! radial direction
+  kelem             = 200,     ! axial direction
   K_start_heat      = 10,      ! for isoflux:    after home many cells in x will you start heating
   x_start_heat      = 10,      ! for isothermal: lenght at which you start heating
   iwork             = 1,
@@ -20,7 +20,7 @@
   pressIsoThermal   = 1,       ! constant pressure for BL cases (2 or 4)
   Fr_1              = 0.0,
   EOSmode           = 0,       ! 0..IG, 1..SCCO2/sPH2
-  select_init       = 0,       ! 0..std initialization, 1..read inflow , 2..read restart file
+  select_init       = 2,       ! 0..std initialization, 1..read inflow , 2..read restart file
   turbmod           = 0,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
   ctheta            = 0.3,
   modVF             = 0,       ! 0..Original 1..LienKalitzin Time/Length scale VF model
@@ -31,8 +31,10 @@
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
   turbdiffmod       = 1,
   output_fname      = "laminarbl.csv",
-  read_fname      = "laminarbl_12.csv",
+  read_fname        = "laminarbl_12.csv", ! name of restartfile
   dtmax             = 0.01,
   output_fname_bl   = "test.csv",
+  imax_old          = 96,
+  kelem_old         = 100,
 /
 
