@@ -10,6 +10,7 @@ OBJS = param.o common.o
 OBJS += math.o
 OBJS += eos.o
 OBJS += mesh.o
+OBJS += module_mesh.o
 OBJS += tm.o tm_ke.o tm_mk.o tm_sa.o tm_vf.o tm_sst.o
 OBJS += tdm.o tdm_vp.o 
 OBJS += numerics.o

@@ -16,6 +16,8 @@ use mk_tm
 use vf_tm
 use mod_tdm
 use vp_tdm
+use module_mesh
+
 implicit none
 include 'mpif.h'
 
@@ -83,6 +85,12 @@ call turbdiff_model%init()
 call init_transpose
 
 !initialize grid
+if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
+
+call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mkgrid(rank)
 
 
