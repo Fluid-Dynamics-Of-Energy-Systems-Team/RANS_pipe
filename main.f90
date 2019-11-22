@@ -56,8 +56,8 @@ Nt=imax
 !initialize variables
 call initMem()
 
-
-
+!initialize numerical
+call init_transpose
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
@@ -81,16 +81,14 @@ if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'))
 call turbdiff_model%init()
 
-!initialize numerical
-call init_transpose
-
-!initialize grid
+!initialize grid including bc
 if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
-
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
+
+
 call mkgrid(rank)
 
 
