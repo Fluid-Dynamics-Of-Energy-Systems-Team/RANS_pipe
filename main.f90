@@ -106,13 +106,13 @@ call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpd
 ! stop
 
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
-call bound_c(cnew, Tw, Qwall, drp,dz, centerBC,rank)
+call bound_c(cnew, Tw, Qwall, drp, centerBC,rank)
 call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
 
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
-call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
+call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
 
@@ -128,7 +128,7 @@ do istep=istart,nstep
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
                               modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
-  call bound_c(Cnew, Tw, Qwall, drp,dz, centerBC,rank)
+  call bound_c(Cnew, Tw, Qwall, drp, centerBC,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
@@ -137,7 +137,7 @@ do istep=istart,nstep
   call fillps(rank)
   call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
-  call bound_v(Unew,Wnew,Win,centerBC,rank, istep)
+  call bound_v(Unew,Wnew,Win,rank, istep)
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
@@ -151,10 +151,10 @@ do istep=istart,nstep
   
   !write the screen output
   noutput = 100
-  if (mod(istep,noutput) .eq. 0) then 
-    call  calc_residual(unew, uold, wnew, wold, resU, resW)
-    if ((resU .le. 1e-12) .and. (resW .le. 1e-12)) exit
-  endif
+  ! if (mod(istep,noutput) .eq. 0) then 
+  !   call  calc_residual(unew, uold, wnew, wold, resU, resW)
+  !   if ((resU .le. 1e-10) .and. (resW .le. 1e-10)) exit
+  ! endif
       
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
@@ -268,14 +268,14 @@ end subroutine calc_mu_eff
 !!*************************************************************************************
 !!  Apply the boundary conditions for the energy equation
 !!*************************************************************************************
-subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
+subroutine bound_c(c, Twall, Qwalll,drp, centerBC,rank)
   use mod_param
   use mod_eos
   use mod_mesh, only : top_bcvalue1, bot_bcvalue1
   ! use mod_mesh
   implicit none
   include 'mpif.h'
-  real(8),                       intent(IN) :: Twall, Qwalll,dz
+  real(8),                       intent(IN) :: Twall, Qwalll
   real(8), dimension(0:i1),      intent(IN) :: drp
   integer,                       intent(IN) :: centerBC, rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: c
@@ -294,12 +294,12 @@ subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   else
     do k=0,k1
       if (top_bcvalue1(k) .eq. 1) then
-        c(i1,k) = c(imax,k)!symmetry
+        c(i1,k) = c(imax,k)                                                !symmetry
       else
         call eos_model%set_enth_w_qwall(qwall,c(imax,k),drp(imax),c(i1,k)) !heatflux
       endif
       if (bot_bcvalue1(k) .eq. 1) then
-        c(0,k) = c(1,k) !symmetry
+        c(0,k) = c(1,k)                                                    !symmetry
       else
         call eos_model%set_enth_w_qwall(qwall,c(1,k),   drp(0),   c(0,k))  !heatflux
       endif
@@ -319,51 +319,17 @@ subroutine bound_c(c, Twall, Qwalll,drp, dz, centerBC,rank)
   endif  
 end subroutine bound_c
 
-subroutine calc_displacement(w, dis2, rank)
-  use mod_param, only : i1, k1, imax,kmax,K_start_heat,Re   !,! kmax
-  use mod_mesh, only : drp, dz, dru
-  implicit none
-  
-  real(8), dimension(0:i1,0:k1), intent(IN) :: w
-  integer, intent(IN) :: rank
-
-  real(8), dimension(0:k1) :: dis, dis2
-  real(8) :: flux, dy, wavg,x, flux1
-  character*5 cha
-  integer i,k
-
-  do k=0,k1
-    flux = 0.
-    flux1 = 0.
-    do i=1,imax
-      flux1 = flux1 + (1-w(i,k))*dru(i)
-      flux = flux + w(i,k)*(1-w(i,k))*dru(i)
-    enddo
-    dis(k)=flux
-    dis2(k)=flux1
-  enddo
-
-  write(cha,'(I5.5)')rank
-  open(15, STATUS='REPLACE',file='test'//cha)
-  do k=0,k1-1
-    x = (k+rank*kmax)*dz - (K_start_heat)*dz-(1/2)*dz
-    write(15,'(6ES24.10E3)')  x, dis(k),dis2(k), 0.664*sqrt(x/Re),1.72*sqrt(x/Re), real(k)
-  enddo
-  close(15)
-  ! stop
-end subroutine
-
 
 
 !!*************************************************************************************
 !!  Apply the boundary conditions for the velocity
 !!*************************************************************************************
-subroutine bound_v(u,w,win,centerBC,rank, step)
+subroutine bound_v(u,w,win,rank, step)
   use mod_param
   use mod_mesh, only : top_bcnovalue, bot_bcnovalue, ubot_bcvalue, dz
   implicit none  
   include 'mpif.h'
-  integer,                       intent(IN) :: centerBC, rank, step
+  integer,                       intent(IN) :: rank, step
   real(8), dimension(0:i1),      intent(IN) :: win
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
@@ -400,7 +366,7 @@ end subroutine bound_v
 !!************************  *************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   use mod_param
-  use mod_mesh
+  use mod_mesh, only : dz, rp, dru
   use mod_common
   implicit none
   include 'mpif.h'
@@ -413,7 +379,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   integer :: ierr
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
-  call bound_v(ubound,wbound,W_in,centerBC,rank, step)
+  call bound_v(ubound,wbound,W_in,rank, step)
   wr = 0
   Ub = 0.
   flux = 0.0
@@ -544,7 +510,7 @@ end subroutine initialize_solution
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_math
-  use mod_mesh
+  use mod_mesh, only : dz, rp, dru, ru, drp, top_bcvalue1, bot_bcvalue1
   use mod_common
   use mod_tdm
   implicit none
@@ -610,7 +576,7 @@ end
 subroutine advance(rank)
   use mod_param
   use mod_math
-  use mod_mesh
+  use mod_mesh, only : dz,dru,drp,rp,ru,dpdz,bot_bcnovalue,top_bcnovalue,ubot_bcvalue, numDomain
   use mod_common
   implicit none
       

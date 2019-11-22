@@ -1,27 +1,3 @@
-
-! !********************************************************************
-! !     write inflow file
-! !********************************************************************
-! subroutine Inflow_output(rank,istap) !tubstress,rank,istap)
-!   use mod_param
-!   use mod_common
-!   implicit none
-  
-!   integer rank,istap
-!   character*5 inflow
-
-!   if (rank.eq.px/2) then
-!     if (turbmod.eq.0) open(29,file='0/Inflow', form='unformatted')
-!     if (turbmod.eq.1) open(29,file='SA/Inflow',form='unformatted')
-!     if (turbmod.eq.2) open(29,file='MK/Inflow',form='unformatted')
-!     if (turbmod.eq.3) open(29,file='VF/Inflow',form='unformatted')
-!     if (turbmod.eq.4) open(29,file='OM/Inflow',form='unformatted')
-!     write(29) Wnew   (:,kmax/2),knew   (:,kmax/2),enew(:,kmax/2),v2new(:,kmax/2), &
-!               omNEW  (:,kmax/2),nuSAnew(:,kmax/2),ekmt(:,kmax/2),Pk   (:,kmax/2)
-!     close(29)
-!   endif
-
-! end
 subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
   use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1
@@ -70,6 +46,7 @@ subroutine write_output_bl(rank, istap)
     size =           (k1-1)*(nvar*20+1)
     disp = (k1+1)*(nvar*20+1) + (rank-1)*(k1-1)*(nvar*20+1)
   endif
+
   do k = k_min,k_max
       write(test,'(7(E20.10e3))') x(k), wstress(k),sfriction(k),bl_th(k),mom_th(k),  &
                                    dis_th(k), -unew(0,k)
@@ -82,6 +59,7 @@ subroutine write_output_bl(rank, istap)
   call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 
+
 end subroutine
 
 
@@ -131,164 +109,6 @@ subroutine inflow_output_upd(rank,istap)
 
 end
 
-
-! !***************************************************************************************
-! !     read istep from the restart file to identify the corresponding inflow profile
-! !***************************************************************************************
-! subroutine loadRestart(startStep,rank)
-!   use mod_param
-!   use mod_common
-!   implicit none
-
-!   character*5 cha
-!   integer startStep,ierr,rank
-
-!   real*8     UNEWR(0:i1,0:k1old)
-!   real*8     UOLDR(0:i1,0:k1old)
-!   real*8     WNEWR(0:i1,0:k1old)
-!   real*8     WOLDR(0:i1,0:k1old)
-!   real*8     CNEWR(0:i1,0:k1old)
-!   real*8     KNEWR(0:i1,0:k1old)
-!   real*8     ENEWR(0:i1,0:k1old)
-!   real*8    V2NEWR(0:i1,0:k1old)
-!   real*8  NUSANEWR(0:i1,0:k1old)
-!   real*8    omNEWR(0:i1,0:k1old)
-!   real*8    PKR(0:i1,0:k1old)
-
-!   write(cha,'(I5.5)')rank
-!   if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
-!   read(19) startStep
-!   read(19) UNEWR,UOLDR,WNEWR,WOLDR,CNEWR,KNEWR,ENEWR,V2NEWR,omNEWR,nuSANEWR, PKR
-!   close(19)
-
-!   do i=0,i1
-!     do k=0,k1
-!       UNEW(i,k) =    UNEWR(i,k1old*k/k1)
-!       UOLD(i,k) =    UOLDR(i,k1old*k/k1)
-!       WNEW(i,k) =    WNEWR(i,k1old*k/k1)
-!       WOLD(i,k) =    WOLDR(i,k1old*k/k1)
-!       CNEW(i,k) =    CNEWR(i,k1old*k/k1)
-!       KNEW(i,k) =    KNEWR(i,k1old*k/k1)
-!       ENEW(i,k) =    ENEWR(i,k1old*k/k1)
-!       V2NEW(i,k) =   V2NEWR(i,k1old*k/k1)
-!       nuSAnew(i,k) = nuSAnewR(i,k1old*k/k1)
-!       omNew(i,k) =   omNewR(i,k1old*k/k1)
-!       Pk(i,k) =      PKR(i,k1old*k/k1)
-!     enddo
-!   enddo
-
-
-! end
-
-! !***************************************************************************************
-! !     store istep in the restart file to identify the corresponding inflow profile
-! !***************************************************************************************
-! subroutine saveRestart(rank)
-!   use mod_param
-!   use mod_common
-!   implicit none
-
-!   character*5 cha
-!   integer rank
-!   write(cha,'(I5.5)')rank
-!   if (turbmod.eq.0) open(19,file= '0/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.1) open(19,file='SA/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.2) open(19,file='MK/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.3) open(19,file='VF/Restart/start_stop.'//cha,form='unformatted')
-!   if (turbmod.eq.4) open(19,file='OM/Restart/start_stop.'//cha,form='unformatted')
-!   write(19) istep
-!   write(19) UNEW,UOLD,WNEW,WOLD,CNEW,KNEW,ENEW,V2NEW,omNEW,nuSANEW,Pk
-!   close(19)
-! end
-
-
-
-
-! !***************************************************************************************
-! !   writes the inflow profile
-! !***************************************************************************************
-! subroutine outputProfile(rank)
-!   use mod_param
-!   use mod_common
-!   implicit none
-  
-!   integer rank
-!   ! radius= 1, velocity=3, temperature=5, density=6, turb. kine=7,
-!   ! epsilon=8, v2=9, nuSA=10, mut=11
-!   if (rank == 0) then
-!     open(19,file='profile')
-!     k = 1
-!     do i=1,imax
-!       write(19,'(14E18.6)') y_cv(i),  unew(i,k),Wnew(i,k), cnew(i,k), temp(i,k), &
-!                             rnew(i,k),knew(i,k),enew(i,k),v2new(i,k),omNew(i,k), &
-!                             nuSAnew(i,k),ekmt(i,k),bf1(i,k), bf2(i,k)
-!     enddo
-!     close(19)
-!   endif
-
-! end
-
-! !***************************************************************************************
-! !   writes the output file in 2D gnuplot style
-! !***************************************************************************************
-! subroutine outputX_h_upd(rank,istap)
-!   use mod_param
-!   use mod_common
-!   use mod_common2
-!   implicit none
-
-!   include 'mpif.h'
-!   character*5 cha
-!   integer rank,ierr,istap
-!   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax),Qp(kmax), &
-!     tmp(kmax),massfl,enth,laminter,tempinter,cpinter,Gb(kmax),rhob(kmax),ekmb(kmax),Ub(kmax), &
-!     addedHeat,addedHeatTot,subheat,subheatTot,w_c
-
-!   twall    = 0.0
-!   Qp       = 0.0
-!   massflow = 0.0
-!   enthflow = 0.0
-!   w_c      = 0.0
-!   Gb       = 0.0
-
-!   do k=1,kmax
-!     do i=1,imax
-!       massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
-!       massflow(k) = massflow(k) + massfl
-!       enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
-!     enddo
-!   enddo
-  
-!   enth_b=enthflow/massflow
-!   do k=1,kmax
-!     w_c=(Cnew(i1,k)+Cnew(imax,k))/2.
-!     call eos_model%set_w_enth(enth_b(k), 'D', rhob(k))
-!     call eos_model%set_w_enth(enth_b(k), 'V', ekmb(k))
-!     call eos_model%set_w_enth(enth_b(k), 'V', ekmb(k))
-!     call eos_model%set_w_enth(w_c,       "T", Twall(k))
-!     call eos_model%set_w_enth(enth_b(k), "T", Tbulk(k))
-!     Gb(k) =massflow(k)/(4.*atan(1.)*Ru(imax)**2.)
-!   enddo
-
-!   ! bulk stuff
-!   write(cha,'(I5.5)')rank
-!   if (turbmod.eq.0) open(9,file='0/profX.'//cha)
-!   if (turbmod.eq.1) open(9,file='SA/profX.'//cha)
-!   if (turbmod.eq.2) open(9,file='MK/profX.'//cha)
-!   if (turbmod.eq.3) open(9,file='VF/profX.'//cha)
-!   if (turbmod.eq.4) open(9,file='OM/profX.'//cha)
-!   do k=1,kmax
-!     write(9,'(8E18.6)') (k+rank*kmax)*dz, massflow(k),enthflow(k),enth_b(k), &
-!                         Twall(k),Tbulk(k),Gb(k)/Gb(1),Gb(k)/Gb(1)/rhob(k)
-!   enddo
-!   close(9)
-!   return
-! end
-
 subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
                                  k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
   use mod_param, only : LoD
@@ -305,7 +125,7 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   character(len=320) :: test
   character(len=321) :: line
   real(8) :: x_v, y_v
-  nvar = 16
+  nvar =16
   index=1
 
   !first core write from 0 to kmax
@@ -335,9 +155,8 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
   call MPI_FILE_READ(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr)
-  if (rank .eq. 0) index=2
   
-
+  if (rank .eq. 0) index=2 !skip header
   do j = k_min,k_max
     do i = 0,i1
       read(lines(index)(1  :20) ,*) x   (i,j)
@@ -397,7 +216,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     k_max = k1
     allocate(lines(1:(i1+1)*k1))
     size =           (i1+1)*(k1)*(nvar*20+1)
-   disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
+    disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
   !other core write from 1 to kmax
   else
     k_min = 1
@@ -406,6 +225,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     size =           (i1+1)*(k1-1)*(nvar*20+1)
     disp = ((i1+1)*(k1)+1)*(nvar*20+1) + (rank-1)*(i1+1)*(k1-1)*(nvar*20+1)
   endif
+
   do j = k_min,k_max      
     do i = 0,i1
       y_v = min(1., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
@@ -417,10 +237,12 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
       index=index+1
     enddo
   enddo
+  
   call MPI_FILE_OPEN(MPI_COMM_WORLD, filename,MPI_MODE_WRONLY + MPI_MODE_CREATE,MPI_INFO_NULL, fh, ierr) 
   call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 
+
 end subroutine write_mpiio_formatted
 
 subroutine set_scalar_to_coords(vector, i1, k1, output)
@@ -529,7 +351,6 @@ subroutine output2d_upd2(rank,istap)
   real(8), dimension(0:i1,0:k1) :: x_plt, y_plt, u_plt,w_plt, rho_plt, c_plt, p_plt, mu_plt, mut_plt, &
                                    k_plt, eps_plt, v2_plt, om_plt, nuSA_plt
   
-
   twall    = 0.0
   massflow = 0.0
   enthflow = 0.0
@@ -552,11 +373,11 @@ subroutine output2d_upd2(rank,istap)
 
   do k=0,k1
     do i=0,i1
-      ! write(*,*) dz
       xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
       yvec(i,k) = y_cv(i)
     enddo
   enddo
+
   call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
 
   call set_uvector_to_coords(unew,i1,k1,u_plt)
