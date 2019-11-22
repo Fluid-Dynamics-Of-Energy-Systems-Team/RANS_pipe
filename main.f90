@@ -60,25 +60,25 @@ call initMem()
 call init_transpose
 
 !initialize EOS
-if (EOSmode.eq.0) allocate(eos_model,    source=IG_EOSModel(Re,Pr))
+if (EOSmode.eq.0) allocate(eos_model,    source=   IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
-if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat'))
+if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
 call eos_model%init() 
 
 !initialize turbulent viscosity model
 if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
-if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA'))
-if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK'))
-if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF'))
+if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA' ))
+if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK' ))
+if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF' ))
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
 
 !initialize turbulent diffusivity model
 if (turbdiffmod.eq.0) allocate(turbdiff_model,source=        CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
-if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'))
-if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'))
-if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'))
-if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'))
+if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
+if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
+if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
+if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
 call turbdiff_model%init()
 
 !initialize grid including bc
@@ -91,6 +91,14 @@ call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 
 call mkgrid(rank)
 
+! if (rank .eq. 0) then
+! do i=0,i1
+!   write(*,*) mesh%dru(i), dru(i)
+! enddo
+! endif
+
+! call mpi_finalize(ierr)
+! stop
 
 dt = dtmax
 istart = 1
@@ -324,10 +332,11 @@ end subroutine bound_c
 !!  Apply the boundary conditions for the velocity
 !!*************************************************************************************
 subroutine bound_v(u,w,win,rank, step)
-  use mod_param
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue, ubot_bcvalue, dz
+  use mod_param,   only : i1, k1, imax, kmax, periodic, px
+  use module_mesh, only : mesh
   implicit none  
   include 'mpif.h'
+  
   integer,                       intent(IN) :: rank, step
   real(8), dimension(0:i1),      intent(IN) :: win
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
@@ -335,12 +344,12 @@ subroutine bound_v(u,w,win,rank, step)
   real(8) :: x, vfs, vfsm
   real(8), dimension(0:k1) :: dis
 
-  u(0,:)    =  (1-ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
-  u(imax,:) =   0.0                       !wall and symmetry
+  u(0,:)    =  (1-mesh%ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
+  u(imax,:) =   0.0                            !wall and symmetry
   u(i1,:)   = - u(imax-1,:)
 
-  w(0,:)    = bot_bcnovalue(:)*w(1,:)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
-  w(i1,:)   = top_bcnovalue(:)*w(imax,:) !wall or symmetry
+  w(0,:)    = mesh%bot_bcnovalue(:)*w(1,:)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
+  w(i1,:)   = mesh%top_bcnovalue(:)*w(imax,:) !wall or symmetry
   
     
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
@@ -365,7 +374,7 @@ end subroutine bound_v
 !!************************  *************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   use mod_param
-  use mod_mesh, only : dz, rp, dru
+  use module_mesh, only : mesh
   use mod_common
   implicit none
   include 'mpif.h'
@@ -377,6 +386,13 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   real(8), dimension(1:imax) :: wr
   integer :: ierr
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
+  
+  real(8), dimension(0:i1) :: rp, dru
+  real(8)                  :: dz
+
+  dz  = mesh%dz
+  dru = mesh%dRu
+  rp  = mesh%rp
   
   call bound_v(ubound,wbound,W_in,rank, step)
   wr = 0

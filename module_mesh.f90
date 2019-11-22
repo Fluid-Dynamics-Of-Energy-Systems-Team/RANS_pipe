@@ -126,7 +126,7 @@ contains
     enddo
   end subroutine
 
-  subroutine discretize_wall_normal(this, fB, fA, gridSize)
+  subroutine discretize_wall_normal(this, fA, fB, gridSize)
     implicit None
     class(AbstractMesh) :: this
     real(8), intent(IN) :: fB, fA, gridsize
@@ -322,7 +322,7 @@ contains
     gridSize  = 1.0
     fA        = 0.12
     fB        = 2.4
-    this%dpdz      = 1.0
+    this%dpdz = 1.0
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
@@ -374,7 +374,7 @@ contains
     gridSize  = 1
     fA        = 0.12
     fB        = 2.4
-    this%dpdz      = 1.0
+    this%dpdz = 1.0
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
