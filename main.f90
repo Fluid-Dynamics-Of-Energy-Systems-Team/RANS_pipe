@@ -91,16 +91,9 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
+call bound_v(Unew,Wnew,Win,rank,istep)
 
-! if (restart .eq. 1 then) call interpolate_solution(imax_old, kelem/px+1, rank, px)
   
-
-! call output2d_upd(rank,px)
-! ! call bound_v(Unew,Wnew,Win,centerBC,rank,istep)
-
-! call output2d_upd2(rank,istep)
-! call mpi_finalize(ierr)
-! stop
 ! call output2d_upd2(rank,istep)
 ! call mpi_finalize(ierr)
 ! stop

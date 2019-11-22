@@ -82,7 +82,6 @@ subroutine calc_bl_thickness(w, w_fs, y_vec, i1, imax, bl_thickness)
     w_inv(i) = w(i1-i)
     y_inv(i) = 1.-y_vec(i1-i)
   enddo
-  !make sure that the w is monotonically increasing
   do i=1,i1
      if (w_inv(i) .ge. 0.99*w_fs) then
       elem = i
@@ -170,7 +169,7 @@ end subroutine
 end subroutine interpolate_vector
 
 subroutine interpolate_solution(i1_old, k1_old, rank, px)
-  use mod_common, only : wnew, unew, rnew, ekm, ekmt, cnew, win, ekmtin
+  use mod_common, only : wnew, unew, rnew, ekm, ekmt, cnew, win, ekmtin, uin
   use mod_mesh, only : y_cv, y_fa, dz
   use mod_param, only : read_fname,i1,k1, kmax, periodic
   implicit none
@@ -195,15 +194,21 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
     enddo
   enddo
 
+  !commuicate the values that are on the previous or next core
   call shiftf1(yold,tmp,rank,i1_old,k1_old);     yold(:,0)      = tmp(:);
-  call shiftb1(yold,tmp,rank,i1_old,k1_old);     yold(:,k1_old) = tmp(:);
   call shiftf1(xold,tmp,rank,i1_old,k1_old);     xold(:,0)      = tmp(:);
+  call shiftb1(yold,tmp,rank,i1_old,k1_old);     yold(:,k1_old) = tmp(:);
   call shiftb1(xold,tmp,rank,i1_old,k1_old);     xold(:,k1_old) = tmp(:);
-  call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
-  call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
-  call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
-  call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
 
+  if ((rank .ne. 0) .or. (periodic .eq. 1)) then
+    call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
+    call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
+  endif
+  if ((rank .ne. px-1) .or. (periodic.eq.1)) then
+    call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
+    call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
+  endif
+    
   !interpolate on the new grid
   call interpolate_vector(xold,yold,x, yu,i1_old, k1_old,i1,k1,uold,unew,rank)
   call interpolate_vector(xold,yold,xw,y, i1_old, k1_old,i1,k1,wold,wnew,rank)  
@@ -211,15 +216,17 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,cold,cnew,rank)
   call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,ekmtold,ekmt,rank)
   
+  if (periodic .eq. 1) return
+
   if (rank .eq. 0) then
     win(:) = wnew(:,0)
-    !uin(:) = unew(:,0)
     ekmtin(:) = ekmt(:,0)
+    uin(:) = unew(:,0)
   endif
-  call MPI_Bcast(win, i1+1, MPI_REAL8, 0,MPI_COMM_WORLD, ierror)
-  !MPI_Bcast(uin, i1+1, MPI_REAL,MPI_COMM_WORLD, ierror)
-  call MPI_Bcast(ekmtin, i1+1, MPI_REAL8, 0,MPI_COMM_WORLD, ierror)
-
+  call MPI_Bcast(win,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
+  call MPI_Bcast(ekmtin,i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
+  call MPI_Bcast(uin,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
+  
 
 end subroutine
 
