@@ -20,6 +20,7 @@ module module_mesh
   contains
     procedure :: init_mem               => init_mem
     procedure :: discretize_streamwise  => discretize_streamwise
+    procedure :: discretize_streamwise2  => discretize_streamwise2    
     procedure :: discretize_wall_normal => discretize_wall_normal
     procedure :: calc_walldist          => calc_walldist
     procedure :: set_carthesian         => set_carthesian
@@ -178,6 +179,136 @@ contains
     integer, intent(IN) :: px 
     this%dz    = 1.0*LoD/(this%kmax*px)
   end subroutine discretize_streamwise
+
+  subroutine discretize_streamwise2(this, LoD, rank, px)
+    use mod_math, only : splint, spline
+    use mod_param, only : kmax, k1
+    implicit None
+    class(AbstractMesh) :: this
+    real(8), intent(IN) :: LoD
+    integer, intent(IN) :: rank, px 
+    real(8) :: L,a,c,H
+    real(8), dimension(0:2000) :: y, x2tab, x, ys
+    real(8), dimension(0:kmax*px) :: xw_total
+    real(8), dimension(0:kmax*px) :: xp_total
+    real(8), dimension(0:k1)    :: xw, xp, dxw,dxp
+    real(8) :: value
+    integer :: i,nelem, k
+    integer :: tabkhi,tabklo = 0 
+
+    a = 10.
+    L = 0.1
+    c = 0.8
+    H = 0.1
+    
+    nelem=2000
+
+    do i=0,nelem
+      x(i) = (i+0.)/(nelem+0)
+      y(i) = H*((tanh(a*(x(i)/L-0.5))+1.)/2.)+c*x(i)
+
+    enddo
+
+    do i=0,nelem
+      ys(i) = (y(i)-y(0))/(y(nelem)-y(0))
+    enddo
+
+    ! function to interpolate
+    call spline(ys,x,  nelem+1,x2tab)
+
+    !calculate the cell faces
+    do i = 0,kmax!*px
+      call splint(ys,x, x2tab,nelem+1,(i+rank*this%kmax+0.)/(kmax*px),xw(i),tabkhi,tabklo) 
+      xw(i) = xw(i)*LoD
+    enddo
+    call shiftv_b(xw, this%k1, value, rank); xw(k1) = value;
+    if (rank .eq. px-1) xw(k1) =  xw(kmax)+(xw(kmax)-xw(kmax-1))
+
+    !calculate the cell centers
+    do k =1,this%k1
+      xp(k)  = (xw(k)+xw(k-1))/2.0
+    enddo
+    call shiftv_f(xp, this%k1, value, rank); xp(0) = value;
+    if (rank .eq. 0) xp(0) =  -xp(1)
+
+    do i = 0,kmax
+      dxp(i) = (xp(i+1)+xp(i))/2.
+    enddo
+    do i = 1,k1
+      dxw(i) = xw(i)-xw(i-1)
+    enddo
+    dxw(0) = dxw(1)
+
+
+
+
+    if (rank .eq. 0) then
+      OPEN(10, file='coords', status='replace')
+      do i = 0,k1
+          write(10,*) i, xw(i), dxw(i),xp(i), dxp(i)
+      enddo
+      close(10)
+    endif
+  
+
+
+    !points
+    ! do k= 0,this%kmax
+    !   xw(k) = xw_total(k+rank*px)
+    ! enddo
+    !communicate the last element
+    !xw(k1) = xw(1)
+
+    !differences
+    ! do i= 1,this%kmax
+    !   dxw(i) = dxw_total(i)
+    ! enddo
+    !communicate the last elemeet
+    !dxw(k1) = dxw(1)
+
+
+    ! do i =1,this%imax
+    !   this%Rp(i)  = (this%Ru(i)+this%Ru(i-1))/2.0
+    !   this%dru(i) = (this%Ru(i)-this%Ru(i-1))
+    ! enddo
+
+    ! do i=1,this%kmax
+    !   xw(i1) =  xw_total( k+rank*kmax)
+    !   dxw(i) = dxw_total(k+rank*kmax)
+    ! enddo
+
+  ! do i =1,this%imax
+  !     this%Rp(i)  = (this%Ru(i)+this%Ru(i-1))/2.0
+  !     this%dru(i) = (this%Ru(i)-this%Ru(i-1))
+  !   enddo
+
+    ! if (rank .eq. 0) then
+    !   OPEN(10, file='coords', status='replace')
+    !   do i = 1,kmax*px
+    !       write(10,*) (i+0.)/(kmax*px), (xw_total(i)-xw_total(i-1))*LoD
+    !   enddo
+    !   close(10)
+    ! endif
+
+
+
+
+    !communicate the values to the other cores
+
+
+    do i =1,this%kmax
+      xp(i)  = (xw(i)+xw(i-1))/2.0
+      dxw(i) = (xw(i)-xw(i-1))
+    enddo
+    
+    ! dxw(this%k1) = dxw(this%imax)
+    ! xw(this%k1)  = this%Ru(this%imax) + this%dru(this%i1)
+    this%Rp(this%i1)  = this%Ru(this%imax) + this%dru(this%i1)/2.0
+
+
+
+    this%dz    = 1.0*LoD/(this%kmax*px)
+  end subroutine discretize_streamwise2
 
   subroutine calc_walldist(this, gridSize)
     implicit None

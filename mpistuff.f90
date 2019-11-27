@@ -1,3 +1,47 @@
+subroutine shiftv_b(vector, dim,value, rank)
+  use mod_param, only : px
+  implicit none
+  include 'mpif.h'
+  integer, intent(IN)                   :: rank, dim
+  real(8), dimension(0:dim), intent(IN) :: vector
+  real(8), intent(OUT)                  :: value
+  integer :: rank_send, rank_recv,ierr
+  integer itag,status(MPI_STATUS_SIZE)
+  itag = 11
+
+  rank_send = rank + 1
+  rank_recv = rank -1
+
+  if(rank.eq.px-1)rank_send=0
+  if(rank.eq.   0)rank_recv=px-1
+  ! write(*,*) vector(0), rank!"here"
+  call mpi_sendrecv(vector(1),1, MPI_REAL8, rank_recv, itag, &
+                    value,    1, MPI_REAL8, rank_send, itag, &
+                    MPI_COMM_WORLD, status, ierr )
+end subroutine
+
+subroutine shiftv_f(vector, dim,value, rank)
+  use mod_param, only : px
+  implicit none
+  include 'mpif.h'
+  integer, intent(IN)                   :: rank, dim
+  real(8), dimension(0:dim), intent(IN) :: vector
+  real(8), intent(OUT)                  :: value
+  integer :: rank_send, rank_recv,ierr
+  integer itag,status(MPI_STATUS_SIZE)
+  itag = 11
+
+  rank_send = rank + 1
+  rank_recv = rank -1
+
+  if(rank.eq.px-1)rank_send=0
+  if(rank.eq.   0)rank_recv=px-1
+  ! write(*,*) vector(0), rank!"here"
+  call mpi_sendrecv(vector(dim-1),1, MPI_REAL8, rank_send, itag, &
+                    value,    1, MPI_REAL8, rank_recv, itag, &
+                    MPI_COMM_WORLD, status, ierr )
+end subroutine
+
 subroutine shiftb(UT,UP,rank)
   use mod_param
   use mod_common

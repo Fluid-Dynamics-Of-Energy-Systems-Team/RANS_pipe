@@ -87,7 +87,7 @@ if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
-
+call mesh%discretize_streamwise2( LoD,rank, px)
 
 call mkgrid(rank)
 
