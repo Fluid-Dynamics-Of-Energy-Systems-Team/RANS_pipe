@@ -1,3 +1,37 @@
+subroutine make_vector(matrix_in, vector_out, imax, kmax)
+  implicit none
+  integer, intent(IN) :: imax, kmax
+  real(8), dimension(1:imax,1:kmax), intent(IN) :: matrix_in
+  real(8), dimension(1:imax*kmax), intent(OUT) :: vector_out
+  integer :: index, i, k
+
+  index = 1
+  do k=1,kmax
+    do i=1,imax
+      vector_out(index) = matrix_in(i,k)
+      index = index+1
+    enddo
+  enddo
+end subroutine make_vector
+
+subroutine make_matrix(vector_in, matrix_out, imax, kmax)
+  implicit none
+  integer, intent(IN) :: imax, kmax
+    real(8), dimension(1:imax*kmax), intent(IN) :: vector_in
+  real(8), dimension(1:imax,1:kmax), intent(OUT) :: matrix_out
+  integer :: index,i,k
+  
+  k=1
+  i=1
+  do index=1,imax*kmax
+    if (i > imax) then
+      i = 1
+      k = k+1
+    endif
+    matrix_out(i,k) = vector_in(index)
+    i = i +1
+  enddo
+end subroutine make_matrix
 !*********************************************************************
 !*********************************************************************
 !  This routine solves a Poisson equation on a staggered
@@ -30,78 +64,114 @@
 !********************************************************************
 !********************************************************************
 
-subroutine solver(p,Ru,RP,thetav,thetap,dphi,ini,rank)
-  use mod_param, only : kmax, imax, i1, k1
+subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
+  use mod_param, only : kmax, imax, i1, k1, px
   implicit none
   include 'mpif.h'
-  real(8), dimension(0:i1,0:k1) :: p
-  real(8), dimension(kmax) :: an,bn,cn
-  real(8), dimension(imax) :: am,bm,cm
-  real(8), dimension(imax,kmax) :: y  
-  real(8), dimension(3*imax*kmax) :: work
   
-  !real*8 p(jmax,kmax,Mx),p2(imax,jmax,kmax/Px)
-  real*8 Ru(0:i1),Rp(0:i1),dphi
-  real*8 thetav(-1:k1),thetap(0:k1)
-!  real*8 am(imax),bm(imax),cm(imax),y(imax,jmax), &
-!         work(3*imax*jmax,kmax/Px)
+  real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
+  real*8      dz,dru(0:IMAX+1),drp(0:IMAX+1)
+  integer     centerBC
 
-!  ,pi,tpp(jmax,kmax)
-  integer rank
+  ! real(8), dimension(1:imax,1:kmax) :: rhs
+  real(8), dimension(kmax*px*imax*8):: work
+  real(8), dimension(1:imax)        :: am,bm,cm
+  real(8), dimension(1:kmax)        :: an,bn,cn
+  real(8), dimension(1:kmax*px)     :: an_t,bn_t,cn_t
+  real(8), dimension(imax*kmax)     :: pvec
+  real(8), dimension(imax*kmax*px)  :: pvec_t
+  real(8), dimension(imax,kmax*px)  :: y
+  
+  
+  ! real*8 Ru(0:i1),Rp(0:i1),dphi
 
-  integer ier,it,ini,i,j,k,ipro
-
+  ! real*8 thetav(-1:k1),thetap(0:k1)
+  integer ierr,ini,i,j,rank, ier
+ 
+! write(*,*) px
+  
+  ! create the coefficients
+  ! do i=1,imax
+  !   cm(i) = 1.0/((Rp(i+1)-Rp(i))*(Ru(i)-Ru(i-1)))
+  !   am(i) = 1.0/((Rp(i)-Rp(i-1))*(Ru(i)-Ru(i-1)))
+  !   bm(I) =-(am(i)+cm(i))
+  ! enddo
+  
+  !wall normal-direction
   do i=1,imax
-    cm(i) = 1.0/((Rp(i+1)-Rp(i))*(Ru(i)-Ru(i-1)))
-    am(i) = 1.0/((Rp(i)-Rp(i-1))*(Ru(i)-Ru(i-1)))
-    bm(I) =-(am(i)+cm(i))
+    am(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))
+    bm(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ &
+      (Rp(I)*dRu(I))
+    cm(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))
   enddo
-      
+  if (centerBC.eq.-1) then
+    bm(1)    = bm(1)+am(1)
+  else
+    bm(1)    =-Ru(1) /(dRp(1)*Rp(1)*dRu(1))
+  endif
+  am(1)=0.
+  bm(imax) = bm(imax)+cm(imax)
+  cm(imax)=0.
+
+    
+
+  !streamwise-direction  
   do j=1,kmax
-    cn(j)=  1.0/((thetap(j+1)-thetap(j))*(thetav(j)-thetav(j-1) ) )
-    an(j)=  1.0/((thetap(j)-thetap(j-1))*(thetav(j)-thetav(j-1) ) )
+    cn(j)=  1.0/((dz)*(dz ) )
+    an(j)=  1.0/((dz)*(dz ) )
     bn(j)= -( an(j) + cn(j) )
   enddo
 
-! 
-! Set the boundary conditions
-! 
-      
-  bm(1)=bm(1)+am(1)      
-  am(1)=0.
-  bm(imax)=bm(imax)+cm(imax)    
-  cm(imax)=0.
+  !gather all the coefficients to 1 coordinates
+  call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+  call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr) 
+  call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+
+  !apply bc
+  bn_t(1)=bn_t(1)-cn_t(1)      
+  an_t(1)=0.
+  bn_t(imax*px)=bn_t(imax*px)-cn_t(imax*px)    
+  cn_t(imax*px)=0.
+  call make_vector(rhs,pvec,imax,kmax)
+  call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+  call make_matrix(pvec_t,y,imax,kmax*px)
+  ! y = rhs
+
   
-  bn(1)    = bn(1)-an(1)
-  an(1)    = 0.
-  bn(kmax) = bn(kmax)-cn(kmax)
-  cn(kmax) = 0.
+
+  
+
+  ! bn_t(1)    = bn_t(1)+an_t(1)
+  ! an_t(1)    = 0.
+  ! bn_t(kmax*px) = bn_t(kmax*px)+cn_t(kmax*px)
+  ! cn_t(kmax*px) = 0.
+
+! C     NP
+! C       = 0  IF AN(1) AND CN(N) ARE NOT ZERO, WHICH CORRESPONDS TO
+! C            PERIODIC BOUNARY CONDITIONS.
+! C       = 1  IF AN(1) AND CN(N) ARE ZERO
 
 
-  do j=1,kmax
-    do i=1,imax
-      y(i,j)=p(i,j)
-    enddo
-  enddo 
-! 
-!     Call cyclic reduction algorithm
-!     
-  if (ini.eq.0) call blktri(0,1,kmax,an,bn,cn,1,imax,am,bm,cm,imax,y,ier,work(1))
-  call blktri(1,1,kmax,an,bn,cn,1,imax,am,bm,cm,imax,y,ier,work(1))
+  !Call cyclic reduction algorithm     
+  if (ini.eq.0) call blktri(0,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
+  call blktri(1,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
+
   if (ier .ne. 0) then
      write(6,*) 'There is something wrong with the solution of the Poisson equation!'
      write(6,*) 'Result are not reliable!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
      stop
   endif
-      
-      
-  do j=1,kmax
+    ! write(*,*) "im here"
+
+  !read the part that is core specific      
+  ! write(*,*)  1+rank*kmax,kmax + rank*kmax,rank*kmax
+  do j=1+rank*kmax,(kmax + rank*kmax)
      do i=1,imax
-        p(i,j)=y(i,j)
+        rhs(i,j-rank*kmax)=y(i,j)
      enddo
   enddo          
 
-end subroutine  solver
+end subroutine  solvepois_cr
 
 
 

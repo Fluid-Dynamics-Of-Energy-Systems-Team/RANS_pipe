@@ -17,7 +17,7 @@ subroutine write_output_bl(rank, istap)
   call postprocess_bl(wnew, ekmi, 1., 1., mom_th, dis_th, bl_th, wstress,sfriction)
 
   do k=0,k1
-      x(k)=(k+rank*kmax)*dz - K_start_heat*dz
+      x(k)=(k+rank*kmax)*dz - K_start_heat*dz !!x(k)=zw(k)-(mesh&L/2)*LoD
   enddo
  
  !first core write from 0 to k1-1
@@ -94,7 +94,7 @@ subroutine inflow_output_upd(rank,istap)
     !fixed width file
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.csv')
-    if (systemsolve.eq.3) open(29,file='bl/'     //trim(fname)//'.csv')
+    if (systemsolve.eq.3) open(29,file='symchan/'     //trim(fname)//'.csv')
     write(29, '(16a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
                           'rho' ,'k'  ,'eps','v2' ,'om', &
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
@@ -341,6 +341,7 @@ subroutine output2d_upd2(rank,istap)
   use mod_mesh
   use mod_tm
   use mod_eos
+  use module_mesh , only : mesh
   implicit none
   include 'mpif.h'
   real*8 pecletx,peclety,pecletz
@@ -373,7 +374,8 @@ subroutine output2d_upd2(rank,istap)
 
   do k=0,k1
     do i=0,i1
-      xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
+      ! xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
+      xvec(i,k) = mesh%dzp(k)
       yvec(i,k) = y_cv(i)
     enddo
   enddo

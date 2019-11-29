@@ -2,6 +2,7 @@ module mod_math
 
 contains
 
+
 SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   !
   !     FAST POISSON SOLVER IN CYLINDRICAL COORDINATES
@@ -73,6 +74,7 @@ SUBROUTINE SOLVEpois(rhs,Ru,Rp,dRu,dRp,dz,rank,centerBC)
 
   !     K --> direction      (zrt)
   dzi = 1./dz
+!  dzi = 1./(dzp(k))
 
   !     RENE: added Sept21_2011
   !     RENE: commented Sept21_2011

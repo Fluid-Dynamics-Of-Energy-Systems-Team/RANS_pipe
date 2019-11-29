@@ -105,12 +105,10 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,y_fa,y_cv,dpdz,Re,systemsolve,select_init)
+! write(*,*) win
 call bound_v(Unew,Wnew,Win,rank,istep)
 
   
-! call output2d_upd2(rank,istep)
-! call mpi_finalize(ierr)
-! stop
 
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 call bound_c(cnew, Tw, Qwall, drp, centerBC,rank)
@@ -122,6 +120,10 @@ call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
+
+! call output2d_upd2(rank,istep)
+! call mpi_finalize(ierr)
+! stop
 
 !***************************!
 !        MAIN LOOP          !
@@ -140,9 +142,15 @@ do istep=istart,nstep
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
 
+
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
+  ! call output2d_upd2(rank,istep)
+  ! call mpi_finalize(ierr)
+  ! stop
+
   call fillps(rank)
-  call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
+  call solvepois_cr(p,0,Ru,Rp,dRu,dRp,dz,rank,centerBC)
+  ! call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,rank, istep)
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
@@ -157,7 +165,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 100
+  noutput = 1
   ! if (mod(istep,noutput) .eq. 0) then 
   !   call  calc_residual(unew, uold, wnew, wold, resU, resW)
   !   if ((resU .le. 1e-10) .and. (resW .le. 1e-10)) exit
@@ -389,8 +397,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   
   real(8), dimension(0:i1) :: rp, dru
   real(8)                  :: dz
+  real(8), dimension(0:k1) :: dzw
+
 
   dz  = mesh%dz
+  dzw = mesh%dzw
   dru = mesh%dRu
   rp  = mesh%rp
   
@@ -413,6 +424,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   do k=1,kmax
     do i=1,imax
       flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
+      !flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dzw(k)
+      
     enddo
   enddo
 
@@ -426,6 +439,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   !compute mf out to the bot (used for the bl)
   do k=1,kmax
       flux = flux + Ubound(0,k)*dz
+     ! flux = flux + Ubound(0,k)*dzw(k)
   enddo
 
   if (rank.eq.px-1)then
@@ -493,12 +507,15 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
   else
     if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
     gridSize = y_fa(imax)
-    do i=1,imax         
-      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2)                      !pipe
+    do i=0,i1!imax         
+      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); 
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
-      if (systemsolve.eq.4) w(i,:)  = 1;u=0;  win=1; mutin=0!bl
+      if (systemsolve.eq.4) then
+         w(i,:)  = 1;u=0;  win=1; mutin=0!bl
+      endif
     enddo
+    ! win=w(:,0);          !pipe
   endif
 end subroutine initialize_solution
 
