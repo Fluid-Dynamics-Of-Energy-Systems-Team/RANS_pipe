@@ -130,8 +130,8 @@ subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   !apply bc
   bn_t(1)=bn_t(1)-cn_t(1)      
   an_t(1)=0.
-  bn_t(imax*px)=bn_t(imax*px)-cn_t(imax*px)    
-  cn_t(imax*px)=0.
+  bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px)    
+  cn_t(kmax*px)=0.
   call make_vector(rhs,pvec,imax,kmax)
   call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
   call make_matrix(pvec_t,y,imax,kmax*px)
