@@ -53,7 +53,9 @@ subroutine mkgrid(rank)
 
     ! bc for the temperature
     do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+      !if ((k+rank*kmax)*dz.lt.x_start_heat) then
+      if ((k.lt.K_start_heat) .and. (rank .eq. 0)) then
+
         top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
         top_bcvalue1(k) =0 ! heat flux or isothermal
@@ -110,7 +112,8 @@ subroutine mkgrid(rank)
     
     ! bc for the temperature
     do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
+      !if ((k+rank*kmax)*dz.lt.x_start_heat) then
+      if ((k.lt.K_start_heat) .and. (rank .eq. 0)) then
         top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
         top_bcvalue1(k) =0 ! heat flux or isothermal

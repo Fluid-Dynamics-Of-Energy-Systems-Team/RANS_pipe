@@ -11,7 +11,7 @@ module module_mesh
   integer                            :: i1, k1, imax, kmax
   real(8), dimension(:), allocatable :: Ru,Rp,dru,drp,y_fa,y_cv     !0:i1
   real(8), dimension(:), allocatable :: zp,zw,dzp,dzw
-  real(8), allocatable               :: dz,dpdz
+  real(8), allocatable               :: dz,dpdz,start
   real(8), dimension(:), allocatable :: wallDist                    !1:imax
   integer, allocatable               :: centerBC,numDomain           
   real(8), dimension(:), allocatable :: top_bcvalue,  bot_bcvalue,   &
@@ -183,10 +183,11 @@ contains
     this%dz    = 1.0*LoD/(this%kmax*px)
   end subroutine discretize_streamwise
 
-  subroutine discretize_streamwise2(this, LoD, rank, px)
+  subroutine discretize_streamwise2(this, LoD,rank, px)
     use mod_math, only : splint, spline
-    use mod_param, only : kmax, k1
+    use mod_param, only : kmax, k1, K_start_heat
     implicit None
+    include 'mpif.h'
     class(AbstractMesh) :: this
     real(8), intent(IN) :: LoD
     integer, intent(IN) :: rank, px 
@@ -194,9 +195,10 @@ contains
     real(8), dimension(0:2000) :: y, x2tab, x, ys
     real(8), dimension(0:this%k1)    :: zw, zp, dzw,dzp
     real(8) :: value
-    integer :: i,nelem, k
+    integer :: i,nelem, k, ierr
     integer :: tabkhi,tabklo = 0 
     character*5 cha
+    real(8) :: tmp
     
     a = 10.
     L = 0.1
@@ -227,12 +229,18 @@ contains
       zp(k)  = (zw(k)+zw(k-1))/2.0
     enddo
     call shiftv_f(zp, this%k1, value, rank); zp(0) = value;
-    if (rank .eq. 0) zp(0) =  -zp(1)
+    if (rank .eq. 0) then
+      zp(0) =  -zp(1)
+      tmp = zp(K_start_heat)
+    endif
 
+    call MPI_Bcast( tmp, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr);
+    this%start = tmp
     !calculate the differences
     do i = 0,kmax
       dzp(i) = (zp(i+1)+zp(i))/2.
     enddo
+    if (rank .eq. 0)   dzp(0) = dzp(1)
     do i = 1,k1
       dzw(i) = zw(i)-zw(i-1)
     enddo
@@ -247,12 +255,23 @@ contains
     write(cha,'(I5.5)')rank
     OPEN(15, file=cha, status='replace')
     do i = 0,k1
-        write(15,*) i, this%zw(i), this%dzw(i),this%zp(i), this%dzp(i)
+       write(15,*) i, this%zw(i), this%dzw(i),this%zp(i), this%dzp(i)
     enddo
     close(15)
     write(*,* ) k1
 
     this%dz    = 1.0*LoD/(this%kmax*px)
+
+    ! do i=0,k1
+    !     dzw(i) = this%dz
+    !     dzp(i) = this%dz
+    ! enddo
+
+    ! this%dzw = dzw
+    ! this%dzp = dzp
+    ! this%zw  = zw
+    ! this%zp  = zp
+
   end subroutine discretize_streamwise2
 
   subroutine calc_walldist(this, gridSize)

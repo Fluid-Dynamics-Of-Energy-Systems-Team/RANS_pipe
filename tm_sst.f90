@@ -87,7 +87,7 @@ subroutine init_w_inflow_SST(this,Re, systemsolve)
     write(Re_str,'(I5.5)') Re_int
     if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
     if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'bl/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
+    if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
 
     read(29) dummy(:),this%kin(:),dummy(:),dummy(:),this%omin(:), &
          dummy(:),this%mutin(:),dummy(:)

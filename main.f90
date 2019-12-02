@@ -165,7 +165,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 1
+  noutput = 100
   ! if (mod(istep,noutput) .eq. 0) then 
   !   call  calc_residual(unew, uold, wnew, wold, resU, resW)
   !   if ((resU .le. 1e-10) .and. (resW .le. 1e-10)) exit
@@ -488,7 +488,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
     if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
     if (systemsolve .eq. 1) case = "pipe"
     if (systemsolve .eq. 2) case = "channel"
-    if (systemsolve .eq. 3) case = "bl"
+    if (systemsolve .eq. 3) case = "symchan"
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
     open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_'//Re_str//'.dat',form='unformatted')

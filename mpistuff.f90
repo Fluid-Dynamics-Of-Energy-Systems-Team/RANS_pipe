@@ -113,7 +113,7 @@ end
 
 subroutine shiftf1(UT,UP,rank,i1,k1)
   use mod_param, only : px
-  use mod_common
+  ! use mod_common
   implicit none
   include 'mpif.h'
   integer rank,ileng,rankb,rankf,ierr,i,k,i1,k1,kmax

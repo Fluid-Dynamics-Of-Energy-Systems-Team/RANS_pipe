@@ -1,7 +1,8 @@
 subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
-  use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1
+  use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1, LoD
   use mod_mesh, only : dz
+  use module_mesh, only : mesh
   implicit none
   include "mpif.h"
   integer, intent(IN) :: rank, istap
@@ -11,13 +12,17 @@ subroutine write_output_bl(rank, istap)
   character(len=140) :: test
   character(len=141) :: line
   integer :: index, nvar, k, fh,ierr, k_max, k_min,size
+  real(8), dimension(0:k1) :: zw
+  ! integer K_start_heat
+  zw = mesh%zw
 
   nvar = 7
   index=1
   call postprocess_bl(wnew, ekmi, 1., 1., mom_th, dis_th, bl_th, wstress,sfriction)
 
   do k=0,k1
-      x(k)=(k+rank*kmax)*dz - K_start_heat*dz !!x(k)=zw(k)-(mesh&L/2)*LoD
+      !@x(k)=(k+rank*kmax)*dz - K_start_heat*dz !!
+      x(k)=zw(k)-mesh%start
   enddo
  
  !first core write from 0 to k1-1
@@ -94,7 +99,7 @@ subroutine inflow_output_upd(rank,istap)
     !fixed width file
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.csv')
-    if (systemsolve.eq.3) open(29,file='symchan/'     //trim(fname)//'.csv')
+    if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.csv')
     write(29, '(16a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
                           'rho' ,'k'  ,'eps','v2' ,'om', &
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
@@ -375,7 +380,7 @@ subroutine output2d_upd2(rank,istap)
   do k=0,k1
     do i=0,i1
       ! xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
-      xvec(i,k) = mesh%dzp(k)
+      xvec(i,k) = mesh%zp(k)
       yvec(i,k) = y_cv(i)
     enddo
   enddo

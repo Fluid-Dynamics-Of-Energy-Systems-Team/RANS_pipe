@@ -20,7 +20,6 @@ subroutine make_matrix(vector_in, matrix_out, imax, kmax)
     real(8), dimension(1:imax*kmax), intent(IN) :: vector_in
   real(8), dimension(1:imax,1:kmax), intent(OUT) :: matrix_out
   integer :: index,i,k
-  
   k=1
   i=1
   do index=1,imax*kmax
@@ -65,7 +64,8 @@ end subroutine make_matrix
 !********************************************************************
 
 subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
-  use mod_param, only : kmax, imax, i1, k1, px
+  use mod_param, only : kmax, imax, i1, k1, px, periodic
+  use module_mesh, only : mesh
   implicit none
   include 'mpif.h'
   
@@ -81,13 +81,13 @@ subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   real(8), dimension(imax*kmax)     :: pvec
   real(8), dimension(imax*kmax*px)  :: pvec_t
   real(8), dimension(imax,kmax*px)  :: y
+  real(8), dimension(0:k1) :: dzw, dzp
   
-  
-  ! real*8 Ru(0:i1),Rp(0:i1),dphi
-
-  ! real*8 thetav(-1:k1),thetap(0:k1)
   integer ierr,ini,i,j,rank, ier
+  character*5 cha
  
+  dzp = mesh%dzp
+  dzw = mesh%dzw
 ! write(*,*) px
   
   ! create the coefficients
@@ -114,43 +114,38 @@ subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   cm(imax)=0.
 
     
-
   !streamwise-direction  
+  ! do j=1,kmax
+  !   cn(j)=  1.0/((dz)*(dz ) )
+  !   an(j)=  1.0/((dz)*(dz ) )
+  !   bn(j)= -( an(j) + cn(j) )
+  ! enddo
+  
   do j=1,kmax
-    cn(j)=  1.0/((dz)*(dz ) )
-    an(j)=  1.0/((dz)*(dz ) )
+    an(j)=  1.0/(dzp(j-1)*dzw(j))
+    cn(j)=  1.0/(dzp(j)  *dzw(j))
     bn(j)= -( an(j) + cn(j) )
   enddo
 
+
   !gather all the coefficients to 1 coordinates
-  call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
-  call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr) 
-  call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+  call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+  call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr) 
+  call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
 
   !apply bc
   bn_t(1)=bn_t(1)-cn_t(1)      
   an_t(1)=0.
-  bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px)    
+  if (periodic.eq.1) then
+    bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px)   !for developing 
+  else 
+    bn_t(kmax*px)=bn_t(kmax*px)+cn_t(kmax*px)
+  endif
   cn_t(kmax*px)=0.
+
   call make_vector(rhs,pvec,imax,kmax)
-  call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax*px, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+  call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)
   call make_matrix(pvec_t,y,imax,kmax*px)
-  ! y = rhs
-
-  
-
-  
-
-  ! bn_t(1)    = bn_t(1)+an_t(1)
-  ! an_t(1)    = 0.
-  ! bn_t(kmax*px) = bn_t(kmax*px)+cn_t(kmax*px)
-  ! cn_t(kmax*px) = 0.
-
-! C     NP
-! C       = 0  IF AN(1) AND CN(N) ARE NOT ZERO, WHICH CORRESPONDS TO
-! C            PERIODIC BOUNARY CONDITIONS.
-! C       = 1  IF AN(1) AND CN(N) ARE ZERO
-
 
   !Call cyclic reduction algorithm     
   if (ini.eq.0) call blktri(0,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
@@ -161,15 +156,12 @@ subroutine solvepois_cr(rhs,ini,Ru,Rp,dRu,dRp,dz,rank,centerBC)
      write(6,*) 'Result are not reliable!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
      stop
   endif
-    ! write(*,*) "im here"
 
-  !read the part that is core specific      
-  ! write(*,*)  1+rank*kmax,kmax + rank*kmax,rank*kmax
   do j=1+rank*kmax,(kmax + rank*kmax)
      do i=1,imax
         rhs(i,j-rank*kmax)=y(i,j)
      enddo
-  enddo          
+  enddo  
 
 end subroutine  solvepois_cr
 
