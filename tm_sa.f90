@@ -462,11 +462,11 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
         ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
           putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
             (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-            +(((nuSA(i,kp)*(rho(i,kp)**0.5)) - (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+            +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
 
           ! putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
           !   (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-          !   +(((nuSA(i,kp)*(rho(i,kp)**0.5)) - (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dzp(k)))**2.0  )
+          !   +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dzp(k)))**2.0  )
 
       enddo
     enddo
