@@ -330,7 +330,12 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
         difcm = (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km)))
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*( &
           (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k )) &
-          -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
+               -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
+
+        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*( &
+        !   (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k ))/dzp(k) &
+        !        -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))/dzp(km)&
+        !   )/dzw(k)   )
       enddo
     enddo
   else                               ! Standard
@@ -341,6 +346,10 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (muk(i,k ) + 0.5*(mut(i,k)+mut(i,kp))/sigma)*(putin(i,kp)-putin(i,k )) &
           - (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)*(putin(i,k )-putin(i,km)))/(dz*dz)   )
+        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+        !   ( (muk(i,k ) + 0.5*(mut(i,k)+mut(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
+        !   - (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km)&
+        !   )/dzw(k)   )
       enddo
     enddo
   endif

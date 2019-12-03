@@ -498,7 +498,7 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
               *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
             -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km))) &
               *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
-          )/dzw(km))
+          )/dzw(k))
       enddo
     enddo
   elseif (diffVersion == 2) then   ! Aupoix
@@ -518,7 +518,7 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
               *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k)  &
             -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/(0.5*(rho(i,k)+rho(i,km))) &
               *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
-          )/dzw(km))
+          )/dzw(k))
 
       enddo
     enddo
@@ -535,7 +535,7 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
         (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
           -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km) &
-        )/dzw(km))
+        )/dzw(k))
 
       enddo
     enddo

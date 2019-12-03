@@ -423,8 +423,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   !compute drho/dt*dvol
   do k=1,kmax
     do i=1,imax
-      flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
-      !flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dzw(k)
+      ! flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
+      flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dzw(k)
       
     enddo
   enddo
@@ -438,8 +438,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
 
   !compute mf out to the bot (used for the bl)
   do k=1,kmax
-      flux = flux + Ubound(0,k)*dz
-     ! flux = flux + Ubound(0,k)*dzw(k)
+      ! flux = flux + Ubound(0,k)*dz
+     flux = flux + Ubound(0,k)*dzw(k)
   enddo
 
   if (rank.eq.px-1)then
@@ -512,7 +512,7 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
       if (systemsolve.eq.4) then
-         w(i,:)  = 1;u=0;  win=1; mutin=0!bl
+         w(i,:)  = 1.;u=0;  win=1.; mutin=0!bl
       endif
     enddo
     ! win=w(:,0);          !pipe
