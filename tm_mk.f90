@@ -184,6 +184,7 @@ subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
 end subroutine set_bc_MK
 
 subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
+  use module_mesh, only : mesh
   implicit none
   class(MK_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
@@ -192,6 +193,10 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8), dimension(0:this%i1,0:this%k1) :: div
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
   real(8) :: Fr_1, ctheta
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
@@ -246,13 +251,13 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
 
       ! this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
       !   *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dzw(k)))*  &
+      !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))*  &
       !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
-      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzw(k))  &
+      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k))  &
       !   )
       this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
       
-      !this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzw(k))
+      !this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
 
     enddo
   enddo

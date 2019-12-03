@@ -64,6 +64,7 @@ end subroutine init_w_inflow_VF
 
 
 subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
+  use module_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
@@ -72,8 +73,12 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8),                                 intent(IN) :: dz
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
   real(8), dimension(0:this%k1) :: tauw
+  real(8), dimension(0:this%k1) :: dzw, dzp
   real(8) :: StR
   integer :: im,ip,km,kp,i,k
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   do k=1,this%kmax
     km=k-1
@@ -214,7 +219,7 @@ subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
   if (rank.eq.0) then
     this%k  (:,0) = this%kin(:)
     this%eps(:,0) = this%epsin(:)
-    this%v2  (:,0) = this%v2in(:)
+    this%v2  (:,0)= this%v2in(:)
   endif
   if (rank.eq.px-1) then
     this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
@@ -289,6 +294,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
 end subroutine solve_v2_VF
 
 subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
+  use module_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
@@ -297,6 +303,10 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8), dimension(0:this%i1,0:this%k1) :: div
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
   real(8) :: Fr_1,ctheta,StR
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   ib = 1
   ie = this%i1-1
@@ -311,7 +321,7 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
       ip=i+1
       im=i-1
 
-      Production of turbulent kinetic energy
+      !Production of turbulent kinetic energy
       this%Pk(i,k) = mut(i,k)*(  &
         2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
             ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
@@ -344,7 +354,7 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
       !     ((U(i,k)-U(im,k))/(Ru(i)-Ru(im)))**2. + &
       !     ((U(i,k)+U(im,k))/(2.*Rp(i)))**2.) + &
       !     (((W(ip,km)+W(ip,k)+W(i,km)+W(i,k))/4. &
-      !     -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
+      !      -(W(im,km)+W(im,k)+W(i,km)+W(i,k))/4.)/dRu(i) &
       !     +((U(i,kp) +U(im,kp)+U(i,k)+U(im,k))/4.-(U(im,km)+U(i,km)+U(im,k)+U(i,k))/4.)/(dz)  )**2.)
     
       !   !               Srsq(i,k) = Pk(i,k)*rho(i,k)/(2.*ekmt(i,k))
@@ -366,7 +376,7 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
       !   *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
       !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))*  &
       !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
-      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k))  &
+      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k))  &
       !   )
 
 

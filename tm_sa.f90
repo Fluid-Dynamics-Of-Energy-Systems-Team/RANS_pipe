@@ -284,6 +284,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
 end subroutine solve_SA
 
 subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
+  use module_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,nuSA
@@ -293,6 +294,10 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
   real(8),dimension(0:this%i1,0:this%k1) :: Gk, Tt
   integer im,ip,km,kp,ib,ie,kb,ke,i,k
   real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,shatSA,StR
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   cv1_3     = (7.1)**3.0
   cb1       = 0.1355
@@ -321,10 +326,10 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
       Tt(i,k)=1
       ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
       StR = ( ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-           +( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) )**2.)
+           +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz )**2.)
 
       ! StR = ( ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !      +( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dzw(k)) )**2.)
+      !      +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )**2.)
       StR = StR**0.5
       ! calculating shat from SA model
       chi         = this%nuSA(i,k)/(mu(i,k)/rho(i,k))
@@ -338,6 +343,7 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
 end subroutine production_SA
 
 subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,modification)
+  use module_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: rho_mod,ek,eki,ekk, ekmt
@@ -346,7 +352,10 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,m
   integer,                                  intent(IN) :: modification
   real(8), dimension(0:this%i1, 0:this%k1), intent(OUT):: putout
   integer km,kp,im,ip,k,i
-  
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
   !Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
   ! For, Standard, Inverse SLS and Aupoix
   ! rho=1 for standard
@@ -401,6 +410,7 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,m
 end subroutine diffusion_SA
 
 subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
+  use module_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,nuSA
@@ -411,7 +421,11 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: putout,dimpl
   integer im,ip,km,kp,ib,ie,kb,ke,i,k
   real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,r_SA,g_SA,fw_SA,shatSA
-  
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
+
   cv1_3     = (7.1)**3.0
   cb1       = 0.1355
   cb2       = 0.622

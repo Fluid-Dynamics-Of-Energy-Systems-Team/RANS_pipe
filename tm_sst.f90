@@ -101,6 +101,7 @@ end subroutine init_w_inflow_SST
 
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
+  use module_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
@@ -111,6 +112,10 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8), dimension(this%k1) :: tauw
   integer  im,ip,km,kp,i,k
   real(8)  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   !constants
   sigma_om2 = 0.856
@@ -296,6 +301,7 @@ end subroutine get_sol_SST
 
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
+  use module_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
@@ -306,7 +312,11 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8)                       :: sigma_om1,sigma_om2, &
                                    beta_1,beta_2,betaStar, &
                                    alfa_1,alfa_2, ctheta,Fr_1
-  
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
+
   Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
   sigma_om1 = 0.5
@@ -615,6 +625,7 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
 end subroutine solve_om_sst
 
 subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,dz)
+  use module_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,beta, putink
@@ -625,6 +636,10 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
   integer km,kp,im,ip,ib,ie,kb,ke,i,k
   real(8), dimension(0:this%i1,0:this%k1) :: div
   real(8) sigma_om1,sigma_om2,beta_1,beta_2,betaStar,alfa_1,alfa_2,alfaSST,betaSST,StR,GtR,ctheta,Fr_1
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
@@ -682,7 +697,7 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
       !   *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
       !   +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )* &
       !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  ) &
-      !   +(2*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)) &
+      !   +(2*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)) &
       !   )
 
 
@@ -699,6 +714,7 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
 end subroutine rhs_om_sst
 
 subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,modification)
+  use module_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho
@@ -707,6 +723,10 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,d
   integer                                , intent(IN) :: modification
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout
   integer  km,kp,i,k
+  real(8), dimension(0:this%k1) :: dzw, dzp
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   if ((modification == 1) .or. (modification == 2)) then       ! Inverse SLS & Aupoix
     do k=1,this%kmax

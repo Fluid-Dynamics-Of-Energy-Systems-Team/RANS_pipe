@@ -207,7 +207,7 @@ subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   p_Pk(:)  =this%Pk(:,k)
   p_bF1(:) =0
   p_bF2(:) =0
-  yp(:) = this%yp(:,k)
+  yp(:)    =this%yp(:,k)
 end subroutine get_profile_KE
 
 subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
@@ -312,6 +312,7 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
 end subroutine rhs_eps_KE
 
 subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
+  use module_mesh, only : mesh
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: putin, muk, mut, rho
@@ -320,7 +321,10 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
   real(8), dimension(0:this%i1, 0:this%k1), intent(OUT):: putout
   integer i,k,kp,km
   real(8) difcp,difcm
+  real(8), dimension(0:this%k1) :: dzw, dzp
 
+  dzw = mesh%dzw
+  dzp = mesh%dzp
   if ((modification == 1) .or. (modification == 2)) then       ! Inverse SLS  and Aupoix
     do k=1,this%k1-1
       kp=k+1
