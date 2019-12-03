@@ -831,7 +831,7 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
           )/(Rp(i)*dru(i))                                       &
           +                                                      &
           (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dzw(kp) - 1./3.*divUkp) &
-          -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dzw(k) - 1./3.*divUkm) &
+          -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dzw(k)  - 1./3.*divUkm) &
           )/dzp(k)
       enddo
     enddo
