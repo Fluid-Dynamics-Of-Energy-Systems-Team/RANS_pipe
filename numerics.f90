@@ -190,10 +190,12 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   integer,                  intent(IN) :: rank, px, i1_old, k1_old
   real(8),dimension(0:i1_old,0:k1_old) :: xold,yold,uold,wold,dummy,rold, ekmold, ekmtold,cold, pold
   real(8),dimension(0:i1,0:k1) :: xw, x, yu, y
-  real(8), dimension(0:i1_old) :: tmp
+  real(8), dimension(0:i1_old) :: tmp, win_old,wout_old,uin_old,uout_old,ekmtin_old, ekmtout_old,xin_old,xout_old
   integer ::  i,k
   integer :: ierror
   real*8,dimension(0:k1) ::  zw, zp
+    character*5 cha
+
   zw = mesh%zw
   zp = mesh%zp
 
@@ -204,37 +206,52 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   do k=0,k1
     do i=0,i1
       ! x (i,k)= (k+rank*kmax)*dz-(1./2.)*dz  
-      x(i,k) = zp(i)
+      x(i,k) = zp(k)
       y (i,k)= y_cv(i)
       ! xw(i,k)= (k+rank*kmax)*dz !
-      xw(i,k) = zw(i)
+      xw(i,k) = zw(k)
       yu(i,k)= y_fa(i)
     enddo
   enddo
-    
+  
+  if (rank .eq. 0) then
+    xin_old = xold(:,0)
+    win_old = wold(:,0)
+    uin_old = uold(:,0)
+    ekmtin_old = ekmtold(:,0)
+  endif  
+
+  if (rank .eq. px-1) then
+    xout_old = xold(:,k1_old)
+    wout_old = wold(:,k1_old)
+    uout_old = uold(:,k1_old)
+    ekmtout_old = ekmtold(:,k1_old)
+  endif  
+  
   !commuicate the values that are on the previous or next core
   call shiftf1(yold,tmp,rank,i1_old,k1_old);     yold(:,0)      = tmp(:);
   call shiftf1(xold,tmp,rank,i1_old,k1_old);     xold(:,0)      = tmp(:);
   call shiftb1(yold,tmp,rank,i1_old,k1_old);     yold(:,k1_old) = tmp(:);
   call shiftb1(xold,tmp,rank,i1_old,k1_old);     xold(:,k1_old) = tmp(:);
+  
+  call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
+  call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
+  call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
+  call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
 
-  if ((rank .ne. 0) .or. (periodic .eq. 1)) then 
-    write(*,*) "started",rank
-    call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
-    write(*,*) "finished",rank
-
-    call MPI_Barrier(MPI_COMM_WORLD);
-    write(*,*) "started2",rank
-    call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
-    write(*,*) "finished2",rank
-    
+  if (rank .eq. 0) then
+    xold(:,0) = xin_old
+    wold(:,0) = win_old
+    uold(:,0) = uin_old
+    ekmtold(:,0) = ekmtin_old
   endif  
 
-
-  if ((rank .ne. px-1) .or. (periodic.eq.1)) then
-    call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
-    call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
-  endif
+  if (rank .eq. px-1) then
+    xold(:,k1_old) = xout_old
+    wold(:,k1_old) = wout_old
+    uold(:,k1_old) = uout_old
+    ekmtold(:,k1_old) = ekmtout_old
+  endif  
 
 
   !interpolate on the new grid
@@ -250,6 +267,16 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
     ekmtin(:) = ekmt(:,0)
     uin(:) = unew(:,0)
   endif
+
+  ! write(cha,'(I5.5)')rank
+  ! OPEN(15, file=cha, status='replace')
+  ! do k = 0,k1
+  !   do i = 0,i1
+  !    write(15,*) x(i,k), y(i,k), unew(i,k), wnew(i,k), ekmt(i,k)
+  !   enddo
+  ! enddo
+  ! close(15)
+
 
   call MPI_Bcast(win,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
   call MPI_Bcast(ekmtin,i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)

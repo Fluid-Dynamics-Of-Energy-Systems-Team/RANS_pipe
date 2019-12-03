@@ -231,7 +231,7 @@ contains
     call shiftv_f(zp, this%k1, value, rank); zp(0) = value;
     if (rank .eq. 0) then
       zp(0) =  -zp(1)
-      tmp = zp(K_start_heat)
+      tmp = zw(K_start_heat)
     endif
 
     call MPI_Bcast( tmp, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr);
@@ -252,13 +252,13 @@ contains
     this%zw  = zw
     this%zp  = zp
 
-    write(cha,'(I5.5)')rank
-    OPEN(15, file=cha, status='replace')
-    do i = 0,k1
-       write(15,*) i, this%zw(i), this%dzw(i),this%zp(i), this%dzp(i)
-    enddo
-    close(15)
-    write(*,* ) k1
+    ! write(cha,'(I5.5)')rank
+    ! OPEN(15, file=cha, status='replace')
+    ! do i = 0,k1
+    !    write(15,*) i, this%zw(i), this%dzw(i),this%zp(i), this%dzp(i)
+    ! enddo
+    ! close(15)
+    ! write(*,* ) k1
 
     this%dz    = 1.0*LoD/(this%kmax*px)
 
