@@ -169,7 +169,7 @@ end subroutine
     enddo
   enddo
 
- !interpolate on hte new x coordinates with the already interpolated y coords
+ !interpolate on the new x coordinates with the already interpolated y coords
   do i=0,i1
     call spline(x_old(1,:),tmpvec(i,:),k1_old+1,vectorx2)
       do k=0,k1
@@ -206,66 +206,66 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   do k=0,k1
     do i=0,i1
       ! x (i,k)= (k+rank*kmax)*dz-(1./2.)*dz  
-      x(i,k) = zp(k)
-      y (i,k)= y_cv(i)
+      x(i,k) =zp(k)
+      y (i,k)=y_cv(i)
       ! xw(i,k)= (k+rank*kmax)*dz !
-      xw(i,k) = zw(k)
-      yu(i,k)= y_fa(i)
+      xw(i,k)=zw(k)
+      yu(i,k)=y_fa(i)
     enddo
   enddo
   
   if (rank .eq. 0) then
-    xin_old = xold(:,0)
-    win_old = wold(:,0)
-    uin_old = uold(:,0)
-    ekmtin_old = ekmtold(:,0)
+    xin_old   =xold(:,0)
+    win_old   =wold(:,0)
+    uin_old   =uold(:,0)
+    ekmtin_old=ekmtold(:,0)
   endif  
 
   if (rank .eq. px-1) then
-    xout_old = xold(:,k1_old)
-    wout_old = wold(:,k1_old)
-    uout_old = uold(:,k1_old)
-    ekmtout_old = ekmtold(:,k1_old)
+    xout_old   =xold(:,k1_old)
+    wout_old   =wold(:,k1_old)
+    uout_old   =uold(:,k1_old)
+    ekmtout_old=ekmtold(:,k1_old)
   endif  
   
   !commuicate the values that are on the previous or next core
-  call shiftf1(yold,tmp,rank,i1_old,k1_old);     yold(:,0)      = tmp(:);
-  call shiftf1(xold,tmp,rank,i1_old,k1_old);     xold(:,0)      = tmp(:);
-  call shiftb1(yold,tmp,rank,i1_old,k1_old);     yold(:,k1_old) = tmp(:);
-  call shiftb1(xold,tmp,rank,i1_old,k1_old);     xold(:,k1_old) = tmp(:);
+  call shiftf1(yold,tmp,rank,i1_old,k1_old);  yold(:,0)      = tmp(:);
+  call shiftf1(xold,tmp,rank,i1_old,k1_old);  xold(:,0)      = tmp(:);
+  call shiftb1(yold,tmp,rank,i1_old,k1_old);  yold(:,k1_old) = tmp(:);
+  call shiftb1(xold,tmp,rank,i1_old,k1_old);  xold(:,k1_old) = tmp(:);
   
-  call shiftf1(uold,tmp,rank,i1_old,k1_old);     uold(:,0)      = tmp(:);
-  call shiftf1(wold,tmp,rank,i1_old,k1_old);     wold(:,0)      = tmp(:);
-  call shiftb1(uold,tmp,rank,i1_old,k1_old);     uold(:,k1_old) = tmp(:);
-  call shiftb1(wold,tmp,rank,i1_old,k1_old);     wold(:,k1_old) = tmp(:);
+  call shiftf1(uold,tmp,rank,i1_old,k1_old);  uold(:,0)      = tmp(:);
+  call shiftf1(wold,tmp,rank,i1_old,k1_old);  wold(:,0)      = tmp(:);
+  call shiftb1(uold,tmp,rank,i1_old,k1_old);  uold(:,k1_old) = tmp(:);
+  call shiftb1(wold,tmp,rank,i1_old,k1_old);  wold(:,k1_old) = tmp(:);
 
   if (rank .eq. 0) then
-    xold(:,0) = xin_old
-    wold(:,0) = win_old
-    uold(:,0) = uin_old
-    ekmtold(:,0) = ekmtin_old
+    xold(:,0)   =xin_old
+    wold(:,0)   =win_old
+    uold(:,0)   =uin_old
+    ekmtold(:,0)=ekmtin_old
   endif  
 
   if (rank .eq. px-1) then
-    xold(:,k1_old) = xout_old
-    wold(:,k1_old) = wout_old
-    uold(:,k1_old) = uout_old
-    ekmtold(:,k1_old) = ekmtout_old
+    xold(:,k1_old)   =xout_old
+    wold(:,k1_old)   =wout_old
+    uold(:,k1_old)   =uout_old
+    ekmtold(:,k1_old)=ekmtout_old
   endif  
 
 
   !interpolate on the new grid
-  call interpolate_vector(xold,yold,x, yu,i1_old, k1_old,i1,k1,uold,unew,rank)
-  call interpolate_vector(xold,yold,xw,y, i1_old, k1_old,i1,k1,wold,wnew,rank)  
-  call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,rold,rnew,rank)
-  call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,cold,cnew,rank)
+  call interpolate_vector(xold,yold,x, yu,i1_old, k1_old,i1,k1,uold,   unew,rank)
+  call interpolate_vector(xold,yold,xw,y, i1_old, k1_old,i1,k1,wold,   wnew,rank)  
+  call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,rold,   rnew,rank)
+  call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,cold,   cnew,rank)
   call interpolate_vector(xold,yold,x, y, i1_old, k1_old,i1,k1,ekmtold,ekmt,rank)
   
   if (periodic .eq. 1) return
   if (rank .eq. 0) then
-    win(:) = wnew(:,0)
-    ekmtin(:) = ekmt(:,0)
-    uin(:) = unew(:,0)
+    win(:)   =wnew(:,0)
+    ekmtin(:)=ekmt(:,0)
+    uin(:)   =unew(:,0)
   endif
 
   ! write(cha,'(I5.5)')rank
@@ -770,15 +770,15 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
         !   -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz)    &
         !   )/dz
         putout(i,k) = putout(i,k) + &
-          (Ru(i )*epop*((Uvel(i ,kp)-Uvel(i ,k))/dzp(k)  &
-                   +dif*(Wvel(ip,k) -Wvel(i ,k))/drp(i ))&
-          -                                              &
-           Ru(im)*emop*((Uvel(im,kp)-Uvel(im,k))/dzp(k) &
+          (Ru(i )*epop*((Uvel(i ,kp)-Uvel(i ,k))/dzp(k)   &
+                   +dif*(Wvel(ip,k) -Wvel(i ,k))/drp(i )) &
+          -                                               &
+           Ru(im)*emop*((Uvel(im,kp)-Uvel(im,k))/dzp(k)   &
                    +dif*(Wvel(i ,k )-Wvel(im,k))/drp(im)) &
           )/(Rp(i)*dru(i))                                &
           +                                               &
-          (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dzw(kp)) &
-          -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dzw(k))&
+          (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dzw(kp))&
+          -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dzw(k)) &
           )/dzp(k)
       enddo
     enddo
@@ -941,7 +941,7 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
       if (U(i,k).ge.(0.0)) then
         r1=(dcu(i,k)+eps)/(dcu(im,k)+eps)
         phi1=max(0.,min(2.*r1,min(fak*(1.+2.*r1),2.)))
-        Cu(i,k)=putin(i,k)+0.5*phi1*(dcu(im,k))
+        Cu(i,k)=putin(i ,k)+0.5*phi1*( dcu(im,k))
       else
         r1=(dcu(i,k)+eps)/(dcu(ip,k)+eps)
         phi1=max(0.,min(2.*r1,min(fak*(1.+2.*r1),2.)))
@@ -950,7 +950,7 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
       if (W(i,k).ge.(0.0)) then
         r3=(dcw(i,k)+eps)/(dcw(i,km)+eps)
         phi3=max(0.,min(2.*r3,min(fak*(1.+2.*r3),2.)))
-        Cw(i,k)=putin(i,k) + 0.5*phi3*(dcw(i,km))
+        Cw(i,k)=putin(i ,k)+0.5*phi3*( dcw(i,km))
       else
         r3=(dcw(i,k)+eps)/(dcw(i,kp)+eps)
         phi3=max(0.,min(2.*r3,min(fak*(1.+2.*r3),2.)))

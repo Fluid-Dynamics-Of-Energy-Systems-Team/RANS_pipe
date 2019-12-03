@@ -2,8 +2,8 @@
   CFL               = 10,     ! CFL number / time step
   systemSolve       = 4,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
   imax              = 192,   ! radial direction
-  kelem             = 400,     ! axial direction
-  K_start_heat      = 40,      ! for isoflux:    after home many cells in x will you start heating
+  kelem             = 1600,     ! axial direction
+  K_start_heat      = 160,      ! for isoflux:    after home many cells in x will you start heating
   x_start_heat      = 10,      ! for isothermal: lenght at which you start heating
   iwork             = 1,
   isave             = 1,
@@ -31,9 +31,9 @@
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
   turbdiffmod       = 1,
   output_fname      = "laminarbl.csv",
-  read_fname        = "laminarbl_12.csv", ! name of restartfile
-  dtmax             = 0.01,
+  read_fname        = "laminarbl_124.csv", ! name of restartfile
+  dtmax             = 0.001,
   output_fname_bl   = "test.csv",
-  imax_old          = 96,
-  kelem_old         = 400
+  imax_old          = 192,
+  kelem_old         = 1600
 /
