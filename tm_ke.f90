@@ -282,7 +282,7 @@ subroutine rhs_k_KE(this,putout,dimpl,rho)
   do k=kb,ke
     do i=ib,ie
       !k equation
-      putout(i,k) = putout(i,k) + ( this%Pk(i,k) + this%Gk(i,k) )/rho(i,k)
+      putout(i,k) = putout(i,k)+(this%Pk(i,k)+this%Gk(i,k))/rho(i,k)
       dimpl(i,k)  = dimpl(i,k) + this%eps(i,k)/this%k(i,k) ! note, rho*epsilon/(rho*k), set implicit and divided by density
     enddo
   enddo
@@ -305,7 +305,7 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
     do i=ib,ie
       !epsilon equation
       putout(i,k) = putout(i,k) +(this%ce1*this%f1(i,k)*this%Pk(i,k)/this%Tt(i,k) &
-                  + this%ce1*this%f1(i,k)*this%Gk(i,k)/this%Tt(i,k) )/rho(i,k)
+                                + this%ce1*this%f1(i,k)*this%Gk(i,k)/this%Tt(i,k) )/rho(i,k)
       dimpl(i,k)  = dimpl(i,k)  + this%ce2*this%f2(i,k)/this%Tt(i,k)   ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
     enddo
   enddo
