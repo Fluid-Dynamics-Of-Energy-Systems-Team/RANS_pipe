@@ -132,24 +132,24 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       this%yp(i,k)     = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
       wallD     = walldist(i)
       ! Vorticity rate
-      StR = ( & 
-            ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4. )/dru(i) &
-          + ( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.    )/(dz) &
-            )**2.)
-
       ! StR = ( & 
       !       ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4. )/dru(i) &
-      !     + ( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.    )/dzw(k) &
+      !     + ( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.    )/(dz) &
       !       )**2.)
+
+      StR = ( & 
+            ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4. )/dru(i) &
+          + ( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.    )/dzw(k) &
+            )**2.)
 
 
       StR = StR**0.5
                
-      gradkom = ((this%k(ip,k) - this%k(im,k))/(dRp(i)+dRp(im))) *((this%om(ip,k) - this%om(im,k))/(dRp(i)+dRp(im))) &
-               +((this%k(i,kp) - this%k(i,km))/(2.0*dz))         *((this%om(i,kp) - this%om(i,km))/(2.0*dz))
-
       ! gradkom = ((this%k(ip,k) - this%k(im,k))/(dRp(i)+dRp(im))) *((this%om(ip,k) - this%om(im,k))/(dRp(i)+dRp(im))) &
-      !          +((this%k(i,kp) - this%k(i,km))/(2.0*dzp(k)))     *((this%om(i,kp) - this%om(i,km))/(2.0*dzp(k)))
+      !          +((this%k(i,kp) - this%k(i,km))/(2.0*dz))         *((this%om(i,kp) - this%om(i,km))/(2.0*dz))
+
+      gradkom = ((this%k(ip,k) - this%k(im,k))/(dRp(i)+dRp(im))) *((this%om(ip,k) - this%om(im,k))/(dRp(i)+dRp(im))) &
+               +((this%k(i,kp) - this%k(i,km))/(2.0*dzp(k)))     *((this%om(i,kp) - this%om(i,km))/(2.0*dzp(k)))
 
 
       this%cdKOM(i,k) = 2.0*sigma_om2*rho(i,k)/this%om(i,k)*gradkom;
@@ -339,24 +339,24 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
       ip=i+1
       im=i-1
       ! Production of turbulent kinetic energy
-      this%Pk(i,k) = mut(i,k)*( &
-        2.*(((w(i,k)-w(i,km))/dz)**2. +((u(i,k)-u(im,k))/dRu(i))**2.+((u(i,k)+u(im,k))/(2.*Rp(i)))**2.)+ &
-        ( &
-          ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-          ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz &
-        )**2.)
-
       ! this%Pk(i,k) = mut(i,k)*( &
-      !   2.*(((w(i,k)-w(i,km))/dzw(k))**2. +((u(i,k)-u(im,k))/dRu(i))**2.+((u(i,k)+u(im,k))/(2.*Rp(i)))**2.)+ &
+      !   2.*(((w(i,k)-w(i,km))/dz)**2. +((u(i,k)-u(im,k))/dRu(i))**2.+((u(i,k)+u(im,k))/(2.*Rp(i)))**2.)+ &
       !   ( &
       !     ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-      !     ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
+      !     ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz &
       !   )**2.)
 
+      this%Pk(i,k) = mut(i,k)*( &
+        2.*(((w(i,k)-w(i,km))/dzw(k))**2. +((u(i,k)-u(im,k))/dRu(i))**2.+((u(i,k)+u(im,k))/(2.*Rp(i)))**2.)+ &
+        ( &
+          ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
+          ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
+        )**2.)
 
-      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) +(w(i,k)-w(i,km))/dz
 
-      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) +(w(i,k)-w(i,km))/dzw(k)
+      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) +(w(i,k)-w(i,km))/dz
+
+      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) +(w(i,k)-w(i,km))/dzw(k)
 
 
 
@@ -365,26 +365,26 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
       ! turbulent time scale
       this%Tt(i,k)   = 1.0/this%om(i,k)   ! 0.31 cmu/omega
                
-      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-             *(mut(i,k)*( &
-                        ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-                        ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) &
-                        )* &
-              (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
-              ) &
-             +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz))
-
-
-
-
       ! this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
       !        *(mut(i,k)*( &
       !                   ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-      !                   ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dzw(k)) &
+      !                   ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) &
       !                   )* &
       !         (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
       !         ) &
-      !        +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)))
+      !        +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz))
+
+
+
+
+      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
+             *(mut(i,k)*( &
+                        ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
+                        ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dzw(k)) &
+                        )* &
+              (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
+              ) &
+             +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)))
 
 
 
@@ -490,32 +490,36 @@ subroutine rhs_k_SST(this,putout,dimpl,rho)
 end subroutine rhs_k_SST
 
 subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modification)
+  use module_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho
   real(8)                                , intent(IN) :: dz
   integer                                , intent(IN) :: modification
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout
-
+  real(8), dimension(0:this%k1) :: dzw, dzp
   integer   km,kp,i,k
+
+  dzw = mesh%dzw
+  dzp = mesh%dzp
 
   if (modification == 1) then       ! Inverse SLS
     do k=1,this%kmax
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
-          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-          sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-          sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-          )/(dz*dz)   )
         ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
         !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-        !   sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
+        !   sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
         !   -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-        !   sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
-        !   )/dzw(k))
+        !   sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
+        !   )/(dz*dz)   )
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
+          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
+          sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
+          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
+          sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
+          )/dzw(k))
       enddo
     enddo
   elseif (modification == 2) then   ! Aupoix
@@ -523,18 +527,18 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-          (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-          (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-          )/(dz*dz)   )
         ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
         !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-        !   (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
+        !   (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
         !   -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-        !   (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
-        !   )/dzw(k))
+        !   (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
+        !   )/(dz*dz)   )
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
+          (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
+          -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
+          (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
+          )/dzw(k))
 
       enddo
     enddo
@@ -543,14 +547,14 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
-           -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))  &
-          )/(dz*dz)   )
         ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k ) &
-        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &
-        !   )/dzw(k))
+        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
+        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))  &
+        !   )/(dz*dz)   )
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k ) &
+           -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &
+          )/dzw(k))
       enddo
     enddo
   endif
@@ -667,43 +671,43 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
       alfaSST   = alfa_1*this%bF1(i,k) + alfa_2*(1.0-this%bF1(i,k))
       betaSST   = beta_1*this%bF1(i,k) + beta_2*(1.0-this%bF1(i,k))
 
-      StR = (2.*(((w(i,k)-w(i,km))/dz)**2. + &
-        ((u(i,k)-u(im,k))/dRu(i))**2. + &
-        ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
-        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4. -(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-        +((u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
-
-      ! StR = (2.*(((w(i,k)-w(i,km))/dzw(k))**2. + &
+      ! StR = (2.*(((w(i,k)-w(i,km))/dz)**2. + &
       !   ((u(i,k)-u(im,k))/dRu(i))**2. + &
       !   ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
       !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4. -(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !   +((u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  )**2.)
+      !   +((u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
 
-      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i)) &
-        +(      w(i,k) -      w(i,km))/dz
+      StR = (2.*(((w(i,k)-w(i,km))/dzw(k))**2. + &
+        ((u(i,k)-u(im,k))/dRu(i))**2. + &
+        ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
+        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4. -(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+        +((u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  )**2.)
 
       ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i)) &
-      !   +(      w(i,k) -      w(i,km))/dzw(k)
+      !   +(      w(i,k) -      w(i,km))/dz
+
+      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i)) &
+        +(      w(i,k) -      w(i,km))/dzw(k)
 
          ! Bouyancy prodution divided by mut
-      GtR=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-        *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-        +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) )* &
-        (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  ) &
-        +(2*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz) &
-        )
-
       ! GtR=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
       !   *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !   +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )* &
+      !   +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) )* &
       !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  ) &
-      !   +(2*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)) &
+      !   +(2*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz) &
       !   )
 
+      GtR=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
+        *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+        +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )* &
+        (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  ) &
+        +(2*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k)) &
+        )
 
-      GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
 
-      ! GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
+      ! GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
+
+      GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
 
 
       putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-this%bF1(i,k))*this%cdKOM(i,k) ) /rho(i,k)
@@ -733,19 +737,19 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,d
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))* &
-          (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k ))) &
-          - (ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))* &
-          (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km))) &
-          )/(dz*dz)   )
-
         ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
         !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))* &
-        !   (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k )))/dzp(k) &
+        !   (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k ))) &
         !   - (ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))* &
-        !   (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km)))/dzp(km) &
-        !   )/dzw(k)   )
+        !   (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km))) &
+        !   )/(dz*dz)   )
+
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))* &
+          (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k )))/dzp(k) &
+          - (ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))* &
+          (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km)))/dzp(km) &
+          )/dzw(k)   )
       enddo
     enddo
   else                                                        ! Standard
@@ -753,14 +757,14 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,d
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
-           -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km)) &
-          )/(dz*dz))
         ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k) &
-        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &  
-        !   )/dzw(k))
+        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
+        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km)) &
+        !   )/(dz*dz))
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+          ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k) &
+           -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &  
+          )/dzw(k))
 
       enddo
     enddo

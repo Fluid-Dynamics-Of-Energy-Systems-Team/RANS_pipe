@@ -325,11 +325,11 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
       Gk(i,k)=0
       Tt(i,k)=1
       ! magnitude of rate of rotation: omega=sqrt(2*Wij*Wij), Wrz = 0.5*(dU/dz-dW/dr);  note, utheta=0 d/dtheta=0
-      StR = ( ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-           +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz )**2.)
-
       ! StR = ( ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !      +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )**2.)
+      !      +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz )**2.)
+
+      StR = ( ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+           +(      (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )**2.)
       StR = StR**0.5
       ! calculating shat from SA model
       chi         = this%nuSA(i,k)/(mu(i,k)/rho(i,k))
@@ -363,19 +363,19 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,m
     kp=k+1
     km=k-1
     do i=1,this%imax
-      putout(i,k) = putout(i,k) + 1.0/rho_mod(i,k)*( &
-        ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* &
-        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k )) &
-        -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
-        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km)) &
-        )/(dz*dz)   )
-
       ! putout(i,k) = putout(i,k) + 1.0/rho_mod(i,k)*( &
       !   ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* &
-      !   sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k ))/dzp(k) &
+      !   sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k )) &
       !   -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
-      !   sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km))/dzp(km) &
-      !   )/dzw(k))   )
+      !   sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km)) &
+      !   )/(dz*dz)   )
+
+      putout(i,k) = putout(i,k) + 1.0/rho_mod(i,k)*( &
+        ( (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)* &
+        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,kp)))*((rho_mod(i,kp)**0.5)*ekmt(i,kp)-(rho_mod(i,k )**0.5)*ekmt(i,k ))/dzp(k) &
+        -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)* &
+        sqrt(0.5*(rho_mod(i,k)+rho_mod(i,km)))*((rho_mod(i,k )**0.5)*ekmt(i,k )-(rho_mod(i,km)**0.5)*ekmt(i,km))/dzp(km) &
+        )/dzw(k)   )
     enddo
   enddo
   
@@ -386,14 +386,14 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,m
       kp=k+1
       km=k-1
       do i=1,this%imax
-        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)*((                         &
-           ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k )) &
-          -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km)) &
-          )/(dz*dz))
         ! putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)*((                         &
-        !    ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k ))/dzp(k) &
-        !   -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km))/dzp(km) &
-        !   )/dzw(k))
+        !    ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k )) &
+        !   -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km)) &
+        !   )/(dz*dz))
+        putout(i,k) = putout(i,k) - 1.0/rho_mod(i,k)*((                         &
+           ekk(i,k )*0.5*(ekmt(i,k)+ekmt(i,kp))/2*(rho_mod(i,kp)-rho_mod(i,k ))/dzp(k) &
+          -ekk(i,km)*0.5*(ekmt(i,k)+ekmt(i,km))/2*(rho_mod(i,k )-rho_mod(i,km))/dzp(km) &
+          )/dzw(k))
       enddo
     enddo
     do i=1,this%imax     ! in the r-direction
@@ -460,13 +460,13 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
         dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
         ! source term
         ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
-            (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-            +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
-
           ! putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
           !   (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-          !   +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dzp(k)))**2.0  )
+          !   +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
+
+          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
+            (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
+            +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dzp(k)))**2.0  )
 
       enddo
     enddo
@@ -488,11 +488,11 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
         dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
         ! source term
         ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
-          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
-            ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dz))**2.0  )
-
           ! putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
-          !   ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dzp(k)))**2.0  )
+          !   ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dz))**2.0  )
+
+          putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
+            ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dzp(k)))**2.0  )
       enddo
     enddo
 
