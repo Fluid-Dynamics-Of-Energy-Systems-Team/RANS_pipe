@@ -465,8 +465,8 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
           !   +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dz))**2.0  )
 
           putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3/rho(i,k) * ( &
-            (((nuSA(ip,k)*(rho(ip,k)**0.5)) - (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
-            +(((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(2.0*dzp(k)))**2.0  )
+               (((nuSA(ip,k)*(rho(ip,k)**0.5))- (nuSA(im,k)*(rho(im,k)**0.5)))/(dRp(i)+dRp(im)))**2.0 &
+             + (((nuSA(i,kp)*(rho(i,kp)**0.5))- (nuSA(i,km)*(rho(i,km)**0.5)))/(dzp(k)+dzp(km)))**2.0  )
 
       enddo
     enddo
@@ -492,7 +492,7 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
           !   ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dz))**2.0  )
 
           putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
-            ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(2.0*dzp(k)))**2.0  )
+            ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(dzp(k)+dzp(km)))**2.0  )
       enddo
     enddo
 
