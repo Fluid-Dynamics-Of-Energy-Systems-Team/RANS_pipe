@@ -55,6 +55,16 @@ module vp_tdm
     procedure :: set_alphat  => set_alphat_irrenfried
   end type Irrenfried_TurbDiffModel
 
+  !************************!
+  !       Bae class        !
+  !************************!
+  
+  type,extends(VPrt_TurbDiffModel), public :: Bae_TurbDiffModel
+  contains
+    procedure :: set_alphat  => set_alphat_bae
+  end type Bae_TurbDiffModel
+
+
 contains
 !****************************************************************************************
 
@@ -183,5 +193,56 @@ contains
       enddo
     enddo
   end subroutine set_alphat_irrenfried
+
+  !************************!
+  !       Bae routines     !
+  !************************!
+
+  subroutine set_alphat_bae(this,mut,lam_cp,mu,alphat)
+    use mod_common, only : wnew, rnew, cp, temp
+    use module_mesh, only : mesh
+    implicit none
+    
+    class(Bae_TurbDiffModel) :: this
+    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
+    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
+    integer :: i,k, km, kp, ip, im
+    real(8) :: dwdy, drhody, dcpdy, dTdy, w
+    real(8), dimension(0:this%i1) :: walldistu
+
+
+    walldistu = mesh%walldistu
+    
+    do k=1,this%kmax
+      km = k-1
+      kp = k+1
+      do i=1,this%imax
+        ip = i+1
+        im = i-1
+        w = (wnew(i,k)+wnew(i,km))/2. !velocity at cell center
+        dwdy = ( &
+               (wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
+             - (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
+               )/(walldistu(ip)-walldistu(i))
+
+        drhody = ( (rnew(ip,k) + rnew(i ,k))/2.0 &
+                  -(rnew(i, k) + rnew(im,k))/2.0 &
+                 )/(walldistu(ip)-walldistu(i))
+
+        dTdy = (   (temp(ip,k) + temp(i ,k))/2.0 &
+                  -(temp(i, k) + temp(im,k))/2.0 &
+                 )/(walldistu(ip)-walldistu(i))
+
+        dTdy = (   (cp(ip,k) + cp(i ,k))/2.0 &
+                  -(cp(i, k) + cp(im,k))/2.0 &
+                 )/(walldistu(ip)-walldistu(i))
+
+        !Pr = ( 1 + (w/rho)*(drho/dy / dw/dy) )/ (1 + T/rho * (drho/dy / dT/dy)) + T/cp * (dCp/dy / dT/dy ) 
+        this%Pr(i,k) = (1. + (wnew(i,k)/rnew(i,k)) * (drhody/dwdy) ) &
+                      /(1+ (temp(i,k)/rnew(i,k))*(drhody/dTdy) + (temp(i,k)/cp(i,k))*(dcpdy/dTdy))
+        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+      enddo
+    enddo
+  end subroutine set_alphat_bae
 
 end module vp_tdm
