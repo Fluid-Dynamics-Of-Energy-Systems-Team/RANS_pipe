@@ -459,3 +459,21 @@ subroutine output2d_upd(rank,istap)
   close(15)
 
 end
+
+subroutine write_vector(vector, i1, k1, rank)
+  implicit none
+  real(8), dimension(0:i1,0:k1), intent(IN) :: vector
+  integer, intent(IN) :: i1, k1, rank
+  integer :: i,k
+  character*4 cha
+  write(cha,'(I4.4)')rank
+  open(15,file=cha)
+
+  do i=0,i1
+    do k=0,k1
+      write(15,'(3ES24.10E3)') i*1., k*1., vector(i,k)
+    enddo
+  enddo
+
+
+end subroutine

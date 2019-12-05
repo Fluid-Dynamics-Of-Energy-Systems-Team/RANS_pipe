@@ -129,11 +129,17 @@ call cpu_time(start)
 !        MAIN LOOP          !
 !***************************!
 
-do istep=istart,nstep
 
+do istep=istart,nstep
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,rp,drp,dru,dz,walldist,rank) 
   call turbdiff_model%set_alphat(ekmt,ekh,ekm,alphat)
   call advanceC(resC,Unew,Wnew,Rnew,rank)
+
+
+  ! if   (mod(istep,100).eq.0) then
+  !   call output2d_upd(rank,istep)
+  ! endif
+  
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
                               modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
@@ -323,6 +329,7 @@ subroutine bound_c(c, Twall, Qwalll,drp, centerBC,rank)
 
   call shiftf(c,tmp,rank);  c(:,0) = tmp(:);
   call shiftb(c,tmp,rank); c(:,k1) = tmp(:);
+
 
   !developing 
   if (periodic.eq.1) return
@@ -552,10 +559,12 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)      :: a,b,c,rhs
   real(8)                       :: sigmat,Q
+  integer  :: ierr
   
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
+
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-  call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1,Rtmp,Ru,Rp,dru,dz,rank,0)
+  call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,Ru,Rp,dru,dz,rank,0)
 
   do k=1,kmax
     do i=1,imax
@@ -580,7 +589,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
       cnew(i,k) = max(rhs(i), 0.0)
     enddo    
   enddo
-
   if (periodic.eq.1) then
     cnew = 0.0; resC=0.0;
   endif
