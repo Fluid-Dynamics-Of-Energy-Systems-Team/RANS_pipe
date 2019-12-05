@@ -221,8 +221,8 @@ contains
         im = i-1
         w = (wnew(i,k)+wnew(i,km))/2. !velocity at cell center
         dwdy = ( &
-               (wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
-             - (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
+                (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
+               -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
                )/(walldistu(ip)-walldistu(i))
 
         drhody = ( (rnew(ip,k) + rnew(i ,k))/2.0 &
@@ -233,7 +233,7 @@ contains
                   -(temp(i, k) + temp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
-        dTdy = (   (cp(ip,k) + cp(i ,k))/2.0 &
+        dcpdy = (   (cp(ip,k) + cp(i ,k))/2.0 &
                   -(cp(i, k) + cp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
