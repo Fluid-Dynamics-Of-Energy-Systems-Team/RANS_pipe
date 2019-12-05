@@ -13,6 +13,7 @@ module module_mesh
   real(8), dimension(:), allocatable :: zp,zw,dzp,dzw
   real(8), allocatable               :: dz,dpdz,start
   real(8), dimension(:), allocatable :: wallDist                    !1:imax
+  real(8), dimension(:), allocatable :: wallDistu !0:i1
   integer, allocatable               :: centerBC,numDomain           
   real(8), dimension(:), allocatable :: top_bcvalue,  bot_bcvalue,   &
                                         top_bcnovalue,bot_bcnovalue, &
@@ -113,7 +114,7 @@ contains
              this%y_fa(0:this%i1),this%y_cv(0:this%i1))
     allocate(this%zw  (0:this%k1),this%zp  (0:this%k1), &
              this%dzw (0:this%k1),this%dzp (0:this%k1))
-    allocate(this%wallDist(1:this%imax))
+    allocate(this%wallDist(1:this%imax), this%wallDistu(0:this%i1))
     allocate(this%top_bcvalue  (0:this%k1), this%bot_bcvalue  (0:this%k1), &
              this%top_bcvalue1 (0:this%k1), this%bot_bcvalue1 (0:this%k1), &
              this%top_bcnovalue(0:this%k1), this%bot_bcnovalue(0:this%k1), &
@@ -289,6 +290,9 @@ contains
     do i = 1,this%imax
       this%wallDist(i) = gridSize - this%rp(i)
     enddo
+    do i = 0,this%i1
+      this%wallDistu(i) = gridSize - this%ru(i)
+    enddo
   end subroutine
 
 !****************************************************************************************
@@ -404,6 +408,13 @@ contains
         this%wallDist(i) = this%rp(i)
       else
         this%wallDist(i) = gridSize-this%rp(i)
+      endif
+    enddo
+    do i = 0, this%i1 
+      if (this%ru(i).le.1) then
+        this%wallDistu(i) = this%ru(i)
+      else
+        this%wallDistu(i) = gridSize-this%ru(i)
       endif
     enddo
   end subroutine
