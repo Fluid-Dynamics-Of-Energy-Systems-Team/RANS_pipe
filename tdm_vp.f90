@@ -237,9 +237,9 @@ contains
                   -(cp(i, k) + cp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
-        !Pr = ( 1 + (w/rho)*(drho/dy / dw/dy) )/ (1 + T/rho * (drho/dy / dT/dy)) + T/cp * (dCp/dy / dT/dy ) 
-        this%Pr(i,k) = (1. + (w/rnew(i,k)) * (drhody/dwdy) ) &
-                      /(1+ (temp(i,k)/rnew(i,k))*(drhody/dTdy) + (temp(i,k)/cp(i,k))*(dcpdy/dTdy))
+        !Pr = ( 1 + (w/rho)*abs(drho/dy / dw/dy) )/ (1 + T/rho * abs(drho/dy / dT/dy)) + T/cp * abs(dCp/dy / dT/dy ) 
+        this%Prt(i,k) = (1. + (w/rnew(i,k)) * abs(drhody/dwdy) ) &
+                      /(1+ (temp(i,k)/rnew(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
       enddo
     enddo
