@@ -60,8 +60,12 @@ module vp_tdm
   !************************!
   
   type,extends(VPrt_TurbDiffModel), public :: Bae_TurbDiffModel
+  real(8), dimension(:), allocatable :: yplus
+  real(8), allocatable :: Aplus, B
   contains
     procedure :: set_alphat  => set_alphat_bae
+    procedure :: init  => init_mem_bae_tdm
+
   end type Bae_TurbDiffModel
 
 
@@ -197,6 +201,29 @@ contains
   !************************!
   !       Bae routines     !
   !************************!
+  type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(i1,k1,imax,kmax,name, Aplus, B, yplus)
+    integer,                  intent(IN) :: i1,k1,imax,kmax
+    character(len=2),         intent(IN) :: name
+    real(8) ,                 intent(IN) :: Aplus, B
+    real(8), dimension(0:i1), intent(IN) :: yplus
+
+    init_Bae_TurbDiffModel%name=name
+    init_Bae_TurbDiffModel%i1 = i1
+    init_Bae_TurbDiffModel%k1 = k1
+    init_Bae_TurbDiffModel%imax = imax
+    init_Bae_TurbDiffModel%kmax = kmax
+    init_Bae_TurbDiffModel%Aplus = Aplus
+    init_Bae_TurbDiffModel%B = B
+    init_Bae_TurbDiffModel%yplus = yplus
+  end function init_Bae_TurbDiffModel
+
+
+  subroutine init_mem_bae_tdm(this)
+      implicit none
+      class(Bae_TurbDiffModel) :: this
+      allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1), this%yplus(1:this%imax))
+  end subroutine init_mem_bae_tdm
+
 
   subroutine set_alphat_bae(this,mut,lam_cp,mu,alphat)
     use mod_common, only : wnew, rnew, cp, temp
@@ -207,10 +234,10 @@ contains
     real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
     real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
     integer :: i,k, km, kp, ip, im
-    real(8) :: dwdy, drhody, dcpdy, dTdy, w
+    real(8) :: dwdy, drhody, dcpdy, dTdy, w, sigma_t,f1, f2, Prt0
     real(8), dimension(0:this%i1) :: walldistu
 
-
+    sigma_t = 0.9
     walldistu = mesh%walldistu
     
     do k=1,this%kmax
@@ -237,9 +264,13 @@ contains
                   -(cp(i, k) + cp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
-        !Pr = ( 1 + (w/rho)*abs(drho/dy / dw/dy) )/ (1 + T/rho * abs(drho/dy / dT/dy)) + T/cp * abs(dCp/dy / dT/dy ) 
-        this%Prt(i,k) = (1. + (w/rnew(i,k)) * abs(drhody/dwdy) ) &
-                      /(1+ (temp(i,k)/rnew(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
+        f1 = 1-exp(this%yplus(i)/this%Aplus)
+        f2 = 0.5*(1+tanh((this%B-this%yplus(i))/10.))
+        !Prt0 = ( 1 + (w/rho)*abs(drho/dy / dw/dy) )/ (1 + T/rho * abs(drho/dy / dT/dy)) + T/cp * abs(dCp/dy / dT/dy ) 
+        Prt0 = (1. + (w/rnew(i,k)) * abs(drhody/dwdy) ) &
+              /(1+ (temp(i,k)/rnew(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
+
+        this%Prt = sigma_t-f1*f2*(sigma_t-Prt0)
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
       enddo
     enddo
