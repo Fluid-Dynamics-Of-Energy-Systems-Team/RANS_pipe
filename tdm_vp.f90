@@ -238,7 +238,7 @@ contains
                  )/(walldistu(ip)-walldistu(i))
 
         !Pr = ( 1 + (w/rho)*(drho/dy / dw/dy) )/ (1 + T/rho * (drho/dy / dT/dy)) + T/cp * (dCp/dy / dT/dy ) 
-        this%Pr(i,k) = (1. + (wnew(i,k)/rnew(i,k)) * (drhody/dwdy) ) &
+        this%Pr(i,k) = (1. + (w/rnew(i,k)) * (drhody/dwdy) ) &
                       /(1+ (temp(i,k)/rnew(i,k))*(drhody/dTdy) + (temp(i,k)/cp(i,k))*(dcpdy/dTdy))
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
       enddo
