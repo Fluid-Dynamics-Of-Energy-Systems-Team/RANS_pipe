@@ -132,25 +132,15 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       this%yp(i,k)     = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
       wallD     = walldist(i)
       ! Vorticity rate
-      ! StR = ( & 
-      !       ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4. )/dru(i) &
-      !     + ( (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.    )/(dz) &
-      !       )**2.)
-
       StR = ( & 
             ( -( (w(ip,km)+w(ip,k)+w(i,km)+w(i ,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4. )/dru(i) &
           + (    (u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4. )/dzw(k) &
             )**2.)
 
-
       StR = StR**0.5
                
-      ! gradkom = ((this%k(ip,k) - this%k(im,k))/(dRp(i)+dRp(im))) *((this%om(ip,k) - this%om(im,k))/(dRp(i)+dRp(im))) &
-      !          +((this%k(i,kp) - this%k(i,km))/(2.0*dz))         *((this%om(i,kp) - this%om(i,km))/(2.0*dz))
-
       gradkom = ((this%k(ip,k) - this%k(im,k))/(dRp(i)+dRp(im))) *((this%om(ip,k) - this%om(im,k))/(dRp(i)+dRp(im))) &
                +((this%k(i,kp) - this%k(i,km))/(dzp(k)+dzp(km))) *((this%om(i,kp) - this%om(i,km))/(dzp(k)+dzp(km)))
-
 
       this%cdKOM(i,k) = 2.0*sigma_om2*rho(i,k)/this%om(i,k)*gradkom;
               
@@ -225,25 +215,6 @@ subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
     topBCvalue = 60.0/0.075*mu(this%imax,k)/rho(this%imax,k)/walldist(this%imax)**2                                   !bcvalue top
     this%om(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%om(this%imax,k)) + top_bcvalue(k)*this%om(this%imax,k) !symmetry or bc value
   enddo
-
-  ! this%k  (this%i1,:)= -this%k(this%imax,:)
-  ! BCvalue(:)         = 60.0/0.075*mu(this%imax,:)/rho(this%imax,:)/walldist(this%imax)**2
-  ! this%om (this%i1,:)= 2.0*BCvalue(:) - this%om(this%imax,:)
-  ! this%bF1(this%i1,:)=  this%bF1(this%imax,:)
-  
-  ! !channel
-  ! if (centerBC.eq.-1) then
-  !   this%k(0,:) = -this%k(1,:)
-  !   BCvalue(:)  = 60.0/0.075*mu(1,:)/rho(1,:)/walldist(1)**2
-  !   this%om(0,:)= 2.0*BCvalue(:) - this%om(1,:)
-  ! endif
-
-  ! !pipe/BL
-  ! if (centerBC.eq.1) then
-  !   this%k (0,:) = this%k  (1,:)
-  !   this%om(0,:) = this%om (1,:)
-  !   this%bF1(0,:)= this%bF1(1,:)
-  ! endif
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%om ,tmp,rank); this%om (:,0)      =tmp(:);
@@ -339,13 +310,6 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
       ip=i+1
       im=i-1
       ! Production of turbulent kinetic energy
-      ! this%Pk(i,k) = mut(i,k)*( &
-      !   2.*(((w(i,k)-w(i,km))/dz)**2. +((u(i,k)-u(im,k))/dRu(i))**2.+((u(i,k)+u(im,k))/(2.*Rp(i)))**2.)+ &
-      !   ( &
-      !     ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-      !     ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz &
-      !   )**2.)
-
       this%Pk(i,k) = mut(i,k)*(  &
         2.*( ((w(i,k)-w(i,km))/dzw(k))**2.      &
             +((u(i,k)-u(im,k))/dRu(i))**2.      &
@@ -355,31 +319,14 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
           +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
          )**2.)
 
-
-      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) +(w(i,k)-w(i,km))/dz
-
       div(i,k) = (Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) &
                 +(      w(i,k)-       w(i,km))/dzw(k)
-
-
 
       this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
       ! turbulent time scale
       this%Tt(i,k)   = 1.0/this%om(i,k)   ! 0.31 cmu/omega
-               
-      ! this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-      !        *(mut(i,k)*( &
-      !                   ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) + &
-      !                   ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) &
-      !                   )* &
-      !         (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
-      !         ) &
-      !        +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz))
-
-
-
-
+          
       this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
              *(mut(i,k)*( &
                           ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
@@ -390,9 +337,6 @@ subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
              +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km)))
 
 
-
-
-      ! this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
       this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
                      *2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
                      
@@ -433,17 +377,14 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
       if ((modification == 0) .or. (modification == 1)) then
         a(i) = (mui(i-1,k)+(mut(i,k)+mut(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
-
         c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
       else if (modification == 2) then
         a(i) = (mui(i-1,k)+(mut(i,k)+mut(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)
-
         c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       endif
-
       b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
@@ -485,7 +426,6 @@ subroutine rhs_k_SST(this,putout,dimpl,rho)
 
   do k=kb,ke
     do i=ib,ie
-      ! k- equation
       putout(i,k) = putout(i,k) + ( this%Pk(i,k) + this%Gk(i,k) )/rho(i,k)
       dimpl(i,k)  = dimpl(i,k)  + betaStar*this%om(i,k)            ! note, betaStar*rho*k*omega/(rho*k), set implicit and divided by density
     enddo
@@ -511,12 +451,6 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
       kp=k+1
       km=k-1
       do i=1,this%imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-        !   sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-        !   -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-        !   sqrt(0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-        !   )/(dz*dz)   )
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
           ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
           sqrt(0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
@@ -530,19 +464,12 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
       kp=k+1
       km=k-1
       do i=1,this%imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
-        !   (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-        !   -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
-        !   (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-        !   )/(dz*dz)   )
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/ &
           (0.5*(rho(i,k)+rho(i,kp)))*(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
           -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/ &
           (0.5*(rho(i,k)+rho(i,km)))*(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
           )/dzw(k))
-
       enddo
     enddo
   else                               ! Standard
@@ -550,10 +477,6 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
       kp=k+1
       km=k-1
       do i=1,this%imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
-        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))  &
-        !   )/(dz*dz)   )
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k ) &
            -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &
@@ -592,35 +515,23 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   call this%diffusion_om_SST(dnew,this%om,mu,mui,muk,mut,sigmakSST,rho,Ru,Rp,dru,dz,modification)
   do k=1,this%kmax
     do i=1,this%imax
-  
       a(i) = (mui(i-1,k)+(mut(i,k)+mut(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5
       a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
-  
       c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
-  
       b(i) = ((-a(i)-c(i))*rho_mod(i,k)**0.5 + dimpl(i,k))
-  
       a(i) = a(i)*rho_mod(i-1,k)**0.5
       c(i) = c(i)*rho_mod(i+1,k)**0.5
-  
       rhs(i) = dnew(i,k)  + ((1-alphae)/alphae)*b(i)*this%om(i,k)
     enddo
   
     i=1
     b(i)=b(i)+bot_bcvalue(k)*a(i)
     rhs(i) = dnew(i,k) - (1-bot_bcvalue(k))*a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
-    
-    ! if (centerBC.eq.-1) then
-    !   rhs(i) = dnew(i,k) - a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
-    ! else
-    !   b(i)=b(i)+a(i) !symmetry
-    ! endif
 
     i = this%imax
     b(i)=b(i)+top_bcvalue(k)*c(i)
     rhs(i) = dnew(i,k) - (1-top_bcvalue(k))*c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
-    ! rhs(i) = dnew(i,k) - c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*(b(i)*this%om(i,k)) !wall
   
     call matrixIdir(this%imax,a,b/alphae,c,rhs)
   
@@ -660,7 +571,6 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
 
   ib = 1
   ie = this%i1-1
-
   kb = 1
   ke = this%k1-1
 
@@ -674,32 +584,16 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
       alfaSST   = alfa_1*this%bF1(i,k) + alfa_2*(1.0-this%bF1(i,k))
       betaSST   = beta_1*this%bF1(i,k) + beta_2*(1.0-this%bF1(i,k))
 
-      ! StR = (2.*(((w(i,k)-w(i,km))/dz)**2. + &
-      !   ((u(i,k)-u(im,k))/dRu(i))**2. + &
-      !   ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
-      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4. -(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !   +((u(i,kp) +u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
-
-      StR = (2.*(((w(i,k)-w(i,km))/dzw(k))**2. + &
-        ((u(i,k)-u(im,k))/dRu(i))**2. + &
-        ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
+      StR = (2.*(((w(i,k)-w(i,km))/dzw(k))**2.      + &
+                 ((u(i,k)-u(im,k))/dRu(i))**2.      + &
+                 ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
         ( ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
          +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))**2.)
-
-      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i)) &
-      !   +(      w(i,k) -      w(i,km))/dz
 
       div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i)) &
                +(      w(i,k) -      w(i,km))/dzw(k)
 
-         ! Bouyancy prodution divided by mut
-      ! GtR=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-      !   *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-      !   +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz) )* &
-      !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  ) &
-      !   +(2*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz) &
-      !   )
-
+      ! Bouyancy prodution divided by mut
       GtR=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
         *  ((((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
         +    ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) )* &
@@ -707,15 +601,10 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
         +(2*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*putink(i,k)))*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km)) &
         )
 
-
       GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
-
-      ! GtR = GtR + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
-
 
       putout(i,k) = putout(i,k) + (alfaSST*StR*rho(i,k) + alfaSST*GtR*rho(i,k) + (1.0-this%bF1(i,k))*this%cdKOM(i,k) ) /rho(i,k)
       dimpl(i,k)  = dimpl(i,k)  + betaSST*this%om(i,k) ! note, beta*rho*omega^2/(rho*omega), set implicit and divided by density
-
     enddo
   enddo
 end subroutine rhs_om_sst
@@ -740,13 +629,6 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,d
       kp=k+1
       km=k-1
       do i=1,this%imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))* &
-        !   (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k ))) &
-        !   - (ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))/sqrt(0.5*(rho(i,k)+rho(i,km)))* &
-        !   (putin(i,k )*sqrt(rho(i,k )) - putin(i,km)*sqrt(rho(i,km))) &
-        !   )/(dz*dz)   )
-
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))/sqrt(0.5*(rho(i,k)+rho(i,kp)))* &
           (putin(i,kp)*sqrt(rho(i,kp)) - putin(i,k )*sqrt(rho(i,k )))/dzp(k) &
@@ -760,15 +642,10 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,d
       kp=k+1
       km=k-1
       do i=1,this%imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k )) &
-        !    -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km)) &
-        !   )/(dz*dz))
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (ekk(i,k ) + (ekmt(i,k)+ekmt(i,kp))/(sigma(i,k)+sigma(i,kp)))*(putin(i,kp)-putin(i,k ))/dzp(k) &
            -(ekk(i,km) + (ekmt(i,k)+ekmt(i,km))/(sigma(i,k)+sigma(i,km)))*(putin(i,k )-putin(i,km))/dzp(km) &  
           )/dzw(k))
-
       enddo
     enddo
   endif

@@ -86,11 +86,11 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
     do i=1,this%imax
       im=i-1
       ip=i+1
-      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
+      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5         ! ystar
       Ret(i,k)     = rho(i,k)*(this%k(i,k)**2.)/(mu(i,k)*this%eps(i,k))        ! not sure if r2 or r
-      this%fmu(i,k)     = (1.-exp(-this%yp(i,k)/70.))*(1+3.45/Ret(i,k)**0.5)
-      this%f1(i,k)      = 1.
-      this%f2(i,k)      = (1.-2./9.*exp(-(Ret(i,k)/6.)**2.))*(1.-exp(-this%yp(i,k)/5.))**2.0
+      this%fmu(i,k)= (1.-exp(-this%yp(i,k)/70.))*(1+3.45/Ret(i,k)**0.5)
+      this%f1(i,k) = 1.
+      this%f2(i,k) = (1.-2./9.*exp(-(Ret(i,k)/6.)**2.))*(1.-exp(-this%yp(i,k)/5.))**2.0
       mut(i,k) = min(1.,rho(i,k)*this%cmu*this%fmu(i,k)*this%k(i,k)**2./(this%eps(i,k)))
     enddo
   enddo
@@ -147,24 +147,6 @@ subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
     this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) +top_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
   enddo
 
-
-  ! this%k(this%i1,:) = -this%k(this%imax,:)
-  ! BCvalue(:) = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
-  ! this%eps(this%i1,:) = 2.0*BCvalue(:) - this%eps(this%imax,:)
-
-  ! ! channel
-  ! if (centerBC.eq.-1) then
-  !   this%k(0,:)  = -this%k(1,:)
-  !   BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
-  !   this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
-  ! endif
-
-  ! ! pipe/BL
-  ! if (centerBC.eq.1) then
-  !   this%k  (0,:) = this%k  (1,:)
-  !   this%eps(0,:) = this%eps(1,:)
-  ! endif
-
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
   call shiftb(this%k,  tmp,rank); this%k  (:,this%k1)=tmp(:);
@@ -215,14 +197,6 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
       im=i-1
             
       ! Production of turbulent kinetic energy
-      ! this%Pk(i,k) = mut(i,k)*(  &
-      !   2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
-      !       ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
-      !       ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dz      &
-      !   )**2.)
-
       this%Pk(i,k) = mut(i,k)*(  &
         2.*(((w(i,k)-w(i,km))/dzw(k))**2.      +  &
             ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
@@ -231,31 +205,19 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
         +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  &
         )**2.)
 
-
-      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
-      !          +(      w(i,k) -      w(i,km))/dz
       div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
                +(      w(i,k) -      w(i,km))/dzw(k)
+               
       this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
       ! turbulent time scale
       this%Tt(i,k)=this%k(i,k)/this%eps(i,k)
-
-      ! Bouyancy production
-      ! this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
-      !   *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz))*  &
-      !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
-      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz)  &
-      !   )
 
       this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
         *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
                      +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))*  &
         (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
         +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km)))
-
-      ! this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
       
       this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
                      *2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))

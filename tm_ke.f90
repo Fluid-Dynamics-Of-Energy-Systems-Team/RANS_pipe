@@ -146,25 +146,19 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
       if ((modification == 0) .or. (modification == 1)) then
         a(i) = (mui(i-1,k)+0.5*(mut(i,k)+mut(i-1,k))/this%sigmak)/((0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5)
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/(rho_mod(i,k)**0.5)
-
         c(i) = (mui(i  ,k)+0.5*(mut(i,k)+mut(i+1,k))/this%sigmak)/((0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5)
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/(rho_mod(i,k)**0.5)
       else if (modification == 2) then
         a(i) = (mui(i-1,k)+0.5*(mut(i,k)+mut(i-1,k))/this%sigmak)/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))
         a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)
-
         c(i) = (mui(i  ,k)+0.5*(mut(i,k)+mut(i+1,k))/this%sigmak)/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))
         c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       endif
-
       b(i) = (rho_mod(i,k)*(-a(i)-c(i)) + dimpl(i,k))
-
       a(i) = a(i)*rho_mod(i-1,k)
       c(i) = c(i)*rho_mod(i+1,k)
-
       rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
     enddo
-
 
      i=1
      b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
@@ -234,18 +228,14 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
 
   do k=1,this%kmax
     do i=1,this%imax
-                  
       a(i) = (mui(i-1,k)+0.5*(mut(i,k)+mut(i-1,k))/this%sigmae)/sqrt(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))
       a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)
-  
       c(i) = (mui(i  ,k)+0.5*(mut(i,k)+mut(i+1,k))/this%sigmae)/sqrt(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)
-  
       b(i) = ((-a(i)-c(i))*(rho_mod(i,k)**1.5) + dimpl(i,k)  )  
       a(i) = a(i)*(rho_mod(i-1,k)**1.5)
       c(i) = c(i)*(rho_mod(i+1,k)**1.5)
       rhs(i) = dnew(i,k) + ((1-alphae)/alphae)*b(i)*this%eps(i,k)
-
     enddo
 
     i=1
@@ -261,7 +251,6 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
     do i=1,this%imax
       resE = resE + ((this%eps(i,k) - rhs(i))/(this%eps(i,k)+1.0e-20))**2.0
       this%eps(i,k) = max(rhs(i), 1.0e-8)
-  
     enddo
   enddo
 end subroutine solve_eps_KE
@@ -297,13 +286,10 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
  
   ib = 1
   ie = this%i1-1
-
   kb = 1
   ke = this%k1-1
-
   do k=kb,ke
     do i=ib,ie
-      !epsilon equation
       putout(i,k) = putout(i,k) +(this%ce1*this%f1(i,k)*this%Pk(i,k)/this%Tt(i,k) &
                                 + this%ce1*this%f1(i,k)*this%Gk(i,k)/this%Tt(i,k) )/rho(i,k)
       dimpl(i,k)  = dimpl(i,k)  + this%ce2*this%f2(i,k)/this%Tt(i,k)   ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
@@ -332,10 +318,6 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
       do i=1,this%i1-1
         difcp = (muk(i,k ) + 0.5*(mut(i,k)+mut(i,kp))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,kp)))
         difcm = (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km)))
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*( &
-        !   (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k )) &
-        !        -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))  )/(dz*dz)   )
-
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)/rho(i,k)*( &
           (     difcp * ((rho(i,kp)**1.5)*putin(i,kp)-(rho(i,k )**1.5)*putin(i,k ))/dzp(k) &
                -difcm * ((rho(i,k )**1.5)*putin(i,k )-(rho(i,km)**1.5)*putin(i,km))/dzp(km)&
@@ -347,9 +329,6 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
       kp=k+1
       km=k-1
       do i=1,this%i1-1
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   ( (muk(i,k ) + 0.5*(mut(i,k)+mut(i,kp))/sigma)*(putin(i,kp)-putin(i,k )) &
-        !   - (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)*(putin(i,k )-putin(i,km)))/(dz*dz)   )
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           ( (muk(i,k ) + 0.5*(mut(i,k)+mut(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
           - (muk(i,km) + 0.5*(mut(i,k)+mut(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km)&
