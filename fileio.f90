@@ -1,7 +1,6 @@
 subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
   use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1, LoD
-  use mod_mesh, only : dz
   use module_mesh, only : mesh
   implicit none
   include "mpif.h"
@@ -69,14 +68,13 @@ end subroutine
 
 
 subroutine inflow_output_upd(rank,istap)
-  use mod_param
-  use mod_tm
-  use mod_eos
-  use mod_common
-  use mod_mesh
+  use mod_param,   only : kmax,i1,imax,px,k,i,systemsolve
+  use mod_tm,      only : turb_model
+  use mod_eos,     only : eos_model
+  use mod_common,  only : wnew, unew, cnew, temp, rnew, ekmt
+  use module_mesh, only : mesh
   implicit none
-  
-  integer rank,istap
+  integer, intent(IN) :: rank,istap
   real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp
   real(8), dimension(1:imax) :: p_bF2
   character(len=50) :: fname
@@ -105,9 +103,9 @@ subroutine inflow_output_upd(rank,istap)
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
     do i=1,imax
       write(29, '(16E20.12)')                                            &
-                y_cv  (i)  ,unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
-                rnew  (i,k),p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &
-                p_nuSA(i)  ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i)
+                mesh%y_cv(i),unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
+                rnew  (i,k) ,p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &
+                p_nuSA(i)   ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i)
     enddo
     close(29)
   endif
@@ -343,9 +341,8 @@ end subroutine set_uvector_to_coords
 subroutine output2d_upd2(rank,istap)
   use mod_param
   use mod_common
-  use mod_mesh
   use mod_tm
-  use mod_eos
+  use mod_eos, only : eos_model
   use module_mesh , only : mesh
   implicit none
   include 'mpif.h'
@@ -356,12 +353,14 @@ subroutine output2d_upd2(rank,istap)
   integer rank,istap,jstart
   real(8), dimension(0:i1,0:k1) :: x_plt, y_plt, u_plt,w_plt, rho_plt, c_plt, p_plt, mu_plt, mut_plt, &
                                    k_plt, eps_plt, v2_plt, om_plt, nuSA_plt
+  real(8), dimension(0:i1) :: dru, rp
+  dru = mesh%dru
+  rp = mesh%rp
   
   twall    = 0.0
   massflow = 0.0
   enthflow = 0.0
   w_c      = 0.0
-
   do k=1,kmax
     do i=1,imax
       massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
@@ -381,7 +380,7 @@ subroutine output2d_upd2(rank,istap)
     do i=0,i1
       ! xvec(i,k)=(k+rank*kmax)*dz-(1./2.)*dz 
       xvec(i,k) = mesh%zp(k)
-      yvec(i,k) = y_cv(i)
+      yvec(i,k) = mesh%y_cv(i)
     enddo
   enddo
 

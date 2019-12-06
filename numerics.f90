@@ -14,37 +14,24 @@ subroutine fillps(rank)
   dzw = mesh%dzw
   dzp = mesh%dzp
 
-
   !
   !     *** Fill the right hand for the poisson solver. ***
   !
   sumps = 0.0
-
   do  k=1,kmax
     do i=1,imax
-      ! p(i,k)  = (                                                         &
-      !             (Ru(i)*dUdt(i,k) - Ru(i-1)*dUdt(i-1,k))/( Rp(i)*dru(i)) &
-      !             +     (dWdt(i,k) -         dWdt(i,k-1))/( dz         )  &
-      !           )/dt                                                      &
-      !         + (rnew(i,k)-rold(i,k))/(dt*dt)
-
       p(i,k)  = (                                                         &
                   (Ru(i)*dUdt(i,k) - Ru(i-1)*dUdt(i-1,k))/( Rp(i)*dru(i)) &
                   +     (dWdt(i,k) -         dWdt(i,k-1))/( dzw(k)     )  &
                 )/dt                                                      &
               + (rnew(i,k)-rold(i,k))/(dt*dt)
-
+      
       qcrit(i,k) = p(i,k)*dt
 
-      ! sumps = sumps + p(i,k)*dru(i)*dz
       sumps = sumps + p(i,k)*dru(i)*dzw(k)
-
     enddo
   enddo
-
-
   call mpi_allreduce(sumps,sumps_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-
 end
 
 subroutine calc_momentum_thickness(w, w_fs, dru, i1,imax, mom_thickness)
@@ -205,10 +192,8 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   !interpolate on the y values of the new grid
   do k=0,k1
     do i=0,i1
-      ! x (i,k)= (k+rank*kmax)*dz-(1./2.)*dz  
       x(i,k) =zp(k)
       y (i,k)=y_cv(i)
-      ! xw(i,k)= (k+rank*kmax)*dz !
       xw(i,k)=zw(k)
       yu(i,k)=y_fa(i)
     enddo
@@ -277,7 +262,6 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   ! enddo
   ! close(15)
 
-
   call MPI_Bcast(win,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
   call MPI_Bcast(ekmtin,i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
   call MPI_Bcast(uin,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
@@ -309,9 +293,7 @@ subroutine correc(rank,setold)
 
   do k=1,kmax-1
     do i=1,imax
-      ! dWdt(i,k)=dWdt(i,k)-dt*(p(i,k+1)-p(i,k))/dz
       dWdt(i,k)=dWdt(i,k)-dt*(p(i,k+1)-p(i,k))/dzp(k)
-
     enddo
   enddo
 
@@ -324,9 +306,7 @@ subroutine correc(rank,setold)
   endif
       
   do i=1,imax
-    ! dWdt(i,kmax)=dWdt(i,kmax)-dt*(pplus_w(i)-p(i,kmax))/dz
     dWdt(i,kmax)=dWdt(i,kmax)-dt*(pplus_w(i)-p(i,kmax))/dzp(kmax)
-
   enddo
   if (setold.eq.0)then
     do k=0,kmax
@@ -374,8 +354,6 @@ subroutine chkdt(rank,istap)
 
   do k=1,kmax
     do i=1,imax
-      ! tmp = ( abs(Unew(i,k)) /  dRp(i) ) &
-      !      +( abs(Wnew(i,k)) /  dz     )
       tmp = ( abs(Unew(i,k)) /  dRp(i) ) &
            +( abs(Wnew(i,k)) /  dzp(k) )
       
@@ -417,16 +395,10 @@ subroutine chkdiv(rank)
       rhokp = 0.5*(rNew(i,k)+rNew(i,k+1))
       rhokm = 0.5*(rNew(i,k)+rNew(i,k-1))
 
-      ! div = &
-      !   (1./Rp(i))*(Ru(i)*Unew(i,k)*rhoip-Ru(i-1)*Unew(i-1,k)*rhoim)*dz      +     &
-      !              (      Wnew(i,k)*rhokp-        Wnew(i,k-1)*rhokm)*dru(i)  +     &
-      !              (      rNew(i,k)      -        rold(i,k)        )/(dt*dru(i)*dz)
-
       div = &
         (1./Rp(i))*(Ru(i)*Unew(i,k)*rhoip-Ru(i-1)*Unew(i-1,k)*rhoim)*dzw(k)  +     &
                    (      Wnew(i,k)*rhokp-        Wnew(i,k-1)*rhokm)*dru(i)  +     &
                    (      rNew(i,k)      -        rold(i,k)        )/(dt*dru(i)*dzw(k))
-
 
         ! if (abs(div).gt.10e-10) write(6,*) i,k+kmax*rank,div
 
@@ -486,13 +458,6 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
       kp=k+1
       km=k-1
       do i=1,imax
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
-        !   (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,kp))) &
-        !       *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-        !     -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,km))) &
-        !       *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-        !   )/(dz*dz))
-
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)/sqrt(rho(i,k))*( &
           (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/sqrt(0.5*(rho(i,k)+rho(i,kp))) &
               *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k) &
@@ -506,20 +471,12 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
       kp=k+1
       km=k-1
       do i=1,i1-1
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        !   (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/(0.5*(rho(i,k)+rho(i,kp))) &
-        !       *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k )) &
-        !     -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/(0.5*(rho(i,k)+rho(i,km))) &
-        !       *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km)) &
-        !   )/(dz*dz))
-
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
           (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)/(0.5*(rho(i,k)+rho(i,kp))) &
               *(rho(i,kp)*putin(i,kp)-rho(i,k )*putin(i,k ))/dzp(k)  &
             -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/(0.5*(rho(i,k)+rho(i,km))) &
               *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
           )/dzw(k))
-
       enddo
     enddo
   else                             ! Standard
@@ -527,16 +484,10 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffV
       kp=k+1
       km=k-1
       do i=1,i1-1
-        ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        ! (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k )) &
-        !   -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km)) &
-        ! )/(dz*dz))
-
         putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
         (  (ekk(i,k ) + 0.5*(ekmt(i,k)+ekmt(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
           -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km) &
         )/dzw(k))
-
       enddo
     enddo
   endif
@@ -614,11 +565,6 @@ subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
                -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i )) &
               )/(Ru(i)*drp(i)) &
           +                                              &
-          ! ( epop * ( (Uvel(i,kp )-Uvel(i,k ))/dz         &
-          !           +(Wvel(ip,k )-Wvel(i,k ))/drp(i))    &
-          ! - epom * ( (Uvel(i,k  )-Uvel(i,km))/dz         &
-          !           +(Wvel(ip,km)-Wvel(i,km))/drp(i))    &  
-          ! )/dz
           ( epop * ( (Uvel(i,kp )-Uvel(i,k ))/dzp(k)     &
                     +(Wvel(ip,k )-Wvel(i,k ))/drp(i))    &
           - epom * ( (Uvel(i,k  )-Uvel(i,km))/dzp(km)    &
@@ -640,31 +586,15 @@ subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
         epop = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,kp) + ekme(i,kp)) !right top
         epom = 0.25*(ekme(i,k)+ekme(ip,k) + ekme(ip,km) + ekme(i,km)) !left  top
 
-        ! divUim = (Ru(i )*Uvel(i ,k)              &
-        !          -Ru(im)*Uvel(im,k)              &
-        !          )/(Rp(i )*dru(i ))              &
-        !        + ( Wvel(i ,k) - Wvel(i ,km))/dz
-
         divUim = (Ru(i )*Uvel(i ,k)              &
                  -Ru(im)*Uvel(im,k)              &
                  )/(Rp(i )*dru(i ))              &
                + ( Wvel(i ,k) - Wvel(i ,km))/dzw(k)
 
-        ! divUip = (Ru(ip)*Uvel(ip,k)              &
-        !          -Ru(i )*Uvel(i ,k)              &
-        !          )/(Rp(ip)*dru(ip))              &
-        !        + ( Wvel(ip,k) - Wvel(ip,km))/dz
-
         divUip = (Ru(ip)*Uvel(ip,k)              &
                  -Ru(i )*Uvel(i ,k)              &
                  )/(Rp(ip)*dru(ip))              &
                + ( Wvel(ip,k) - Wvel(ip,km))/dzw(k)
-
-
-        ! divUi =  (Rp(ip)*(Uvel(ip,k)+Uvel(i ,k)) &
-        !          -Rp(i )*(Uvel(i ,k)+Uvel(im,k)) &
-        !          )/(2.*Ru(i)*drp(i))             &
-        !        + ((Wvel(ip,k)+Wvel(i,k))-(Wvel(ip,km)+Wvel(i,km)))/(2.*dz)
 
         divUi =  (Rp(ip)*(Uvel(ip,k)+Uvel(i ,k)) &
                  -Rp(i )*(Uvel(i ,k)+Uvel(im,k)) &
@@ -677,11 +607,6 @@ subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
                -Rp(i )*ekme(i ,k)*(dif*(Uvel(i ,k)-Uvel(im,k))/dru(i ) -1./3.*divUim) &
               )/(Ru(i)*drp(i)) &
           +(                                            &
-          !   epop * ( (Uvel(i ,kp)-Uvel(i,k ))/dz        &
-          !           +(Wvel(ip,k )-Wvel(i,k ))/drp(i))   &
-          ! - epom * ( (Uvel(i ,k )-Uvel(i,km))/dz        &
-          !           +(Wvel(ip,km)-Wvel(i,km))/drp(i))   &
-          !  )/dz                                         &
             epop * ( (Uvel(i ,kp)-Uvel(i,k ))/dzp(k)    &
                     +(Wvel(ip,k )-Wvel(i,k ))/drp(i))   &
           - epom * ( (Uvel(i ,k )-Uvel(i,km))/dzp(km)   &
@@ -758,18 +683,7 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
         epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) ) !right top
         emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) ) !right bot
 
-        ! putout(i,k) = putout(i,k) + &
-        !   (Ru(i )*epop*((Uvel(i ,kp)-Uvel(i ,k))/dz      &
-        !            +dif*(Wvel(ip,k) -Wvel(i ,k))/drp(i ))&
-        !   -                                              &
-        !    Ru(im)*emop*((Uvel(im,kp)-Uvel(im,k))/dz      &
-        !            +dif*(Wvel(i ,k )-Wvel(im,k))/drp(im))&
-        !   )/(Rp(i)*dru(i))                               &
-        !   +                                              &
-        !   (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz)    &
-        !   -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz)    &
-        !   )/dz
-        putout(i,k) = putout(i,k) + &
+        putout(i,k) = putout(i,k) +                       &
           (Ru(i )*epop*((Uvel(i ,kp)-Uvel(i ,k))/dzp(k)   &
                    +dif*(Wvel(ip,k) -Wvel(i ,k))/drp(i )) &
           -                                               &
@@ -794,32 +708,11 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
         epop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(ip,k) + ekme(ip,kp) )
         emop = 0.25*(ekme(i,k)+ekme(i,kp) + ekme(im,k) + ekme(im,kp) )
 
-        ! divUkm = (Ru(i)*Uvel(i,k )-Ru(im)*Uvel(im,k ))/(Rp(i)*dru(i)) &
-        !        + (Wvel(i,k )      -       Wvel(i,km))/dz
-
         divUkm = (Ru(i)*Uvel(i,k )-Ru(im)*Uvel(im,k ))/(Rp(i)*dru(i)) &
                + (Wvel(i,k )      -       Wvel(i,km))/dzw(k)
 
-
-        ! divUkp = (Ru(i)*Uvel(i,kp)-Ru(im)*Uvel(im,kp))/(Rp(i)*dru(i)) &
-        !        + (Wvel(i,kp)      -       Wvel(i ,k ))/dz
-
         divUkp = (Ru(i)*Uvel(i,kp)-Ru(im)*Uvel(im,kp))/(Rp(i)*dru(i)) &
                + (Wvel(i,kp)      -       Wvel(i ,k ))/dzw(kp)
-
-
-        ! putout(i,k) = putout(i,k) + &
-        !   (                                                      &
-        !   Ru(i )*epop*(  (Uvel(i ,kp)-Uvel(i ,k))/dz             &
-        !             +dif*(Wvel(ip,k )-Wvel(i ,k))/drp(i))        &!(Rp(ip)-Rp(i))) new
-        !   -                                                      &
-        !   Ru(im)*emop*(  (Uvel(im,kp)-Uvel(im,k))/dz             &
-        !   +       dif*(   Wvel(i ,k )-Wvel(im,k))/drp(im))       &!(Rp(i)-Rp(im))) x_new
-        !   )/(Rp(i)*dru(i))                                       &
-        !   +                                                      &
-        !   (2.*ekme(i,kp)*((Wvel(i,kp)-Wvel(i,k ))/dz - 1./3.*divUkp) &
-        !   -2.*ekme(i,k )*((Wvel(i,k )-Wvel(i,km))/dz - 1./3.*divUkm) &
-        !   )/dz
 
         putout(i,k) = putout(i,k) + &
           (                                                      &
@@ -910,8 +803,6 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
     enddo
   enddo
 
-  !     if (periodic.eq.1) then
-
   call shiftf(dcu,dcubf,rank)
   call shiftf(dcw,dcwbf,rank)
 
@@ -919,8 +810,6 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
     dcu(i,0) = dcubf(i)
     dcw(i,0) = dcwbf(i)
   enddo
-
-  !     endif
 
   if ((periodic.ne.1).and.(rank.eq.0)) then
     dcu(:,0) = 0.0
@@ -931,7 +820,6 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
   fak=1.0/3.0
 
   !     calculate face value for C
-
   do k=kb,ke
     kp=k+1
     km=k-1
@@ -959,19 +847,13 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
     enddo
   enddo
 
-  !     if (periodic.eq.1) then
-
   call shiftf(cu,dcubf,rank)
   call shiftf(cw,dcwbf,rank)
-
 
   do i=ib,ie
     cu(i,0)  = dcubf(i)
     cw(i,0)  = dcwbf(i)
   enddo
-
-  !     endif
-
 
   if ((periodic.ne.1).and.(rank.eq.0)) then
     do i=0,ie
@@ -985,14 +867,6 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
     km=k-1
     do i=ib,ie
       im=i-1
-      ! putout(i,k) =    - (Ru(i)*U(i,k)*cu(i,k)-Ru(im)*U(im,k)*cu(im,k))/(Rp(i)*dru(i))  &
-      !                  - (      W(i,k)*cw(i,k)-       W(i,km)*cw(i,km))/dz              &
-      !       + putin(i,k)*(                                                              &
-      !                    (Ru(i)*U(i,k)        -Ru(im)*U(im,k)         )/(Rp(i)*dru(i))  &
-      !                  + (      W(i,k)        -       W(i,km)         )/dz              &
-      !       )
-
-
       putout(i,k) =    - (Ru(i)*U(i,k)*cu(i,k)-Ru(im)*U(im,k)*cu(im,k))/(Rp(i)*dru(i))  &
                        - (      W(i,k)*cw(i,k)-       W(i,km)*cw(i,km))/dzw(k)          &
             + putin(i,k)*(                                                              &
@@ -1008,8 +882,6 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
       km=k-1
       do i=ib,ie
         im=i-1
-        ! putout(i,k)= putout(i,k)  + W(i,k)*putin(i,k)/dz
-        ! dimpl(i,k) =  dimpl(i,k)  + W(i,k)/dz
         putout(i,k)= putout(i,k)  + W(i,k)*putin(i,k)/dzw(k)
         dimpl(i,k) =  dimpl(i,k)  + W(i,k)/dzw(k)
       enddo
@@ -1078,15 +950,6 @@ subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,drp,dz,i1,k1)
       rhokm=0.25*(rho(i,k)+rho(i,km)+rho(ip,k)+rho(ip,km)) !left top
 
       putout(i,k) = 0.0
-      ! putout(i,k) = - 0.25 * (                                            &
-      !   (Rp(ip)*(Uvel(i, k)+Uvel(ip,k))*(Uvel(i,k)+Uvel(ip,k))*rho(ip,k)  &
-      !   -Rp(i )*(Uvel(im,k)+Uvel(i ,k))*(Uvel(i,k)+Uvel(im,k))*rho(i ,k)  &
-      !   )/(Ru(i)*drp(i))                                                  &   
-      !   + &
-      !   ((Wvel(i,k )+Wvel(ip,k ))*(Uvel(i,k)+Uvel(i,kp))*rhokp            &
-      !   -(Wvel(i,km)+Wvel(ip,km))*(Uvel(i,k)+Uvel(i,km))*rhokm            &
-      !   )/(dz)                                                            &
-      !   )
       putout(i,k) = - 0.25 * (                                            &
         (Rp(ip)*(Uvel(i, k)+Uvel(ip,k))*(Uvel(i,k)+Uvel(ip,k))*rho(ip,k)  &
         -Rp(i )*(Uvel(im,k)+Uvel(i ,k))*(Uvel(i,k)+Uvel(im,k))*rho(i ,k)  &
@@ -1166,21 +1029,8 @@ subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
       rhoip=0.25*(rho(i,k)+rho(i,kp)+rho(ip,k)+rho(ip,kp)) !right top
       rhoim=0.25*(rho(i,k)+rho(i,kp)+rho(im,k)+rho(im,kp)) !right bottom
 
-      ! peclet_z(i,k)= Wvel(i,k)*rho(i,k)*dz/(ekm(i,k))
       peclet_z(i,k)= Wvel(i,k)*rho(i,k)*dzw(k)/(ekm(i,k))
       
-      ! if (peclet_z(i,k).gt.2.)then
-      !   advcecw_w= 2.0*(rho(i,k)+rho(i,k))*Wvel(i,k)*(Wvel(i,k)-Wvel(i,km))/dz & 
-      !              +                                                           & 
-      !              2.0*Wvel(i,k)*(                                             &
-      !               (rho(i,k )+rho(i,k ))*Wvel(i,k )                           &
-      !              -(rho(i,km)+rho(i,km))*Wvel(i,km)                           &
-      !              )/dz
-      ! else
-      !   advcecw_w= ((Wvel(i,k )+Wvel(i,kp))*(Wvel(i,k)+Wvel(i,kp))*rho(i,kp)   &
-      !              -(Wvel(i,km)+Wvel(i,k ))*(Wvel(i,k)+Wvel(i,km))*rho(i,k )   &
-      !              )/dz
-      ! endif
       if (peclet_z(i,k).gt.2.)then
         advcecw_w= 2.0*(rho(i,k)+rho(i,k))*Wvel(i,k)*(Wvel(i,k)-Wvel(i,km))/dzw(k)& 
                    +                                                              & 
@@ -1193,7 +1043,6 @@ subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
                    -(Wvel(i,km)+Wvel(i,k ))*(Wvel(i,k)+Wvel(i,km))*rho(i,k )   &
                    )/dzp(k)
       endif
-
       putout(i,k) = 0.0
       putout(i,k) = - 0.25 * (                                          &
         (Ru(i )*(Uvel(i ,k)+Uvel(i ,kp))*(Wvel(i,k)+Wvel(ip,k))*rhoip   &
