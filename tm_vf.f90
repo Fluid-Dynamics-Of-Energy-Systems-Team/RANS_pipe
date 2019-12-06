@@ -64,7 +64,7 @@ end subroutine init_w_inflow_VF
 
 
 subroutine set_mut_VF(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
@@ -164,17 +164,24 @@ type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax,name)
   init_VF_TurbModel%kmax = kmax
 end function init_VF_TurbModel
 
-subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
-  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
+  use mod_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-  real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  integer,                               intent(IN) :: periodic, rank, px
   real(8),dimension(0:this%k1) :: BCvalue
   real(8),dimension(0:this%i1) :: tmp
   integer :: k  
   real(8) :: topBCvalue, botBCvalue
+  real(8), dimension(0:this%k1) :: top_bcnovalue, bot_bcnovalue,top_bcvalue, bot_bcvalue
+  real(8),dimension(1:this%imax):: walldist
+
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+  top_bcvalue   = mesh%top_bcvalue
+  bot_bcvalue   = mesh%bot_bcvalue
+  walldist      = mesh%walldist
 
   do k = 0,this%k1 
     this%k(0,k)       = bot_bcnovalue(k)*this%k(1,k)          !symmetry or 0 value
@@ -186,26 +193,6 @@ subroutine set_bc_VF(this,mu,rho,walldist,centerBC,periodic,rank,px)
     topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                       !bcvalue
     this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) + top_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
   enddo
-
-  ! this%k (this%i1,:) = -this%k (this%imax,:)
-  ! this%v2(this%i1,:) = -this%v2(this%imax,:)
-  ! BCvalue(:)  = 2.0*mu(this%imax,:)/rho(this%imax,:)*this%k(this%imax,:)/walldist(this%imax)**2
-  ! this%eps(this%i1,:)  = 2.0*BCvalue(:) - this%eps(this%imax,:)
-
-  ! ! channel
-  ! if (centerBC.eq.-1) then
-  !   this%k(0,:)  = -this%k(1,:)
-  !   this%v2(0,:) = -this%v2(1,:)
-  !   BCvalue(:)   = 2.0*mu(1,:)/rho(1,:)*this%k(1,:)/walldist(1)**2
-  !   this%eps(0,:)= 2.0*BCvalue(:) - this%eps(1,:)
-  ! endif
-
-  ! ! pipe/BL
-  ! if (centerBC.eq.1) then
-  !   this%k  (0,:)= this%k  (1,:)
-  !   this%eps(0,:)= this%eps(1,:)
-  !   this%v2 (0,:)= this%v2 (1,:)
-  ! endif  
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
@@ -233,7 +220,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,dRp,dz, &
                        alphav2,modification,rank,centerBC,periodic)
   use mod_math
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+  use mod_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -243,7 +230,11 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resV2
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  real(8), dimension(0:this%k1) :: top_bcnovalue, bot_bcnovalue
   integer :: i,k
+
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
       
   resV2=0.0; dnew=0.0; dimpl = 0.0;
 
@@ -275,12 +266,10 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
     enddo
 
     i=1
-    ! b(i)=b(i)+centerBC*a(i)!*alphav2
     b(i)=b(i)+bot_bcnovalue(k)*a(i)
     rhs(i) = dnew(i,k) + ((1-alphav2)/alphav2)*b(i)*this%v2(i,k)
 
     i=this%imax
-    ! b(i) = b(i) - c(i)
     b(i)=b(i)+top_bcnovalue(k)*c(i)
     rhs(i) = dnew(i,k) + ((1-alphav2)/alphav2)*b(i)*this%v2(i,k)
 
@@ -294,7 +283,7 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
 end subroutine solve_v2_VF
 
 subroutine production_VF(this,u,w,temp,rho,mu,mut,beta,Rp,Ru,dRu,dRp,dz)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mu,mut,beta

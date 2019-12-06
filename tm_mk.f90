@@ -126,17 +126,23 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                        alpha1,modification,rank,centerBC,periodic)
 end
 
-subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
-  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
+  use mod_mesh, only : mesh
   implicit none
   class(MK_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-  real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  integer,                               intent(IN) :: centerBC,periodic, rank, px
-  real(8),dimension(0:this%k1) :: BCvalue
+  integer,                               intent(IN) :: periodic, rank, px
   real(8),dimension(0:this%i1) :: tmp
-  real(8) :: topBCvalue, botBCvalue
+  real(8),dimension(0:this%k1) :: top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  real(8),dimension(1:this%imax) :: walldist
   integer :: k
+  real(8) :: topBCvalue, botBCvalue
+  
+  top_bcnovalue= mesh%top_bcnovalue
+  bot_bcnovalue= mesh%bot_bcnovalue
+  top_bcvalue  = mesh%top_bcvalue
+  bot_bcvalue  = mesh%bot_bcvalue
+  walldist = mesh%walldist
 
   do k = 0,this%k1 
     this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
@@ -166,7 +172,7 @@ subroutine set_bc_MK(this,mu,rho,walldist,centerBC,periodic,rank,px)
 end subroutine set_bc_MK
 
 subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(MK_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
@@ -207,7 +213,7 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
 
       div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
                +(      w(i,k) -      w(i,km))/dzw(k)
-               
+
       this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
       ! turbulent time scale

@@ -1,235 +1,518 @@
 module mod_mesh
-  !***************GRID
-  real(8) :: dz,dpdz
-  real(8), dimension(:), allocatable :: Ru,Rp,y_fa,y_cv,dru,drp !0:i1
-  real(8), dimension(:), allocatable :: z1,z2                   !0:k1
-  real(8), dimension(:), allocatable :: wallDist                !1:imax
-  integer                            :: centerBC,numDomain
-  real(8), dimension(:), allocatable :: top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1,&
+
+  implicit none
+!****************************************************************************************
+  
+  !*************************!
+  !     Abstract class      !
+  !*************************!
+
+  type, abstract, public :: AbstractMesh
+  integer                            :: i1, k1, imax, kmax
+  real(8), dimension(:), allocatable :: Ru,Rp,dru,drp,y_fa,y_cv     !0:i1
+  real(8), dimension(:), allocatable :: zp,zw,dzp,dzw
+  real(8), allocatable               :: dz,dpdz,start
+  real(8), dimension(:), allocatable :: wallDist                    !1:imax
+  real(8), dimension(:), allocatable :: wallDistu !0:i1
+  integer, allocatable               :: centerBC,numDomain           
+  real(8), dimension(:), allocatable :: top_bcvalue,  bot_bcvalue,   &
+                                        top_bcnovalue,bot_bcnovalue, &
+                                        top_bcvalue1, bot_bcvalue1,  &
                                         ubot_bcvalue
+  contains
+    procedure :: init_mem               => init_mem
+    procedure :: discretize_streamwise  => discretize_streamwise
+    procedure :: discretize_streamwise2  => discretize_streamwise2    
+    procedure :: discretize_wall_normal => discretize_wall_normal
+    procedure :: calc_walldist          => calc_walldist
+    procedure :: set_carthesian         => set_carthesian
+    procedure(init), deferred     :: init
+    procedure(set_bc), deferred   :: set_bc
+  end type AbstractMesh
+
+  interface
+
+    subroutine init(this,LoD,K_start_heat,x_start_heat,rank,px)
+      import :: AbstractMesh
+      class(AbstractMesh) :: this
+      real(8), intent(IN) :: LoD, x_start_heat
+      integer, intent(IN) :: px, K_start_heat,rank
+    end subroutine init
+
+    subroutine set_bc(this,K_start_heat,x_start_heat, rank)
+      import :: AbstractMesh
+      class(AbstractMesh) :: this
+      integer, intent(IN) :: K_start_heat, rank
+      real(8), intent(IN) :: x_start_heat
+    end subroutine set_bc
+  end interface
+
+class(AbstractMesh),  allocatable :: mesh
+!****************************************************************************************
+
+  !*************************!
+  !    Pipe Mesh Class      !
+  !*************************!
+  
+  type, extends(AbstractMesh), public :: Pipe_Mesh
+  contains
+    procedure :: init => init_pipe
+    procedure :: set_bc => set_bc_pipe
+  end type Pipe_Mesh
+
+  !****************************************************************************************
+
+  !*************************!
+  !   Channel Mesh Class    !
+  !*************************!
+  
+  type, extends(AbstractMesh), public :: Channel_Mesh
+  contains
+    procedure :: init => init_channel
+    procedure :: set_bc => set_bc_channel
+    procedure :: calc_walldist => calc_walldist_twowall
+  end type Channel_Mesh
+
+!****************************************************************************************
+
+  !*************************!
+  ! Sym. Channel Mesh Class !
+  !*************************!
+  
+  type, extends(AbstractMesh), public :: SymChannel_Mesh
+  contains
+    procedure :: init => init_symchannel
+    procedure :: set_bc => set_bc_symchannel
+  end type SymChannel_Mesh
+
+!****************************************************************************************
+
+  !*************************!
+  !Boundary Layer Mesh Class!
+  !*************************!
+  
+  type, extends(AbstractMesh), public :: BLayer_Mesh
+  contains
+    procedure :: init => init_bl
+    procedure :: set_bc => set_bc_blayer
+  end type BLayer_Mesh
 
 contains
-!!********************************************************************
-!!     mkgrid
-!!********************************************************************
-subroutine mkgrid(rank)
-  use mod_param
-  implicit none
-  integer, intent(IN)       :: rank
-  real(8)                   :: pi,fA,fB,fact,gridSize,Yplus,Rei
-  real(8), dimension(imax)  :: delta
-  
-  !init mem
-  allocate(Ru(0:i1),Rp(0:i1),y_fa(0:i1),y_cv(0:i1),dru(0:i1),drp(0:i1))
-  allocate(z1(0:k1),z2(0:k1))
-  allocate(wallDist(1:imax))
-  allocate(top_bcvalue(0:k1), bot_bcvalue(0:k1),top_bcvalue1(0:k1), bot_bcvalue1(0:k1), top_bcnovalue(0:k1), bot_bcnovalue(0:k1), &
-    ubot_bcvalue(0:k1))
+!****************************************************************************************
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!****************************************************************************************
 
-  
-  pi    = 4.0*atan(1.0)
-  Rei   = 1.0/Re
-  dz    = 1.0*LoD/(kmax*px)
-  ru(0) = 0
+  !************************!
+  !   Abstract routines    !
+  !************************!
 
-  !pipe
-  if (systemSolve.eq.1) then
-    if (rank.eq.0) print*,"************* SOLVING A PIPE FLOW *************!"
-    numDomain = 1
-    centerBC  = 1
-    gridSize  = 0.5
-    fA = 0.12
-    fB = 2.4
-    dpdz      = 4.0
+  subroutine init_mem(this)
+    implicit none
+    class(AbstractMesh) :: this
+    allocate(this%Ru  (0:this%i1),this%Rp  (0:this%i1), &
+             this%dru (0:this%i1),this%drp (0:this%i1), &
+             this%y_fa(0:this%i1),this%y_cv(0:this%i1))
+    allocate(this%zw  (0:this%k1),this%zp  (0:this%k1), &
+             this%dzw (0:this%k1),this%dzp (0:this%k1))
+    allocate(this%wallDist(1:this%imax), this%wallDistu(0:this%i1))
+    allocate(this%top_bcvalue  (0:this%k1), this%bot_bcvalue  (0:this%k1), &
+             this%top_bcvalue1 (0:this%k1), this%bot_bcvalue1 (0:this%k1), &
+             this%top_bcnovalue(0:this%k1), this%bot_bcnovalue(0:this%k1), &
+             this%ubot_bcvalue (0:this%k1))
+  end subroutine init_mem
 
-    !bc for the momentum and turbulence
-    bot_bcnovalue(:) = 1 !symmetry
-    top_bcnovalue(:) =-1 !wall
-    bot_bcvalue(:)   = 1 ! symmetry
-    top_bcvalue(:)   = 0 ! wall
-    ubot_bcvalue(:)  = 1
+  subroutine set_carthesian(this)
+    implicit none
+    class(AbstractMesh) :: this
+    integer :: i
+    do i=0,this%i1
+      this%ru(i)=1.0
+      this%rp(i)=1.0
+    enddo
+  end subroutine
+
+  subroutine discretize_wall_normal(this, fA, fB, gridSize)
+    implicit None
+    class(AbstractMesh) :: this
+    real(8), intent(IN) :: fB, fA, gridsize
+    real(8) :: fact
+    integer :: i
+
+    this%ru(0) = 0
+
+    !apply stretching
+    do i = 1,this%imax
+      fact       = (i-0.)/(this%imax-0.)
+      this%ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
+      this%ru(i) = this%ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
+    enddo
+
+    !normalize with the gridsize
+    do i=0,this%imax
+      this%ru(i)=this%ru(i)/this%ru(this%imax)*gridSize
+    enddo
+
+    !calculate the cell centers and differences
+    do i =1,this%imax
+      this%Rp(i)  = (this%Ru(i)+this%Ru(i-1))/2.0
+      this%dru(i) = (this%Ru(i)-this%Ru(i-1))
+    enddo
+
+    this%dru(this%i1) = this%dru(this%imax)
+    this%Ru(this%i1)  = this%Ru(this%imax) + this%dru(this%i1)
+    this%Rp(this%i1)  = this%Ru(this%imax) + this%dru(this%i1)/2.0
+
+    this%dru(0) = this%dru(1)
+    this%Rp(0)  = this%Ru(0) - this%dru(0)/2.0
+
+    do i = 0,this%imax
+      this%drp(i) = this%Rp(i+1) - this%Rp(i)
+    enddo
+
+    do i=0,this%i1
+      this%y_cv(i)=this%rp(i)
+      this%y_fa(i)=this%ru(i)
+    enddo
+
+  end subroutine discretize_wall_normal
+
+  subroutine discretize_streamwise(this, LoD, px)
+    implicit None
+    class(AbstractMesh) :: this
+    real(8), intent(IN) :: LoD
+    integer, intent(IN) :: px 
+    this%dz    = 1.0*LoD/(this%kmax*px)
+  end subroutine discretize_streamwise
+
+  subroutine discretize_streamwise2(this, LoD,rank, px)
+    use mod_math, only : splint, spline
+    use mod_param, only : kmax, k1, K_start_heat
+    implicit None
+    include 'mpif.h'
+    class(AbstractMesh) :: this
+    real(8), intent(IN) :: LoD
+    integer, intent(IN) :: rank, px 
+    real(8) :: L,a,c,H
+    real(8), dimension(0:2000) :: y, x2tab, x, ys
+    real(8), dimension(0:this%k1)    :: zw, zp, dzw,dzp
+    real(8) :: value
+    integer :: i,nelem, k, ierr
+    integer :: tabkhi,tabklo = 0 
+    character*5 cha
+    real(8) :: tmp
     
+    a = 10.
+    L = 0.1
+    c = 0.8
+    H = 0.1
+    
+    !create function to interpolate on
+    nelem=2000
+    do i=0,nelem
+      x(i) = (i+0.)/(nelem+0)
+      y(i) = H*((tanh(a*(x(i)/L-0.5))+1.)/2.)+c*x(i)
+    enddo
+    do i=0,nelem
+      ys(i) = (y(i)-y(0))/(y(nelem)-y(0))
+    enddo
+    call spline(ys,x,  nelem+1,x2tab)
+
+    !calculate the cell faces
+    do i = 0,kmax!*px
+      call splint(ys,x, x2tab,nelem+1,(i+rank*this%kmax+0.)/(kmax*px),zw(i),tabkhi,tabklo) 
+      zw(i) = zw(i)*LoD
+    enddo
+    call shiftv_b(zw, this%k1, value, rank); zw(k1) = value;
+    if (rank .eq. px-1) zw(k1) =  zw(kmax)+(zw(kmax)-zw(kmax-1))
+
+    !calculate the cell centers
+    do k =1,this%k1
+      zp(k)  = (zw(k)+zw(k-1))/2.0
+    enddo
+    call shiftv_f(zp, this%k1, value, rank); zp(0) = value;
+    if (rank .eq. 0) then
+      zp(0) =  -zp(1)
+      tmp = zw(K_start_heat)
+    endif
+
+    call MPI_Bcast( tmp, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ierr);
+    this%start = tmp
+    !calculate the differences
+    do i = 0,kmax
+      dzp(i) = (zp(i+1)+zp(i))/2.
+    enddo
+    if (rank .eq. 0)   dzp(0) = dzp(1)
+    do i = 1,k1
+      dzw(i) = zw(i)-zw(i-1)
+    enddo
+    dzw(0) = dzw(1)
+
+    ! this%dz    = 1.0*LoD/(this%kmax*px)
+    ! do k=0,k1
+    !    dzw(k) = this%dz 
+    !    dzp(k) = this%dz
+    !    zw(k)  = (k+this%kmax*rank)*this%dz
+    !    zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
+    ! enddo
+
+    this%dzw = dzw
+    this%dzp = dzp
+    this%zw  = zw
+    this%zp  = zp
+
+  end subroutine discretize_streamwise2
+
+  subroutine calc_walldist(this, gridSize)
+    implicit None
+    class(AbstractMesh) :: this
+    real(8), intent(IN) :: gridSize
+    integer :: i
+    do i = 1,this%imax
+      this%wallDist(i) = gridSize - this%rp(i)
+    enddo
+    do i = 0,this%i1
+      this%wallDistu(i) = gridSize - this%ru(i)
+    enddo
+  end subroutine
+
+!****************************************************************************************
+
+  !*************************!
+  !    Pipe Mesh routines   !
+  !*************************!
 
 
+  subroutine init_pipe(this, LoD, K_start_heat, x_start_heat, rank,px)
+    implicit none
+    class(Pipe_Mesh) :: this
+    real(8), intent(IN) :: LoD, x_start_heat
+    integer, intent(IN) :: px, K_start_heat,rank
+    real(8) :: pi, gridsize, fA, fB
+    this%numDomain = 1
+    this%centerBC = 1
+    gridSize  = 0.5
+    fA        = 0.12
+    fB        = 2.4
+    this%dpdz = 4.0
+
+    call this%init_mem()
+    call this%discretize_streamwise(LoD, px)
+    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%calc_walldist(gridsize)
+    call this%set_bc(K_start_heat, x_start_heat, rank)
+
+  end subroutine init_pipe
+  subroutine set_bc_pipe(this, K_start_heat, x_start_heat,rank)
+    class(Pipe_Mesh) :: this
+    real(8), intent(IN) :: x_start_heat
+    integer, intent(IN) :: K_start_heat, rank
+    integer :: i,k
+    !bc for the momentum and turbulent scalars
+    this%bot_bcnovalue(:) = 1 ! symmetry
+    this%bot_bcvalue(:)   = 1 ! symmetry
+    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    this%top_bcnovalue(:) =-1 ! wall
+    this%top_bcvalue(:)   = 0 ! wall
+    
     ! bc for the temperature
-    do k=0,k1
-      !if ((k+rank*kmax)*dz.lt.x_start_heat) then
-      if ((k.lt.K_start_heat) .and. (rank .eq. 0)) then
-
-        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+    this%bot_bcvalue1(:)  = 1 ! symmetry
+    do k=0,this%k1
+      if ( (k+rank*this%kmax)*this%dz.lt. x_start_heat) then
+        this%top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
-        top_bcvalue1(k) =0 ! heat flux or isothermal
+        this%top_bcvalue1(k) =0 ! heat flux or isothermal
       endif
     enddo
-    bot_bcvalue1(:)   = 1 ! symmetry
+
+  end subroutine
 
 
+!****************************************************************************************
 
-  !channel
-  elseif (systemSolve.eq.2) then
-    if (rank.eq.0) print*,"************* SOLVING A CHANNEL FLOW *************!"
-    numDomain = -1
-    centerBC  = -1
+  !*************************!
+  !  Channel Mesh routines  !
+  !*************************!
+
+  subroutine init_channel(this, LoD, K_start_heat, x_start_heat,rank, px)
+    implicit none
+    class(Channel_Mesh) :: this
+    real(8), intent(IN) :: LoD, x_start_heat
+    integer, intent(IN) :: px, K_start_heat,rank
+    real(8) :: pi, gridsize, fA, fB
+    this%numDomain = -1
+    this%centerBC = -1
     gridSize  = 2.0
     fA        = 0.5
     fB        = 4.6
-    dpdz      = 1.0
-    bot_bcnovalue(:) =-1 ! wall
-    top_bcnovalue(:) =-1 ! wall
-    bot_bcvalue(:)   = 0 ! wall
-    top_bcvalue(:)   = 0 ! wall
-    ubot_bcvalue(:)  = 1 ! 1: set the u value to zero at the wall
-    
+    this%dpdz = 1.0
 
+    call this%init_mem()
+    call this%discretize_streamwise(LoD, px)
+    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%set_bc(K_start_heat, x_start_heat,rank)
+    call this%calc_walldist(gridsize)
+    call this%set_carthesian()
+
+  end subroutine init_channel
+
+
+  subroutine set_bc_channel(this, K_start_heat, x_start_heat,rank)
+    class(Channel_Mesh) :: this
+    real(8), intent(IN) :: x_start_heat
+    integer, intent(IN) :: K_start_heat, rank
+    integer :: i,k
+
+    !bc for the momentum and turbulent scalars
+    this%bot_bcnovalue(:) =-1 ! wall
+    this%bot_bcvalue(:)   = 0 ! wall
+    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    this%top_bcnovalue(:) =-1 ! wall
+    this%top_bcvalue(:)   = 0 ! wall
 
     ! bc for the temperature
-    do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
-        top_bcvalue1(k) =1 ! no heat flux (symmetry)
-        bot_bcvalue1(k) =1 ! no heat flux (symmetry)
+    do k=0,this%k1
+      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+        this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
+        this%bot_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
-        top_bcvalue1(k) =0 ! heat flux or isothermal
-        bot_bcvalue1(k) =0 ! heat flux or isothermal
+        this%top_bcvalue1(k) = 0 ! heat flux or isothermal
+        this%bot_bcvalue1(k) = 0 ! heat flux or isothermal
       endif
     enddo
 
-  !bl
-  elseif (systemSolve.eq.3) then
-    if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
-    numDomain = -1
-    centerBC  = 1
+  end subroutine
+
+  subroutine calc_walldist_twowall(this, gridSize)
+    implicit None
+    class(Channel_Mesh) :: this
+    real(8), intent(IN) :: gridSize
+    integer :: i
+    do i = 1,this%imax
+      if (this%rp(i).le.1) then
+        this%wallDist(i) = this%rp(i)
+      else
+        this%wallDist(i) = gridSize-this%rp(i)
+      endif
+    enddo
+    do i = 0, this%i1 
+      if (this%ru(i).le.1) then
+        this%wallDistu(i) = this%ru(i)
+      else
+        this%wallDistu(i) = gridSize-this%ru(i)
+      endif
+    enddo
+  end subroutine
+
+!****************************************************************************************
+
+  !**************************!
+  !Sym. Channel Mesh routines!
+  !**************************!
+
+  subroutine init_symchannel(this, LoD, K_start_heat, x_start_heat,rank, px)
+    implicit none
+    class(SymChannel_Mesh) :: this
+    real(8), intent(IN) :: LoD, x_start_heat
+    integer, intent(IN) :: px, K_start_heat,rank
+    real(8) :: pi, gridsize, fA, fB
+    this%numDomain = -1
+    this%centerBC = 1
     gridSize  = 1.0
-    fA = 0.12
-    fB = 2.4
-    dpdz      = 1.0
-    bot_bcnovalue(:) = 1 !symmetry
-    bot_bcvalue(:)   = 1 ! symmetry
+    fA        = 0.12
+    fB        = 2.4
+    this%dpdz = 1.0
 
-    top_bcnovalue(:) =-1 !wall
-    top_bcvalue(:)   = 0 ! wall
-    ubot_bcvalue(:)  = 1 ! 0: set the wall to du/dy =0
+    call this%init_mem()
+    call this%discretize_streamwise(LoD, px)
+    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%set_bc(K_start_heat, x_start_heat,rank)
+    call this%calc_walldist(gridsize)
+    call this%set_carthesian()
+
+  end subroutine init_symchannel
+
+  subroutine set_bc_symchannel(this, K_start_heat, x_start_heat,rank)
+    class(SymChannel_Mesh) :: this
+    real(8), intent(IN) :: x_start_heat
+    integer, intent(IN) :: K_start_heat, rank
+    integer :: i,k
     
+    !bc for the momentum and turbulent scalars
+    this%bot_bcnovalue(:) = 1 ! symmetry
+    this%bot_bcvalue(:)   = 1 ! symmetry
+    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    this%top_bcnovalue(:) =-1 ! wall
+    this%top_bcvalue(:)   = 0 ! wall
     
     ! bc for the temperature
-    do k=0,k1
-      !if ((k+rank*kmax)*dz.lt.x_start_heat) then
-      if ((k.lt.K_start_heat) .and. (rank .eq. 0)) then
-        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+    this%bot_bcvalue1(:)  = 1 ! symmetry
+    do k=0,this%k1
+      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+        this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
-        top_bcvalue1(k) =0 ! heat flux or isothermal
+        this%top_bcvalue1(k) = 0 ! heat flux or isothermal
       endif
     enddo
-    bot_bcvalue1(:)   = 1 ! symmetry
+    
+  end subroutine
 
+!****************************************************************************************
 
-    elseif (systemSolve.eq.4) then
-    if (rank.eq.0) print*,"************* SOLVING A BOUNDARY LAYER FLOW *************!"
-    numDomain = -1
-    centerBC  = 1
+  !****************************!
+  !Boundary Layer Mesh routines!
+  !****************************!
 
+  subroutine init_bl(this, LoD, K_start_heat, x_start_heat,rank, px)
+    implicit none
+    class(BLayer_Mesh) :: this
+    real(8), intent(IN) :: LoD, x_start_heat
+    integer, intent(IN) :: px, K_start_heat,rank
+    real(8) :: pi, gridsize, fA, fB
+    this%numDomain = -1
+    this%centerBC = 1
     gridSize  = 1
-    fA = 0.12
-    fB = 2.4
-    dpdz      = 1.0
-    
-    do k=0,k1
-      if ((rank.eq.0) .and. (k.le.K_start_heat)) then
-        top_bcnovalue(k) =1 !symmetry
-        top_bcvalue(k)   =1 !symmetry
+    fA        = 0.12
+    fB        = 2.4
+    this%dpdz = 1.0
+
+    call this%init_mem()
+    call this%discretize_streamwise(LoD, px)
+    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%set_bc(K_start_heat, x_start_heat,rank)
+    call this%calc_walldist(gridsize)
+    call this%set_carthesian()
+
+  end subroutine init_bl
+
+  subroutine set_bc_blayer(this, K_start_heat, x_start_heat,rank)
+    class(BLayer_Mesh) :: this
+    real(8), intent(IN) :: x_start_heat
+    integer, intent(IN) :: K_start_heat, rank
+    integer :: i,k
+
+    !bc for the momentum and turbulent scalars
+    this%bot_bcvalue(:)   = 1 ! symmetry
+    this%bot_bcnovalue(:) = 1 ! symmetry
+    this%ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
+    do k=0,this%k1
+      if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
+        this%top_bcnovalue(k) = 1 !symmetry
+        this%top_bcvalue(k)   = 1 !symmetry
       else
-        top_bcnovalue(k) =-1 !wall
-        top_bcvalue(k)   = 0 ! wall
+        this%top_bcnovalue(k) =-1 !wall
+        this%top_bcvalue(k)   = 0 !wall
       endif
     enddo
-    ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
-
-    bot_bcvalue(:)   = 1 ! symmetry
-    bot_bcnovalue(:) = 1 !symmetry
     
     ! bc for the temperature
-    do k=0,k1
-      if ((k+rank*kmax)*dz.lt.x_start_heat) then
-        top_bcvalue1(k) =1 ! no heat flux (symmetry)
+    this%bot_bcvalue1(:)      = 1 ! symmetry
+    do k=0,this%k1
+      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+        this%top_bcvalue1(k)  = 1 ! no heat flux (symmetry)
       else
-        top_bcvalue1(k) =0 ! heat flux or isothermal
+        this%top_bcvalue1(k)  = 0 ! heat flux or isothermal
       endif
     enddo
-    bot_bcvalue1(:)   = 1 ! symmetry
+  end subroutine
+end module mod_mesh
 
-
-    
-  else
-    if (rank.eq.0) print '("systemSolve is ",i7," when it should be either 1 (pipe), 2(channel) or 3(BL)")', systemSolve
-    stop
-  endif
-
-  !apply stretching
-  do i = 1,imax
-    fact = (i-0.)/(imax-0.)
-    ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
-    ru(i) = ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
-    delta(i)=0.5*(ru(i)-ru(i-1))
-  enddo
-
-  !normalize with the gridsize
-  do i=0,imax
-    ru(i)=ru(i)/ru(imax)*gridSize
-  enddo
-
-  !calculate the cell centers and differences
-  do i = 1 , imax
-    Rp(i)  = (Ru(i)+Ru(i-1))/2.0
-    dru(i) = (Ru(i)-Ru(i-1))
-  enddo
-  dru(i1) = dru(imax)
-  Ru(i1) = Ru(imax) + dru(i1)
-  Rp(i1) = Ru(imax) + dru(i1)/2.0
-  dru(0)  = dru(1)
-  Rp(0)  = Ru(0) - dru(0)/2.0
-  do i = 0,imax
-    drp(i) = Rp(i+1) - Rp(i)
-  enddo
-
-  !calculate wall distance
-  !channel
-  if (centerBC.eq.-1) then 
-    do i = 1,imax
-      if (rp(i).le.1) then
-        wallDist(i) = rp(i)
-      else!channel
-  
-        wallDist(i) = gridSize-rp(i)
-      endif
-    enddo
-  !bl/pipe
-  else 
-    do i = 1,imax
-      wallDist(i) = gridSize - rp(i)
-    enddo
-  endif
-  do i=0,i1
-    y_cv(i)=rp(i)
-    y_fa(i)=ru(i)
-  enddo
- 
-  !conversion to carthesian coordinates
-  if (numDomain.eq.-1) then
-    do i=0,i1
-      ru(i)=1.0
-      rp(i)=1.0
-    enddo
-  endif
-
-  !write the file
-  if (rank.eq.0) then
-    open(11,file = 'grid.txt')
-    write(11,*) Re, imax
-    do i=1,imax
-      yplus = wallDist(i)*Re
-      write(11,'(i5,4F12.6)') i,yplus,y_fa(i),y_cv(i),delta(max(1,i))
-    enddo
-    close(11)
-  endif
-  return
-end
-end module

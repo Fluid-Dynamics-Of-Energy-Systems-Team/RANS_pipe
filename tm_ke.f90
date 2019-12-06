@@ -59,12 +59,11 @@ module ke_tm
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
       real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_KE
-    subroutine set_bc_KE(this,mu,rho,walldist,centerBC,periodic,rank,px)
+    subroutine set_bc_KE(this,mu,rho,periodic,rank,px)
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-      real(8),dimension(1:this%imax),        intent(IN) :: walldist
-      integer,                               intent(IN) :: centerBC,periodic, rank, px
+      integer,                               intent(IN) :: periodic, rank, px
     end subroutine set_bc_KE
     subroutine init_w_inflow_KE(this,Re,systemsolve)
       import :: KE_TurbModel
@@ -123,7 +122,7 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
   use mod_math
-  use mod_mesh, only : bot_bcnovalue, top_bcnovalue
+  use mod_mesh, only : mesh
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -133,7 +132,11 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resK
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  real(8), dimension(0:this%k1)           :: bot_bcnovalue, top_bcnovalue
   integer                                 :: i,k
+
+  bot_bcnovalue = mesh%bot_bcnovalue
+  top_bcnovalue = mesh%top_bcnovalue
 
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
@@ -208,7 +211,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
   use mod_math
-  use mod_mesh, only : bot_bcvalue, top_bcvalue
+  use mod_mesh, only : mesh
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -218,8 +221,12 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resE
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  real(8), dimension(0:this%k1)           :: bot_bcvalue,top_bcvalue
   integer                                 :: i,k
   
+  top_bcvalue = mesh%bot_bcvalue
+  bot_bcvalue = mesh%top_bcvalue
+
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%eps,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
@@ -298,7 +305,7 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
 end subroutine rhs_eps_KE
 
 subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,dz,modification)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: putin, muk, mut, rho

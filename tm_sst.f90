@@ -101,7 +101,7 @@ end subroutine init_w_inflow_SST
 
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho, mu, mui
@@ -193,17 +193,25 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                         alpha2,modification,rank,centerBC,periodic)
 end subroutine advance_SST
 
-subroutine set_bc_SST(this,mu,rho,walldist,centerBC,periodic,rank,px)
-  use mod_mesh, only : top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+subroutine set_bc_SST(this,mu,rho,periodic,rank,px)
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-  real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  integer,                               intent(IN) :: periodic, rank, px
   real(8),dimension(0:this%k1) :: BCvalue
   real(8),dimension(0:this%i1) :: tmp
   real(8) :: botBCvalue, topBCvalue
   integer :: k
+  real(8), dimension(0:this%k1) :: top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  real(8),dimension(1:this%imax):: walldist
+  
+
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+  top_bcvalue = mesh%top_bcvalue
+  bot_bcvalue = mesh%bot_bcvalue
+  walldist = mesh%walldist
 
   do k = 0,this%k1
     this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
@@ -272,7 +280,7 @@ end subroutine get_sol_SST
 
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
@@ -349,7 +357,7 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphak,modification,rank,centerBC,periodic)
   use mod_math
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
@@ -359,8 +367,12 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                                intent(OUT):: resK
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl,sigmakSST
   real(8), dimension(this%imax) :: a,b,c,rhs
+  real(8), dimension(0:this%k1) :: top_bcnovalue, bot_bcnovalue
   integer i,k
   
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+
   resK  = 0.0; dnew=0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%k,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
@@ -433,7 +445,7 @@ subroutine rhs_k_SST(this,putout,dimpl,rho)
 end subroutine rhs_k_SST
 
 subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modification)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho
@@ -441,7 +453,6 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,dz,modifi
   integer                                , intent(IN) :: modification
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout
   real(8), dimension(0:this%k1) :: dzw, dzp
-
   integer   km,kp,i,k
 
   dzw = mesh%dzw
@@ -491,7 +502,7 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                        Ru,Rp,dru,drp,dz, &
                        alphae,modification,rank,centerBC,periodic)
   use mod_math
-  use mod_mesh, only : top_bcvalue, bot_bcvalue
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
@@ -501,9 +512,13 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   real(8),                                intent(OUT):: resOm
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl,sigmakSST
   real(8), dimension(this%imax) :: a,b,c,rhs
+  real(8), dimension(0:this%k1) :: top_bcvalue, bot_bcvalue
   integer i,k
-  resOm = 0.0
 
+  bot_bcvalue = mesh%bot_bcvalue
+  top_bcvalue = mesh%top_bcvalue
+
+  resOm = 0.0
   dnew=0.0; dimpl = 0.0;
   call advecc(dnew,dimpl,this%om,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
   call this%rhs_om_sst(dnew,dimpl,this%k,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,dz)
@@ -543,7 +558,7 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
 end subroutine solve_om_sst
 
 subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,dz)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,beta, putink
@@ -610,7 +625,7 @@ subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta,Rp,Ru,dRu,dRp,d
 end subroutine rhs_om_sst
 
 subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,modification)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho

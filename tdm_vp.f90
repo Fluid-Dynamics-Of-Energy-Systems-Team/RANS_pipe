@@ -227,7 +227,7 @@ contains
 
   subroutine set_alphat_bae(this,mut,lam_cp,mu,alphat)
     use mod_common, only : wnew, rnew, cp, temp
-    use module_mesh, only : mesh
+    use mod_mesh, only : mesh
     implicit none
     
     class(Bae_TurbDiffModel) :: this
@@ -250,14 +250,14 @@ contains
         ip = i+1
         im = i-1
         w = (wnew(i,k)+wnew(i,km))/2. !velocity at cell center
-        dwdy = ( &
-                (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
-               -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
-               )/(walldistu(ip)-walldistu(i))
         ! dwdy = ( &
-        !         (wnew(ip,k)+wnew(ip,km))/2. &
-        !        -(wnew(im,k)+wnew(im,km))/2. &
-        !        )/(walldist(ip)-walldist(im))
+        !         (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
+        !        -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
+        !        )/(walldistu(ip)-walldistu(i))
+        dwdy = ( &
+                (wnew(ip,k)+wnew(ip,km))/2. &
+               -(wnew(im,k)+wnew(im,km))/2. &
+               )/(walldist(ip)-walldist(im))
         
         drhody = ( (rnew(ip,k) + rnew(i ,k))/2.0 &
                   -(rnew(i, k) + rnew(im,k))/2.0 &

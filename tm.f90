@@ -51,17 +51,16 @@ module mod_tm
       class(TurbModel) :: this
       real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
       real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
-      real(8), dimension(1:this%i1),          intent(IN) :: walldist
+      real(8), dimension(1:this%imax),        intent(IN) :: walldist
       real(8),                                intent(IN) :: dz,alpha1,alpha2,alpha3
       integer,                                intent(IN) :: modification,rank,centerBC,periodic
       real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_turb_tm
-    subroutine set_bc_tm(this,mu,rho,walldist,centerBC,periodic,rank,px)
+    subroutine set_bc_tm(this,mu,rho,periodic,rank,px)
       import :: TurbModel
       class(TurbModel) :: this
       real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-      real(8),dimension(1:this%imax),        intent(IN) :: walldist
-      integer,                               intent(IN) :: centerBC,periodic, rank, px
+      integer,                               intent(IN) :: periodic, rank, px
     end subroutine set_bc_tm
     subroutine get_profile_tm(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
       import :: TurbModel
@@ -115,18 +114,18 @@ contains
    !    Abstract routines    !
    !************************!
 
-subroutine set_mut_bc(this,mut,periodic, px, rank)
-  use mod_mesh, only: top_bcnovalue, bot_bcnovalue
+subroutine set_mut_bc(this,mut,periodic,px,rank)
+  use mod_mesh, only : mesh
   class(TurbModel) :: this
   integer,                                 intent(IN) :: periodic,px,rank
-  real(8), dimension(0:this%i1,0:this%k1), intent(OUT) :: mut
+  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: mut
   real(8), dimension(0:this%i1) :: tmp
-  
-  mut(this%i1,:) = top_bcnovalue(:)*mut(this%imax,:)
-  mut(0,:)       = bot_bcnovalue(:)*mut(1,:)
+ 
+  mut(this%i1,:) = mesh%top_bcnovalue(:)*mut(this%imax,:)
+  mut(0,:)       = mesh%bot_bcnovalue(:)*mut(1,:)
 
-  call shiftf(mut,tmp,rank); mut(:,0)  = tmp(:);
-  call shiftb(mut,tmp,rank); mut(:,this%k1) = tmp(:);
+  call shiftf(mut,tmp,rank); mut(:,0)      =tmp(:);
+  call shiftb(mut,tmp,rank); mut(:,this%k1)=tmp(:);
 
   if ((periodic.ne.1).and.(rank.eq.0)) then
     mut(:,0) = this%mutin(:)
@@ -149,11 +148,10 @@ subroutine init_laminar(this)
     call this%init_mem()
 end subroutine init_laminar
 
-subroutine set_bc_laminar(this,mu,rho,walldist,centerBC,periodic,rank,px)
+subroutine set_bc_laminar(this,mu,rho,periodic,rank,px)
       class(Laminar_TurbModel) :: this
       real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-      real(8),dimension(1:this%imax),        intent(IN) :: walldist
-      integer,                               intent(IN) :: centerBC,periodic, rank, px
+      integer,                               intent(IN) :: periodic, rank, px
 end subroutine set_bc_laminar
 
 subroutine init_sol_laminar(this)

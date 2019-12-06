@@ -138,15 +138,19 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,Ru,Rp,dru,drp,dz,walldist,alpha1,modification,centerBC,periodic,rank)
 end subroutine advance_SA
 
-subroutine set_bc_SA(this,mu,rho,walldist,centerBC,periodic,rank,px)
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
+  use mod_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
-  real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  integer,                               intent(IN) :: periodic, rank, px
   real(8),dimension(0:this%i1) :: tmp
+  real(8),dimension(0:this%k1) :: top_bcnovalue, bot_bcnovalue
   integer :: k
+
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+
   do k = 0,this%kmax 
     this%nuSA(0,k)       = bot_bcnovalue(k)*this%nuSA(1,k)         !symmetry or 0 value
     this%nuSA(this%i1,k) = top_bcnovalue(k)*this%nuSA(this%imax,k) !symmetry or 0 value
@@ -201,7 +205,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     Ru,Rp,dru,drp,dz,walldist, &
                     alphak,modification,centerBC,periodic,rank)
   use mod_math
-  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+  use mod_mesh, only : mesh
   use mod_common, only : res_nuSA
   implicit none
   class(SA_TurbModel) :: this
@@ -213,9 +217,13 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   real(8),                               intent(OUT):: resSA
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,tempArray,dimpl,eknu,eknui,eknuk
   real(8), dimension(this%imax)           :: a,b,c,rhs
+  real(8), dimension(0:this%k1) :: top_bcnovalue, bot_bcnovalue
   integer :: k,i
   real(8) cb3
   
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+
   cb3 = 2.0/3.0
   resSA = 0.0
   dnew=0.0; dimpl = 0.0;
@@ -271,7 +279,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
 end subroutine solve_SA
 
 subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,rho,mu,nuSA
@@ -327,7 +335,7 @@ subroutine production_SA(this,nuSA,u,w,rho,mu,dRu,dz,walldist)
 end subroutine production_SA
 
 subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,modification)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: rho_mod,ek,eki,ekk, ekmt
@@ -383,7 +391,7 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,Ru,Rp,dru,dz,m
 end subroutine diffusion_SA
 
 subroutine rhs_SA(this, putout,dimpl,nuSA,rho,walldist,drp,dz,modification)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,nuSA

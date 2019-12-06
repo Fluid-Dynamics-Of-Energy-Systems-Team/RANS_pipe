@@ -2,18 +2,20 @@
 !!     poisson solver
 !!********************************************************************
 subroutine fillps(rank)
-  use mod_param, only : i, k, kmax, imax,k1
+  use mod_param, only : i, k, kmax, imax,k1,i1
   use mod_common,only : dudt,dwdt,rnew,rold,p,qcrit,dt
-  use mod_mesh,  only : dz, dru, rp, ru
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   include 'mpif.h'
   integer ierr,rank
   real*8 sumps,sumps_tot
   real*8,dimension(0:k1) ::  dzw, dzp
+  real(8), dimension(0:i1) :: dru, rp, ru
   dzw = mesh%dzw
   dzp = mesh%dzp
-
+  dru = mesh%dru
+  rp  = mesh%rp
+  ru  = mesh%ru
   !
   !     *** Fill the right hand for the poisson solver. ***
   !
@@ -114,7 +116,7 @@ end subroutine
 subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
                           mom_th, dis_th, bl_th, stress,sfriction)
   use mod_param, only : k1,i1,imax
-  use mod_mesh, only : top_bcnovalue, y_cv, drp, dru
+  use mod_mesh, only : mesh
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: w, mui
   real(8), intent(IN) :: rho_fs, w_fs
@@ -122,12 +124,12 @@ subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
   integer :: k
 
   do k=0,k1
-    if (top_bcnovalue(k) .eq. -1) then
-      call calc_momentum_thickness(w(:,k),w_fs,dru, i1, imax, mom_th(k))
-      call calc_displacement_thickness(w(:,k), w_fs,dru, i1, imax, dis_th(k))
-      call calc_bl_thickness(w(:,k), w_fs, y_cv, i1, imax, bl_th(k))
-      call calc_shear_stress(w(:,k), mui(:,k),drp, i1,imax, stress(k))
-      call calc_skin_friction(w(:,k), mui(:,k),drp, rho_fs, w_fs,i1,imax, sfriction(k))
+    if (mesh%top_bcnovalue(k) .eq. -1) then
+      call calc_momentum_thickness(w(:,k),w_fs,mesh%dru, i1, imax, mom_th(k))
+      call calc_displacement_thickness(w(:,k), w_fs,mesh%dru, i1, imax, dis_th(k))
+      call calc_bl_thickness(w(:,k), w_fs, mesh%y_cv, i1, imax, bl_th(k))
+      call calc_shear_stress(w(:,k), mui(:,k),mesh%drp, i1,imax, stress(k))
+      call calc_skin_friction(w(:,k), mui(:,k),mesh%drp, rho_fs, w_fs,i1,imax, sfriction(k))
     else
       mom_th(k)=0; dis_th(k)=0; bl_th(k)=0; stress(k)=0; sfriction(k)=0;
     endif
@@ -168,9 +170,8 @@ end subroutine interpolate_vector
 
 subroutine interpolate_solution(i1_old, k1_old, rank, px)
   use mod_common, only : wnew, unew, rnew, ekm, ekmt, cnew, win, ekmtin, uin
-  use mod_mesh, only : y_cv, y_fa, dz
   use mod_param, only : read_fname,i1,k1, kmax, periodic
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
 
   implicit none
   include "mpif.h"
@@ -180,11 +181,6 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   real(8), dimension(0:i1_old) :: tmp, win_old,wout_old,uin_old,uout_old,ekmtin_old, ekmtout_old,xin_old,xout_old
   integer ::  i,k
   integer :: ierror
-  real*8,dimension(0:k1) ::  zw, zp
-    character*5 cha
-
-  zw = mesh%zw
-  zp = mesh%zp
 
   call read_mpiio_formatted(trim(read_fname), xold, yold, uold,wold,rold,cold,pold,ekmold, ekmtold,dummy,     &
                                  dummy, dummy, dummy, dummy,dummy,dummy, i1_old, k1_old,rank,px)
@@ -192,10 +188,10 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   !interpolate on the y values of the new grid
   do k=0,k1
     do i=0,i1
-      x(i,k) =zp(k)
-      y (i,k)=y_cv(i)
-      xw(i,k)=zw(k)
-      yu(i,k)=y_fa(i)
+      x(i,k) =mesh%zp(k)
+      y (i,k)=mesh%y_cv(i)
+      xw(i,k)=mesh%zw(k)
+      yu(i,k)=mesh%y_fa(i)
     enddo
   enddo
   
@@ -253,15 +249,6 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
     uin(:)   =unew(:,0)
   endif
 
-  ! write(cha,'(I5.5)')rank
-  ! OPEN(15, file=cha, status='replace')
-  ! do k = 0,k1
-  !   do i = 0,i1
-  !    write(15,*) x(i,k), y(i,k), unew(i,k), wnew(i,k), ekmt(i,k)
-  !   enddo
-  ! enddo
-  ! close(15)
-
   call MPI_Bcast(win,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
   call MPI_Bcast(ekmtin,i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
   call MPI_Bcast(uin,   i1+1, MPI_REAL8,0,MPI_COMM_WORLD, ierror)
@@ -275,15 +262,16 @@ end subroutine
 subroutine correc(rank,setold)
   use mod_param
   use mod_common
-  use mod_mesh
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
       
   integer rank,setold
   real*8 pplus_w(imax)
-  real*8,dimension(0:k1) ::  dzw, dzp
+  real(8), dimension(0:k1) :: dzw, dzp
+  real(8), dimension(0:i1) :: drp
   dzw = mesh%dzw
   dzp = mesh%dzp
+  drp = mesh%drp
 
   do k=1,kmax
     do i=1,imax-1
@@ -338,17 +326,19 @@ end
 !!     chkdt
 !!********************************************************************
 subroutine chkdt(rank,istap)
-  use mod_param
-  use mod_common
-  use mod_mesh
-  use module_mesh, only : mesh
+  use mod_param,  only : imax,kmax,i1,k1,i,k,dtmax,CFL
+  use mod_common, only : wnew, unew, dt
+  use mod_mesh,only : mesh
   implicit none
   include 'mpif.h'
   integer rank,ierr,istap
-  real*8  tmp,Courant,dtmp,tmp1,tmp2,tmp3,dr2,dz2,kcoeff
-  real*8,dimension(0:k1) ::  dzw, dzp
+  real*8  tmp,dtmp
+  real(8), dimension(0:k1) :: dzw, dzp
+  real(8), dimension(0:i1) :: drp
+
   dzw = mesh%dzw
   dzp = mesh%dzp
+  drp = mesh%drp
 
   dt = dtmax
 
@@ -372,17 +362,20 @@ end
 !!     chkdiv
 !!********************************************************************
 subroutine chkdiv(rank)
-  use mod_param, only : kmax, imax, i, k,k1
+  use mod_param, only : kmax, imax, i, k,k1, i1
   use mod_common,only : rnew, unew, wnew, dt, rold
-  use mod_mesh,  only : dz, dru, ru, rp
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none    
   include 'mpif.h'
   integer rank,ierr,ll
   real*8   div,divmax,divbar,divmax_tot,divbar_tot,rhoip,rhoim,rhokp,rhokm
-  real*8,dimension(0:k1) ::  dzw, dzp
+  real(8), dimension(0:k1) :: dzw, dzp
+  real(8), dimension(0:i1) :: dru,ru,rp
   dzw = mesh%dzw
   dzp = mesh%dzp
+  ru  = mesh%ru
+  rp  = mesh%rp
+  dru = mesh%dru
 
   divbar = 0.0
   divmax = 0.0
@@ -441,13 +434,13 @@ end
 !!     diffusion term in the z-direction, set as a source term...
 !!********************************************************************
 subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-  use mod_param
-  use module_mesh, only : mesh
+  use mod_param,   only : i,k,kmax,imax,k1,i1
+  use mod_mesh, only : mesh
   implicit none
   integer   km,kp,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
-    rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
-    ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
+             rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
+             ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
   real(8), dimension(0:k1) :: dzw, dzp
 
   dzw = mesh%dzw
@@ -536,20 +529,18 @@ end
 !!     
 !!*****************************************************************
 subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   integer  i,k,im,ip,km,kp,i1,k1,numDom
-  real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
-    ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
-    epop,epom,dzi,divUim,divUip,divUi,dif
+  real*8   putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
+           ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
+           epop,epom,divUim,divUip,divUi,dif
   real*8,dimension(0:k1) ::  dzw, dzp
   dzw = mesh%dzw
   dzp = mesh%dzp
 
   !pipe
   if (numDom == -1) then
-
-    dzi =1./dz
     do k=1,k1-1
       kp=k+1
       km=k-1
@@ -660,7 +651,7 @@ end
 !!     
 !!*****************************************************************
 subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
      
 
@@ -766,7 +757,7 @@ end
 !!     
 !!********************************************************************
 subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagImpl)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
 
   integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank,periodic
@@ -922,7 +913,7 @@ end
 !!     
 !!********************************************************************
 subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,drp,dz,i1,k1)
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
   integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
   real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
@@ -999,7 +990,7 @@ end
 !!********************************************************************
 subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
   use mod_param
-  use module_mesh, only : mesh
+  use mod_mesh, only : mesh
   implicit none
 
   integer   im,ip,km,kp,ib,ie,kb,ke
@@ -1011,13 +1002,10 @@ subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
   dzw = mesh%dzw
   dzp = mesh%dzp
 
-
-
   ib = 1
   ie = i1-1
   kb = 1
   ke = k1-1
-
 
   do k=kb,ke
     kp=k+1
