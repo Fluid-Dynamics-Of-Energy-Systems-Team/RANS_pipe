@@ -73,13 +73,6 @@ if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 call turb_model%init()
 
-!initialize turbulent diffusivity model
-if (turbdiffmod.eq.0) allocate(turbdiff_model,source=        CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
-if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
-if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
-if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
-if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
-call turbdiff_model%init()
 
 !initialize grid including bc
 if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
@@ -88,6 +81,16 @@ if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
 if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
+
+!initialize turbulent diffusivity model
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=        CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
+if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
+if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
+if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
+if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.,mesh%walldist*Re))
+call turbdiff_model%init()
+1
 
 call mkgrid(rank)
 
