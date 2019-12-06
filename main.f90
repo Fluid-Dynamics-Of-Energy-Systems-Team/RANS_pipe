@@ -144,7 +144,7 @@ do istep=istart,nstep
   ! endif
   
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
-                              Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,       &
+                              Ru,Rp,dru,drp,dz,walldist,alphak,alphae,alphav2,        &
                               modifDiffTerm,rank,centerBC,periodic,resSA,resK, resV2)
   call bound_c(Cnew, Tw, Qwall, drp, centerBC,rank)
   call turb_model%set_bc(ekm,rnew,walldist,centerBC,periodic,rank,px)
@@ -295,8 +295,7 @@ end subroutine calc_mu_eff
 subroutine bound_c(c, Twall, Qwalll,drp, centerBC,rank)
   use mod_param
   use mod_eos
-  use mod_mesh, only : top_bcvalue1, bot_bcvalue1
-  ! use mod_mesh
+  use module_mesh, only : mesh
   implicit none
   include 'mpif.h'
   real(8),                       intent(IN) :: Twall, Qwalll
@@ -306,7 +305,11 @@ subroutine bound_c(c, Twall, Qwalll,drp, centerBC,rank)
 
   real(8), dimension(0:i1) :: tmp
   real(8)                  :: enth_wall  
-  
+  real(8), dimension(0:k1) :: bot_bcvalue1, top_bcvalue1
+
+  top_bcvalue1 = mesh%top_bcvalue1
+  bot_bcvalue1 = mesh%bot_bcvalue1
+
 
   !isothermal
   if (isothermalBC.eq.1) then
@@ -373,7 +376,7 @@ subroutine bound_v(u,w,win,rank, step)
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
   call shiftb(u,tmp,rank);     u(:,k1) = tmp(:);
   call shiftf(w,tmp,rank);     w(:,0)  = tmp(:);
-  call shiftb(w,tmp,rank);     w(:,k1)  = tmp(:);
+  call shiftb(w,tmp,rank);     w(:,k1) = tmp(:);
   if (periodic.eq. 1) return
 
   !developing
@@ -406,11 +409,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
   real(8), dimension(0:i1) :: rp, dru
-  real(8)                  :: dz
   real(8), dimension(0:k1) :: dzw
 
-
-  dz  = mesh%dz
   dzw = mesh%dzw
   dru = mesh%dRu
   rp  = mesh%rp
@@ -433,9 +433,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   !compute drho/dt*dvol
   do k=1,kmax
     do i=1,imax
-      ! flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dz
-      flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dzw(k)
-      
+      flux = flux - (rnew(i,k)-rold(i,k))/dt*Rp(i)*dru(i)*dzw(k)      
     enddo
   enddo
 
@@ -448,7 +446,6 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
 
   !compute mf out to the bot (used for the bl)
   do k=1,kmax
-      ! flux = flux + Ubound(0,k)*dz
      flux = flux + Ubound(0,k)*dzw(k)
   enddo
 
@@ -476,7 +473,7 @@ end subroutine bound_m
 !!           initialize the solution
 !!*************************************************************************************
 
-subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz,Re, systemsolve, select_init)
+subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz, Re, systemsolve, select_init)
   use mod_tm
   use mod_param, only : imax_old, kelem_old,px
   implicit none
@@ -552,18 +549,29 @@ end subroutine initialize_solution
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param
   use mod_math
-  use mod_mesh, only : dz, rp, dru, ru, drp, top_bcvalue1, bot_bcvalue1
+  ! use mod_mesh, only : dz, rp, dru, ru, drp, top_bcvalue1, bot_bcvalue1
+  use module_mesh, only : mesh
   use mod_common
   use mod_tdm
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
-  real(8),                       intent(OUT) :: resC
+  real(8),                       intent(OUT):: resC
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)      :: a,b,c,rhs
-  real(8)                       :: sigmat,Q
+  real(8)                       :: sigmat,Q,dz
   integer  :: ierr
-  
+  real(8), dimension(0:i1) :: rp, dru, ru, drp
+  real(8), dimension(0:k1) :: dzw, top_bcvalue1, bot_bcvalue1
+
+  dzw = mesh%dzw
+  dru = mesh%dRu
+  drp = mesh%drp
+  rp  = mesh%rp
+  ru  = mesh%ru
+  top_bcvalue1 = mesh%top_bcvalue1
+  bot_bcvalue1 = mesh%bot_bcvalue1
+
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
@@ -619,7 +627,8 @@ end
 subroutine advance(rank)
   use mod_param
   use mod_math
-  use mod_mesh, only : dz,dru,drp,rp,ru,dpdz,bot_bcnovalue,top_bcnovalue,ubot_bcvalue, numDomain
+  use module_mesh, only : mesh
+  use mod_mesh, only :  numDomain
   use mod_common
   implicit none
       
@@ -628,7 +637,21 @@ subroutine advance(rank)
   real*8, dimension(imax-1) :: au, bu, cu, rhsu
   real*8 dnew(0:i1,0:k1)
   real*8 dif,alpha,rhoa,rhob,rhoc
-  real*8 x
+  real*8 :: x, dpdz, dz
+  real(8), dimension(0:i1) :: rp, dru, ru, drp
+  real(8), dimension(0:k1) :: dzw, top_bcnovalue, bot_bcnovalue, ubot_bcvalue
+
+  dzw = mesh%dzw
+  dru = mesh%dRu
+  drp = mesh%drp
+  rp  = mesh%rp
+  ru  = mesh%ru
+  dpdz= mesh%dpdz
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+  ubot_bcvalue  = mesh%ubot_bcvalue
+
+
   dif=0.0
 
   !>********************************************************************
@@ -715,16 +738,20 @@ end
 !!*************************************************************************************
 subroutine cmpinf(Bulk,Stress)
   use mod_param
-  use mod_mesh
   use mod_common
-  implicit none
-     
-      include 'mpif.h'
+  use module_mesh, only : mesh
+  implicit none   
+  include 'mpif.h'
   integer ierr
   real*8 waver(imax),waver2(imax)
-     
+  real(8), dimension(0:i1)   :: rp, dru 
+  real(8), dimension(1:imax) :: wallDist
   real*8  Bulk,Stress
-     
+  
+  rp       = mesh%rp
+  dru      = mesh%dru
+  walldist = mesh%wallDist
+
   !     --- Initialization ---
    
   Waver = 0.0
