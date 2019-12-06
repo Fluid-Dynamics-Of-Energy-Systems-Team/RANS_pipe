@@ -317,7 +317,7 @@ contains
     ! bc for the temperature
     this%bot_bcvalue1(:)  = 1 ! symmetry
     do k=0,this%k1
-      if ( (k+rank*this%kmax)*this%dz.lt. x_start_heat) then
+      if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
         this%top_bcvalue1(k) =0 ! heat flux or isothermal
@@ -371,7 +371,7 @@ contains
 
     ! bc for the temperature
     do k=0,this%k1
-      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+      if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
         this%bot_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
@@ -447,7 +447,7 @@ contains
     ! bc for the temperature
     this%bot_bcvalue1(:)  = 1 ! symmetry
     do k=0,this%k1
-      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+      if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
         this%top_bcvalue1(k) = 0 ! heat flux or isothermal
@@ -507,7 +507,7 @@ contains
     ! bc for the temperature
     this%bot_bcvalue1(:)      = 1 ! symmetry
     do k=0,this%k1
-      if ((k+rank*this%kmax)*this%dz.lt.x_start_heat) then
+      if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k)  = 1 ! no heat flux (symmetry)
       else
         this%top_bcvalue1(k)  = 0 ! heat flux or isothermal
