@@ -52,7 +52,7 @@ end subroutine set_constants_NK
 subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   use mod_tm, only : turb_model
   use mod_mesh, only : mesh
-  use mod_param, only : Qwall, Pr
+  use mod_param, only : Qwall
   use mod_common, only : cp
   implicit none
   class(NK_TurbDiffModel) :: this
@@ -64,7 +64,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
   real(8), dimension(1:this%imax) :: walldist
-
+  real(8) :: Pr
   walldist = mesh%walldist
 
   eps  = turb_model%eps
@@ -87,7 +87,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 
       this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)
       this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
-
+      Pr = mu(i,k)/lam_cp(i,k)
       this%flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0      
       alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*((Tt(i,k)*this%Ttemp(i,k))**0.5)
 

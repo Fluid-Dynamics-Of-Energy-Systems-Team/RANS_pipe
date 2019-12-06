@@ -353,12 +353,9 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   use mod_param, only : kmax, imax, i1, k1, px, periodic
   use mod_mesh, only : mesh
   implicit none
-  include 'mpif.h'
-  
-  real*8      RHS(IMAX,KMAX)
+  include 'mpif.h'  
+  real*8      rhs(imax,kmax)
   integer     centerBC
-
-  ! real(8), dimension(1:imax,1:kmax) :: rhs
   real(8), dimension(kmax*px*imax*8):: work
   real(8), dimension(1:imax)        :: am,bm,cm
   real(8), dimension(1:kmax)        :: an,bn,cn
@@ -368,25 +365,15 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   real(8), dimension(imax,kmax*px)  :: y
   real(8), dimension(0:k1) :: dzw, dzp
   real(8), dimension(0:i1) :: dru,drp,ru,rp
-  
   integer ierr,ini,i,j,rank, ier
-  character*5 cha
- 
+  
   dzp = mesh%dzp
   dzw = mesh%dzw
   dru = mesh%dRu
   drp = mesh%dRp
   ru = mesh%ru
   rp = mesh%rp
-! write(*,*) px
-  
-  ! create the coefficients
-  ! do i=1,imax
-  !   cm(i) = 1.0/((Rp(i+1)-Rp(i))*(Ru(i)-Ru(i-1)))
-  !   am(i) = 1.0/((Rp(i)-Rp(i-1))*(Ru(i)-Ru(i-1)))
-  !   bm(I) =-(am(i)+cm(i))
-  ! enddo
-  
+
   !wall normal-direction
   do i=1,imax
     am(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))
@@ -394,6 +381,7 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
       (Rp(I)*dRu(I))
     cm(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))
   enddo
+  !apply bc for wall normal-direction
   if (centerBC.eq.-1) then
     bm(1)    = bm(1)+am(1)
   else
@@ -402,34 +390,24 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   am(1)=0.
   bm(imax) = bm(imax)+cm(imax)
   cm(imax)=0.
-
-    
-  !streamwise-direction  
-  ! do j=1,kmax
-  !   cn(j)=  1.0/((dz)*(dz ) )
-  !   an(j)=  1.0/((dz)*(dz ) )
-  !   bn(j)= -( an(j) + cn(j) )
-  ! enddo
-  
+   
+  !streamwise
   do j=1,kmax
     an(j)=  1.0/(dzp(j-1)*dzw(j))
     cn(j)=  1.0/(dzp(j)  *dzw(j))
     bn(j)= -( an(j) + cn(j) )
   enddo
-
-
   !gather all the coefficients to 1 coordinates
   call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
   call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr) 
   call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
-
-  !apply bc
+  !apply bc streamwise
   bn_t(1)=bn_t(1)-cn_t(1)      
   an_t(1)=0.
   if (periodic.eq.1) then
-    bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px)   !for developing 
+    bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px) !periodic
   else 
-    bn_t(kmax*px)=bn_t(kmax*px)+cn_t(kmax*px)
+    bn_t(kmax*px)=bn_t(kmax*px)+cn_t(kmax*px) !for developing 
   endif
   cn_t(kmax*px)=0.
 

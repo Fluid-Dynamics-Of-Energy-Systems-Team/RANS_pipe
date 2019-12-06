@@ -175,13 +175,13 @@ subroutine get_profile_KtEt(this,p_kt,p_epst,p_Pkt,yp,k)
 end subroutine get_profile_KtEt
 
 subroutine advance_KtEt(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
-                      alpha1,alpha2,alpha3,                   &
+                      alpha1,alpha2,                   &
                       modification,rank,periodic,    &
                       residual1, residual2, residual3)
   use mod_common, only : cp
   class(KtEt_TurbDiffModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
-  real(8),                                intent(IN) :: alpha1,alpha2, alpha3
+  real(8),                                intent(IN) :: alpha1,alpha2
   integer,                                intent(IN) :: modification,rank,periodic
   real(8),                                intent(OUT):: residual1,residual2, residual3
   real(8), dimension(0:this%i1,0:this%k1) :: rho_mod
