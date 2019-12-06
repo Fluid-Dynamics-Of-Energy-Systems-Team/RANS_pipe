@@ -9,7 +9,7 @@ module sst_tm
   !************************!
 
   type, extends(TurbModel), public :: SST_TurbModel
-  real(8), dimension(:,:), allocatable :: Gk,cdKOM,Tt
+  real(8), dimension(:,:), allocatable :: Gk,cdKOM
   real(8), dimension(:),   allocatable :: omin,kin,bF1in
   contains
     procedure :: init => init_SST

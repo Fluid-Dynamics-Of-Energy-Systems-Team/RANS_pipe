@@ -1,5 +1,5 @@
-module dwx_tm
-  use ktet_tm
+module dwx_tdm
+  use ktet_tdm, only : KtEt_TurbDiffModel
   implicit none
 
 !****************************************************************************************
@@ -14,8 +14,8 @@ module dwx_tm
     procedure :: set_constants => set_constants_DWX
     procedure :: set_alphat => set_alphat_DWX
     procedure :: rhs_epst_KtEt => rhs_epst_KtEt_DWX
-    procedure :: init_w_inflow => init_w_inflow_DWX !MISSING
-  end type DWX_TurbModel
+    ! procedure :: init_w_inflow => init_w_inflow_DWX !MISSING
+  end type DWX_TurbDiffModel
 
 
 contains
@@ -48,21 +48,25 @@ subroutine set_constants_DWX(this)
   this%cd2 = 0.9
 end subroutine set_constants_DWX
 
-subroutine init_w_inflow_DWX(this,Re,systemsolve)
-  !!!!!!!!!!!
-end subroutine init_w_inflow_DWX
+! subroutine init_w_inflow_DWX(this,Re,systemsolve)
+!   !!!!!!!!!!!
+! end subroutine init_w_inflow_DWX
 
-subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,ekh,alphat)
+subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   use mod_tm, only : turb_model
-  use mod_mesh, only : Rp,dRp,dRu,dz,walldist
+  use mod_mesh, only : mesh
   implicit none
   class(DWX_TurbDiffModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,ekh
+  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
   integer  im,ip,km,kp,i,k
   real(8),dimension(0:this%k1) ::   tauw
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
+  real(8), dimension(1:this%imax) :: walldist
+
+  walldist = mesh%walldist
+
   eps  = turb_model%eps
   kine = turb_model%k
   Tt = turb_model%Tt
@@ -76,7 +80,6 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,ekh,alphat)
       ip=i+1
       ! yplus hsould be an input so it can be changed from yplus to ystar
       this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
-
   
       Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))        
       Reeps(i,k)   = walldist(i)*((mu(i,k)*eps(i,k)/rho(i,k))**0.25)*rho(i,k)/mu(i,k)   
@@ -86,23 +89,27 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,ekh,alphat)
 
       this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))
                 
-      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*k(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5)
+      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5
                  
 
     enddo
   enddo
 end subroutine set_alphat_DWX
 
-subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,ekh,alphat)
+subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
   use mod_tm, only : turb_model
+  use mod_mesh, only : mesh
   implicit none
   class(DWX_TurbDiffModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho,mu,temp,ekh,alphat
+  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
   real(8),dimension(0:this%i1,0:this%k1) :: Reeps,Ret
   integer ib,ie,kb,ke,i,k 
   real(8) ce2,fd1,feps,fd2
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps,Tt
+  real(8), dimension(1:this%imax) :: walldist
+
+  walldist = mesh%walldist
 
   eps  = turb_model%eps
   kine = turb_model%k

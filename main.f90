@@ -83,7 +83,7 @@ call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
 !initialize turbulent diffusivity model
-if (turbdiffmod.eq.0) allocate(turbdiff_model,source=        CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
 if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))

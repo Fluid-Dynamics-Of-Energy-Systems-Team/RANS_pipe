@@ -10,8 +10,9 @@ module mod_tm
   type, abstract, public :: TurbModel
   integer i1,k1,imax,kmax
   character(len=3)                     :: name
-  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2,yp
+  real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2,yp, Tt
   real(8), dimension(:),   allocatable :: mutin, Pkin
+  real(8), allocatable :: ce1,ce2
   contains
     procedure(init_tm), deferred :: init
     procedure(set_mut_tm), deferred :: set_mut

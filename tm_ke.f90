@@ -9,9 +9,9 @@ module ke_tm
   !************************!
   
   type,abstract,extends(TurbModel), public :: KE_TurbModel
-  real(8), dimension(:,:), allocatable :: Gk,Tt,f1,f2,fmu,Lh,fv2
+  real(8), dimension(:,:), allocatable :: Gk,f1,f2,fmu,Lh,fv2
   real(8), dimension(:),   allocatable :: epsin, kin, v2in
-  real(8) :: sigmak,sigmae,ce1,ce2,cmu
+  real(8) :: sigmak,sigmae,cmu
   contains
     procedure(set_mut_KE), deferred :: set_mut
     procedure(advance_KE), deferred :: advance_turb
