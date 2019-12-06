@@ -11,11 +11,11 @@ module vp_tdm
     procedure :: init => init_mem_vp_tdm
   end type VPrt_TurbDiffModel
   interface
-    subroutine set_alphat_vp_tdm(this,mut,lam_cp,mu,alphat)
+    subroutine set_alphat_vp_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       import :: VPrt_TurbDiffModel
       class(VPrt_TurbDiffModel) :: this
-      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp, mu
-      real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+      real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     end subroutine set_alphat_vp_tdm
   end interface
 
@@ -86,11 +86,11 @@ contains
   ! Kays Crawford routines !
   !************************!
 
-  subroutine set_alphat_kc(this,mut,lam_cp,mu,alphat)
+  subroutine set_alphat_kc(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
     implicit none
     class(KaysCrawford_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     integer :: i,k
     real(8) :: c1,c2,c3,c4
 
@@ -115,11 +115,11 @@ contains
   !     Kays routines      !
   !************************!
 
-  subroutine set_alphat_kays(this,mut,lam_cp,mu,alphat)
+  subroutine set_alphat_kays(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
     implicit none
     class(Kays_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     integer :: i,k
     real(8) :: PeT
 
@@ -143,11 +143,11 @@ contains
   !    Tang routines       !
   !************************!
 
-  subroutine set_alphat_tang(this,mut,lam_cp,mu,alphat)
+  subroutine set_alphat_tang(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
     implicit none
     class(Tang_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     integer :: i,k
     real(8) :: Atang
 
@@ -174,11 +174,11 @@ contains
   !   Irrenfried routines  !
   !************************!
 
-  subroutine set_alphat_irrenfried(this,mut,lam_cp,mu,alphat)
+  subroutine set_alphat_irrenfried(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
     implicit none
     class(Irrenfried_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     integer :: i,k
     real(8) :: gam,Agam,Prtinf,PeT
 
@@ -225,42 +225,40 @@ contains
   end subroutine init_mem_bae_tdm
 
 
-  subroutine set_alphat_bae(this,mut,lam_cp,mu,alphat)
-    use mod_common, only : wnew, rnew, cp, temp
+  subroutine set_alphat_bae(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_common, only : cp
     use mod_mesh, only : mesh
     implicit none
-    
-    class(Bae_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: mut,mu,lam_cp !lam_cp==ekh in the code
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
-    integer :: i,k, km, kp, ip, im
-    real(8) :: dwdy, drhody, dcpdy, dTdy, w, sigma_t,f1, f2, Prt0
-    real(8), dimension(0:this%i1) :: walldistu, walldist
 
+    class(Bae_TurbDiffModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+    integer :: i,k, km, kp, ip, im
+    real(8) :: dwdy, drhody, dcpdy, dTdy, wcenter, sigma_t,f1, f2, Prt0
+    real(8), dimension(0:this%i1) :: walldistu, walldist
 
     sigma_t = 0.9
     walldistu = mesh%walldistu
     walldist = mesh%walldist
-    
-    
+        
     do k=1,this%kmax
       km = k-1
       kp = k+1
       do i=1,this%imax
         ip = i+1
         im = i-1
-        w = (wnew(i,k)+wnew(i,km))/2. !velocity at cell center
+        wcenter = (w(i,k)+w(i,km))/2. !velocity at cell center
         ! dwdy = ( &
         !         (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
         !        -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
         !        )/(walldistu(ip)-walldistu(i))
         dwdy = ( &
-                (wnew(ip,k)+wnew(ip,km))/2. &
-               -(wnew(im,k)+wnew(im,km))/2. &
+                (w(ip,k)+w(ip,km))/2. &
+               -(w(im,k)+w(im,km))/2. &
                )/(walldist(ip)-walldist(im))
         
-        drhody = ( (rnew(ip,k) + rnew(i ,k))/2.0 &
-                  -(rnew(i, k) + rnew(im,k))/2.0 &
+        drhody = ( (rho(ip,k) + rho(i ,k))/2.0 &
+                  -(rho(i, k) + rho(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
         dTdy = (   (temp(ip,k) + temp(i ,k))/2.0 &
@@ -274,8 +272,8 @@ contains
         f1 = 1-exp(this%yplus(i)/this%Aplus)
         f2 = 0.5*(1+tanh((this%B-this%yplus(i))/10.))
         !Prt0 = ( 1 + (w/rho)*abs(drho/dy / dw/dy) )/ (1 + T/rho * abs(drho/dy / dT/dy)) + T/cp * abs(dCp/dy / dT/dy ) 
-        Prt0 = (1. + (w/rnew(i,k)) * abs(drhody/dwdy) ) &
-              /(1+ (temp(i,k)/rnew(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
+        Prt0 = (1. + (wcenter/rho(i,k)) * abs(drhody/dwdy) ) &
+              /(1+ (temp(i,k)/rho(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
 
         this%Prt = sigma_t-f1*f2*(sigma_t-Prt0)
         alphat(i,k)= mut(i,k)/this%Prt(i,k)

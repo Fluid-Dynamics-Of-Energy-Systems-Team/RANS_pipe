@@ -116,7 +116,7 @@ call turb_model%set_bc(ekm,rnew,periodic,rank,px)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
 
 rold = rnew
-call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,mesh%rp,mesh%drp,mesh%dru,mesh%dz,mesh%walldist,rank) 
+call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
@@ -131,8 +131,8 @@ call cpu_time(start)
 
 
 do istep=istart,nstep
-  call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,ekmtin,mesh%rp,mesh%drp,mesh%dru,mesh%dz,mesh%walldist,rank) 
-  call turbdiff_model%set_alphat(ekmt,ekh,ekm,alphat)
+  call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
+  call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
   call advanceC(resC,Unew,Wnew,Rnew,rank)
 
 
@@ -267,21 +267,18 @@ end subroutine calc_prop
 !!******************************************************************************************
 !!      routine to estimate the effective viscosity
 !!******************************************************************************************
-subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,mutin,rp,drp,dru,dz,walldist,rank)
+subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,rank)
   use mod_param, only : k1,i1,kmax,imax,periodic,px
   use mod_tm,    only : turb_model
+  use mod_mesh,  only : mesh
 
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
-  real(8), dimension(0:i1),      intent(IN) :: mutin
-  real(8), dimension(1:imax),    intent(IN) :: walldist
-  real(8), dimension(0:i1),      intent(IN) :: Rp,dru,drp
   integer,                       intent(IN) :: rank
-  real(8),                       intent(IN) :: dz
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
 
-  call turb_model%set_mut(utmp,wtmp,rho,mu,mui,walldist,rp,drp,dru,dz,mut)
+  call turb_model%set_mut(utmp,wtmp,rho,mu,mui,mesh%walldist,mesh%rp,mesh%drp,mesh%dru,mesh%dz,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
   mue = mu + mut  
 end subroutine calc_mu_eff

@@ -21,12 +21,19 @@ module mod_tdm
       class(TurbDiffModel) :: this
     end subroutine init_tdm
 
-    subroutine set_alphat_tdm(this,mut,lam_cp,mu,alphat)
+    subroutine set_alphat_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp, mu
-      real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+      real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     end subroutine set_alphat_tdm
+
+    ! subroutine set_alphat_tdm(this,mut,lam_cp,mu,alphat)
+    !   import :: TurbDiffModel
+    !   class(TurbDiffModel) :: this
+    !   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp, mu
+    !   real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+    ! end subroutine set_alphat_tdm
 
 
   end interface
@@ -52,10 +59,10 @@ contains
     class(CPrt_TurbDiffModel) :: this
   end subroutine init_constprt
 
-  subroutine set_alphat_constprt(this,mut,lam_cp,mu, alphat)
+  subroutine set_alphat_constprt(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
     class(CPrt_TurbDiffModel) :: this
-    real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: mut, lam_cp,mu
-    real(8), dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     alphat = mut/this%Prt
   end subroutine set_alphat_constprt
 
