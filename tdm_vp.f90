@@ -248,10 +248,6 @@ contains
         ip = i+1
         im = i-1
         wcenter = (w(i,k)+w(i,km))/2. !velocity at cell center
-        ! dwdy = ( &
-        !         (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
-        !        -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
-        !        )/(walldistu(ip)-walldistu(i))
         dwdy = ( &
                 (w(ip,k)+w(ip,km))/2. &
                -(w(im,k)+w(im,km))/2. &

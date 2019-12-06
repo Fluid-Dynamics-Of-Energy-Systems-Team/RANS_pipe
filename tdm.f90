@@ -15,6 +15,7 @@ module mod_tdm
   contains
     procedure(init_tdm),       deferred :: init
     procedure(set_alphat_tdm), deferred :: set_alphat
+    procedure :: advance_turbdiff => advance_turbdiff_tdm
   end type TurbDiffModel
 
   interface
@@ -49,6 +50,16 @@ class(TurbDiffModel), allocatable :: turbdiff_model
   end type CPrt_TurbDiffModel
 
 contains
+  subroutine advance_turbdiff_tdm(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
+                      alpha1,alpha2,                   &
+                      modification,rank,periodic,    &
+                      residual1, residual2, residual3)
+  class(TurbDiffModel) :: this
+  real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
+  real(8),                                intent(IN) :: alpha1,alpha2
+  integer,                                intent(IN) :: modification,rank,periodic
+  real(8),                                intent(OUT):: residual1,residual2, residual3
+  end subroutine advance_turbdiff_tdm
 
   type(CPrt_TurbDiffModel) function init_CPrt_TurbDiffModel(i1,k1,imax,kmax,name, Prt)
     integer, intent(in) :: i1,k1,imax,kmax

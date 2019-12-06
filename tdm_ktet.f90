@@ -16,7 +16,7 @@ module ktet_tdm
     procedure(set_alpha_KtEt), deferred :: set_alphat
     procedure(rhs_epst_KtEt), deferred :: rhs_epst_KtEt
     procedure(set_constants), deferred :: set_constants
-    ! procedure(advance_KtEt), deferred :: advance_turbdiff=
+    procedure :: advance_turbdiff => advance_KtEt
     ! procedure(init_w_inflow_KtEt), deferred :: init_w_inflow  ! MISSING
     procedure :: init => init_KtEt
     procedure :: rhs_kt_KtEt
