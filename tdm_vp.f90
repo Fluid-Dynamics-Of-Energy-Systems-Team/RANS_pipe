@@ -235,10 +235,13 @@ contains
     real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
     integer :: i,k, km, kp, ip, im
     real(8) :: dwdy, drhody, dcpdy, dTdy, w, sigma_t,f1, f2, Prt0
-    real(8), dimension(0:this%i1) :: walldistu
+    real(8), dimension(0:this%i1) :: walldistu, walldist
+
 
     sigma_t = 0.9
     walldistu = mesh%walldistu
+    walldist = mesh%walldist
+    
     
     do k=1,this%kmax
       km = k-1
@@ -251,7 +254,11 @@ contains
                 (wnew(ip,k)+wnew(i,k)+wnew(ip,km)+wnew(i,km))/4. &
                -(wnew(im,k)+wnew(i,k)+wnew(im,km)+wnew(i,km))/4. &
                )/(walldistu(ip)-walldistu(i))
-
+        ! dwdy = ( &
+        !         (wnew(ip,k)+wnew(ip,km))/2. &
+        !        -(wnew(im,k)+wnew(im,km))/2. &
+        !        )/(walldist(ip)-walldist(im))
+        
         drhody = ( (rnew(ip,k) + rnew(i ,k))/2.0 &
                   -(rnew(i, k) + rnew(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
