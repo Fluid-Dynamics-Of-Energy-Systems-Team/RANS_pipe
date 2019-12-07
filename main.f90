@@ -136,6 +136,8 @@ call cpu_time(start)
 do istep=istart,nstep
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
   call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
+  call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
+
   call advanceC(resC,Unew,Wnew,Rnew,rank)
 
 
@@ -152,6 +154,8 @@ do istep=istart,nstep
                                       resEpst, resKt)
   call bound_c(Cnew, Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
+  call turbdiff_model%set_bc(ekh,rnew,periodic,rank,px)
+
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
 

@@ -24,7 +24,7 @@ contains
 !****************************************************************************************
 
   !************************!
-  !       DWX routines      !
+  !       DWX routines     !
   !************************!
 
 type(DWX_TurbDiffModel) function init_DWX_TurbDiffModel(i1,k1,imax,kmax,name)

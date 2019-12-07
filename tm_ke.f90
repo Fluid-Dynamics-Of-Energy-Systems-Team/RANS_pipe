@@ -140,9 +140,9 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
 
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%k,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%k,u,w,mesh%Ru,mesh%Rp,mesh%dru,mesh%dz,this%i1,this%k1,rank,periodic,.true.)
   call this%rhs_k_KE(dnew,dimpl,rho) 
-  call diffc(dnew,this%k,mu,mui,muk,mut,this%sigmak,rho,Ru,Rp,dru,dz,rank,modification)
+  call diffc(dnew,this%k,mu,mui,muk,mut,this%sigmak,rho,mesh%Ru,mesh%Rp,mesh%dru,mesh%dz,rank,modification)
 
   do k=1,this%kmax
     do i=1,this%imax
@@ -224,14 +224,14 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8), dimension(0:this%k1)           :: bot_bcvalue,top_bcvalue
   integer                                 :: i,k
   
-  top_bcvalue = mesh%bot_bcvalue
-  bot_bcvalue = mesh%top_bcvalue
+  bot_bcvalue = mesh%bot_bcvalue
+  top_bcvalue = mesh%top_bcvalue
 
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%eps,u,w,Ru,Rp,dru,dz,this%i1,this%k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%eps,u,w,mesh%Ru,mesh%Rp,mesh%dru,mesh%dz,this%i1,this%k1,rank,periodic,.true.)
   call this%rhs_eps_KE(dnew,dimpl,rho)  
-  call this%diffusion_eps_KE(dnew,this%eps,muk,mut,this%sigmae,rho,dz,modification)
+  call this%diffusion_eps_KE(dnew,this%eps,muk,mut,this%sigmae,rho,mesh%dz,modification)
 
   do k=1,this%kmax
     do i=1,this%imax

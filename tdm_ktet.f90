@@ -22,7 +22,7 @@ module ktet_tdm
     procedure :: rhs_kt_KtEt
     procedure :: diffusion_epst_KtEt
     procedure :: solve_epst_KtEt
-    procedure :: set_bc_KtEt
+    procedure :: set_bc => set_bc_KtEt
     procedure :: production_KtEt
     procedure :: solve_kt_KtEt
     procedure :: init_mem_KtEt
@@ -320,12 +320,12 @@ subroutine rhs_kt_KtEt(this,putout,dimpl,rho)
   enddo
 end subroutine rhs_kt_KtEt
 
-subroutine set_bc_KtEt(this,ekh,rho,centerBC,periodic,rank,px)
+subroutine set_bc_KtEt(this,ekh,rho,periodic,rank,px)
   use mod_mesh, only : mesh
   implicit none
   class(KtEt_TurbDiffModel) :: this
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,ekh
-  integer,                               intent(IN) :: centerBC,periodic, rank, px
+  integer,                               intent(IN) :: periodic, rank, px
   real(8),dimension(0:this%k1) ::  top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
   real(8), dimension(1:this%imax) :: walldist
   real(8),dimension(0:this%i1) :: tmp

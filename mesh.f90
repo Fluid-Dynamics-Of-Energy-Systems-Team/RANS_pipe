@@ -309,10 +309,10 @@ contains
     integer :: i,k
     !bc for the momentum and turbulent scalars
     this%bot_bcnovalue(:) = 1 ! symmetry
-    this%bot_bcvalue(:)   = 1 ! symmetry
-    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
     this%top_bcnovalue(:) =-1 ! wall
+    this%bot_bcvalue(:)   = 1 ! symmetry
     this%top_bcvalue(:)   = 0 ! wall
+    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
     
     ! bc for the temperature
     this%bot_bcvalue1(:)  = 1 ! symmetry
@@ -364,10 +364,10 @@ contains
 
     !bc for the momentum and turbulent scalars
     this%bot_bcnovalue(:) =-1 ! wall
-    this%bot_bcvalue(:)   = 0 ! wall
-    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
     this%top_bcnovalue(:) =-1 ! wall
+    this%bot_bcvalue(:)   = 0 ! wall
     this%top_bcvalue(:)   = 0 ! wall
+    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
 
     ! bc for the temperature
     do k=0,this%k1
