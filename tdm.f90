@@ -53,12 +53,12 @@ contains
   subroutine advance_turbdiff_tdm(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
                       alpha1,alpha2,                   &
                       modification,rank,periodic,    &
-                      residual1, residual2, residual3)
+                      residual1, residual2)
   class(TurbDiffModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
   real(8),                                intent(IN) :: alpha1,alpha2
   integer,                                intent(IN) :: modification,rank,periodic
-  real(8),                                intent(OUT):: residual1,residual2, residual3
+  real(8),                                intent(OUT):: residual1,residual2
   end subroutine advance_turbdiff_tdm
 
   type(CPrt_TurbDiffModel) function init_CPrt_TurbDiffModel(i1,k1,imax,kmax,name, Prt)

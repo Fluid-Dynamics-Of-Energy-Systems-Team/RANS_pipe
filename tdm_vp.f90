@@ -60,7 +60,7 @@ module vp_tdm
   !************************!
   
   type,extends(VPrt_TurbDiffModel), public :: Bae_TurbDiffModel
-  real(8), dimension(:), allocatable :: yplus
+  real(8), dimension(:,:), allocatable :: yplus
   real(8), allocatable :: Aplus, B
   contains
     procedure :: set_alphat  => set_alphat_bae
@@ -201,12 +201,11 @@ contains
   !************************!
   !       Bae routines     !
   !************************!
-  type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(i1,k1,imax,kmax,name, Aplus, B, yplus)
+  type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(i1,k1,imax,kmax,name, Aplus, B)
     integer,                  intent(IN) :: i1,k1,imax,kmax
     character(len=2),         intent(IN) :: name
     real(8) ,                 intent(IN) :: Aplus, B
-    real(8), dimension(0:i1), intent(IN) :: yplus
-
+    
     init_Bae_TurbDiffModel%name=name
     init_Bae_TurbDiffModel%i1 = i1
     init_Bae_TurbDiffModel%k1 = k1
@@ -214,14 +213,14 @@ contains
     init_Bae_TurbDiffModel%kmax = kmax
     init_Bae_TurbDiffModel%Aplus = Aplus
     init_Bae_TurbDiffModel%B = B
-    init_Bae_TurbDiffModel%yplus = yplus
   end function init_Bae_TurbDiffModel
 
 
   subroutine init_mem_bae_tdm(this)
       implicit none
       class(Bae_TurbDiffModel) :: this
-      allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1), this%yplus(1:this%imax))
+      allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1),&
+               this%yplus(0:this%i1,0:this%k1))
   end subroutine init_mem_bae_tdm
 
 
@@ -234,9 +233,10 @@ contains
     real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
     real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     integer :: i,k, km, kp, ip, im
+    real(8),dimension(0:this%k1) ::   tauw
     real(8) :: dwdy, drhody, dcpdy, dTdy, wcenter, sigma_t,f1, f2, Prt0
-    real(8), dimension(0:this%i1) :: walldistu, walldist
-
+    real(8), dimension(0:this%i1) :: walldistu
+    real(8), dimension(1:this%imax) :: walldist
     sigma_t = 0.9
     walldistu = mesh%walldistu
     walldist = mesh%walldist
@@ -244,9 +244,14 @@ contains
     do k=1,this%kmax
       km = k-1
       kp = k+1
+      tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,km)+w(this%imax,k))/walldist(this%imax)
+
       do i=1,this%imax
         ip = i+1
         im = i-1
+        this%yplus(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
+
+
         wcenter = (w(i,k)+w(i,km))/2. !velocity at cell center
         dwdy = ( &
                 (w(ip,k)+w(ip,km))/2. &
@@ -265,14 +270,15 @@ contains
                   -(cp(i, k) + cp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
-        f1 = 1-exp(this%yplus(i)/this%Aplus)
-        f2 = 0.5*(1+tanh((this%B-this%yplus(i))/10.))
+        f1 = 1-exp(this%yplus(i,k)/this%Aplus)
+        f2 = 0.5*(1+tanh((this%B-this%yplus(i,k))/10.))
         !Prt0 = ( 1 + (w/rho)*abs(drho/dy / dw/dy) )/ (1 + T/rho * abs(drho/dy / dT/dy)) + T/cp * abs(dCp/dy / dT/dy ) 
         Prt0 = (1. + (wcenter/rho(i,k)) * abs(drhody/dwdy) ) &
-              /(1+ (temp(i,k)/rho(i,k))*abs(drhody/dTdy) + (temp(i,k)/cp(i,k))*abs(dcpdy/dTdy))
+              /(1+ (temp(i,k)/rho(i,k))*abs(drhody/(dTdy+1e-20)) + (temp(i,k)/cp(i,k))*abs(dcpdy/(dTdy+1e-20)))
 
         this%Prt = sigma_t-f1*f2*(sigma_t-Prt0)
         alphat(i,k)= mut(i,k)/this%Prt(i,k)
+
       enddo
     enddo
   end subroutine set_alphat_bae
