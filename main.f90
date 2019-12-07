@@ -16,18 +16,20 @@ use vf_tm
 use mod_tdm
 use vp_tdm
 use mod_mesh
+use dwx_tdm
+use nk_tdm
 
 implicit none
 include 'mpif.h'
 
 integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1
-real(8) ::  resC,resK,resE,resV2,resOm,resSA   
+real(8) ::  resC,resK,resE,resV2,resOm,resSA,resKt,resEpst  
 real(8) ::  start, finish
 real(8) :: resU, resW
 
 
-resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;
+resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;resKt=0;resEpst=0
 
 !read parameters
 call read_parameters()
@@ -88,7 +90,9 @@ if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
-if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.,mesh%walldist*Re))
+if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.))
+if (turbdiffmod.eq.6) allocate(turbdiff_model,source=    init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
+if (turbdiffmod.eq.7) allocate(turbdiff_model,source=    init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
 call turbdiff_model%init()
 
 ! if (rank .eq. 0) then
@@ -117,6 +121,7 @@ call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! nec
 
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
+call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
@@ -143,6 +148,10 @@ do istep=istart,nstep
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               mesh%Ru,mesh%Rp,mesh%dru,mesh%drp,mesh%dz,mesh%walldist,alphak,alphae,alphav2,        &
                               modifDiffTerm,rank,mesh%centerBC,periodic,resSA,resK, resV2)
+  call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
+                                      alphak,alphae,                   &
+                                      modifDiffTerm,rank,periodic,    &
+                                      resEpst, resKt)
   call bound_c(Cnew, Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
