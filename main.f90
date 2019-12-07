@@ -101,9 +101,6 @@ call turbdiff_model%init()
 ! enddo
 ! endif
 
-! call mpi_finalize(ierr)
-! stop
-
 dt = dtmax
 istart = 1
 
@@ -125,6 +122,7 @@ call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
+
 
 ! call output2d_upd2(rank,istep)
 ! call mpi_finalize(ierr)

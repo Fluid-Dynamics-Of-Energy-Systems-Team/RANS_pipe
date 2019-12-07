@@ -113,14 +113,14 @@ subroutine inflow_output_upd(rank,istap)
 end
 
 subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
-                                 k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
+                                 k, eps, v2, om,nuSA,alphat, i1, k1,rank,px)
   use mod_param, only : LoD
   implicit none 
   include "mpif.h"
   character(*),                  intent(IN) :: filename
   real(8), dimension(0:i1,0:k1), intent(OUT) :: x,y,u,w,rho,T,p,mu,mut,yp, &
                                                k,eps,v2,om,nuSA, &
-                                               res_nuSA
+                                               alphat
   integer,                       intent(IN) :: i1,k1,rank,px
   integer nvar,i,j,index,k_max,k_min,size,fh,ierr
   integer(kind=MPI_OFFSET_KIND) disp 
@@ -177,21 +177,21 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
       read(lines(index)(241:260),*) v2  (i,j)
       read(lines(index)(261:280),*) om  (i,j)
       read(lines(index)(281:300),*) nuSA(i,j)      
-      read(lines(index)(301:320),*) res_nuSA(i,j)      
+      read(lines(index)(301:320),*) alphat(i,j)      
       index=index+1
     enddo
   enddo
 end subroutine read_mpiio_formatted
 
 subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
-                                 k, eps, v2, om,nuSA,res_nuSA, i1, k1,rank,px)
+                                 k, eps, v2, om,nuSA,alphat, i1, k1,rank,px)
   use mod_param, only : LoD
   implicit none 
   include "mpif.h"
   character(*),                  intent(IN) :: filename
   real(8), dimension(0:i1,0:k1), intent(IN) :: x,y,u,w,rho,T,p,mu,mut,yp, &
                                                k,eps,v2,om,nuSA, &
-                                               res_nuSA
+                                               alphat
   integer,                       intent(IN) :: i1,k1,rank,px
   integer nvar,i,j,index,k_max,k_min,size,fh,ierr
   integer(kind=MPI_OFFSET_KIND) disp 
@@ -209,7 +209,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     allocate(lines(1:(i1+1)*k1+1)) !+1 for header
     disp = 0
     size = ((i1+1)*(k1)+1)*(nvar*20+1)
-    write(test,'(16(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA','res_nuSA' !write the header
+    write(test,'(16(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2','om','nuSA','alphat' !write the header
     write(line, '(A)') test // NEW_LINE("A")
     lines(index) = line
     index = index+1
@@ -234,7 +234,7 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
       y_v = min(1., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
       x_v = min(LoD,max(0.,x(i,j))) !takes the LOD or zero in case the x is negative
       write(test,'(16(E20.10e3))') x_v, y_v,u(i,j),w(i,j),rho(i,j),T(i,j), p(i,j), mu(i,j), mut(i,j), &
-                                   yp(i,j),k(i,j), eps(i,j), v2(i,j), om(i,j), nuSA(i,j), res_nuSA(i,j)
+                                   yp(i,j),k(i,j), eps(i,j), v2(i,j), om(i,j), nuSA(i,j), alphat(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
       index=index+1
@@ -352,7 +352,7 @@ subroutine output2d_upd2(rank,istap)
   real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol
   integer rank,istap,jstart
   real(8), dimension(0:i1,0:k1) :: x_plt, y_plt, u_plt,w_plt, rho_plt, c_plt, p_plt, mu_plt, mut_plt, &
-                                   k_plt, eps_plt, v2_plt, om_plt, nuSA_plt
+                                   k_plt, eps_plt, v2_plt, om_plt, nuSA_plt,alphat_plt
   real(8), dimension(0:i1) :: dru, rp
   dru = mesh%dru
   rp = mesh%rp
@@ -398,9 +398,11 @@ subroutine output2d_upd2(rank,istap)
   call set_scalar_to_coords (v2_sol,i1,k1,v2_plt)
   call set_scalar_to_coords (om_sol,i1,k1,om_plt)
   call set_scalar_to_coords (nuSA_sol,i1,k1,nuSA_plt)
+  call set_scalar_to_coords (alphat,i1,k1,alphat_plt)
+  
   
   call write_mpiio_formatted(trim(output_fname), xvec, yvec, u_plt,w_plt, rho_plt,c_plt,p_plt,mu_plt, mut_plt,yp_sol,     &
-                                 k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,res_nuSA, i1, k1,rank,px)
+                                 k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,alphat_plt, i1, k1,rank,px)
 end
 
 subroutine output2d_upd(rank,istap)
