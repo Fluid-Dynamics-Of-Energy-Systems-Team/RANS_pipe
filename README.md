@@ -7,7 +7,7 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 To model the reynolds stress, the following turbulent viscosity models are included:
 
 * [Spalart-Almaras](https://arc.aiaa.org/doi/pdf/10.2514/6.1992-439)
-* [V2-f](https://link.springer.com/article/10.1007/s10494-005-1974-8)
+* [v2-f](https://link.springer.com/article/10.1007/s10494-005-1974-8)
 * [k-epsilon](https://www.sciencedirect.com/science/article/pii/0017931072900762)
 * [k-omega](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
 
