@@ -7,7 +7,7 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 To model the reynolds stress, the following turbulent viscosity models are included:
 
 * [Spalart-Almaras](https://arc.aiaa.org/doi/pdf/10.2514/6.1992-439)
-* [V2-f]()
+* [V2-f](https://link.springer.com/article/10.1007/s10494-005-1974-8)
 * [k-epsilon](https://www.sciencedirect.com/science/article/pii/0017931072900762)
 * [k-omega](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
 
@@ -22,11 +22,11 @@ To model the turbulent heat flux, the following turbulent diffusivity models are
 * [Nagano & Kim](https://asmedigitalcollection.asme.org/heattransfer/article-abstract/110/3/583/382763/A-Two-Equation-Model-for-Heat-Transport-in-Wall?redirectedFrom=fulltext)
 
 ## To Do
-* Implement two equation models for the turbulent heat flux
+* Find the bug in the k-epsilon turbulence model
+* Convert the v2f model to a non-equidistant grid
 * Write out residuals
-* Fix the non-equidistant grid for the turbulence models
-
-
+* Write out the turbulent prandtl number/the two variable associated with the turbulent diffusivity
+https://link.springer.com/article/10.1007/s10494-005-1974-8
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
      style="float: center; margin-right: 10px;" />
