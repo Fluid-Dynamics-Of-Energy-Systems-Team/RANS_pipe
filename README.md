@@ -35,5 +35,10 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 ## References
 <a id="1">[1]</a> 
 Tang, G. et al (2016).
-A variable turbulent Prandtl number model for simulating supercritical pressure CO2 heat transfer
+A variable turbulent Prandtl number model for simulating supercritical pressure CO2 heat transfer.
 International Journal of Heat and Mass Transfer, 102, 1082 - 1092
+<a id="2">[1]</a> 
+Deng, B. et al (2001).
+A near-wall two-equation heat transfer model for wall turbulent flows.
+International Journal of Heat and Mass Transfer, 44(4), 691 - 698
+
