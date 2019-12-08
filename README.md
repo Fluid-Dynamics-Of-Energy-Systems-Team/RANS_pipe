@@ -73,3 +73,7 @@ Kays, W.M., Crawford, M.E., Weigand, B. (2005).
 Convective heat and mass transfer. 
 Boston: McGraw-Hill Higher Education, 76,81-89. 
 
+<a id="8">[8]</a>
+Laurence, D.R., Uribe J.C., Utyuzhnikov, S.V. (2004). 
+A Robust Formulation of the v2-f Model. 
+Flow Turbulence and Combustion, 73, 169-185
