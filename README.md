@@ -9,7 +9,7 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 * [k-omega](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
 
 ### Turbulent heat flux models
-* [Tang](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
+* [Tang et al. (2016)](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
 * [Kays](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
 * [Kays & Crawford](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
 * [Irrenfried](https://www.sciencedirect.com/science/article/pii/S0142727X17304083?via%3Dihub)
@@ -31,3 +31,9 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
      
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/pipe.png"
      style="float: center; margin-right: 10px;" />
+
+## References
+<a id="1">[1]</a> 
+Tang G. et al (2016)
+A variable turbulent Prandtl number model for simulating supercritical pressure CO2 heat transfer
+International Journal of Heat and Mass Transfer, 102, 1082 - 1092
