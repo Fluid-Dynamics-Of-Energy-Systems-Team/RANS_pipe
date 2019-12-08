@@ -13,7 +13,7 @@ RANS code to solve turbulent flows over a flat plate or through a pipe or channe
 * [Kays](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
 * [Kays & Crawford](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
 * [Irrenfried](https://www.sciencedirect.com/science/article/pii/S0142727X17304083?via%3Dihub)
-*[Bae](https://www.infona.pl/resource/bwmeta1.element.elsevier-e6af3d8b-9871-32d3-a9f6-4972a82f5f76)
+* [Bae](https://www.infona.pl/resource/bwmeta1.element.elsevier-e6af3d8b-9871-32d3-a9f6-4972a82f5f76)
 * [Deng](https://www.sciencedirect.com/science/article/abs/pii/S0017931000001319)
 * [Nagano & Kim](https://asmedigitalcollection.asme.org/heattransfer/article-abstract/110/3/583/382763/A-Two-Equation-Model-for-Heat-Transport-in-Wall?redirectedFrom=fulltext)
 ## To Do
