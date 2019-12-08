@@ -68,3 +68,8 @@ Nagano, Y., Kim, C. (1988).
 A two-equation model for heat transport in wall turbulent shear flows. 
 Journal Heat Transfer, 110(3), 583-589.
 
+<a id="6">[6]</a>
+Kays, W.M., Crawford, M.E., Weigand, B. (2005). 
+Convective heat and mass transfer. 
+Boston: McGraw-Hill Higher Education, 76,81-89. 
+
