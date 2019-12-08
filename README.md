@@ -62,3 +62,9 @@ AIAA journal, 32(8), 1598-1605.
 Spalart, P., Allmaras, S. (1992).
 A one-equation turbulence model for aerodynamic flows.
 30th aerospace sciences meeting and exhibit. 
+
+<a id="6">[6]</a>
+Nagano, Y., Kim, C. (1988).
+A two-equation model for heat transport in wall turbulent shear flows. 
+Journal Heat Transfer, 110(3), 583-589.
+
