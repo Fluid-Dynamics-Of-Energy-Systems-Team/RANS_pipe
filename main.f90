@@ -85,15 +85,25 @@ call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
 !initialize turbulent diffusivity model
-if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'Pr', Pr))
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'cPr', Pr))
 if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.))
-if (turbdiffmod.eq.6) allocate(turbdiff_model,source=    init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
-if (turbdiffmod.eq.7) allocate(turbdiff_model,source=    init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
+if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.6)) then
+  allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
+else if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.7)) then
+  allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
+else
+  call mpi_finalize()
+  write(*,*) "turbulent diffisivity model not valid in combination with the chosen turbulence model"
+  stop
+endif
 call turbdiff_model%init()
+
+
+
 
 ! if (rank .eq. 0) then
 ! do i=0,i1
@@ -105,7 +115,8 @@ dt = dtmax
 istart = 1
 
 !initialize solution 
-call initialize_solution(rank,wnew,unew,cnew,ekmt,win,ekmtin,i1,k1,mesh%y_fa,mesh%y_cv,mesh%dpdz,Re,systemsolve,select_init)
+call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,&
+                         i1,k1,mesh%y_fa,mesh%y_cv,mesh%dpdz,Re,systemsolve,select_init)
 ! write(*,*) win
 call bound_v(Unew,Wnew,Win,rank,istep)
 
@@ -123,11 +134,6 @@ call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
 
-
-! call output2d_upd2(rank,istep)
-! call mpi_finalize(ierr)
-! stop
-
 !***************************!
 !        MAIN LOOP          !
 !***************************!
@@ -135,35 +141,26 @@ call cpu_time(start)
 
 do istep=istart,nstep
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
+
   call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
   call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
-
-  call advanceC(resC,Unew,Wnew,Rnew,rank)
-
-
-  ! if   (mod(istep,100).eq.0) then
-  !   call output2d_upd(rank,istep)
-  ! endif
   
+  !scalar equations
+  call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               mesh%Ru,mesh%Rp,mesh%dru,mesh%drp,mesh%dz,mesh%walldist,alphak,alphae,alphav2,        &
                               modifDiffTerm,rank,mesh%centerBC,periodic,resSA,resK, resV2)
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
-                                      alphak,alphae,                   &
-                                      modifDiffTerm,rank,periodic,    &
-                                      resEpst, resKt)
+                                      alphak,alphae,modifDiffTerm,rank,periodic,resEpst, resKt)
+  !apply bc
   call bound_c(Cnew, Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
   call turbdiff_model%set_bc(ekh,rnew,periodic,rank,px)
 
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
-
-
+  
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
-  ! call output2d_upd2(rank,istep)
-  ! call mpi_finalize(ierr)
-  ! stop
 
   call fillps(rank)
   call solvepois_cr(p,0,rank,mesh%centerBC)
@@ -182,12 +179,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 100
-  ! if (mod(istep,noutput) .eq. 0) then 
-  !   call  calc_residual(unew, uold, wnew, wold, resU, resW)
-  !   if ((resU .le. 1e-10) .and. (resW .le. 1e-10)) exit
-  ! endif
-      
+  noutput = 100     
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
       write(6,'(A7,9A14)') 'istep'    ,'dt'      ,'bulk'   ,'stress' ,'cResid', &
@@ -473,16 +465,18 @@ end subroutine bound_m
 !!           initialize the solution
 !!*************************************************************************************
 
-subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv, dpdz, Re, systemsolve, select_init)
-  use mod_tm
+subroutine initialize_solution(rank, w, u,c, mut,alphat, &
+                               win, mutin,alphatin, i1,k1, y_fa, y_cv, dpdz, Re, systemsolve, select_init)
+  use mod_tm, only : turb_model
+  use mod_tdm, only : turbdiff_model
   use mod_param, only : imax_old, kelem_old,px
   implicit none
   include "mpif.h"
   integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
   real(8),                        intent(IN) :: dpdz,Re
   real(8), dimension(0:i1),       intent(IN) :: y_cv,y_fa
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut
-  real(8), dimension(0:i1),       intent(OUT):: win,mutin
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut,alphat
+  real(8), dimension(0:i1),       intent(OUT):: win,mutin,alphatin
   real(8), dimension(0:i1) :: dummy
   character(len=5)  :: Re_str
   character(len=7)  :: case
@@ -498,15 +492,19 @@ subroutine initialize_solution(rank, w, u,c, mut, win, mutin, i1,k1, y_fa, y_cv,
     if (systemsolve .eq. 3) case = "symchan"
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
-    open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_'//Re_str//'.dat',form='unformatted')
-    read(29) win(:),dummy,dummy,dummy,dummy,dummy,mutin(:),dummy
+    open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_' &
+                                        //trim(turbdiff_model%name)//'_' &
+                                        //Re_str//'.dat',form='unformatted')
+    read(29) win(:),dummy,dummy,dummy,dummy,dummy,mutin(:),dummy, alphatin(:)
     close(29)
     do k=0,k1
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
       c(:,k)= 0
+      alphat(:,k) = alphatin(:)
     enddo
     call turb_model%init_w_inflow(Re, systemsolve)
+    turbdiff_model%alphatin = alphatin
 
   !initialize with laminar analytical solution
   else if (select_init .eq. 2) then

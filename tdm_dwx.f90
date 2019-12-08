@@ -14,7 +14,6 @@ module dwx_tdm
     procedure :: set_constants => set_constants_DWX
     procedure :: set_alphat => set_alphat_DWX
     procedure :: rhs_epst_KtEt => rhs_epst_KtEt_DWX
-    ! procedure :: init_w_inflow => init_w_inflow_DWX !MISSING
   end type DWX_TurbDiffModel
 
 
@@ -29,7 +28,7 @@ contains
 
 type(DWX_TurbDiffModel) function init_DWX_TurbDiffModel(i1,k1,imax,kmax,name)
   integer, intent(in) :: i1,k1,imax,kmax
-  character(len=2), intent(IN) :: name
+  character(len=3), intent(IN) :: name
   init_DWX_TurbDiffModel%name=name
   init_DWX_TurbDiffModel%i1 = i1
   init_DWX_TurbDiffModel%k1 = k1
@@ -47,10 +46,6 @@ subroutine set_constants_DWX(this)
   this%cd1 = 2.0
   this%cd2 = 0.9
 end subroutine set_constants_DWX
-
-! subroutine init_w_inflow_DWX(this,Re,systemsolve)
-!   !!!!!!!!!!!
-! end subroutine init_w_inflow_DWX
 
 subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   use mod_tm, only : turb_model

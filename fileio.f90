@@ -70,21 +70,23 @@ end subroutine
 subroutine inflow_output_upd(rank,istap)
   use mod_param,   only : kmax,i1,imax,px,k,i,systemsolve
   use mod_tm,      only : turb_model
+  use mod_tdm,     only : turbdiff_model
   use mod_eos,     only : eos_model
-  use mod_common,  only : wnew, unew, cnew, temp, rnew, ekmt
+  use mod_common,  only : wnew, unew, cnew, temp, rnew, ekmt, alphat
   use mod_mesh, only : mesh
   implicit none
   integer, intent(IN) :: rank,istap
   real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp
   real(8), dimension(1:imax) :: p_bF2
-  character(len=50) :: fname
+  character(len=100) :: fname
   character(len=5)  :: Re_str
   integer           :: Re_int
 
   Re_int = int(eos_model%Re)
   write(Re_str,'(I5.5)') Re_int
 
-  fname = 'Inflow_'//trim(turb_model%name)//'_'//Re_str
+  fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(turbdiff_model%name)//'_'//Re_str
+
   if (rank.eq.px/2) then
     k = kmax/2
     call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,p_yp,k)
@@ -92,7 +94,7 @@ subroutine inflow_output_upd(rank,istap)
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.dat',form='unformatted')
-    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk
+    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, alphat(:,kmax/2)
     close(29)
     !fixed width file
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')

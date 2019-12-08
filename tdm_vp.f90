@@ -203,7 +203,7 @@ contains
   !************************!
   type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(i1,k1,imax,kmax,name, Aplus, B)
     integer,                  intent(IN) :: i1,k1,imax,kmax
-    character(len=2),         intent(IN) :: name
+    character(len=3),         intent(IN) :: name
     real(8) ,                 intent(IN) :: Aplus, B
     
     init_Bae_TurbDiffModel%name=name
@@ -266,7 +266,7 @@ contains
                   -(temp(i, k) + temp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 
-        dcpdy = (   (cp(ip,k) + cp(i ,k))/2.0 &
+        dcpdy = (  (cp(ip,k) + cp(i ,k))/2.0 &
                   -(cp(i, k) + cp(im,k))/2.0 &
                  )/(walldistu(ip)-walldistu(i))
 

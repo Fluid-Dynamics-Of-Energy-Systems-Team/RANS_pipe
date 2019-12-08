@@ -9,7 +9,7 @@ module mod_tdm
   
   type, abstract, public :: TurbDiffModel
   integer i1,k1,imax,kmax
-  character(len=3)                      :: name
+  character(len=4)                      :: name
   real(8), dimension(:,:), allocatable :: Pkt,kt,epst, yp
   real(8), dimension(:),   allocatable :: alphatin, Pktin
   contains
@@ -87,7 +87,7 @@ contains
     call shiftb(alphat,tmp,rank); alphat(:,this%k1)=tmp(:);
 
     if ((periodic.ne.1).and.(rank.eq.0)) then
-      alphat(:,0) = 0.0!this%mutin(:)
+      alphat(:,0) = this%alphatin(:)
     endif
     if ((periodic.ne.1).and.(rank.eq.px-1)) then
       alphat(:,this%k1) = 2.*alphat(:,this%kmax)-alphat(:,this%kmax-1)
@@ -107,7 +107,7 @@ contains
 
   type(CPrt_TurbDiffModel) function init_CPrt_TurbDiffModel(i1,k1,imax,kmax,name, Prt)
     integer, intent(in) :: i1,k1,imax,kmax
-    character(len=2), intent(IN) :: name
+    character(len=3), intent(IN) :: name
     real(8), intent(in) :: Prt
     init_CPrt_TurbDiffModel%name=name
     init_CPrt_TurbDiffModel%i1 = i1
