@@ -39,7 +39,7 @@ https://link.springer.com/article/10.1007/s10494-005-1974-8
 
 ## References
 <a id="1">[1]</a> 
-Tang, G. et al (2016).
+Tang, G., Shi, H., Wu, Y., Lu,J., Li, Z., Liu, Q., Zhang, H. (2016).
 A variable turbulent Prandtl number model for simulating supercritical pressure CO2 heat transfer.
 International Journal of Heat and Mass Transfer, 102, 1082 - 1092
 
