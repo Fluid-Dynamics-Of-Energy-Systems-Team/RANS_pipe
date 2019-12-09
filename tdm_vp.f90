@@ -10,7 +10,7 @@ module vp_tdm
     procedure(set_alphat_vp_tdm), deferred :: set_alphat
     procedure :: init => init_mem_vp_tdm
     procedure :: get_sol => get_sol_vp_tdm
-    ! procedure :: init_w_inflow => init_w_inflow_vp
+    procedure :: init_w_inflow => init_w_inflow_vp_tdm
     procedure :: get_profile => get_profile_vp_tdm
   end type VPrt_TurbDiffModel
   interface
@@ -81,8 +81,11 @@ contains
 
   subroutine init_mem_vp_tdm(this)
       implicit none
+      integer i
       class(VPrt_TurbDiffModel) :: this
       allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1))
+      allocate(this%Prtin(0:this%i1), this%alphatin(0:this%i1))
+      
   end subroutine init_mem_vp_tdm
 
   subroutine get_sol_vp_tdm(this,Prt,epst,kt)
@@ -103,6 +106,26 @@ contains
     p_pkt = 0.
   end subroutine get_profile_vp_tdm
 
+  subroutine init_w_inflow_vp_tdm(this,Re,systemsolve)
+    use mod_tm, only : turb_model
+    implicit none
+    class(VPrt_TurbDiffModel) :: this
+    real(8), intent(IN) :: Re
+    integer, intent(IN) :: systemsolve
+    real(8), dimension(0:this%i1) :: dummy, Prtin
+    character(len=5)  :: Re_str
+    character(len=100) :: fname
+    integer           :: Re_int,i
+    Re_int = int(Re)
+    write(Re_str,'(I5.5)') Re_int
+    fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(this%name)//'_'//Re_str//'.dat'
+    if (systemsolve .eq. 1) open(29,file = 'pipe/'//trim(fname),form='unformatted')
+    if (systemsolve .eq. 2) open(29,file = 'channel/'//trim(fname),form='unformatted')
+    if (systemsolve .eq. 3) open(29,file = 'symchan/'//trim(fname),form='unformatted')
+    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
+             dummy(:),dummy(:),dummy(:),this%alphatin(:), this%Prtin(:)
+    close(29)
+  end subroutine init_w_inflow_vp_tdm
 
 
   !************************!
@@ -244,6 +267,7 @@ contains
       class(Bae_TurbDiffModel) :: this
       allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1),&
                this%yplus(0:this%i1,0:this%k1))
+      allocate(this%Prtin(0:this%i1), this%alphatin(0:this%i1))
   end subroutine init_mem_bae_tdm
 
 

@@ -18,7 +18,7 @@ module ktet_tdm
     procedure(set_constants), deferred :: set_constants
     procedure :: advance_turbdiff => advance_KtEt
     procedure :: get_sol => get_sol_KtEt
-    ! procedure :: init_w_inflow => init_w_inflow_KtEt
+    procedure :: init_w_inflow => init_w_inflow_KtEt
     procedure :: init => init_KtEt
     procedure :: rhs_kt_KtEt
     procedure :: diffusion_epst_KtEt
@@ -85,8 +85,6 @@ subroutine init_sol_KtEt(this)
   enddo
 end subroutine init_sol_KtEt
 
-
-
 subroutine init_mem_KtEt(this)  
   class(KtEt_TurbDiffModel) :: this
   allocate(this%epst(0:this%i1,0:this%k1),this%kt (0:this%i1,0:this%k1),     &
@@ -95,7 +93,7 @@ subroutine init_mem_KtEt(this)
            this%yp(0:this%i1,0:this%k1))
            
   allocate(this%Pktin (0:this%i1), &
-           this%epstin(0:this%i1),this%ktin(0:this%i1))
+           this%epstin(0:this%i1),this%ktin(0:this%i1),this%alphatin(0:this%i1))
 end subroutine init_mem_KtEt
 
 
@@ -107,6 +105,28 @@ subroutine get_sol_KtEt(this,Prt,epst,kt)
   kt   =this%kt
 end subroutine get_sol_KtEt
 
+subroutine init_w_inflow_KtEt(this,Re,systemsolve)
+  use mod_tm, only : turb_model
+  implicit none
+  class(KtEt_TurbDiffModel) :: this
+  real(8), intent(IN) :: Re
+  integer, intent(IN) :: systemsolve
+  real(8), dimension(0:this%i1) :: dummy, Prtin
+  character(len=5)  :: Re_str
+  character(len=100) :: fname
+  integer           :: Re_int
+  Re_int = int(Re)
+  write(Re_str,'(I5.5)') Re_int
+  fname = 'Inflow_'//turb_model%name//'_'//this%name//'_'//Re_str//'.dat'
+  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//trim(fname),form='unformatted')
+  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//trim(fname),form='unformatted')
+  if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//trim(fname),form='unformatted')
+  read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
+           dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
+           dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
+           dummy(:),this%alphatin, this%Prtin(:), this%ktin(:),this%epstin, this%Pktin
+  close(29)
+end subroutine init_w_inflow_KtEt
 
 subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
                        alphakt,modification,rank,periodic)

@@ -93,12 +93,14 @@ if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
-if (((turbdiffmod.eq.6) .or. (turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then
+if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then
   if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid"
   call mpi_finalize(ierr)
   stop
 endif
 call turbdiff_model%init()
+
+      
 
 
 
@@ -115,6 +117,12 @@ istart = 1
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,&
                          i1,k1,mesh%y_fa,mesh%y_cv,mesh%dpdz,Re,systemsolve,select_init)
+
+  ! call mpi_barrier(ierr)
+  ! call mpi_finalize(ierr)
+  ! stop
+
+
 ! write(*,*) win
 call bound_v(Unew,Wnew,Win,rank,istep)
 
@@ -502,7 +510,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
       alphat(:,k) = alphatin(:)
     enddo
     call turb_model%init_w_inflow(Re, systemsolve)
-    turbdiff_model%alphatin = alphatin
+    call turbdiff_model%init_w_inflow(Re, systemsolve)
 
   !initialize with laminar analytical solution
   else if (select_init .eq. 2) then

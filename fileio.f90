@@ -97,7 +97,7 @@ subroutine inflow_output_upd(rank,istap)
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.dat',form='unformatted')
-    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, alphat(:,kmax/2), &
+    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, &
               alphat(:,kmax/2), p_prt, p_kt, p_epst, p_pkt
     close(29)
     !fixed width file
