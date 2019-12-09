@@ -16,12 +16,26 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 To account for the varying properties, corrections for these models can be used as presented by Catris & Aupoix (2000) [[12]](#12) and Otero et al. (2018) [[13]](#13).
 
 ### Turbulent heat flux models
-To model the turbulent heat flux, the following turbulent diffusivity models are included:
+The turbulent heat flux is calculated according to:
+
+<p align="center">
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_j''}{h''}}=-{\rho}{\alpha_t}\frac{\partial\tilde{h}}{\partial{x_j}}"/>
+</p>,
+
+Where the turbulent diffusivity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t" /> can be calculated using the zero equations models, given by:
+<p align="center">
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t=\frac{\mu_t}{Pr_t}" />
+</p>,
+
+where <img src="https://latex.codecogs.com/svg.latex?\Large&space;{\mu}_t" /> is the turbulent viscosity and <img src="https://latex.codecogs.com/svg.latex?\Large&space;{Pr}_{t}" /> the turbulent Prandtl number. The turbulent Prandtl number can be modeled using the following models:
+
 * Tang et al. (2016) [[1]](#1)
 * Kays (2005) [[11]](#11)
 * Kays & Crawford (2005) [[8]](#8)
 * Irrenfried & Steiner (2017) [[3]](#3)
 * Bae (2016) [[10]](#10)
+
+To calculate the thermal diffusivity using 2 extra transport the following models are included:
 * Deng et al. (2001) [[2]](#2) 
 * Nagano & Kim (1988) [[7]](#5)
 
