@@ -90,7 +90,7 @@ if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
-if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.))
+if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,20.))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
 if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then

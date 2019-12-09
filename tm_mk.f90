@@ -104,7 +104,7 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   class(MK_TurbModel) :: this
   real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
-  real(8), dimension(1:this%i1),          intent(IN) :: walldist
+  real(8), dimension(1:this%imax),        intent(IN) :: walldist
   real(8),                                intent(IN) :: dz,alpha1,alpha2, alpha3
   integer,                                intent(IN) :: modification,rank,centerBC,periodic
   real(8),                                intent(OUT):: residual1,residual2, residual3

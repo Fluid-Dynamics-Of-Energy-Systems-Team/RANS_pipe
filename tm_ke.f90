@@ -226,7 +226,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   
   bot_bcvalue = mesh%bot_bcvalue
   top_bcvalue = mesh%top_bcvalue
-
+  
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%eps,u,w,mesh%Ru,mesh%Rp,mesh%dru,mesh%dz,this%i1,this%k1,rank,periodic,.true.)
