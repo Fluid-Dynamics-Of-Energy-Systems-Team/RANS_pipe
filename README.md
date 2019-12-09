@@ -1,5 +1,5 @@
 # RANS_pipe
-RANS code to solve turbulent flows over a flat plate or through a pipe and channel with variable properties as a function of temperature only ([low mach number approximation](https://ccse.lbl.gov/Research/LowMach/lowMach.html)). Periodic bounday conditions at the inlet and outlet will produce fully developed profiles that can be used as a inlet boundary condition for a developing flow with heating (either isoflux or isothermal boundary condition).
+RANS code to solve turbulent flows over a flat plate or through a pipe and channel with variable properties as a function of temperature only ([low mach number approximation](https://ccse.lbl.gov/Research/LowMach/lowMach.html)). Periodic boundary conditions for the inlet and outlet will produce fully developed profiles that can be used as an inlet boundary condition for a developing flow with heating (using either an isoflux or isothermal boundary condition).
 ## Mesh
 The code supports a non-equidistant mesh in wall-normal direction as well as streamwise direction with refinement where the boundary conditions change.
 
