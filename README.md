@@ -12,7 +12,7 @@ The reynolds shear stress is modeled using:
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_i''}{u_i''}}=-{\mu_{t}}\left(2\frac{\partial{\tilde{u_i}}}{{\partial}{x_i}}-\frac{2}{3}{\nabla}{\cdot}\tilde{u}\right)+\frac{2}{3}\overline{\rho}\tilde{k}" />
 </p>
 
-To model the turbulent viscosity, <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mu_t" />, the following turbulent viscosity models are included:
+To model the turbulent viscosity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mu_t" />, the following turbulent viscosity models can be used:
 * Spalart & Allmaras (1992) [[6]](#6)
 * Laurence et al. (2004) [[9]](#9)
 * Jones & Launder (1972) [[4]](#4) 
