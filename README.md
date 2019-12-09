@@ -7,7 +7,12 @@ The code supports a non-equidistant mesh in wall-normal direction as well as str
      style="float: center; margin-right: 10px;" />
 ## Models
 ### Turbulent viscosity models
-To model the reynolds stress, the following turbulent viscosity models are included:
+The reynolds shear stress is modeled using:
+<p align="center">
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_i''}{u_i''}}=-{\mu_{t}}\left(2\frac{\partial{\tilde{u_i}}}{{\partial}{x_i}}-\frac{2}{3}{\nabla}{\cdot}\tilde{u}\right)+\frac{2}{3}\overline{\rho}\tilde{k}" />
+</p>
+
+To model the turbulent viscosity, <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mu_t" />, the following turbulent viscosity models are included:
 * Spalart & Allmaras (1992) [[6]](#6)
 * Laurence et al. (2004) [[9]](#9)
 * Jones & Launder (1972) [[4]](#4) 
@@ -16,7 +21,7 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 To account for the varying properties, corrections for these models can be used as presented by Catris & Aupoix (2000) [[12]](#12) and Otero et al. (2018) [[13]](#13).
 
 ### Turbulent heat flux models
-The turbulent heat flux is calculated according to:
+The turbulent heat flux is modeled according to:
 
 <p align="center">
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_j''}{h''}}=-{\rho}{\alpha_t}\frac{\partial\tilde{h}}{\partial{x_j}},"/>
