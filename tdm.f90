@@ -15,6 +15,7 @@ module mod_tdm
   contains
     procedure(init_tdm),       deferred :: init
     procedure(set_alphat_tdm), deferred :: set_alphat
+    procedure(get_sol_tdm),    deferred :: get_sol
     procedure :: advance_turbdiff => advance_turbdiff_tdm
     procedure :: set_alphat_bc
     procedure :: set_bc => set_bc_tdm
@@ -34,6 +35,12 @@ module mod_tdm
       real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     end subroutine set_alphat_tdm
 
+    subroutine get_sol_tdm(this,Prt,epst,kt)
+      import :: TurbDiffModel
+      class(TurbDiffModel) :: this
+      real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+    end subroutine get_sol_tdm
+
   end interface
 
   
@@ -50,10 +57,10 @@ class(TurbDiffModel), allocatable :: turbdiff_model
   contains
     procedure :: init => init_constprt
     procedure :: set_alphat  => set_alphat_constprt
+    procedure :: get_sol => get_sol_constprt
   end type CPrt_TurbDiffModel
 
 contains
-
 
 !****************************************************************************************
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -127,5 +134,13 @@ contains
     real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     alphat = mut/this%Prt
   end subroutine set_alphat_constprt
+
+  subroutine get_sol_constprt(this,Prt,epst,kt)
+    class(CPrt_TurbDiffModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+    Prt  =this%Prt
+    epst =0.    
+    kt   =0.
+end subroutine get_sol_constprt
 
 end module mod_tdm
