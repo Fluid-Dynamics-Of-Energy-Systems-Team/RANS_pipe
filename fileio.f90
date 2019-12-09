@@ -76,7 +76,8 @@ subroutine inflow_output_upd(rank,istap)
   use mod_mesh, only : mesh
   implicit none
   integer, intent(IN) :: rank,istap
-  real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp
+  real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp, &
+                                p_prt,p_kt,p_epst,p_pkt
   real(8), dimension(1:imax) :: p_bF2
   character(len=100) :: fname
   character(len=5)  :: Re_str
@@ -90,24 +91,29 @@ subroutine inflow_output_upd(rank,istap)
   if (rank.eq.px/2) then
     k = kmax/2
     call turb_model%get_profile(p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,p_yp,k)
+    call turbdiff_model%get_profile(p_prt,p_kt,p_epst,p_pkt,k)
+    
     !binary
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.dat',form='unformatted')
     if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.dat',form='unformatted')
-    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, alphat(:,kmax/2)
+    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, alphat(:,kmax/2), &
+              alphat(:,kmax/2), p_prt, p_kt, p_epst, p_pkt
     close(29)
     !fixed width file
     if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')
     if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.csv')
     if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.csv')
-    write(29, '(16a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
+    write(29, '(21a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
                           'rho' ,'k'  ,'eps','v2' ,'om', &
-                          'nuSA','mut','Pk' ,'bF1','bF2', 'yp'
+                          'nuSA','mut','Pk' ,'bF1','bF2', 'yp', &
+                          'alphat','prt','kt','epst','pkt'
     do i=1,imax
-      write(29, '(16E20.12)')                                            &
+      write(29, '(21E20.12)')                                            &
                 mesh%y_cv(i),unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
                 rnew  (i,k) ,p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &
-                p_nuSA(i)   ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i)
+                p_nuSA(i)   ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i), &
+                alphat(i,k), p_prt(i), p_kt(i), p_epst(i), p_pkt(i)
     enddo
     close(29)
   endif

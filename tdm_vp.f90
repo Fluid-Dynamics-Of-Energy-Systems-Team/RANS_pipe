@@ -10,6 +10,8 @@ module vp_tdm
     procedure(set_alphat_vp_tdm), deferred :: set_alphat
     procedure :: init => init_mem_vp_tdm
     procedure :: get_sol => get_sol_vp_tdm
+    ! procedure :: init_w_inflow => init_w_inflow_vp
+    procedure :: get_profile => get_profile_vp_tdm
   end type VPrt_TurbDiffModel
   interface
     subroutine set_alphat_vp_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
@@ -90,6 +92,17 @@ contains
     epst =0.    
     kt   =0.
   end subroutine get_sol_vp_tdm
+
+  subroutine get_profile_vp_tdm(this,p_prt,p_kt,p_epst,p_Pkt,k)
+    class(VPrt_TurbDiffModel) :: this
+    integer,                               intent(IN) :: k
+    real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+    p_prt = this%Prt(:,k)
+    p_kt = 0.
+    p_epst = 0.
+    p_pkt = 0.
+  end subroutine get_profile_vp_tdm
+
 
 
   !************************!

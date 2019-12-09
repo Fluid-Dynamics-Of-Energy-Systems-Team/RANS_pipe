@@ -18,7 +18,7 @@ module ktet_tdm
     procedure(set_constants), deferred :: set_constants
     procedure :: advance_turbdiff => advance_KtEt
     procedure :: get_sol => get_sol_KtEt
-    ! procedure(init_w_inflow_KtEt), deferred :: init_w_inflow  ! MISSING
+    ! procedure :: init_w_inflow => init_w_inflow_KtEt
     procedure :: init => init_KtEt
     procedure :: rhs_kt_KtEt
     procedure :: diffusion_epst_KtEt
@@ -85,6 +85,8 @@ subroutine init_sol_KtEt(this)
   enddo
 end subroutine init_sol_KtEt
 
+
+
 subroutine init_mem_KtEt(this)  
   class(KtEt_TurbDiffModel) :: this
   allocate(this%epst(0:this%i1,0:this%k1),this%kt (0:this%i1,0:this%k1),     &
@@ -92,7 +94,7 @@ subroutine init_mem_KtEt(this)
            this%Ttemp (0:this%i1,0:this%k1),this%Tmix(0:this%i1,0:this%k1),  &
            this%yp(0:this%i1,0:this%k1))
            
-  allocate(this%alphatin(0:this%i1),this%Pktin (0:this%i1), &
+  allocate(this%Pktin (0:this%i1), &
            this%epstin(0:this%i1),this%ktin(0:this%i1))
 end subroutine init_mem_KtEt
 
@@ -167,14 +169,14 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
   enddo
 end
 
-subroutine get_profile_KtEt(this,p_kt,p_epst,p_Pkt,yp,k)
+subroutine get_profile_KtEt(this,p_prt,p_kt,p_epst,p_Pkt,k)
   class(KtEt_TurbDiffModel) :: this
   integer,                               intent(IN) :: k
-  real(8),dimension(0:this%i1),          intent(OUT):: p_kt,p_epst,p_Pkt,yp
+  real(8),dimension(0:this%i1),          intent(OUT):: p_prt, p_kt,p_epst,p_Pkt
+  p_prt(:) = 0.0
   p_kt(:)   =this%kt(:,k)
   p_epst(:) =this%epst(:,k)
   p_Pkt(:)  =this%Pkt(:,k)
-  ! yp(:)     =this%yp(:,k)
 end subroutine get_profile_KtEt
 
 subroutine advance_KtEt(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
@@ -360,10 +362,12 @@ subroutine set_bc_KtEt(this,ekh,rho,periodic,rank,px)
   if (rank.eq.0) then
     this%kt  (:,0) = this%ktin(:)
     this%epst(:,0) = this%epstin(:)
+    this%Pkt(:,0) = this%Pktin(:)
   endif
   if (rank.eq.px-1) then
     this%kt  (:,this%k1)= 2.0*this%kt  (:,this%kmax)-this%kt  (:,this%kmax-1)
     this%epst(:,this%k1)= 2.0*this%epst(:,this%kmax)-this%epst(:,this%kmax-1)
+    this%Pkt(:,this%k1)= 2.0*this%Pkt(:,this%kmax)-this%Pkt(:,this%kmax-1)
   endif
 
 end subroutine set_bc_KtEt

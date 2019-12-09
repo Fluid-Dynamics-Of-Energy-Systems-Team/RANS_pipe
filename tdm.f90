@@ -16,6 +16,8 @@ module mod_tdm
     procedure(init_tdm),       deferred :: init
     procedure(set_alphat_tdm), deferred :: set_alphat
     procedure(get_sol_tdm),    deferred :: get_sol
+    ! procedure(init_w_inflow_tdm), deferred :: init_w_inflow
+    procedure(get_profile_tdm), deferred :: get_profile
     procedure :: advance_turbdiff => advance_turbdiff_tdm
     procedure :: set_alphat_bc
     procedure :: set_bc => set_bc_tdm
@@ -34,6 +36,13 @@ module mod_tdm
       real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
       real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
     end subroutine set_alphat_tdm
+
+    subroutine get_profile_tdm(this,p_prt,p_kt,p_epst,p_Pkt,k)
+      import :: TurbDiffModel
+      class(TurbDiffModel) :: this
+      integer,                               intent(IN) :: k
+      real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+    end subroutine get_profile_tdm
 
     subroutine get_sol_tdm(this,Prt,epst,kt)
       import :: TurbDiffModel
@@ -58,6 +67,7 @@ class(TurbDiffModel), allocatable :: turbdiff_model
     procedure :: init => init_constprt
     procedure :: set_alphat  => set_alphat_constprt
     procedure :: get_sol => get_sol_constprt
+    procedure :: get_profile => get_profile_constprt
   end type CPrt_TurbDiffModel
 
 contains
@@ -141,6 +151,18 @@ contains
     Prt  =this%Prt
     epst =0.    
     kt   =0.
-end subroutine get_sol_constprt
+  end subroutine get_sol_constprt
+
+  subroutine get_profile_constprt(this,p_prt,p_kt,p_epst,p_Pkt,k)
+    class(CPrt_TurbDiffModel) :: this
+    integer,                               intent(IN) :: k
+    real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+    p_prt = this%Prt
+    p_kt = 0
+    p_epst = 0
+    p_pkt = 0
+  end subroutine get_profile_constprt
+
+
 
 end module mod_tdm
