@@ -13,6 +13,8 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 * Jones & Launder (1972) [[4]](#4) 
 * Myong & Kasagi (1990)  [[5]](#5)
 
+To account for the varying properties, corrections for these models can be used as presented by Catris & Aupoix (2000) [[12]](#12) and Otero et al. (2018) [[13]](#13).
+
 ### Turbulent heat flux models
 To model the turbulent heat flux, the following turbulent diffusivity models are included:
 * Tang et al. (2016) [[1]](#1)
