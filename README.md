@@ -16,7 +16,7 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 ### Turbulent heat flux models
 To model the turbulent heat flux, the following turbulent diffusivity models are included:
 * Tang et al. (2016) [[1]](#1)
-* Kays (2005) [[8]](#8)
+* Kays (2005) [[11]](#11)
 * Kays & Crawford (2005) [[8]](#8)
 * Irrenfried & Steiner (2017) [[3]](#3)
 * Bae (2016) [[10]](#10)
@@ -89,3 +89,8 @@ Flow Turbulence and Combustion, 73, 169-185](https://link.springer.com/article/1
 [Bae, Y.Y. (2016).
 A new formulation of variable turbulent Prandtl number for heat transfer to supercritical fluids. 
 International Journal of Heat and Mass Transfer, 92, 792-806.](https://www.infona.pl/resource/bwmeta1.element.elsevier-e6af3d8b-9871-32d3-a9f6-4972a82f5f76)
+
+<a id="11">[11]</a>
+[Kays, W.M. (1994).
+Turbulent Prandtl Number—Where Are We?
+Journal of Heat Transfer, 116(2), 284-295.](https://asmedigitalcollection.asme.org/heattransfer/article/116/2/284/383190/Turbulent-Prandtl-Number-Where-Are-We)
