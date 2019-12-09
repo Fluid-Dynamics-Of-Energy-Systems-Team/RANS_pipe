@@ -19,14 +19,12 @@ To account for the varying properties, corrections for these models can be used 
 The turbulent heat flux is calculated according to:
 
 <p align="center">
-<img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_j''}{h''}}=-{\rho}{\alpha_t}\frac{\partial\tilde{h}}{\partial{x_j}}"/>
-</p>,
-
-Where the turbulent diffusivity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t" /> can be calculated using the zero equations models, given by:
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\overline{\rho{u_j''}{h''}}=-{\rho}{\alpha_t}\frac{\partial\tilde{h}}{\partial{x_j}},"/>
+</p>
+where the turbulent diffusivity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t" /> can be calculated using the zero equations models, given by:
 <p align="center">
-<img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t=\frac{\mu_t}{Pr_t}" />
-</p>,
-
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t=\frac{\mu_t}{Pr_t}," />
+</p>
 where <img src="https://latex.codecogs.com/svg.latex?\Large&space;{\mu}_t" /> is the turbulent viscosity and <img src="https://latex.codecogs.com/svg.latex?\Large&space;{Pr}_{t}" /> the turbulent Prandtl number. The turbulent Prandtl number can be modeled using the following models:
 
 * Tang et al. (2016) [[1]](#1)
