@@ -138,11 +138,11 @@ subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
   integer :: k
   real(8) :: topBCvalue, botBCvalue
   
-  top_bcnovalue= mesh%top_bcnovalue
-  bot_bcnovalue= mesh%bot_bcnovalue
-  top_bcvalue  = mesh%top_bcvalue
-  bot_bcvalue  = mesh%bot_bcvalue
-  walldist = mesh%walldist
+  top_bcnovalue(:)= mesh%top_bcnovalue(:)
+  bot_bcnovalue(:)= mesh%bot_bcnovalue(:)
+  top_bcvalue(:)  = mesh%top_bcvalue(:)
+  bot_bcvalue(:)  = mesh%bot_bcvalue(:)
+  walldist(:) = mesh%walldist(:)
 
   do k = 0,this%k1 
     this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
@@ -183,8 +183,8 @@ subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
   real(8) :: Fr_1, ctheta
   real(8), dimension(0:this%k1) :: dzw, dzp
 
-  dzw = mesh%dzw
-  dzp = mesh%dzp
+  dzw(:) = mesh%dzw(:)
+  dzp(:) = mesh%dzp(:)
 
   Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!

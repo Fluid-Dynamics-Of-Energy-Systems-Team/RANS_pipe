@@ -247,13 +247,13 @@ contains
     enddo
     dzw(0) = dzw(1)
 
-    ! this%dz    = 1.0*LoD/(this%kmax*px)
-    ! do k=0,k1
-    !    dzw(k) = this%dz 
-    !    dzp(k) = this%dz
-    !    zw(k)  = (k+this%kmax*rank)*this%dz
-    !    zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
-    ! enddo
+    this%dz    = 1.0*LoD/(this%kmax*px)
+    do k=0,k1
+       dzw(k) = this%dz 
+       dzp(k) = this%dz
+       zw(k)  = (k+this%kmax*rank)*this%dz
+       zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
+    enddo
 
     this%dzw = dzw
     this%dzp = dzp
