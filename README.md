@@ -1,5 +1,5 @@
 # RANS_pipe
-RANS code to solve turbulent flows over a flat plate or through a pipe or channel with variable properties
+RANS code to solve turbulent flows over a flat plate or through a pipe and channel with variable properties as a function of temperature only ([low mach number approximation](https://ccse.lbl.gov/Research/LowMach/lowMach.html)).
 
 ## Models
 
