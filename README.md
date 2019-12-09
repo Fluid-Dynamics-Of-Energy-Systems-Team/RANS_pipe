@@ -26,7 +26,7 @@ To model the turbulent heat flux, the following turbulent diffusivity models are
 * Convert the v2f model to a non-equidistant grid
 * Write out residuals
 * Write out the turbulent prandtl number/the two variable associated with the turbulent diffusivity
-https://link.springer.com/article/10.1007/s10494-005-1974-8
+
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
      style="float: center; margin-right: 10px;" />
