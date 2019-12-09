@@ -14,12 +14,12 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 ### Turbulent heat flux models
 To model the turbulent heat flux, the following turbulent diffusivity models are included:
 * Tang et al. (2016) [[1]](#1)
-* [Kays](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
+* Kays (2005) [[8]](#8)
 * Kays & Crawford (2005) [[8]](#8)
 * Irrenfried & Steiner (2017) [[3]](#3)
 * Bae (2016) [[10]](#10)
-* Deng et al. (2001) 
-* Nagano & Kim (1988)
+* Deng et al. (2001) [[2]](#2) 
+* Nagano & Kim (1988) [[7]](#5)
 
 ## To Do
 * Find the bug in the k-epsilon turbulence model
