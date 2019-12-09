@@ -96,8 +96,8 @@ Turbulent Prandtl Number—Where Are We?
 Journal of Heat Transfer, 116(2), 284-295.](https://asmedigitalcollection.asme.org/heattransfer/article/116/2/284/383190/Turbulent-Prandtl-Number-Where-Are-We)
 
 <a id="12">[12]</a>
-[Catris, S., Aupoix, B. (2000). 
-Density corrections for turbulence models. 
+[Catris, S., Aupoix, B. (2000).
+Density corrections for turbulence models.
 Aerospace Science and Technology, 4.1, 1-11.]
 (https://www.sciencedirect.com/science/article/pii/S1270963800001127)
 
