@@ -98,8 +98,9 @@ Journal of Heat Transfer, 116(2), 284-295.](https://asmedigitalcollection.asme.o
 <a id="12">[12]</a>
 [Catris, S., Aupoix, B. (2000).
 Density corrections for turbulence models.
-Aerospace Science and Technology, 4.1, 1-11.]
-(https://www.sciencedirect.com/science/article/pii/S1270963800001127)
+Aerospace Science and Technology, 4.1,1-11.]
+\(https://www.sciencedirect.com/science/article/pii/S1270963800001127)
+
 
 <a id="13">[13]</a>
 [Otero R., G.J., Patel, A., Diez S., R., Pecnik, R. (2018).
