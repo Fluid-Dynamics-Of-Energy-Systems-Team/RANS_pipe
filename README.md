@@ -14,7 +14,7 @@ The reynolds shear stress is modeled using:
 
 To model the turbulent viscosity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mu_t" />, the following turbulent viscosity models can be used:
 * Spalart & Allmaras (1992) [[6]](#6)
-* Laurence et al. (2004) [[9]](#9)
+* Durbin (1995) [[9]](#9)
 * Jones & Launder (1972) [[4]](#4) 
 * Myong & Kasagi (1990)  [[5]](#5)
 
@@ -102,9 +102,9 @@ Convective heat and mass transfer.
 Boston: McGraw-Hill Higher Education, 76, 81-89.](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
 
 <a id="9">[9]</a>
-[Laurence, D.R., Uribe J.C., Utyuzhnikov, S.V. (2004). 
-A Robust Formulation of the v2-f Model. 
-Flow Turbulence and Combustion, 73, 169-185](https://link.springer.com/article/10.1007/s10494-005-1974-8)
+[Durbin, P.A. (1995)
+Separated flow computations with the k-epsilon-v-squared model.
+AIAA journal, 33(4), 659-664.](https://link.springer.com/article/10.1007/s10494-005-1974-8)
 
 <a id="10">[10]</a>
 [Bae, Y.Y. (2016).
