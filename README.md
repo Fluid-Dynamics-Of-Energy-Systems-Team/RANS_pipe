@@ -10,7 +10,7 @@ The code supports a non-equidistant mesh in wall-normal direction as well as str
 To model the reynolds stress, the following turbulent viscosity models are included:
 * Spalart & Allmaras (1992) [[6]](#6)
 * Laurence et al. (2004) [[9]](#9)
-* Jones & Launder (1972)[[4]](#4) 
+* Jones & Launder (1972) [[4]](#4) 
 * Menter (1994) [[5]](#5)
 
 ### Turbulent heat flux models
