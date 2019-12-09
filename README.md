@@ -11,7 +11,7 @@ To model the reynolds stress, the following turbulent viscosity models are inclu
 * Spalart & Allmaras (1992) [[6]](#6)
 * Laurence et al. (2004) [[9]](#9)
 * Jones & Launder (1972) [[4]](#4) 
-* Menter (1994) [[5]](#5)
+* Myong & Kasagi (1990)  [[5]](#5)
 
 ### Turbulent heat flux models
 To model the turbulent heat flux, the following turbulent diffusivity models are included:
@@ -61,9 +61,9 @@ The prediction of laminarization with a two-equation model of turbulence.
 International Journal of Heat and Mass Transfer, 15(2), 301-314](https://www.sciencedirect.com/science/article/pii/0017931072900762)
 
 <a id="5">[5]</a> 
-[Menter, F.R. (1994) 
-Two-equation eddy-viscosity turbulence models for engineering applications. 
-AIAA journal, 32(8), 1598-1605.](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
+[Myong,H.K., Kasagi,N. (1990)
+A new approach to the improvement of k-epsilon turbulence model for wall-bounded shear flows. 
+JSME International Journal, 33, 63–72](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
 
 <a id="6">[6]</a> 
 [Spalart, P., Allmaras, S. (1992).
