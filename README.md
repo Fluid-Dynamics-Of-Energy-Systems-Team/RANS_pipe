@@ -3,7 +3,7 @@ RANS code to solve turbulent flows over a flat plate or through a pipe and chann
 ## Mesh
 The rans simulation supports a non-equidistant mesh in wall-normal direction as well as streamwise direction with refinement where the boundary conditions change.
 
-<img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/blstart/notebooks/non-equidistant.svg"
+<img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/blstart/notebooks/non-equidistant.svg?sanitize=true"
      style="float: center; margin-right: 10px;" />
 ## Models
 ### Turbulent viscosity models
