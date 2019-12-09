@@ -9,6 +9,7 @@ module vp_tdm
   contains
     procedure(set_alphat_vp_tdm), deferred :: set_alphat
     procedure :: init => init_mem_vp_tdm
+    procedure :: get_sol => get_sol_vp_tdm
   end type VPrt_TurbDiffModel
   interface
     subroutine set_alphat_vp_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
@@ -81,6 +82,15 @@ contains
       class(VPrt_TurbDiffModel) :: this
       allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1))
   end subroutine init_mem_vp_tdm
+
+  subroutine get_sol_vp_tdm(this,Prt,epst,kt)
+    class(VPrt_TurbDiffModel) :: this
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+    Prt  =this%Prt
+    epst =0.    
+    kt   =0.
+  end subroutine get_sol_vp_tdm
+
 
   !************************!
   ! Kays Crawford routines !

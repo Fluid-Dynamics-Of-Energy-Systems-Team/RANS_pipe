@@ -17,6 +17,7 @@ module ktet_tdm
     procedure(rhs_epst_KtEt), deferred :: rhs_epst_KtEt
     procedure(set_constants), deferred :: set_constants
     procedure :: advance_turbdiff => advance_KtEt
+    procedure :: get_sol => get_sol_KtEt
     ! procedure(init_w_inflow_KtEt), deferred :: init_w_inflow  ! MISSING
     procedure :: init => init_KtEt
     procedure :: rhs_kt_KtEt
@@ -28,7 +29,6 @@ module ktet_tdm
     procedure :: init_mem_KtEt
     procedure :: init_sol => init_sol_KtEt
     procedure :: get_profile => get_profile_KtEt
-    procedure :: get_sol => get_sol_KtEt
   end type KtEt_TurbDiffModel
 
   interface
@@ -96,6 +96,16 @@ subroutine init_mem_KtEt(this)
            this%epstin(0:this%i1),this%ktin(0:this%i1))
 end subroutine init_mem_KtEt
 
+
+subroutine get_sol_KtEt(this,Prt,epst,kt)
+  class(KtEt_TurbDiffModel) :: this
+  real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+  Prt  =0
+  epst =this%epst
+  kt   =this%kt
+end subroutine get_sol_KtEt
+
+
 subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
                        alphakt,modification,rank,periodic)
   use mod_math
@@ -156,13 +166,6 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
     enddo
   enddo
 end
-subroutine get_sol_KtEt(this,kt,epst,yp)
-    class(KtEt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: kt,epst,yp
-    kt   =this%kt    
-    epst =this%epst
-    ! yp  = this%yp
-end subroutine get_sol_KtEt
 
 subroutine get_profile_KtEt(this,p_kt,p_epst,p_Pkt,yp,k)
   class(KtEt_TurbDiffModel) :: this

@@ -91,15 +91,15 @@ if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,1.))
-if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.6)) then
-  allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
-else if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.7)) then
-  allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
-else
-  call mpi_finalize()
-  write(*,*) "turbulent diffisivity model not valid in combination with the chosen turbulence model"
-  stop
-endif
+! if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.6)) then
+!   allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
+! else if ((turbmod.eq.3) .or. (turbmod.eq.4) .and. (turbdiffmod.eq.7)) then
+!   allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
+! else
+!   call mpi_finalize()
+!   write(*,*) "turbulent diffisivity model not valid in combination with the chosen turbulence model"
+!   stop
+! endif
 call turbdiff_model%init()
 
 
