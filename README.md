@@ -35,7 +35,7 @@ where <img src="https://latex.codecogs.com/svg.latex?\Large&space;{\mu}_t" /> is
 * Irrenfried & Steiner (2017) [[3]](#3)
 * Bae (2016) [[10]](#10)
 
-To calculate the thermal diffusivity using 2 extra transport the following models are included:
+To calculate the thermal diffusivity using 2 extra transport equations, the following models are included:
 * Deng et al. (2001) [[2]](#2) 
 * Nagano & Kim (1988) [[7]](#5)
 
