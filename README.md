@@ -17,7 +17,7 @@ To model the turbulent heat flux, the following turbulent diffusivity models are
 * [Kays](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205) 
 * Kays & Crawford (2005) [[8]](#8)
 * Irrenfried & Steiner (2017) [[3]](#3)
-* [Bae](https://www.infona.pl/resource/bwmeta1.element.elsevier-e6af3d8b-9871-32d3-a9f6-4972a82f5f76)
+* Bae (2016) [[10]](#10)
 * Deng et al. (2001) 
 * Nagano & Kim (1988)
 
@@ -76,9 +76,14 @@ Journal Heat Transfer, 110(3), 583-589.](https://asmedigitalcollection.asme.org/
 <a id="8">[8]</a>
 [Kays, W.M., Crawford, M.E., Weigand, B. (2005). 
 Convective heat and mass transfer. 
-Boston: McGraw-Hill Higher Education, 76,81-89.](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
+Boston: McGraw-Hill Higher Education, 76, 81-89.](https://www.sciencedirect.com/science/article/pii/S0017931016300734#b0205)
 
 <a id="9">[9]</a>
 [Laurence, D.R., Uribe J.C., Utyuzhnikov, S.V. (2004). 
 A Robust Formulation of the v2-f Model. 
 Flow Turbulence and Combustion, 73, 169-185](https://link.springer.com/article/10.1007/s10494-005-1974-8)
+
+<a id="10">[10]</a>
+[Bae, Y.Y. (2016).
+A new formulation of variable turbulent Prandtl number for heat transfer to supercritical fluids. 
+International Journal of Heat and Mass Transfer, 92, 792-806.](https://www.infona.pl/resource/bwmeta1.element.elsevier-e6af3d8b-9871-32d3-a9f6-4972a82f5f76)
