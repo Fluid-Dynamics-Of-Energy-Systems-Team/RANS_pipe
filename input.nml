@@ -1,5 +1,5 @@
 &input
-  CFL               = 1,     ! CFL number / time step
+  CFL               = 10,     ! CFL number / time step
   systemSolve       = 1,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
   imax              = 96,   ! radial direction
   kelem             = 32,     ! axial direction
@@ -15,7 +15,7 @@
   Pr                = 3.19457,
   Qwall             = 0.0,     ! Qwall=(qw*D/(k0*T0))
   isothermalBC      = 0,       ! isothermal wall: 1
-  Tw                = 1.25,    ! scaled with the inflow temp (Tin=1)
+  Tw                = 1.5,    ! scaled with the inflow temp (Tin=1)
   dTwall            = 0.05,
   pressIsoThermal   = 1,       ! constant pressure for BL cases (2 or 4)
   Fr_1              = 0.0,
@@ -29,10 +29,10 @@
   alphae            = 0.1, 
   alphav2           = 0.1, 
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 2,
+  turbdiffmod       = 5,
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
-  dtmax             = 0.001,
+  dtmax             = 0.01,
   output_fname_bl   = "test.csv",
   imax_old          = 192,
   kelem_old         = 1600
