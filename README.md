@@ -48,6 +48,7 @@ To calculate the thermal diffusivity using 2 extra transport equations, the foll
 * Find the bug in the k-epsilon turbulence model
 * Convert the v2f model to a non-equidistant grid
 * Write out residuals
+* Restart with the turbulent diffusivity variables interpolated
 
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
