@@ -10,7 +10,7 @@ module mod_tdm
   type, abstract, public :: TurbDiffModel
   integer i1,k1,imax,kmax
   character(len=4)                      :: name
-  real(8), dimension(:,:), allocatable :: Pkt,kt,epst, yp
+  real(8), dimension(:,:), allocatable :: Pkt,kt,epst, yp,Tmix,Ttemp
   real(8), dimension(:),   allocatable :: alphatin, Pktin,Prtin
   contains
     procedure(init_tdm),       deferred :: init

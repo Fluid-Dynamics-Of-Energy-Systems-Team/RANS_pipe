@@ -150,7 +150,8 @@ do istep=istart,nstep
 
   call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
   call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
-  
+  ! call write_vector(turbdiff_model%epst, i1, k1, rank)
+
   !scalar equations
   call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &

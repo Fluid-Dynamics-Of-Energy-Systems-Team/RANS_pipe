@@ -397,7 +397,7 @@ subroutine output2d_upd2(rank,istap)
   enddo
 
   call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
-  call turbdiff_model%get_sol(prt_sol,kt_sol,epst_sol)
+  call turbdiff_model%get_sol(prt_sol,epst_sol,kt_sol)
 
   call set_uvector_to_coords(unew,i1,k1,u_plt)
   call set_wvector_to_coords(wnew,i1,k1,w_plt)
@@ -416,7 +416,7 @@ subroutine output2d_upd2(rank,istap)
   call set_scalar_to_coords (kt_sol,i1,k1,kt_plt)
   call set_scalar_to_coords (epst_sol,i1,k1,epst_plt)
 
-  
+  call write_vector(turbdiff_model%Pkt,i1,k1,rank)
   
   call write_mpiio_formatted(trim(output_fname), xvec, yvec, u_plt,w_plt, rho_plt,c_plt,p_plt,mu_plt, mut_plt,yp_sol,     &
                                  k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,alphat_plt, prt_plt, kt_plt, epst_plt,           &
@@ -493,6 +493,7 @@ subroutine write_vector(vector, i1, k1, rank)
       write(15,'(3ES24.10E3)') i*1., k*1., vector(i,k)
     enddo
   enddo
+  close(15)
 
 
 end subroutine

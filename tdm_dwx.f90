@@ -89,6 +89,7 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 
     enddo
   enddo
+
 end subroutine set_alphat_DWX
 
 subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)

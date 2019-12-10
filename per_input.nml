@@ -1,33 +1,39 @@
 &input
-  CFL               = 100.0,   ! CFL number / time step
-  systemSolve       = 2,       ! 1: pipe, 2: channel 3: boundary layer !**dpdz now defined in mkgrid should be 1 for channel/BL, 4 for the pipe**!!
-  imax              = 196,      ! radial direction
-  kelem             = 32,      ! axial direction
-  K_start_heat      = 25,       ! for isoflux:    after home many cells in x will you start heating
-  x_start_heat      = 10,       ! for isothermal: lenght at which you start heating
+  CFL               = 10,     ! CFL number / time step
+  systemSolve       = 1,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
+  imax              = 96,   ! radial direction
+  kelem             = 32,     ! axial direction
+  K_start_heat      = 10,      ! for isoflux:    after home many cells in x will you start heating
+  x_start_heat      = 10,      ! for isothermal: lenght at which you start heating
   iwork             = 1,
   isave             = 1,
   nTab              = 2000,    ! 2000 for co2, 2500 for pH2
-  nstep             = 100000,
-  LoD               = 20,      ! pH2= 30
+  nstep             = 10000000,
+  LoD               = 200,     ! pH2= 30
   periodic          = 1,       ! 1..periodic, 2..developing   
-  Re                = 360,
+  Re                = 360,!1000000,
   Pr                = 3.19457,
   Qwall             = 0.0,     ! Qwall=(qw*D/(k0*T0))
   isothermalBC      = 0,       ! isothermal wall: 1
-  Tw                = 1.25,    ! scaled with the inflow temp (Tin=1)
+  Tw                = 1.5,    ! scaled with the inflow temp (Tin=1)
   dTwall            = 0.05,
   pressIsoThermal   = 1,       ! constant pressure for BL cases (2 or 4)
   Fr_1              = 0.0,
   EOSmode           = 0,       ! 0..IG, 1..SCCO2/sPH2
   select_init       = 0,       ! 0..std initialization, 1..read inflow , 2..read restart file
-  turbmod           = 0,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
+  turbmod           = 2,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST
   ctheta            = 0.3,
   modVF             = 0,       ! 0..Original 1..LienKalitzin Time/Length scale VF model
   alphac            = 0.1,
   alphak            = 0.1,     ! for SA
   alphae            = 0.1, 
   alphav2           = 0.1, 
-  modifDiffTerm     = 1,       ! 0..Standard, 1..invSLS, 2..Aupoix
+  modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
+  turbdiffmod       = 6,
+  output_fname      = "laminarbl.csv",
+  read_fname        = "laminarbl_124.csv", ! name of restartfile
+  dtmax             = 0.01,
+  output_fname_bl   = "test.csv",
+  imax_old          = 192,
+  kelem_old         = 1600
 /
-

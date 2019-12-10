@@ -9,7 +9,7 @@ module ktet_tdm
   !************************!
   
   type,abstract,extends(TurbDiffModel), public :: KtEt_TurbDiffModel
-  real(8), dimension(:,:), allocatable :: Ttemp,Tmix,flambda
+  real(8), dimension(:,:), allocatable :: flambda
   real(8), dimension(:),   allocatable :: epstin, ktin
   real(8) :: sigmakt,sigmaet,clambda,cp1,cp2,cd1,cd2
   contains
@@ -76,8 +76,8 @@ subroutine init_sol_KtEt(this)
   class(KtEt_TurbDiffModel) :: this
   integer :: i
   do i=0,this%i1
-    this%kt(i,:)  =0.0001
-    this%epst(i,:)=0.0010
+    this%kt(i,:)  =0.1
+    this%epst(i,:)=1.000
     this%Pkt(i,:) = 0 
     this%ktin(i) = 0.0
     this%epstin(i) = 0.0
@@ -114,18 +114,22 @@ subroutine init_w_inflow_KtEt(this,Re,systemsolve)
   real(8), dimension(0:this%i1) :: dummy, Prtin
   character(len=5)  :: Re_str
   character(len=100) :: fname
-  integer           :: Re_int
+  integer           :: Re_int,k
   Re_int = int(Re)
   write(Re_str,'(I5.5)') Re_int
-  fname = 'Inflow_'//turb_model%name//'_'//this%name//'_'//Re_str//'.dat'
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//trim(fname),form='unformatted')
-  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//trim(fname),form='unformatted')
-  if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//trim(fname),form='unformatted')
+  fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(this%name)//'_'//Re_str//'.dat'
+  if (systemsolve .eq. 1) open(29,file = 'pipe/'//trim(fname),form='unformatted')
+  if (systemsolve .eq. 2) open(29,file = 'channel/'//trim(fname),form='unformatted')
+  if (systemsolve .eq. 3) open(29,file = 'symchan/'//trim(fname),form='unformatted')
   read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-           dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-           dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-           dummy(:),this%alphatin, this%Prtin(:), this%ktin(:),this%epstin, this%Pktin
+             dummy(:),dummy(:),dummy(:),this%alphatin, this%Prtin(:), &
+             this%ktin(:),this%epstin, this%Pktin
   close(29)
+  do k=0,this%k1
+    this%epst(:,k) = this%epstin(:)
+    this%kt(:,k) = this%ktin(:)
+    this%Pkt(:,k) = this%Pktin(:)
+  enddo
 end subroutine init_w_inflow_KtEt
 
 subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
@@ -233,9 +237,10 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
   real(8), dimension(0:this%i1,0:this%k1) :: div
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
   real(8), dimension(0:this%k1) :: dzp
-  real(8), dimension(0:this%i1) :: dru
+  real(8), dimension(0:this%i1) :: dru,drp
 
   dzp = mesh%dzp
+  drp = mesh%drp
 
   ib = 1
   ie = this%i1-1
@@ -250,9 +255,13 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
       ip=i+1
       im=i-1
       ! Production of temperature fluctuations  Pkt= <u'j T'> dTdxj= (lambda_t/cp)/cp dCdxj dTdxj = = (lambda_t/cp)dTdxj^2
+      ! this%Pkt(i,k) = alphat(i,k)/cp(i,k)                           *          &
+      !           (((c(i,k)-c(i,km))/dzp(km))*((temp(i,k)-temp(i,km))/dzp(km))   &
+      !          + ((c(i,k)-c(im,k))/dRu(i)*((temp(i,k)-temp(im,k))/dRu(i))))
       this%Pkt(i,k) = alphat(i,k)/cp(i,k)                           *          &
                 (((c(i,k)-c(i,km))/dzp(km))*((temp(i,k)-temp(i,km))/dzp(km))   &
-               + ((c(i,k)-c(im,k))/dRu(i)*((temp(i,k)-temp(im,k))/dRu(i))))
+               + ((c(i,k)-c(im,k))/dRp(im)*((temp(i,k)-temp(im,k))/dRp(im))))
+!     
 !     this%Pkt(i,k) = alphat(i,k)*(((temp(i,k)-temp(i,km))/dz)**2.0+ ((temp(i,k)-temp(im,k))/dRu(i))**2.0)
 
     enddo
