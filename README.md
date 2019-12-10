@@ -45,6 +45,7 @@ To calculate the thermal diffusivity using 2 extra transport equations, the foll
 * Nagano & Kim (1988) [[7]](#5)
 
 ## To Do
+* fix the dissipation bc for the Deng model and the NK model
 * Convert the v2f model to a non-equidistant grid
 * Write out residuals
 * Restart with the turbulent diffusivity variables interpolated
