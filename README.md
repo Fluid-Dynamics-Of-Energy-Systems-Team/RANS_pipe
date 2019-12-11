@@ -86,7 +86,7 @@ International Journal of Heat and Mass Transfer, 15(2), 301-314](https://www.sci
 <a id="5">[5]</a> 
 [Myong, H.K.,Kasagi ,N. (1990)
 A new approach to the improvement of k-epsilon turbulence model for wall-bounded shear flows. 
-JSME International Journal, 33, 63–72](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
+JSME International Journal, 33, 63–72](https://www.jstage.jst.go.jp/article/jsmeb1988/33/1/33_1_63/_pdf/-char/ja)
 
 <a id="6">[6]</a> 
 [Spalart, P., Allmaras, S. (1992).
