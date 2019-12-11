@@ -29,7 +29,7 @@
   alphae            = 0.1, 
   alphav2           = 0.1, 
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 6,
+  turbdiffmod       = 7,
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.01,

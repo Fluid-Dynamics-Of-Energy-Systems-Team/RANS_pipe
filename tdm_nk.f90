@@ -52,7 +52,7 @@ end subroutine set_constants_NK
 subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   use mod_tm, only : turb_model
   use mod_mesh, only : mesh
-  use mod_param, only : Qwall
+  use mod_param, only : Qwall, Pr
   use mod_common, only : cp
   implicit none
   class(NK_TurbDiffModel) :: this
@@ -64,7 +64,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
   real(8), dimension(1:this%imax) :: walldist
-  real(8) :: Pr
+  ! real(8) :: Pr
   walldist = mesh%walldist
 
   eps  = turb_model%eps
@@ -83,11 +83,12 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
 
       cfi =  2*tauw(k)/rho(this%imax,k)/utau                     ! Skin friction
+      ! Qwall = temp(this%imax)-temp(this%imax)
       sti =  Qwall/(rho(this%imax,k)*cp(this%imax,k)*utau*temp(this%imax,k))  ! Stanton number
 
       this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)
       this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
-      Pr = mu(i,k)/lam_cp(i,k)
+      ! Pr = mu(i,k)/lam_cp(i,k)
       this%flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0      
       alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*((Tt(i,k)*this%Ttemp(i,k))**0.5)
 
@@ -106,9 +107,9 @@ subroutine rhs_epst_KtEt_NK(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
   real(8) d2Tdxdr
   real(8), dimension(0:this%i1,0:this%k1) :: Pk, kine, Tt
   real(8), dimension(0:this%k1) :: dzp
-  real(8), dimension(0:this%i1) :: dru
+  real(8), dimension(0:this%i1) :: drp
   
-  dru = mesh%dRu
+  drp = mesh%dRp
   dzp = mesh%dzp
 
      ! ce2 is from the k-epsilon model
@@ -129,7 +130,8 @@ subroutine rhs_epst_KtEt_NK(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
       ! d2Tdxdr = (1-this%flambda(i,k))*rho(i,k)*alphat(i,k)*ekh(i,k) * &
       !        ((((temp(i,k)-temp(i,km))/dz)-((temp(im,k)-temp(im,km))/dz) )/dRu(i))**2
       d2Tdxdr = (1-this%flambda(i,k))*rho(i,k)*alphat(i,k)*lam_cp(i,k) * &
-             ((((temp(i,k)-temp(i,km))/dzp(km))-((temp(im,k)-temp(im,km))/dzp(km)) )/dRu(i))**2
+             ((((temp(i,k)-temp(i,km))/dzp(km))-((temp(im,k)-temp(im,km))/dzp(km)) )/dRp(im))**2
+
       putout(i,k) = putout(i,k) + (this%cp1*this%epst(i,k)/(this%kt(i,k)+1.0e-20)*this%Pkt(i,k) + &
                    this%cp2*this%epst(i,k)/ kine(i,k)* Pk(i,k) + d2Tdxdr)     /rho(i,k)
       dimpl(i,k)  = dimpl(i,k)  + this%cd1*this%epst(i,k)/(this%kt(i,k)+1.0e-20) + this%cd2/Tt(i,k)           
