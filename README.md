@@ -45,10 +45,11 @@ To calculate the thermal diffusivity using 2 extra transport equations, the foll
 * Nagano & Kim (1988) [[7]](#5)
 
 ## To Do
-* Find the bug in the k-epsilon turbulence model
+* fix the dissipation bc for the Deng model and the NK model
 * Convert the v2f model to a non-equidistant grid
 * Write out residuals
 * Restart with the turbulent diffusivity variables interpolated
+* Add the convective outlet bc for the scalars
 
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
