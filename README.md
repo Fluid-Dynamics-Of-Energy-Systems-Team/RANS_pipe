@@ -29,7 +29,7 @@ The turbulent heat flux is modeled according to:
 
 where the turbulent diffusivity <img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t" /> can be calculated using the zero equations models, given by:
 <p align="center">
-<img src="https://latex.codecogs.com/svg.latex?\Large&space;\alpha_t=\frac{\mu_t}{Pr_t}," />
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;{\rho}\alpha_t=\frac{\mu_t}{Pr_t}," />
 </p>
 
 where <img src="https://latex.codecogs.com/svg.latex?\Large&space;{\mu}_t" /> is the turbulent viscosity and <img src="https://latex.codecogs.com/svg.latex?\Large&space;{Pr}_{t}" /> the turbulent Prandtl number. The turbulent Prandtl number can be modeled using the following models:
