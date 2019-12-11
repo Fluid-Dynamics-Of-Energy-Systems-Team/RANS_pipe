@@ -16,6 +16,8 @@ module ktet_tdm
     procedure(set_alpha_KtEt), deferred :: set_alphat
     procedure(rhs_epst_KtEt), deferred :: rhs_epst_KtEt
     procedure(set_constants), deferred :: set_constants
+    
+    procedure :: set_bc => set_bc_KtEt
     procedure :: advance_turbdiff => advance_KtEt
     procedure :: get_sol => get_sol_KtEt
     procedure :: init_w_inflow => init_w_inflow_KtEt
@@ -23,7 +25,6 @@ module ktet_tdm
     procedure :: rhs_kt_KtEt
     procedure :: diffusion_epst_KtEt
     procedure :: solve_epst_KtEt
-    procedure :: set_bc => set_bc_KtEt
     procedure :: production_KtEt
     procedure :: solve_kt_KtEt
     procedure :: init_mem_KtEt
@@ -52,15 +53,20 @@ module ktet_tdm
       class(KtEt_TurbDiffModel) :: this
       real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
       real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
-    end subroutine rhs_epst_KtEt  
-
+    end subroutine rhs_epst_KtEt
+  
   end interface
 
 contains
 !****************************************************************************************
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !****************************************************************************************
-
+  ! subroutine set_bc_KtEt(this,ekh,rho,periodic,rank,px)
+  !   implicit none
+  !   class(KtEt_TurbDiffModel) :: this
+  !   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,ekh
+  !   integer,                               intent(IN) :: periodic, rank, px
+  ! end subroutine set_bc_KtEt
   !************************!
   !       KE routines      !
   !************************!
@@ -238,6 +244,7 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
   real(8), dimension(0:this%k1) :: dzp
   real(8), dimension(0:this%i1) :: dru,drp
+  real(8) :: dTdx, dTdy
 
   dzp = mesh%dzp
   drp = mesh%drp
@@ -258,10 +265,9 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
       ! this%Pkt(i,k) = alphat(i,k)/cp(i,k)                           *          &
       !           (((c(i,k)-c(i,km))/dzp(km))*((temp(i,k)-temp(i,km))/dzp(km))   &
       !          + ((c(i,k)-c(im,k))/dRu(i)*((temp(i,k)-temp(im,k))/dRu(i))))
-      this%Pkt(i,k) = alphat(i,k)/cp(i,k)                           *          &
-                (((c(i,k)-c(i,km))/dzp(km))*((temp(i,k)-temp(i,km))/dzp(km))   &
-               + ((c(i,k)-c(im,k))/dRp(im)*((temp(i,k)-temp(im,k))/dRp(im))))
-!     
+     dTdx = (temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
+     dTdy = (temp(ip,k)-temp(im,k))/(drp(i)+drp(im))
+     this%Pkt(i,k) = alphat(i,k)*(dTdx*dTdx + dTdy*dTdy) !- 2*this%epst(i,k) this part is put implict !NOTE: CHANGED BY STEPHAN
 !     this%Pkt(i,k) = alphat(i,k)*(((temp(i,k)-temp(i,km))/dz)**2.0+ ((temp(i,k)-temp(im,k))/dRu(i))**2.0)
 
     enddo
@@ -301,17 +307,12 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
 
   do k=1,this%kmax
     do i=1,this%imax
-                  
       a(i) = (ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k))/this%sigmaet)
       a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)
-
       c(i) = (ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k))/this%sigmaet)
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
-  
       b(i) = ((-a(i)-c(i))+ dimpl(i,k)  )  
-      
       rhs(i) = dnew(i,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)
-
     enddo
 
     i=1
@@ -348,7 +349,7 @@ subroutine rhs_kt_KtEt(this,putout,dimpl,rho)
   do k=kb,ke
     do i=ib,ie
       !kt equation
-      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k)
+      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k) 
       dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
     enddo
   enddo
@@ -418,9 +419,6 @@ subroutine diffusion_epst_KtEt(this,putout,putin,ekhk,alphat,sigma,rho)
     kp=k+1
     km=k-1
     do i=1,this%i1-1
-      ! putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-      !   ( (ekhk(i,k ) + 0.5*(alphat(i,k)+alphat(i,kp))/sigma)*(putin(i,kp)-putin(i,k )) &
-      !   - (ekhk(i,km) + 0.5*(alphat(i,k)+alphat(i,km))/sigma)*(putin(i,k )-putin(i,km)))/(dz*dz)   )
       putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
         ( (ekhk(i,k ) + 0.5*(alphat(i,k)+alphat(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
         - (ekhk(i,km) + 0.5*(alphat(i,k)+alphat(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km)&

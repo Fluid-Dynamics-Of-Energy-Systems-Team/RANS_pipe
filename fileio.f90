@@ -2,6 +2,7 @@ subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
   use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1, LoD
   use mod_mesh, only : mesh
+  use mod_tdm, only : turbdiff_model
   implicit none
   include "mpif.h"
   integer, intent(IN) :: rank, istap
@@ -63,6 +64,8 @@ subroutine write_output_bl(rank, istap)
   call MPI_FILE_SET_VIEW(fh, disp, MPI_CHAR, MPI_CHAR, 'native', MPI_INFO_NULL, ierr) 
   call MPI_FILE_WRITE(fh, lines, size, MPI_CHAR,MPI_STATUS_IGNORE, ierr) 
   call MPI_FILE_CLOSE(fh, ierr) 
+
+  call write_vector(turbdiff_model%Pkt, i1, k1, rank)
 
 end subroutine
 
@@ -416,7 +419,7 @@ subroutine output2d_upd2(rank,istap)
   call set_scalar_to_coords (kt_sol,i1,k1,kt_plt)
   call set_scalar_to_coords (epst_sol,i1,k1,epst_plt)
 
-  call write_vector(turbdiff_model%Pkt,i1,k1,rank)
+  ! call write_vector(turbdiff_model%Pkt,i1,k1,rank)
   
   call write_mpiio_formatted(trim(output_fname), xvec, yvec, u_plt,w_plt, rho_plt,c_plt,p_plt,mu_plt, mut_plt,yp_sol,     &
                                  k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,alphat_plt, prt_plt, kt_plt, epst_plt,           &

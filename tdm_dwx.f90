@@ -14,6 +14,7 @@ module dwx_tdm
     procedure :: set_constants => set_constants_DWX
     procedure :: set_alphat => set_alphat_DWX
     procedure :: rhs_epst_KtEt => rhs_epst_KtEt_DWX
+    procedure :: set_bc => set_bc_DWX
   end type DWX_TurbDiffModel
 
 
@@ -47,6 +48,67 @@ subroutine set_constants_DWX(this)
   this%cd2 = 0.9
 end subroutine set_constants_DWX
 
+subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
+  use mod_mesh, only : mesh
+  use mod_param, only : isothermalBC
+  implicit none
+  class(DWX_TurbDiffModel) :: this
+  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,ekh
+  integer,                               intent(IN) :: periodic, rank, px
+  real(8),dimension(0:this%k1) ::  top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
+  real(8), dimension(1:this%imax) :: walldist
+  real(8),dimension(0:this%i1) :: tmp
+  real(8) :: topBCvalue, botBCvalue
+  integer :: k
+
+  walldist = mesh%walldist
+  top_bcvalue = mesh%top_bcvalue
+  bot_bcvalue = mesh%bot_bcvalue
+  top_bcnovalue = mesh%top_bcnovalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+  !isothermal
+  if (isothermalBC.eq.1) then
+    do k = 0,this%k1 
+      this%kt(0,k)         = bot_bcnovalue(k)*this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
+      this%kt(this%i1,k)   = top_bcnovalue(k)*this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
+      !botBCvalue = 2.0*ekh(1,k)/rho(1,k)*this%kt(1,k)/walldist(1)**2                                                          !bcvalue
+      botBCvalue = 2.0*ekh(1,k)/rho(1,k)*(this%kt(1,k)**0.5/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
+      this%epst(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%epst(1,k))         +bot_bcvalue(k)*this%epst(1,k)        !symmetry or bc value
+      topBCvalue = 2.0*ekh(this%imax,k)/rho(this%imax,k)*(this%kt(this%imax,k)**0.5/walldist(this%imax))**2
+      !topBCvalue = 2.0*ekh(this%imax,k)/rho(this%imax,k)*this%kt(this%imax,k)/walldist(this%imax)**2                          !bcvalue
+      this%epst(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(this%imax,k)) +top_bcvalue(k)*this%epst(this%imax,k)!symmetry or bc value
+    enddo
+  !isoflux
+  else
+    do
+      this%kt(0,k)        =this%kt(1,k)         ! dkt/dy = 0 
+      this%kt(this%i1,k)  =this%kt(this%imax,k) ! dkt/dy = 0 
+      this%epst(0,k)      =this%epst(1,k)         ! depst/dy = 0 
+      this%epst(this%i1,k)=this%epst(this%imax,k) ! depst/dy = 0 
+    enddo
+  endif
+
+  call shiftf(this%kt,  tmp,rank); this%kt  (:,0)      =tmp(:);
+  call shiftf(this%epst,tmp,rank); this%epst(:,0)      =tmp(:);
+  call shiftb(this%kt,  tmp,rank); this%kt  (:,this%k1)=tmp(:);
+  call shiftb(this%epst,tmp,rank); this%epst(:,this%k1)=tmp(:);
+  
+  ! developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%kt  (:,0) = this%ktin(:)
+    this%epst(:,0) = this%epstin(:)
+    this%Pkt(:,0) = this%Pktin(:)
+  endif
+  if (rank.eq.px-1) then
+    this%kt  (:,this%k1)= 2.0*this%kt  (:,this%kmax)-this%kt  (:,this%kmax-1)
+    this%epst(:,this%k1)= 2.0*this%epst(:,this%kmax)-this%epst(:,this%kmax-1)
+    this%Pkt(:,this%k1)= 2.0*this%Pkt(:,this%kmax)-this%Pkt(:,this%kmax-1)
+  endif
+
+end subroutine set_bc_DWX
+
+
 subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   use mod_tm, only : turb_model
   use mod_mesh, only : mesh
@@ -75,15 +137,11 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       ip=i+1
       ! yplus hsould be an input so it can be changed from yplus to ystar
       this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
-  
       Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))        
       Reeps(i,k)   = walldist(i)*((mu(i,k)*eps(i,k)/rho(i,k))**0.25)*rho(i,k)/mu(i,k)   
-
       this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)
       this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
-
       this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))
-                
       alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5
                  
 
@@ -126,7 +184,8 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
       feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   
       fd2  = (1/0.9)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
       
-      putout(i,k) = putout(i,k) + (this%cp1*this%Pkt(i,k)/this%Tmix(i,k))/rho(i,k)
+      !putout(i,k) = putout(i,k) + (this%cp1*this%Pkt(i,k)/this%Tmix(i,k))/rho(i,k)
+      putout(i,k) = putout(i,k) + ((this%cp1/this%Tmix(i,k))*this%Pkt(i,k))/rho(i,k) !NOTE: CHANGED BY STEPHAN
       dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1/this%Ttemp(i,k) + this%cd2*fd2/Tt(i,k)
     enddo
   enddo
