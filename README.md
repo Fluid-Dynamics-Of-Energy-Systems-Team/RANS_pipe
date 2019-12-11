@@ -50,6 +50,7 @@ To calculate the thermal diffusivity using 2 extra transport equations, the foll
 * Write out residuals
 * Restart with the turbulent diffusivity variables interpolated
 * Add the convective outlet bc for the scalars
+* Fix the RHS of the NK model (make the heat flux a calculated more general value)
 
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
