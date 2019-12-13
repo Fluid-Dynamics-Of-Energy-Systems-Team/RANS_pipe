@@ -103,12 +103,13 @@ subroutine init_mem_KtEt(this)
 end subroutine init_mem_KtEt
 
 
-subroutine get_sol_KtEt(this,Prt,epst,kt)
+subroutine get_sol_KtEt(this,Prt,epst,kt, Pkt)
   class(KtEt_TurbDiffModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+  real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt
   Prt  =0
   epst =this%epst
   kt   =this%kt
+  Pkt  = this%Pkt
 end subroutine get_sol_KtEt
 
 subroutine init_w_inflow_KtEt(this,Re,systemsolve)
@@ -227,10 +228,10 @@ subroutine advance_KtEt(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
   else
     rho_mod = 1.0
   endif
-
   call this%production_KtEt(c,temp,rho,cp,alphat)
   call this%solve_epst_KtEt(residual2,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_mod, &
                        alpha2,modification,rank,periodic)
+
   call this%solve_kt_KtEt(residual1,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
                        alpha1,modification,rank,periodic)
 end
@@ -404,7 +405,6 @@ end subroutine set_bc_KtEt
 
 subroutine diffusion_epst_KtEt(this,putout,putin,ekhk,alphat,sigma,rho)
   use mod_mesh, only : mesh
-  ! use mod_mesh, only : dz
   implicit none
   class(KtEt_TurbDiffModel) :: this
   real(8), dimension(0:this%i1, 0:this%k1), intent(IN) :: putin, ekhk, alphat, rho

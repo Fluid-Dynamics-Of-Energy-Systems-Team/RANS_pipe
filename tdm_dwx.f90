@@ -80,7 +80,7 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
     enddo
   !isoflux
   else
-    do
+    do k= 0,this%k1 
       this%kt(0,k)        =this%kt(1,k)         ! dkt/dy = 0 
       this%kt(this%i1,k)  =this%kt(this%imax,k) ! dkt/dy = 0 
       this%epst(0,k)      =this%epst(1,k)         ! depst/dy = 0 
@@ -142,9 +142,7 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)
       this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
       this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))
-      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5
-                 
-
+      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5              
     enddo
   enddo
 
@@ -183,7 +181,6 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
       fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0
       feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   
       fd2  = (1/0.9)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
-      
       !putout(i,k) = putout(i,k) + (this%cp1*this%Pkt(i,k)/this%Tmix(i,k))/rho(i,k)
       putout(i,k) = putout(i,k) + ((this%cp1/this%Tmix(i,k))*this%Pkt(i,k))/rho(i,k) !NOTE: CHANGED BY STEPHAN
       dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1/this%Ttemp(i,k) + this%cd2*fd2/Tt(i,k)

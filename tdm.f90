@@ -44,10 +44,10 @@ module mod_tdm
       real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
     end subroutine get_profile_tdm
 
-    subroutine get_sol_tdm(this,Prt,epst,kt)
+    subroutine get_sol_tdm(this,Prt,epst,kt, Pkt)
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+      real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt
     end subroutine get_sol_tdm
 
     subroutine init_w_inflow_tdm(this,Re,systemsolve)
@@ -154,12 +154,13 @@ contains
     alphat = mut/this%Prt
   end subroutine set_alphat_constprt
 
-  subroutine get_sol_constprt(this,Prt,epst,kt)
+  subroutine get_sol_constprt(this,Prt,epst,kt, Pkt)
     class(CPrt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt
     Prt  =this%Prt
     epst =0.    
     kt   =0.
+    Pkt = 0.
   end subroutine get_sol_constprt
 
   subroutine get_profile_constprt(this,p_prt,p_kt,p_epst,p_Pkt,k)

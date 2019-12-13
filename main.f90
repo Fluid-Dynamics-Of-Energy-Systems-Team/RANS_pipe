@@ -24,12 +24,12 @@ include 'mpif.h'
 
 integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1
-real(8) ::  resC,resK,resE,resV2,resOm,resSA,resKt,resEpst  
+real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2  
 real(8) ::  start, finish
 real(8) :: resU, resW
 
 
-resC=0;resV2=0;resK=0;resE=0;resOm=0;resSA=0;resKt=0;resEpst=0
+resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0!;resKt=0;resEpst=0
 
 !read parameters
 call read_parameters()
@@ -150,29 +150,32 @@ do istep=istart,nstep
 
   call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
   call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
-
+  
   !scalar equations
   call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
                               mesh%Ru,mesh%Rp,mesh%dru,mesh%drp,mesh%dz,mesh%walldist,alphak,alphae,alphav2,        &
-                              modifDiffTerm,rank,mesh%centerBC,periodic,resSA,resK, resV2)
+                              modifDiffTerm,rank,mesh%centerBC,periodic,resTV1,resTV2,resTV3)
+
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
-                                      alphak,alphae,modifDiffTerm,rank,periodic,resEpst, resKt)
+                                      alphak,alphae,modifDiffTerm,rank,periodic,resTD1,resTD2)
   !apply bc
   call bound_c(Cnew, Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
   call turbdiff_model%set_bc(ekh,rnew,periodic,rank,px)
 
+
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
   call advance(rank)
   
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
-
+  
   call fillps(rank)
   call solvepois_cr(p,0,rank,mesh%centerBC)
   ! call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,rank, istep)
+
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
@@ -188,11 +191,12 @@ do istep=istart,nstep
   noutput = 100     
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
-      write(6,'(A7,9A14)') 'istep'    ,'dt'      ,'bulk'   ,'stress' ,'cResid', &
-                           'kineResid','epsResid','v2Resid','omResid','nuSAresid'
+      write(6,'(A7,9A13)') 'istep'  ,'dt' ,'bulk'   ,'stress' ,'cResid', &
+                           'resTV1','resTV2','resTV3', &
+                           'resTD1', 'resTD2'
     endif
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
-      write(6,'(i7,9e14.5)') istep,dt,bulk,stress,resC,resK,resE,resV2,resU,resW
+      write(6,'(i7,9e13.4)') istep,dt,bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
     endif
   end if
          

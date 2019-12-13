@@ -168,7 +168,6 @@ subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
   if (rank.eq.px-1) then
     this%nuSA(:,this%k1) = 2.0*this%nuSA(:,this%kmax) - this%nuSA(:,this%kmax-1)
     this%pk(:,this%k1) = 2.0*this%pk(:,this%kmax) - this%pk(:,this%kmax-1)
-
   endif
 
 end subroutine set_bc_SA
