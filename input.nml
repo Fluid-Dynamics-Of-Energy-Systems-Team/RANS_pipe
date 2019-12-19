@@ -36,4 +36,5 @@
   output_fname_bl   = "test.csv",
   imax_old          = 192,
   kelem_old         = 1600
+  Qsource           = 0.015649452 !2/Re*Pr
 /

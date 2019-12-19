@@ -341,10 +341,8 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
     i=this%imax
     ! b(i) = b(i)+c(i)!-top_bcnovalue(k)*c(i)
     ! rhs(i) = dnew(i,k) +((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
-
     b(i) = b(i)+top_bcvalue(k)*c(i)
     rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%epst(i+1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
-      
     call matrixIdir(this%imax,a,b/alphaet,c,rhs)
   
     do i=1,this%imax

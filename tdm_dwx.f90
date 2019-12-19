@@ -107,21 +107,21 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
 
   call shiftf(this%kt,  tmp,rank); this%kt  (:,0)      =tmp(:);
   call shiftf(this%epst,tmp,rank); this%epst(:,0)      =tmp(:);
-  call shiftf(this%Pkt,tmp,rank); this%Pkt(:,0)      =tmp(:);
+  call shiftf(this%Pkt, tmp,rank); this%Pkt (:,0)      =tmp(:);
   call shiftb(this%kt,  tmp,rank); this%kt  (:,this%k1)=tmp(:);
   call shiftb(this%epst,tmp,rank); this%epst(:,this%k1)=tmp(:);
-  call shiftb(this%Pkt,tmp,rank); this%Pkt(:,this%k1)=tmp(:);
+  call shiftb(this%Pkt, tmp,rank); this%Pkt (:,this%k1)=tmp(:);
   ! developing
   if (periodic.eq.1) return
   if (rank.eq.0) then
     this%kt  (:,0) = this%ktin(:)
     this%epst(:,0) = this%epstin(:)
-    this%Pkt(:,0) = this%Pktin(:)
+    this%Pkt(:,0)  = this%Pktin(:)
   endif
   if (rank.eq.px-1) then
-    this%kt  (:,this%k1)= 2.0*this%kt  (:,this%kmax)-this%kt  (:,this%kmax-1)
-    this%epst(:,this%k1)= 2.0*this%epst(:,this%kmax)-this%epst(:,this%kmax-1)
-    this%Pkt(:,this%k1)= 2.0*this%Pkt(:,this%kmax)-this%Pkt(:,this%kmax-1)
+    this%kt  (:,this%k1)=2.0*this%kt  (:,this%kmax)-this%kt  (:,this%kmax-1)
+    this%epst(:,this%k1)=2.0*this%epst(:,this%kmax)-this%epst(:,this%kmax-1)
+    this%Pkt (:,this%k1)=2.0*this%Pkt (:,this%kmax)-this%Pkt (:,this%kmax-1)
   endif
  
 end subroutine set_bc_DWX
@@ -136,10 +136,10 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
   integer  im,ip,km,kp,i,k
-  real(8),dimension(0:this%k1) ::   tau, utau, qw, ttau
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
   real(8), dimension(1:this%imax) :: walldist
+  real(8) :: nu
 
   walldist = mesh%walldist
 
@@ -150,27 +150,14 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   do k=1,this%kmax
     km=k-1
     kp=k+1
-    tau(k) = mui(this%imax,k)*0.5*(w(this%imax,km)+w(this%imax,k))/walldist(this%imax)
-    utau(k) = (tau(k)/((rho(this%imax,k)+rho(this%imax,k))/2.))**0.5
-    qw(k) = (ekhi(this%imax,k)*cpi(this%imax,k)) &
-                  *(temp(this%i1,k)-temp(this%imax,k))/mesh%drp(this%imax)
-    ttau(k) = qw(k)/( ((rho(this%i1,k)+rho(this%imax,k))/2.0)*cpi(this%imax,k)*utau(k))
-
     do i=1,this%imax
       im=i-1
       ip=i+1
-      ! yplus hsould be an input so it can be changed from yplus to ystar
-      !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tau(k)**0.5
-      this%yp(i,k) = (rho(i,k)*walldist(i)*utau(k))/mu(i,k)
-
-      Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))                          !k^2/(eps*nu)
-      Reeps(i,k)   = walldist(i)*(((mu(i,k)/rho(i,k))*eps(i,k))**0.25)/(mu(i,k)/rho(i,k)) !y*(nu*eps)^(1/4)/nu
-      this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)                           !kt/epst
-      this%Tmix(i,k)    = Tt(i,k) * this%Ttemp(i,k)                                       !tau_u*tau_t = k*kt/(epst*eps)
-      !this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
-      
-      this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16))**2.0)*(1+(3/(Ret(i,k)**0.75)))        !f_lambda=(1-exp(Reps/16))^2 * (1+3/Rt^(3/4))
-      !alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*Tt(i,k)*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5
+      nu = mu(i,k)/rho(i,k)
+      Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))                          !k^2/(eps*nu)
+      Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu                   !y*(nu*eps)^(1/4)/nu
+      this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)             !kt/epst      
+      this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16.))**2.0)*(1+(3/(Ret(i,k)**0.75)))     !f_lambda=(1-exp(Reps/16))^2 * (1+3/Rt^(3/4))
       alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*(kine(i,k)**2/eps(i,k))*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5              
     enddo
   enddo
@@ -189,7 +176,7 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
   real(8) ce2,fd1,feps,fd2
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps,Tt
   real(8), dimension(1:this%imax) :: walldist
-
+  real(8) :: nu
   walldist = mesh%walldist
 
   eps  = turb_model%eps
@@ -204,15 +191,16 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
 
   do k=kb,ke
     do i=ib,ie
-      Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k)) 
-      Reeps(i,k)   = walldist(i)*((mu(i,k)*eps(i,k)/rho(i,k))**0.25)*rho(i,k)/mu(i,k)   
-
-      fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0
-      feps = 1 - 0.3*exp(-((Ret(i,k)/6.5)**2.0))   
+      nu = mu(i,k)/rho(i,k)
+      Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))              !k^2/(eps*nu)
+      Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu       !y*(nu*eps)^(1/4)/nu
+      fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0                    ! (1-exp(-R_eps/1.7))^2
+      feps = 1 - 0.3*exp(-(Ret(i,k)/6.5)**2.0)                  ! (1-0.3*exp(-(Ret/6.5)^2))
       fd2  = (1/this%cd2)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
       !putout(i,k) = putout(i,k) + (this%cp1*this%Pkt(i,k)/this%Tmix(i,k))/rho(i,k)
-      putout(i,k) = putout(i,k) + ((this%cp1*(1/this%Tmix(i,k))**0.5)*this%Pkt(i,k))/rho(i,k) !NOTE: CHANGED BY STEPHAN
-      dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1/this%Ttemp(i,k) + this%cd2*fd2/Tt(i,k)
+      this%Tmix(i,k)    = Tt(i,k) * this%Ttemp(i,k)                                       !tau_u*tau_t = k*kt/(epst*eps)
+      putout(i,k) = putout(i,k) + ((this%cp1*(1/this%Tmix(i,k))**0.5)*this%Pkt(i,k))/rho(i,k) !NOTE: CHANGED BY STEPHAN ! -cp1*sqrt(epst*eps/kt*k)*alphat*dTdxi*dTdxi
+      dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1*(1/this%Ttemp(i,k)) + this%cd2*fd2*(1/Tt(i,k))
     enddo
   enddo
 end subroutine rhs_epst_KtEt_DWX

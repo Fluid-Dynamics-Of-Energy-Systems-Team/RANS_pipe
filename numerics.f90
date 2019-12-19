@@ -47,7 +47,7 @@ subroutine calc_turbdiff_values(qwall,ttau,twall,tauw,utau,yplus,tplus,uplus)
     tauw(k) = ekmi(imax,k)*0.5*(wnew(imax,k-1)+wnew(imax,k))/mesh%walldist(imax)
     utau(k) = (tauw(k)/( (rnew(i1,k)+rnew(imax,k))/2.) )**0.5
     twall(k)= (temp(i1,k)+temp(imax,k))/2.
-    qwall(k)= ekhi(imax,k)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/mesh%drp(imax)
+    qwall(k)= ekhi(imax,k)/((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/mesh%drp(imax)
     ttau(k) = qwall(k)/(((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*utau(k))
     do i=0,i1
       tplus(i,k) = (twall(k)-temp(i,k))/ttau(k)

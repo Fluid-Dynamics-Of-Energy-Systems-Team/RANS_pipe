@@ -561,7 +561,7 @@ end subroutine initialize_solution
 !!
 !!************************************************************************************
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
-  use mod_param,   only : k1,i1,imax,kmax,alphac,k,i,periodic, Pr, Re
+  use mod_param,   only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource
   use mod_math,    only : matrixIdir
   use mod_mesh, only : mesh
   use mod_common,  only : cnew,ekhk,ekh,alphat,ekhi
@@ -594,16 +594,16 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
-      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) +2./(Re*Pr)
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) +Qsource
     enddo
 
     i=1
     b(i)=b(i)+bot_bcvalue1(k)*a(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + 2./(Re*Pr) !nothing or value
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) +Qsource !nothing or value
 
     i=imax
     b(i)=b(i)+top_bcvalue1(k)*c(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + 2./(Re*Pr) !nothing or value
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) +Qsource !nothing or value
 
     call matrixIdir(imax,a,b/alphac,c,rhs)
 

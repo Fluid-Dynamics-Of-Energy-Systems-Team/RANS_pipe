@@ -8,7 +8,7 @@ module mod_param
   integer   turbmod,modifDiffTerm,modVF,profiling,isothermalBC,pressIsoThermal
   real*8    Re,Pr,Qwall,CFL,Tw,dTwall, LOD,x_start_heat
   real*8    ctheta,Fr_1, dtmax
-  real*8    alphac,alphak,alphae,alphav2
+  real*8    alphac,alphak,alphae,alphav2, Qsource
   integer   Mt,Nx,Mx,Nt , turbdiffmod, restart, imax_old, kelem_old
   character(len=40) output_fname, output_fname_bl, read_fname
 
@@ -17,7 +17,7 @@ module mod_param
                  isothermalBC, Tw, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &
                  alphav2, modifDiffTerm, turbdiffmod, output_fname, dtmax, output_fname_bl, read_fname, &
-                 imax_old, kelem_old
+                 imax_old, kelem_old, Qsource
 
 contains
 
