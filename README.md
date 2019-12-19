@@ -17,6 +17,7 @@ To model the turbulent viscosity <img src="https://latex.codecogs.com/svg.latex?
 * Durbin (1995) [[9]](#9)
 * Jones & Launder (1972) [[4]](#4) 
 * Myong & Kasagi (1990)  [[5]](#5)
+* Abe (1994)             [[14]](#14)
 
 To account for the varying properties, corrections for these models can be used as presented by Catris & Aupoix (2000) [[12]](#12) and Otero et al. (2018) [[13]](#13).
 
@@ -50,7 +51,6 @@ To calculate the thermal diffusivity using 2 extra transport equations, the foll
 * Write out residuals
 * Restart with the turbulent diffusivity variables interpolated
 * Add the convective outlet bc for the scalars
-* Fix the RHS of the NK model (make the heat flux a calculated more general value)
 
 ## Results
 <img src="https://github.com/Fluid-Dynamics-Of-Energy-Systems-Team/RANS_pipe/raw/clean/notebooks/bl.png"
@@ -86,7 +86,7 @@ International Journal of Heat and Mass Transfer, 15(2), 301-314](https://www.sci
 <a id="5">[5]</a> 
 [Myong, H.K.,Kasagi ,N. (1990)
 A new approach to the improvement of k-epsilon turbulence model for wall-bounded shear flows. 
-JSME International Journal, 33, 63–72](https://www.jstage.jst.go.jp/article/jsmeb1988/33/1/33_1_63/_pdf/-char/ja)
+JSME International Journal, 33, 63–72](https://arc.aiaa.org/doi/abs/10.2514/3.12149)
 
 <a id="6">[6]</a> 
 [Spalart, P., Allmaras, S. (1992).
@@ -128,3 +128,8 @@ Aerospace Science and Technology, 4.1,1-11.](https://www.sciencedirect.com/scien
 [Otero R., G.J., Patel, A., Diez S., R., Pecnik, R. (2018).
 Turbulence modelling for flows with strong variations in thermo-physical properties.
 International Journal of Heat and Fluid Flow, 73, 114-123.](https://www.sciencedirect.com/science/article/pii/S0142727X18301978)
+
+<a id="14">[14]</a>
+[Abe, K., Kondoh, T., Nagano, Y. (1994).
+A new turbulence model for predicting fluid flow and heat transfer in separating and reattaching flows—I. Flow field calculations.
+International journal of heat and mass transfer, 37(1), 139-151.](https://www.sciencedirect.com/science/article/pii/S0142727X18301978)

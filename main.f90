@@ -12,6 +12,7 @@ use mod_tm
 use sa_tm
 use sst_tm
 use mk_tm
+use abe_tm
 use vf_tm
 use mod_tdm
 use vp_tdm
@@ -72,6 +73,8 @@ if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK' ))
 if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF' ))
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
+if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel(i1, k1, imax, kmax,'Abe'))
+
 call turb_model%init()
 
 
@@ -97,7 +100,7 @@ if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,20.))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
-if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then
+if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.((turbmod.eq.4).or.(turbmod.eq.5)))) then
   if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid"
   call mpi_finalize(ierr)
   stop
