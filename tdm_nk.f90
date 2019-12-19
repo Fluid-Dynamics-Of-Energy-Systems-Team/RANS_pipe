@@ -118,7 +118,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
   integer  im,ip,km,kp,i,k 
   real(8) cfi, sti, utau
-  real(8),dimension(0:this%k1) ::   tauw
+  real(8),dimension(0:this%k1) ::   tauw, Qwall_vec
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
   real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
   real(8), dimension(1:this%imax) :: walldist
@@ -144,8 +144,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 
       cfi =  2*tauw(k)/rho(this%imax,k)/utau                     ! Skin friction
       ! tcond_wall = 0.25*(lam_cp(this%i1,k)+lam_cp(this%imax,k))*(cp(this%i1,k)+cp(this%imax,k))*Re*Pr
-      ! Qwall = (cnew(this%i1,k)-cnew(this%imax,k))/dzp(this%imax)
-
+      
       ! write(*,*) Qwall, tcond_wall
       sti =  Qwall/(rho(this%imax,k)*cp(this%imax,k)*utau*temp(this%imax,k))  ! Stanton number
 
@@ -157,6 +156,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 
     enddo
   enddo
+  
 end subroutine set_alphat_NK
 
 subroutine rhs_epst_KtEt_NK(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)

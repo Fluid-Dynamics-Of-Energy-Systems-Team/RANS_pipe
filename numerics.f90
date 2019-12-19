@@ -36,6 +36,27 @@ subroutine fillps(rank)
   call mpi_allreduce(sumps,sumps_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 end
 
+subroutine calc_turbdiff_values(qwall,ttau,twall,tauw,utau,yplus,tplus,uplus)
+  use mod_param, only : i1,imax,k1,kmax,k,i
+  use mod_common, only : rnew, ekm, cpi, ekhi, temp, wnew, ekmi
+  use mod_mesh, only : mesh
+  implicit none
+  real(8), dimension(0:k1), intent(OUT) :: qwall, ttau, Twall, tauw, utau
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: yplus, tplus, uplus
+  do k=0,k1
+    tauw(k) = ekmi(imax,k)*0.5*(wnew(imax,k-1)+wnew(imax,k))/mesh%walldist(imax)
+    utau(k) = (tauw(k)/( (rnew(i1,k)+rnew(imax,k))/2.) )**0.5
+    twall(k)= (temp(i1,k)+temp(imax,k))/2.
+    qwall(k)= ekhi(imax,k)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/mesh%drp(imax)
+    ttau(k) = qwall(k)/(((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*utau(k))
+    do i=0,i1
+      tplus(i,k) = (twall(k)-temp(i,k))/ttau(k)
+      uplus(i,k) = wnew(i,k)/utau(k)
+      yplus(i,k) = (mesh%walldist(i)*utau(k)*rnew(i,k))/ekm(i,k)
+    enddo
+  enddo
+end subroutine calc_turbdiff_values
+
 subroutine calc_momentum_thickness(w, w_fs, dru, i1,imax, mom_thickness)
   implicit none
   real(8), dimension(0:i1),   intent(IN) :: w

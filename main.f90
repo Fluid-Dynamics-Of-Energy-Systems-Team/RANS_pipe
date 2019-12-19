@@ -28,7 +28,6 @@ real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2
 real(8) ::  start, finish
 real(8) :: resU, resW
 
-
 resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0!;resKt=0;resEpst=0
 
 !read parameters
@@ -84,6 +83,11 @@ if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
+! if (rank .eq. 0) then
+!   do i=0,i1
+!     write(*,*) mesh%y_cv(i)
+!   enddo
+! endif
 !initialize turbulent diffusivity model
 if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'cPr', Pr))
 if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
@@ -139,6 +143,9 @@ call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
+
+
+  
 
 !***************************!
 !        MAIN LOOP          !
@@ -321,7 +328,6 @@ subroutine bound_c(c, Twall, Qwall,rank)
     call eos_model%set_w_temp(Twall, "H", enth_wall)
     c(0,:) = (1-bot_bcvalue1(:))*(2.0*enth_wall - c(1,:))   +bot_bcvalue1(k)*c(1,:)    !pipe/bl
     c(i1,:)= (1-top_bcvalue1(:))*(2.0*enth_wall - c(imax,:))+top_bcvalue1(k)*c(imax,:) !pipe/bl
-
   !isoflux
   else
     do k=0,k1
@@ -510,7 +516,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     do k=0,k1
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
-      c(:,k)= 0
+      c(:,k)= 0.5
       alphat(:,k) = alphatin(:)
     enddo
     call turb_model%init_w_inflow(Re, systemsolve)
@@ -523,11 +529,11 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
     gridSize = y_fa(imax)
     do i=0,i1!imax         
-      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); 
+      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
       if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
       if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
       if (systemsolve.eq.4) then
-         w(i,:)  = 1.;u=0;  win=1.; mutin=0!bl
+         w(i,:)  = 1.; u=0.;  win=1.; mutin=0!bl 
       endif
     enddo
     ! win=w(:,0);          !pipe
@@ -555,7 +561,7 @@ end subroutine initialize_solution
 !!
 !!************************************************************************************
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
-  use mod_param,   only : k1,i1,imax,kmax,alphac,k,i,periodic
+  use mod_param,   only : k1,i1,imax,kmax,alphac,k,i,periodic, Pr, Re
   use mod_math,    only : matrixIdir
   use mod_mesh, only : mesh
   use mod_common,  only : cnew,ekhk,ekh,alphat,ekhi
@@ -588,16 +594,16 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
-      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k)  
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) +2./(Re*Pr)
     enddo
 
     i=1
     b(i)=b(i)+bot_bcvalue1(k)*a(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) !nothing or value
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + 2./(Re*Pr) !nothing or value
 
     i=imax
     b(i)=b(i)+top_bcvalue1(k)*c(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) !nothing or value
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + 2./(Re*Pr) !nothing or value
 
     call matrixIdir(imax,a,b/alphac,c,rhs)
 
@@ -606,9 +612,9 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
       cnew(i,k) = max(rhs(i), 0.0)
     enddo    
   enddo
-  if (periodic.eq.1) then
-    cnew = 0.0; resC=0.0;
-  endif
+  ! if (periodic.eq.1) then
+  !   cnew = 0.0; resC=0.0;
+  ! endif
 
 end
 

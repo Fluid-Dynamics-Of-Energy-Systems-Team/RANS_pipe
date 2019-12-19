@@ -9,7 +9,7 @@ module ktet_tdm
   !************************!
   
   type,abstract,extends(TurbDiffModel), public :: KtEt_TurbDiffModel
-  real(8), dimension(:,:), allocatable :: flambda
+  real(8), dimension(:,:), allocatable :: flambda, resKt, resEt
   real(8), dimension(:),   allocatable :: epstin, ktin
   real(8) :: sigmakt,sigmaet,clambda,cp1,cp2,cd1,cd2
   contains
@@ -88,6 +88,8 @@ subroutine init_sol_KtEt(this)
     this%ktin(i) = 0.0
     this%epstin(i) = 0.0
     this%Pktin(i) = 0 
+    this%ResKt(i,:) = 0.
+    this%ResEt(i,:) = 0.
   enddo
 end subroutine init_sol_KtEt
 
@@ -96,20 +98,23 @@ subroutine init_mem_KtEt(this)
   allocate(this%epst(0:this%i1,0:this%k1),this%kt (0:this%i1,0:this%k1),     &
            this%Pkt(0:this%i1,0:this%k1), this%flambda(0:this%i1,0:this%k1), &
            this%Ttemp (0:this%i1,0:this%k1),this%Tmix(0:this%i1,0:this%k1),  &
-           this%yp(0:this%i1,0:this%k1))
+           this%yp(0:this%i1,0:this%k1),this%resEt(0:this%i1,0:this%k1),     &
+           this%resKt(0:this%i1,0:this%k1))
            
   allocate(this%Pktin (0:this%i1), &
            this%epstin(0:this%i1),this%ktin(0:this%i1),this%alphatin(0:this%i1))
 end subroutine init_mem_KtEt
 
 
-subroutine get_sol_KtEt(this,Prt,epst,kt, Pkt)
+subroutine get_sol_KtEt(this,Prt,epst,kt, Pkt, resKt, resEt)
   class(KtEt_TurbDiffModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt
+  real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt,resKt,resEt
   Prt  =0
   epst =this%epst
   kt   =this%kt
   Pkt  = this%Pkt
+  resKt = this%resKt
+  resEt = this%resEt
 end subroutine get_sol_KtEt
 
 subroutine init_w_inflow_KtEt(this,Re,systemsolve)
@@ -137,6 +142,8 @@ subroutine init_w_inflow_KtEt(this,Re,systemsolve)
     this%kt(:,k) = this%ktin(:)
     this%Pkt(:,k) = this%Pktin(:)
   enddo
+  this%ResKt = 0
+  this%ResEt = 0
 end subroutine init_w_inflow_KtEt
 
 subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
@@ -185,15 +192,20 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
 
     i=1
     b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
+    ! b(i) = b(i) - a(i) !symmetry = +1 ; wall = -1 
+    a(i)=0
     rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
       
     i=this%imax
     b(i) = b(i) + top_bcnovalue(k)*c(i)
+    ! b(i) = b(i) - c(i) !symmetry = +1 ; wall = -1 
+    c(i)=0
     rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
 
     call matrixIdir(this%imax,a,b/alphakt,c,rhs)
 
     do i=1,this%imax
+      this%resKt(i,k) = ((this%kt(i,k) - rhs(i)))!/(this%kt(i,k)+1.0e-20))**2.0
       resKt = resKt + ((this%kt(i,k) - rhs(i))/(this%kt(i,k)+1.0e-20))**2.0
       this%kt(i,k) = max(rhs(i), 1.0e-8)
     enddo
@@ -287,7 +299,7 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
   real(8),                                intent(OUT):: resEt
   real(8), dimension(0:this%i1,0:this%k1) :: dnew,dimpl
   real(8), dimension(this%imax)           :: a,b,c,rhs
-  real(8), dimension(0:this%k1)           :: bot_bcvalue, top_bcvalue
+  real(8), dimension(0:this%k1)           :: bot_bcvalue, top_bcvalue, bot_bcnovalue, top_bcnovalue
   real(8), dimension(0:this%i1)           :: dru,drp,ru,rp
   integer                                 :: i,k
   real(8) :: dz
@@ -299,6 +311,9 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
   dz =mesh%dz
   bot_bcvalue = mesh%bot_bcvalue
   top_bcvalue = mesh%top_bcvalue
+  bot_bcnovalue = mesh%bot_bcnovalue
+  top_bcnovalue = mesh%top_bcnovalue
+
 
   resEt  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
@@ -317,19 +332,25 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
     enddo
 
     i=1
+    ! b(i) = b(i)!+a(i)!-bot_bcnovalue(k)*a(i)
+    !a(i) = 0
+    ! rhs(i) = dnew(i,k) +((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
     b(i) = b(i)+bot_bcvalue(k)*a(i)
     rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%epst(i-1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
 
     i=this%imax
+    ! b(i) = b(i)+c(i)!-top_bcnovalue(k)*c(i)
+    ! rhs(i) = dnew(i,k) +((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
+
     b(i) = b(i)+top_bcvalue(k)*c(i)
     rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%epst(i+1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
       
     call matrixIdir(this%imax,a,b/alphaet,c,rhs)
   
     do i=1,this%imax
+      this%resEt(i,k) = ((this%epst(i,k) - rhs(i))/(this%epst(i,k)+1.0e-20))**2.0
       resEt = resEt + ((this%epst(i,k) - rhs(i))/(this%epst(i,k)+1.0e-20))**2.0
       this%epst(i,k) = max(rhs(i), 1.0e-8)
-  
     enddo
   enddo
 end subroutine solve_epst_KtEt

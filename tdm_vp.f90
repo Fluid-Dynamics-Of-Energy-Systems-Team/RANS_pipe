@@ -88,13 +88,15 @@ contains
       
   end subroutine init_mem_vp_tdm
 
-  subroutine get_sol_vp_tdm(this,Prt,epst,kt, Pkt)
+  subroutine get_sol_vp_tdm(this,Prt,epst,kt, Pkt, resKt, resEt)
     class(VPrt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt
+    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt, resKt, resEt
     Prt  =this%Prt
     epst =0.    
     kt   =0.
     Pkt = 0.
+    resEt = 0.
+    resKt = 0
   end subroutine get_sol_vp_tdm
 
   subroutine get_profile_vp_tdm(this,p_prt,p_kt,p_epst,p_Pkt,k)

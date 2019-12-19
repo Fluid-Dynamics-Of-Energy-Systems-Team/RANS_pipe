@@ -108,7 +108,7 @@ contains
       case ("T")
         output = enth + 1.0
       case ("D")
-        output = 1./(enth+1.)
+        output = 1.!./(enth+1.)
       case ("L")
         output = 1./(this%Re*this%Pr)
       case ("C")
@@ -116,7 +116,7 @@ contains
       case ("V")
         output = 1./this%Re
       case ("B")
-        output = 1./(enth+1)
+        output = 1.!1./(enth+1)
       case default
         write(*,*) "Property doesn't exist!!!"
     end select

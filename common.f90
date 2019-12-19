@@ -12,7 +12,7 @@ module mod_common
   real(8) dt
   real(8), dimension(:,:), allocatable :: Unew,Wnew,rnew,cnew,qcrit, &
                                           Uold,Wold,rold,dUdt,dVdt,dWdt,p,res_nuSA,dummy
-  real(8), dimension(:),   allocatable :: Win,ekmtin, dis, Uin,alphatin
+  real(8), dimension(:),   allocatable :: Win,ekmtin, dis, Uin,alphatin, qwall_vec
 
 
   real(8), dimension(:), allocatable :: wstress, sfriction, mom_thickness, dis_thickness, bl_thickness
@@ -40,7 +40,7 @@ contains
              dUdt(0:i1,0:k1),dVdt(0:i1,0:k1),dWdt(0:i1,0:k1),                 &
              res_nuSA(0:i1,0:k1),dummy(0:i1,0:k1))
     allocate(Win(0:i1),ekmtin(0:i1),uin(0:i1),alphatin(0:i1))
-    allocate(dis(0:k1))
+    allocate(dis(0:k1), qwall_vec(0:k1))
     allocate(p(imax,kmax))
 
     !NUMERICAL STUFF

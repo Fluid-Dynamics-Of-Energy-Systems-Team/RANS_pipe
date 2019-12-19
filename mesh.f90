@@ -58,6 +58,7 @@ class(AbstractMesh),  allocatable :: mesh
   contains
     procedure :: init => init_pipe
     procedure :: set_bc => set_bc_pipe
+    ! procedure ::   calc_walldist => calc_walldist
   end type Pipe_Mesh
 
   !****************************************************************************************
@@ -248,12 +249,12 @@ contains
     dzw(0) = dzw(1)
 
     this%dz    = 1.0*LoD/(this%kmax*px)
-    ! do k=0,k1
-    !    dzw(k) = this%dz 
-    !    dzp(k) = this%dz
-    !    zw(k)  = (k+this%kmax*rank)*this%dz
-    !    zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
-    ! enddo
+    do k=0,k1
+       dzw(k) = this%dz 
+       dzp(k) = this%dz
+       zw(k)  = (k+this%kmax*rank)*this%dz
+       zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
+    enddo
 
     this%dzw = dzw
     this%dzp = dzp
@@ -387,6 +388,7 @@ contains
     class(Channel_Mesh) :: this
     real(8), intent(IN) :: gridSize
     integer :: i
+
     do i = 1,this%imax
       if (this%rp(i).le.1) then
         this%wallDist(i) = this%rp(i)
