@@ -1,6 +1,6 @@
 &input
   CFL               = 10.,     ! CFL number / time step
-  systemSolve       = 3,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
+  systemSolve       = 2,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
   imax              = 192,   ! radial direction
   kelem             = 32,     ! axial direction
   K_start_heat      = 0,      ! for isoflux:    after home many cells in x will you start heating
@@ -11,7 +11,7 @@
   nstep             = 10000000,
   LoD               = 10,     ! pH2= 30
   periodic          = 1,       ! 1..periodic, 2..developing   
-  Re                = 395,
+  Re                = 180,!395,
   Pr                = 0.71,
   Qwall             = 0.,     ! Qwall=(qw*D/(k0*T0))
   isothermalBC      = 1,       ! isothermal wall: 1
@@ -29,12 +29,12 @@
   alphae            = 0.1, 
   alphav2           = 0.1, 
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 1
+  turbdiffmod       = 6,
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.01,
   output_fname_bl   = "test.csv",
   imax_old          = 192,
   kelem_old         = 1600
-  Qsource           = 0.0!15649452 !2/Re*Pr
+  Qsource           = 0.015649452 !2/Re*Pr
 /

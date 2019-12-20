@@ -100,8 +100,8 @@ if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,20.))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
-if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.((turbmod.eq.4).or.(turbmod.eq.5)))) then
-  if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid"
+if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.(turbmod.eq.1).or.((turbmod.eq.4))) then
+  if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid", turbmod, turbdiffmod
   call mpi_finalize(ierr)
   stop
 endif

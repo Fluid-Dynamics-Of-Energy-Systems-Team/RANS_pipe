@@ -79,7 +79,7 @@ subroutine set_mut_Abe(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
   real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: mut
   integer  im,ip,km,kp,i,k
   real(8),dimension(0:this%k1) ::   tauw, utau
-  real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
+  real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp, Reps
   real(8) :: nu_wall
 
   do k=1,this%kmax
@@ -92,10 +92,12 @@ subroutine set_mut_Abe(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
       ip=i+1
       !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5         ! ystar
       nu_wall = mui(this%imax,k)/(0.5*(rho(this%imax,k)+rho(this%i1,k)))
+
       this%yp(i,k) = rho(i,k)*utau(k)*walldist(i)/mu(i,k)
       Ret(i,k)     = rho(i,k)*(this%k(i,k)**2.)/(mu(i,k)*this%eps(i,k))        ! not sure if r2 or r
-      this%fmu (i,k)= ((1.-exp(-this%yp(i,k)/14.))**2) * (1.+(5./(Ret(i,k)**0.75))*exp(-(Ret(i,k)/200)**2))
-      this%feps(i,k)= ((1.-exp(-this%yp(i,k)/3.1))**2) * (1.-0.3                  *exp(-(Ret(i,k)/6.5)**2))
+      Reps(i,k)    = (walldist(i)*((mu(i,k)/rho(i,k))*this%eps(i,k))**.25)/(mu(i,k)/rho(i,k))
+      this%fmu (i,k)= ((1.-exp(-Reps(i,k)/14.))**2) * (1.+(5./(Ret(i,k)**0.75))*exp(-(Ret(i,k)/200)**2))
+      this%feps(i,k)= ((1.-exp(-Reps(i,k)/3.1))**2) * (1.-0.3                  *exp(-(Ret(i,k)/6.5)**2))
       ! this%f1(i,k) = 1.
       ! this%f2(i,k) = (1.-2./9.*exp(-(Ret(i,k)/6.)**2.))*(1.-exp(-this%yp(i,k)/5.))**2.0
       mut(i,k) = min(1.,rho(i,k)*this%cmu*this%fmu(i,k)*this%k(i,k)**2./(this%eps(i,k)))
@@ -263,7 +265,7 @@ subroutine production_Abe(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
       div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
                +(      w(i,k) -      w(i,km))/dzw(k)
 
-      this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)!+mut(i,k)*(div(i,k)))*(div(i,k))
+      this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
       ! turbulent time scale
       this%Tt(i,k)=this%k(i,k)/this%eps(i,k)
