@@ -132,4 +132,4 @@ International Journal of Heat and Fluid Flow, 73, 114-123.](https://www.scienced
 <a id="14">[14]</a>
 [Abe, K., Kondoh, T., Nagano, Y. (1994).
 A new turbulence model for predicting fluid flow and heat transfer in separating and reattaching flows—I. Flow field calculations.
-International journal of heat and mass transfer, 37(1), 139-151.](https://www.sciencedirect.com/science/article/pii/S0142727X18301978)
+International journal of heat and mass transfer, 37(1), 139-151.](https://cfd.spbstu.ru/agarbaruk/doc/2001_Abe-Kawamura-Matsuo_Direct-Numerical-Simulation-of-a-Fully-Developed-Turbulent-Channel-Flow-With-Respect-to-the-Reynolds-Number-D.pdf)
