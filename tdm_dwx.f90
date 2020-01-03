@@ -50,7 +50,7 @@ end subroutine set_constants_DWX
 
 subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   use mod_mesh, only : mesh
-  use mod_param, only : isothermalBC
+  use mod_param, only : isothermalBC, Re, Pr
   use mod_common, only : cpi, ekhi
   implicit none
   class(DWX_TurbDiffModel) :: this
@@ -74,13 +74,16 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
       this%kt(this%i1,k)  = top_bcnovalue(k)*this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
       this%Pkt(0,k)       = bot_bcnovalue(k)*this%Pkt(1,k)
       this%Pkt(this%i1,k) = top_bcnovalue(k)*this%Pkt(this%imax,k)
-      !botBCvalue = 2.0*ekh(1,k)/rho(1,k)*this%kt(1,k)/walldist(1)**2                                                          !bcvalue
+      ! botBCvalue = ekh(1,k)/rho(1,k)*this%kt(1,k)/walldist(1)**2                                                          !bcvalue
       botBCvalue = ekhi(1,k)/(0.5*(rho(0,k)+rho(1,k))) &
                     *((this%kt(1,k)**0.5)/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
+      ! botBCvalue = 0.065*Re*(2/(Re*Pr))**2
       this%epst(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%epst(1,k))         +bot_bcvalue(k)*this%epst(1,k)        !symmetry or bc value
       
 
-      !topBCvalue = 2.0*ekh(this%imax,k)/rho(this%imax,k)*this%kt(this%imax,k)/walldist(this%imax)**2                          !bcvalue
+      ! topBCvalue = ekh(this%imax,k)/rho(this%imax,k)*this%kt(this%imax,k)/walldist(this%imax)**2                          !bcvalue
+      ! topBCvalue = 0.065*Re*(2/(Re*Pr))**2
+
       topBCvalue = ekhi(this%imax,k)/(.5*(rho(this%i1,k)+rho(this%imax,k))) &   
                     *((this%kt(this%imax,k)**0.5)/walldist(this%imax))**2
       this%epst(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(this%imax,k)) +top_bcvalue(k)*this%epst(this%imax,k)!symmetry or bc value
@@ -95,9 +98,9 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
       this%kt(this%i1,k)  = this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
       ! this%kt(0,k)        = this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
       ! this%kt(this%i1,k)  = this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
-      botBCvalue = 2.0*ekh(1,k)/rho(1,k)*(this%kt(1,k)**0.5/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
+      botBCvalue = ekh(1,k)/rho(1,k)*(this%kt(1,k)**0.5/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
       this%epst(0,k)       = (2.0*botBCvalue-this%epst(1,k))              !symmetry or bc value
-      topBCvalue = 2.0*ekh(this%imax,k)/rho(this%imax,k)*(this%kt(this%imax,k)**0.5/walldist(this%imax))**2
+      topBCvalue = ekh(this%imax,k)/rho(this%imax,k)*(this%kt(this%imax,k)**0.5/walldist(this%imax))**2
       this%epst(this%i1,k) = (2.0*topBCvalue-this%epst(this%imax,k))!symmetry or bc value
 
       this%Pkt(0,k)       =this%Pkt(1,k)
@@ -169,6 +172,7 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
   use mod_mesh, only : mesh
   implicit none
   class(DWX_TurbDiffModel) :: this
+                    ! *((this%kt(this%imax,k)**0.5
   real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
   real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
   real(8),dimension(0:this%i1,0:this%k1) :: Reeps,Ret
@@ -194,8 +198,9 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
       nu = mu(i,k)/rho(i,k)
       Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))              !k^2/(eps*nu)
       Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu       !y*(nu*eps)^(1/4)/nu
-      fd1  = 1 - (exp(-Reeps(i,k)/1.7))**2.0                    ! (1-exp(-R_eps/1.7))^2
-      feps = 1 - 0.3*exp(-(Ret(i,k)/6.5)**2.0)                  ! (1-0.3*exp(-(Ret/6.5)^2))
+      fd1  = 1 - exp(-Reeps(i,k)/1.7)**2.0                    ! (1-exp(-R_eps/1.7))^2
+      feps = 1 - 0.3*exp(-(Ret(i,k)/6.5)**2.0)                  !feps = 1-0.3*exp(-(Ret/6.5)^2)
+      ! feps = 1 - 0.3*exp(-(Ret(i,k)/6.5))**2.0                  ! feps = 1-0.3*exp(-(Ret/6.5))^2
       fd2  = (1/this%cd2)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
       !putout(i,k) = putout(i,k) + (this%cp1*this%Pkt(i,k)/this%Tmix(i,k))/rho(i,k)
       this%Tmix(i,k)    = Tt(i,k) * this%Ttemp(i,k)                                       !tau_u*tau_t = k*kt/(epst*eps)

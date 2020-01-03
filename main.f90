@@ -74,7 +74,6 @@ if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF' ))
 if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
 if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel(i1, k1, imax, kmax,'Abe'))
-
 call turb_model%init()
 
 
@@ -86,11 +85,6 @@ if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
-! if (rank .eq. 0) then
-!   do i=0,i1
-!     write(*,*) mesh%y_cv(i)
-!   enddo
-! endif
 !initialize turbulent diffusivity model
 if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'cPr', Pr))
 if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
@@ -125,12 +119,7 @@ istart = 1
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,&
                          i1,k1,mesh%y_fa,mesh%y_cv,mesh%dpdz,Re,systemsolve,select_init)
 
-  ! call mpi_barrier(ierr)
-  ! call mpi_finalize(ierr)
-  ! stop
 
-
-! write(*,*) win
 call bound_v(Unew,Wnew,Win,rank,istep)
 
   
@@ -164,8 +153,8 @@ do istep=istart,nstep
   !scalar equations
   call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
-                              mesh%Ru,mesh%Rp,mesh%dru,mesh%drp,mesh%dz,mesh%walldist,alphak,alphae,alphav2,        &
-                              modifDiffTerm,rank,mesh%centerBC,periodic,resTV1,resTV2,resTV3)
+                              alphak,alphae,alphav2,        &
+                              modifDiffTerm,rank,periodic,resTV1,resTV2,resTV3)
 
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
                                       alphak,alphae,modifDiffTerm,rank,periodic,resTD1,resTD2)
@@ -293,15 +282,14 @@ end subroutine calc_prop
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,rank)
   use mod_param, only : k1,i1,kmax,imax,periodic,px
   use mod_tm,    only : turb_model
-  use mod_mesh,  only : mesh
-
+  
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
   integer,                       intent(IN) :: rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: mue,mut
   real(8), dimension(0:k1) :: tauw(0:k1)
 
-  call turb_model%set_mut(utmp,wtmp,rho,mu,mui,mesh%walldist,mesh%rp,mesh%drp,mesh%dru,mesh%dz,mut)
+  call turb_model%set_mut(utmp,wtmp,rho,mu,mui,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
   mue = mu + mut  
 end subroutine calc_mu_eff

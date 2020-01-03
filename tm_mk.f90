@@ -48,42 +48,43 @@ subroutine set_constants_MK(this)
 end subroutine set_constants_MK
 
 subroutine init_w_inflow_MK(this,Re,systemsolve)
+  use mod_param, only : i1,k1,i,k
+  implicit none
   class(MK_TurbModel) :: this
   real(8), intent(IN) :: Re
   integer, intent(IN) :: systemsolve
-  real(8), dimension(0:this%i1) :: dummy
+  real(8), dimension(0:i1) :: dummy
   character(len=5)  :: Re_str
-  integer           :: Re_int,i,k
+  integer           :: Re_int
   Re_int = int(Re)
   write(Re_str,'(I5.5)') Re_int
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
+  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'   //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
   if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
   if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
   read(29) dummy(:),this%kin(:),this%epsin(:),dummy(:),dummy(:),dummy(:),this%mutin(:),dummy(:)
   close(29)
-  do k=0,this%k1
+  do k=0,k1
     this%eps(:,k) = this%epsin(:)
     this%k(:,k) = this%kin(:)
   enddo
 end subroutine init_w_inflow_MK
 
-subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
+subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
+  use mod_param, only : kmax,imax,k1,i1,i,k
+  use mod_mesh, only : walldist
   implicit none
   class(MK_TurbModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui
-  real(8),dimension(1:this%imax),        intent(IN) :: walldist
-  real(8),dimension(0:this%i1),          intent(IN) :: Rp,dRp,dru
-  real(8),                               intent(IN) :: dz
-  real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: mut
-  integer  im,ip,km,kp,i,k
-  real(8),dimension(0:this%k1) ::   tauw
-  real(8),dimension(0:this%i1,0:this%k1) :: Ret, yp
+  real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
+  real(8),dimension(0:i1,0:k1),intent(OUT):: mut
+  integer  im,ip,km,kp
+  real(8),dimension(0:k1) ::   tauw
+  real(8),dimension(0:i1,0:k1) :: Ret, yp
 
-  do k=1,this%kmax
+  do k=1,kmax
     km=k-1
     kp=k+1
-    tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,km)+w(this%imax,k))/walldist(this%imax)
-    do i=1,this%imax
+    tauw(k) = mui(imax,k)*0.5*(w(imax,km)+w(imax,k))/walldist(imax)
+    do i=1,imax
       im=i-1
       ip=i+1
       this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5         ! ystar
@@ -97,18 +98,16 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,walldist,Rp,dRp,dru,dz,mut)
 end subroutine set_mut_MK
 
 subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
-                      Ru,Rp,dru,drp,dz,walldist,             &
                       alpha1,alpha2,alpha3,                  &
-                      modification,rank,centerBC,periodic,   &
+                      modification,rank,periodic,   &
                       residual1, residual2, residual3)
+  use mod_param, only : kmax,imax,k1,i1,i,k
   class(MK_TurbModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8), dimension(0:this%i1),          intent(IN) :: Ru,Rp,dru,drp
-  real(8), dimension(1:this%imax),        intent(IN) :: walldist
-  real(8),                                intent(IN) :: dz,alpha1,alpha2, alpha3
-  integer,                                intent(IN) :: modification,rank,centerBC,periodic
-  real(8),                                intent(OUT):: residual1,residual2, residual3
-  real(8), dimension(0:this%i1,0:this%k1) :: rho_mod
+  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+  real(8),                      intent(IN) :: alpha1,alpha2, alpha3
+  integer,                      intent(IN) :: modification,rank,periodic
+  real(8),                      intent(OUT):: residual1,residual2, residual3
+  real(8), dimension(0:i1,0:k1) :: rho_mod
 
   !1, our modification, 2, Aupoix modification
   if ((modification == 1) .or. (modification == 2)) then
@@ -117,46 +116,36 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
     rho_mod = 1.0
   endif
 
-  call this%production_MK(u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
+  call this%production_MK(u,w,temp,rho,mut,beta)
   call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       Ru,Rp,dru,drp,dz, &
-                       alpha2,modification,rank,centerBC,periodic)
+                       alpha2,modification,rank,periodic)
   call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       Ru,Rp,dru,drp,dz, &
-                       alpha1,modification,rank,centerBC,periodic)
+                       alpha1,modification,rank,periodic)
 end
 
 subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
-  use mod_mesh, only : mesh
+  use mod_param, only : kmax,imax,k1,i1,i,k
+  use mod_mesh, only  : top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue,walldist
   implicit none
   class(MK_TurbModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,mu
+  real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
   integer,                               intent(IN) :: periodic, rank, px
-  real(8),dimension(0:this%i1) :: tmp
-  real(8),dimension(0:this%k1) :: top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
-  real(8),dimension(1:this%imax) :: walldist
-  integer :: k
+  real(8),dimension(0:i1) :: tmp
   real(8) :: topBCvalue, botBCvalue
   
-  top_bcnovalue(:)= mesh%top_bcnovalue(:)
-  bot_bcnovalue(:)= mesh%bot_bcnovalue(:)
-  top_bcvalue(:)  = mesh%top_bcvalue(:)
-  bot_bcvalue(:)  = mesh%bot_bcvalue(:)
-  walldist(:) = mesh%walldist(:)
-
-  do k = 0,this%k1 
+  do k = 0,k1 
     this%k(0,k)         = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
-    this%k(this%i1,k)   = top_bcnovalue(k)*this%k(this%imax,k) !symmetry or 0 value
+    this%k(i1,k)   = top_bcnovalue(k)*this%k(imax,k) !symmetry or 0 value
     botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                          !bcvalue
     this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))         +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value
-    topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                          !bcvalue
-    this%eps(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(this%imax,k)) +top_bcvalue(k)*this%eps(this%imax,k)!symmetry or bc value
+    topBCvalue = 2.0*mu(imax,k)/rho(imax,k)*this%k(imax,k)/walldist(imax)**2                          !bcvalue
+    this%eps(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(imax,k)) +top_bcvalue(k)*this%eps(imax,k)!symmetry or bc value
   enddo
 
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
-  call shiftb(this%k,  tmp,rank); this%k  (:,this%k1)=tmp(:);
-  call shiftb(this%eps,tmp,rank); this%eps(:,this%k1)=tmp(:);
+  call shiftb(this%k,  tmp,rank); this%k  (:,k1)=tmp(:);
+  call shiftb(this%eps,tmp,rank); this%eps(:,k1)=tmp(:);
   
   ! developing
   if (periodic.eq.1) return
@@ -165,40 +154,29 @@ subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
     this%eps(:,0) = this%epsin(:)
   endif
   if (rank.eq.px-1) then
-    this%k  (:,this%k1)= 2.0*this%k  (:,this%kmax)-this%k  (:,this%kmax-1)
-    this%eps(:,this%k1)= 2.0*this%eps(:,this%kmax)-this%eps(:,this%kmax-1)
+    this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
+    this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
   endif
 
 end subroutine set_bc_MK
 
-subroutine production_MK(this,u,w,temp,rho,mut,beta,Rp,Ru,dRu,dRp,dz)
-  use mod_mesh, only : mesh
+subroutine production_MK(this,u,w,temp,rho,mut,beta)
+  use mod_param, only : kmax,imax,k1,i1,i,k
+  use mod_mesh,  only : dzw,dzp,rp,ru,dru,drp
   implicit none
   class(MK_TurbModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: u,w,temp,rho,mut,beta
-  real(8), dimension(0:this%i1),           intent(IN) :: Rp,Ru,dRu,dRp
-  real(8),                                 intent(IN) :: dz
-  real(8), dimension(0:this%i1,0:this%k1) :: div
-  integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mut,beta
+  real(8), dimension(0:i1,0:k1) :: div
+  integer im,ip,km,kp
   real(8) :: Fr_1, ctheta
-  real(8), dimension(0:this%k1) :: dzw, dzp
-
-  dzw(:) = mesh%dzw(:)
-  dzp(:) = mesh%dzp(:)
 
   Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
   ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
 
-  ib = 1
-  ie = this%i1-1
-
-  kb = 1
-  ke = this%k1-1
-
-  do k=kb,ke
+  do k=1,kmax
     kp=k+1
     km=k-1
-    do i=ib,ie
+    do i=1,imax
       ip=i+1
       im=i-1
             

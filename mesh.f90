@@ -22,7 +22,7 @@ module mod_mesh
   contains
     procedure :: init_mem               => init_mem
     procedure :: discretize_streamwise  => discretize_streamwise
-    procedure :: discretize_streamwise2  => discretize_streamwise2    
+    procedure :: discretize_streamwise2 => discretize_streamwise2    
     procedure :: discretize_wall_normal => discretize_wall_normal
     procedure :: calc_walldist          => calc_walldist
     procedure :: set_carthesian         => set_carthesian
@@ -47,7 +47,11 @@ module mod_mesh
     end subroutine set_bc
   end interface
 
-class(AbstractMesh),  allocatable :: mesh
+class(AbstractMesh),   allocatable :: mesh
+real(8), dimension(:), allocatable :: top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1, &
+                                      top_bcvalue,bot_bcvalue,ubot_bcvalue, &
+                                      drp,dru,rp,ru,dzp,dzw,zp,zw,y_fa,y_cv,walldistu,walldist
+
 !****************************************************************************************
 
   !*************************!
@@ -108,31 +112,45 @@ contains
   !************************!
 
   subroutine init_mem(this)
+    use mod_param, only : i1,k1,imax
     implicit none
     class(AbstractMesh) :: this
-    allocate(this%Ru  (0:this%i1),this%Rp  (0:this%i1), &
-             this%dru (0:this%i1),this%drp (0:this%i1), &
-             this%y_fa(0:this%i1),this%y_cv(0:this%i1))
-    allocate(this%zw  (0:this%k1),this%zp  (0:this%k1), &
-             this%dzw (0:this%k1),this%dzp (0:this%k1))
-    allocate(this%wallDist(1:this%imax), this%wallDistu(0:this%i1))
-    allocate(this%top_bcvalue  (0:this%k1), this%bot_bcvalue  (0:this%k1), &
-             this%top_bcvalue1 (0:this%k1), this%bot_bcvalue1 (0:this%k1), &
-             this%top_bcnovalue(0:this%k1), this%bot_bcnovalue(0:this%k1), &
-             this%ubot_bcvalue (0:this%k1))
+    allocate(this%Ru  (0:i1),this%Rp  (0:i1), &
+             this%dru (0:i1),this%drp (0:i1), &
+             this%y_fa(0:i1),this%y_cv(0:i1))
+    allocate(this%zw  (0:k1),this%zp  (0:k1), &
+             this%dzw (0:k1),this%dzp (0:k1))
+    allocate(this%wallDist(1:imax), this%wallDistu(0:i1))
+    allocate(this%top_bcvalue  (0:k1), this%bot_bcvalue  (0:k1), &
+             this%top_bcvalue1 (0:k1), this%bot_bcvalue1 (0:k1), &
+             this%top_bcnovalue(0:k1), this%bot_bcnovalue(0:k1), &
+             this%ubot_bcvalue (0:k1))
+
+    allocate(Ru  (0:i1),Rp  (0:i1), &
+             dru (0:i1),drp (0:i1), &
+             y_fa(0:i1),y_cv(0:i1))
+    allocate(zw  (0:k1),zp  (0:k1), &
+             dzw (0:k1),dzp (0:k1))
+    allocate(wallDist(1:imax), wallDistu(0:i1))
+    allocate(top_bcvalue  (0:k1),bot_bcvalue  (0:k1), &
+             top_bcvalue1 (0:k1),bot_bcvalue1 (0:k1), &
+             top_bcnovalue(0:k1),bot_bcnovalue(0:k1), &
+             ubot_bcvalue (0:k1))
   end subroutine init_mem
 
   subroutine set_carthesian(this)
+    use mod_param, only : i1,k1
     implicit none
     class(AbstractMesh) :: this
     integer :: i
-    do i=0,this%i1
+    do i=0,i1
       this%ru(i)=1.0
       this%rp(i)=1.0
     enddo
   end subroutine
 
   subroutine discretize_wall_normal(this, fA, fB, gridSize)
+    use mod_param, only : i1,k1,imax,kmax
     implicit None
     class(AbstractMesh) :: this
     real(8), intent(IN) :: fB, fA, gridsize
@@ -142,35 +160,35 @@ contains
     this%ru(0) = 0
 
     !apply stretching
-    do i = 1,this%imax
-      fact       = (i-0.)/(this%imax-0.)
+    do i = 1,imax
+      fact       = (i-0.)/(imax-0.)
       this%ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
       this%ru(i) = this%ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
     enddo
 
     !normalize with the gridsize
-    do i=0,this%imax
-      this%ru(i)=this%ru(i)/this%ru(this%imax)*gridSize
+    do i=0,imax
+      this%ru(i)=this%ru(i)/this%ru(imax)*gridSize
     enddo
 
     !calculate the cell centers and differences
-    do i =1,this%imax
+    do i =1,imax
       this%Rp(i)  = (this%Ru(i)+this%Ru(i-1))/2.0
       this%dru(i) = (this%Ru(i)-this%Ru(i-1))
     enddo
 
-    this%dru(this%i1) = this%dru(this%imax)
-    this%Ru(this%i1)  = this%Ru(this%imax) + this%dru(this%i1)
-    this%Rp(this%i1)  = this%Ru(this%imax) + this%dru(this%i1)/2.0
+    this%dru(i1) = this%dru(imax)
+    this%Ru(i1)  = this%Ru(imax) + this%dru(i1)
+    this%Rp(i1)  = this%Ru(imax) + this%dru(i1)/2.0
 
     this%dru(0) = this%dru(1)
     this%Rp(0)  = this%Ru(0) - this%dru(0)/2.0
 
-    do i = 0,this%imax
+    do i = 0,imax
       this%drp(i) = this%Rp(i+1) - this%Rp(i)
     enddo
 
-    do i=0,this%i1
+    do i=0,i1
       this%y_cv(i)=this%rp(i)
       this%y_fa(i)=this%ru(i)
     enddo
@@ -178,16 +196,17 @@ contains
   end subroutine discretize_wall_normal
 
   subroutine discretize_streamwise(this, LoD, px)
+    use mod_param, only : i1,kmax
     implicit None
     class(AbstractMesh) :: this
     real(8), intent(IN) :: LoD
     integer, intent(IN) :: px 
-    this%dz    = 1.0*LoD/(this%kmax*px)
+    this%dz    = 1.0*LoD/(kmax*px)
   end subroutine discretize_streamwise
 
   subroutine discretize_streamwise2(this, LoD,rank, px)
+    use mod_param, only : i1,k1,imax,kmax,K_start_heat
     use mod_math, only : splint, spline
-    use mod_param, only : kmax, k1, K_start_heat
     implicit None
     include 'mpif.h'
     class(AbstractMesh) :: this
@@ -195,7 +214,7 @@ contains
     integer, intent(IN) :: rank, px 
     real(8) :: L,a,c,H
     real(8), dimension(0:2000) :: y, x2tab, x, ys
-    real(8), dimension(0:this%k1)    :: zw, zp, dzw,dzp
+    real(8), dimension(0:k1)    :: zw, zp, dzw,dzp
     real(8) :: value
     integer :: i,nelem, k, ierr
     integer :: tabkhi,tabklo = 0 
@@ -220,17 +239,17 @@ contains
 
     !calculate the cell faces
     do i = 0,kmax!*px
-      call splint(ys,x, x2tab,nelem+1,(i+rank*this%kmax+0.)/(kmax*px),zw(i),tabkhi,tabklo) 
+      call splint(ys,x, x2tab,nelem+1,(i+rank*kmax+0.)/(kmax*px),zw(i),tabkhi,tabklo) 
       zw(i) = zw(i)*LoD
     enddo
-    call shiftv_b(zw, this%k1, value, rank); zw(k1) = value;
+    call shiftv_b(zw, k1, value, rank); zw(k1) = value;
     if (rank .eq. px-1) zw(k1) =  zw(kmax)+(zw(kmax)-zw(kmax-1))
 
     !calculate the cell centers
-    do k =1,this%k1
+    do k =1,k1
       zp(k)  = (zw(k)+zw(k-1))/2.0
     enddo
-    call shiftv_f(zp, this%k1, value, rank); zp(0) = value;
+    call shiftv_f(zp, k1, value, rank); zp(0) = value;
     if (rank .eq. 0) then
       zp(0) =  -zp(1)
       tmp = zw(K_start_heat)
@@ -248,12 +267,12 @@ contains
     enddo
     dzw(0) = dzw(1)
 
-    this%dz    = 1.0*LoD/(this%kmax*px)
+    this%dz    = 1.0*LoD/(kmax*px)
     do k=0,k1
        dzw(k) = this%dz 
        dzp(k) = this%dz
-       zw(k)  = (k+this%kmax*rank)*this%dz
-       zp(k)  = (k+this%kmax*rank)*this%dz - (0.5)*this%dz
+       zw(k)  = (k+kmax*rank)*this%dz
+       zp(k)  = (k+kmax*rank)*this%dz - (0.5)*this%dz
     enddo
 
     this%dzw = dzw
@@ -264,14 +283,15 @@ contains
   end subroutine discretize_streamwise2
 
   subroutine calc_walldist(this, gridSize)
+    use mod_param, only : i1,imax
     implicit None
     class(AbstractMesh) :: this
     real(8), intent(IN) :: gridSize
     integer :: i
-    do i = 1,this%imax
+    do i = 1,imax
       this%wallDist(i) = gridSize - this%rp(i)
     enddo
-    do i = 0,this%i1
+    do i = 0,i1
       this%wallDistu(i) = gridSize - this%ru(i)
     enddo
   end subroutine
@@ -304,10 +324,11 @@ contains
 
   end subroutine init_pipe
   subroutine set_bc_pipe(this, K_start_heat, x_start_heat,rank)
+    use mod_param, only :k1,k
+    implicit none
     class(Pipe_Mesh) :: this
     real(8), intent(IN) :: x_start_heat
     integer, intent(IN) :: K_start_heat, rank
-    integer :: i,k
     !bc for the momentum and turbulent scalars
     this%bot_bcnovalue(:) = 1 ! symmetry
     this%top_bcnovalue(:) =-1 ! wall
@@ -317,7 +338,7 @@ contains
     
     ! bc for the temperature
     this%bot_bcvalue1(:)  = 1 ! symmetry
-    do k=0,this%k1
+    do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
@@ -358,10 +379,11 @@ contains
 
 
   subroutine set_bc_channel(this, K_start_heat, x_start_heat,rank)
+    use mod_param, only :k1,k
+    implicit none
     class(Channel_Mesh) :: this
     real(8), intent(IN) :: x_start_heat
     integer, intent(IN) :: K_start_heat, rank
-    integer :: i,k
 
     !bc for the momentum and turbulent scalars
     this%bot_bcnovalue(:) =-1 ! wall
@@ -371,7 +393,7 @@ contains
     this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
 
     ! bc for the temperature
-    do k=0,this%k1
+    do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
         this%bot_bcvalue1(k) = 1 ! no heat flux (symmetry)
@@ -384,19 +406,20 @@ contains
   end subroutine
 
   subroutine calc_walldist_twowall(this, gridSize)
+    use mod_param, only : imax,i1
     implicit None
     class(Channel_Mesh) :: this
     real(8), intent(IN) :: gridSize
     integer :: i
 
-    do i = 1,this%imax
+    do i = 1,imax
       if (this%rp(i).le.1) then
         this%wallDist(i) = this%rp(i)
       else
         this%wallDist(i) = gridSize-this%rp(i)
       endif
     enddo
-    do i = 0, this%i1 
+    do i = 0, i1 
       if (this%ru(i).le.1) then
         this%wallDistu(i) = this%ru(i)
       else
@@ -434,10 +457,10 @@ contains
   end subroutine init_symchannel
 
   subroutine set_bc_symchannel(this, K_start_heat, x_start_heat,rank)
+    use mod_param, only :k1,k
     class(SymChannel_Mesh) :: this
     real(8), intent(IN) :: x_start_heat
     integer, intent(IN) :: K_start_heat, rank
-    integer :: i,k
     
     !bc for the momentum and turbulent scalars
     this%bot_bcnovalue(:) = 1 ! symmetry
@@ -448,7 +471,7 @@ contains
     
     ! bc for the temperature
     this%bot_bcvalue1(:)  = 1 ! symmetry
-    do k=0,this%k1
+    do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
@@ -487,16 +510,16 @@ contains
   end subroutine init_bl
 
   subroutine set_bc_blayer(this, K_start_heat, x_start_heat,rank)
+    use mod_param, only : k1,i,k
     class(BLayer_Mesh) :: this
     real(8), intent(IN) :: x_start_heat
     integer, intent(IN) :: K_start_heat, rank
-    integer :: i,k
-
+    
     !bc for the momentum and turbulent scalars
     this%bot_bcvalue(:)   = 1 ! symmetry
     this%bot_bcnovalue(:) = 1 ! symmetry
     this%ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
-    do k=0,this%k1
+    do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcnovalue(k) = 1 !symmetry
         this%top_bcvalue(k)   = 1 !symmetry
@@ -508,7 +531,7 @@ contains
     
     ! bc for the temperature
     this%bot_bcvalue1(:)      = 1 ! symmetry
-    do k=0,this%k1
+    do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
         this%top_bcvalue1(k)  = 1 ! no heat flux (symmetry)
       else

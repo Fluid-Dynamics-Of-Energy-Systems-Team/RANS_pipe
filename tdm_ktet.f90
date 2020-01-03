@@ -82,9 +82,9 @@ subroutine init_sol_KtEt(this)
   class(KtEt_TurbDiffModel) :: this
   integer :: i
   do i=0,this%i1
-    this%kt(i,:)  =0.1
-    this%epst(i,:)=1.000
-    this%Pkt(i,:) = 0 
+    this%kt(i,:)  =.5
+    this%epst(i,:)=1.0
+    this%Pkt(i,:) = 0.1 
     this%ktin(i) = 0.0
     this%epstin(i) = 0.0
     this%Pktin(i) = 0 
@@ -192,13 +192,11 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
 
     i=1
     b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
-    ! b(i) = b(i) - a(i) !symmetry = +1 ; wall = -1 
     a(i)=0
     rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
       
     i=this%imax
     b(i) = b(i) + top_bcnovalue(k)*c(i)
-    ! b(i) = b(i) - c(i) !symmetry = +1 ; wall = -1 
     c(i)=0
     rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
 
@@ -257,7 +255,7 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
   integer im,ip,jm,jp,km,kp,ib,ie,kb,ke,i,k
   real(8), dimension(0:this%k1) :: dzp
   real(8), dimension(0:this%i1) :: dru,drp
-  real(8) :: dTdx, dTdy
+  real(8) :: dTdx, dTdy,dktdx,dktdy
 
   dzp = mesh%dzp
   drp = mesh%drp
@@ -281,8 +279,6 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
      dTdx = (temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
      dTdy = (temp(ip,k)-temp(im,k))/(drp(i)+drp(im))
      this%Pkt(i,k) = alphat(i,k)*(dTdx*dTdx + dTdy*dTdy) !- 2*this%epst(i,k) this part is put implict !NOTE: CHANGED BY STEPHAN
-!     this%Pkt(i,k) = alphat(i,k)*(((temp(i,k)-temp(i,km))/dz)**2.0+ ((temp(i,k)-temp(im,k))/dRu(i))**2.0)
-
     enddo
   enddo
 end subroutine production_KtEt
@@ -332,15 +328,10 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
     enddo
 
     i=1
-    ! b(i) = b(i)!+a(i)!-bot_bcnovalue(k)*a(i)
-    !a(i) = 0
-    ! rhs(i) = dnew(i,k) +((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
     b(i) = b(i)+bot_bcvalue(k)*a(i)
     rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%epst(i-1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
 
     i=this%imax
-    ! b(i) = b(i)+c(i)!-top_bcnovalue(k)*c(i)
-    ! rhs(i) = dnew(i,k) +((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
     b(i) = b(i)+top_bcvalue(k)*c(i)
     rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%epst(i+1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
     call matrixIdir(this%imax,a,b/alphaet,c,rhs)

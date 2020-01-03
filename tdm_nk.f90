@@ -120,9 +120,9 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
   real(8) cfi, sti, utau
   real(8),dimension(0:this%k1) ::   tauw, Qwall_vec
   real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
-  real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
-  real(8), dimension(1:this%imax) :: walldist
-  real(8), dimension(0:this%i1) :: dzp
+  real(8),dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
+  real(8),dimension(1:this%imax) :: walldist
+  real(8),dimension(0:this%i1) :: dzp
   real(8) :: tcond_wall
   walldist = mesh%walldist
   dzp = mesh%dzp
@@ -156,7 +156,7 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 
     enddo
   enddo
-  
+
 end subroutine set_alphat_NK
 
 subroutine rhs_epst_KtEt_NK(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
