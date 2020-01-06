@@ -51,6 +51,7 @@ class(AbstractMesh),   allocatable :: mesh
 real(8), dimension(:), allocatable :: top_bcnovalue,bot_bcnovalue,top_bcvalue1,bot_bcvalue1, &
                                       top_bcvalue,bot_bcvalue,ubot_bcvalue, &
                                       drp,dru,rp,ru,dzp,dzw,zp,zw,y_fa,y_cv,walldistu,walldist
+real(8) :: dz
 
 !****************************************************************************************
 
@@ -115,16 +116,16 @@ contains
     use mod_param, only : i1,k1,imax
     implicit none
     class(AbstractMesh) :: this
-    allocate(this%Ru  (0:i1),this%Rp  (0:i1), &
-             this%dru (0:i1),this%drp (0:i1), &
-             this%y_fa(0:i1),this%y_cv(0:i1))
-    allocate(this%zw  (0:k1),this%zp  (0:k1), &
-             this%dzw (0:k1),this%dzp (0:k1))
-    allocate(this%wallDist(1:imax), this%wallDistu(0:i1))
-    allocate(this%top_bcvalue  (0:k1), this%bot_bcvalue  (0:k1), &
-             this%top_bcvalue1 (0:k1), this%bot_bcvalue1 (0:k1), &
-             this%top_bcnovalue(0:k1), this%bot_bcnovalue(0:k1), &
-             this%ubot_bcvalue (0:k1))
+    ! allocate(this%Ru  (0:i1),this%Rp  (0:i1), &
+    !          this%dru (0:i1),this%drp (0:i1), &
+    !          this%y_fa(0:i1),this%y_cv(0:i1))
+    ! allocate(this%zw  (0:k1),this%zp  (0:k1), &
+    !          this%dzw (0:k1),this%dzp (0:k1))
+    ! allocate(this%wallDist(1:imax), this%wallDistu(0:i1))
+    ! allocate(this%top_bcvalue  (0:k1), this%bot_bcvalue  (0:k1), &
+    !          this%top_bcvalue1 (0:k1), this%bot_bcvalue1 (0:k1), &
+    !          this%top_bcnovalue(0:k1), this%bot_bcnovalue(0:k1), &
+    !          this%ubot_bcvalue (0:k1))
 
     allocate(Ru  (0:i1),Rp  (0:i1), &
              dru (0:i1),drp (0:i1), &
@@ -144,8 +145,8 @@ contains
     class(AbstractMesh) :: this
     integer :: i
     do i=0,i1
-      this%ru(i)=1.0
-      this%rp(i)=1.0
+      ru(i)=1.0
+      rp(i)=1.0
     enddo
   end subroutine
 
@@ -157,40 +158,40 @@ contains
     real(8) :: fact
     integer :: i
 
-    this%ru(0) = 0
+    ru(0) = 0
 
     !apply stretching
     do i = 1,imax
       fact       = (i-0.)/(imax-0.)
-      this%ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
-      this%ru(i) = this%ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
+      ru(i) = (1.-tanh(fB*(fA-fact))/tanh(fA*fB))
+      ru(i) = ru(i)/(1.-tanh(fB*(fA-1.))/tanh(fA*fB))
     enddo
 
     !normalize with the gridsize
     do i=0,imax
-      this%ru(i)=this%ru(i)/this%ru(imax)*gridSize
+      ru(i)=ru(i)/ru(imax)*gridSize
     enddo
 
     !calculate the cell centers and differences
     do i =1,imax
-      this%Rp(i)  = (this%Ru(i)+this%Ru(i-1))/2.0
-      this%dru(i) = (this%Ru(i)-this%Ru(i-1))
+      Rp(i)  = (Ru(i)+Ru(i-1))/2.0
+      dru(i) = (Ru(i)-Ru(i-1))
     enddo
 
-    this%dru(i1) = this%dru(imax)
-    this%Ru(i1)  = this%Ru(imax) + this%dru(i1)
-    this%Rp(i1)  = this%Ru(imax) + this%dru(i1)/2.0
+    dru(i1) = dru(imax)
+    Ru(i1)  = Ru(imax) + dru(i1)
+    Rp(i1)  = Ru(imax) + dru(i1)/2.0
 
-    this%dru(0) = this%dru(1)
-    this%Rp(0)  = this%Ru(0) - this%dru(0)/2.0
+    dru(0) = dru(1)
+    Rp(0)  = Ru(0) - dru(0)/2.0
 
     do i = 0,imax
-      this%drp(i) = this%Rp(i+1) - this%Rp(i)
+      drp(i) = Rp(i+1) - Rp(i)
     enddo
 
     do i=0,i1
-      this%y_cv(i)=this%rp(i)
-      this%y_fa(i)=this%ru(i)
+      y_cv(i)=rp(i)
+      y_fa(i)=ru(i)
     enddo
 
   end subroutine discretize_wall_normal
@@ -201,7 +202,7 @@ contains
     class(AbstractMesh) :: this
     real(8), intent(IN) :: LoD
     integer, intent(IN) :: px 
-    this%dz    = 1.0*LoD/(kmax*px)
+    dz    = 1.0*LoD/(kmax*px)
   end subroutine discretize_streamwise
 
   subroutine discretize_streamwise2(this, LoD,rank, px)
@@ -214,7 +215,6 @@ contains
     integer, intent(IN) :: rank, px 
     real(8) :: L,a,c,H
     real(8), dimension(0:2000) :: y, x2tab, x, ys
-    real(8), dimension(0:k1)    :: zw, zp, dzw,dzp
     real(8) :: value
     integer :: i,nelem, k, ierr
     integer :: tabkhi,tabklo = 0 
@@ -267,18 +267,13 @@ contains
     enddo
     dzw(0) = dzw(1)
 
-    this%dz    = 1.0*LoD/(kmax*px)
+    dz    = 1.0*LoD/(kmax*px)
     do k=0,k1
-       dzw(k) = this%dz 
-       dzp(k) = this%dz
-       zw(k)  = (k+kmax*rank)*this%dz
-       zp(k)  = (k+kmax*rank)*this%dz - (0.5)*this%dz
+       dzw(k) = dz 
+       dzp(k) = dz
+       zw(k)  = (k+kmax*rank)*dz
+       zp(k)  = (k+kmax*rank)*dz - (0.5)*dz
     enddo
-
-    this%dzw = dzw
-    this%dzp = dzp
-    this%zw  = zw
-    this%zp  = zp
 
   end subroutine discretize_streamwise2
 
@@ -289,10 +284,10 @@ contains
     real(8), intent(IN) :: gridSize
     integer :: i
     do i = 1,imax
-      this%wallDist(i) = gridSize - this%rp(i)
+      wallDist(i) = gridSize - rp(i)
     enddo
     do i = 0,i1
-      this%wallDistu(i) = gridSize - this%ru(i)
+      wallDistu(i) = gridSize - ru(i)
     enddo
   end subroutine
 
@@ -330,19 +325,19 @@ contains
     real(8), intent(IN) :: x_start_heat
     integer, intent(IN) :: K_start_heat, rank
     !bc for the momentum and turbulent scalars
-    this%bot_bcnovalue(:) = 1 ! symmetry
-    this%top_bcnovalue(:) =-1 ! wall
-    this%bot_bcvalue(:)   = 1 ! symmetry
-    this%top_bcvalue(:)   = 0 ! wall
-    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    bot_bcnovalue(:) = 1 ! symmetry
+    top_bcnovalue(:) =-1 ! wall
+    bot_bcvalue(:)   = 1 ! symmetry
+    top_bcvalue(:)   = 0 ! wall
+    ubot_bcvalue(:)  = 1 ! zero vertical velocity
     
     ! bc for the temperature
-    this%bot_bcvalue1(:)  = 1 ! symmetry
+    bot_bcvalue1(:)  = 1 ! symmetry
     do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
-        this%top_bcvalue1(k) =1 ! no heat flux (symmetry)
+        top_bcvalue1(k) =1 ! no heat flux (symmetry)
       else
-        this%top_bcvalue1(k) =0 ! heat flux or isothermal
+        top_bcvalue1(k) =0 ! heat flux or isothermal
       endif
     enddo
 
@@ -386,20 +381,20 @@ contains
     integer, intent(IN) :: K_start_heat, rank
 
     !bc for the momentum and turbulent scalars
-    this%bot_bcnovalue(:) =-1 ! wall
-    this%top_bcnovalue(:) =-1 ! wall
-    this%bot_bcvalue(:)   = 0 ! wall
-    this%top_bcvalue(:)   = 0 ! wall
-    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    bot_bcnovalue(:) =-1 ! wall
+    top_bcnovalue(:) =-1 ! wall
+    bot_bcvalue(:)   = 0 ! wall
+    top_bcvalue(:)   = 0 ! wall
+    ubot_bcvalue(:)  = 1 ! zero vertical velocity
 
     ! bc for the temperature
     do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
-        this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
-        this%bot_bcvalue1(k) = 1 ! no heat flux (symmetry)
+        top_bcvalue1(k) = 1 ! no heat flux (symmetry)
+        bot_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
-        this%top_bcvalue1(k) = 0 ! heat flux or isothermal
-        this%bot_bcvalue1(k) = 0 ! heat flux or isothermal
+        top_bcvalue1(k) = 0 ! heat flux or isothermal
+        bot_bcvalue1(k) = 0 ! heat flux or isothermal
       endif
     enddo
 
@@ -413,17 +408,17 @@ contains
     integer :: i
 
     do i = 1,imax
-      if (this%rp(i).le.1) then
-        this%wallDist(i) = this%rp(i)
+      if (rp(i).le.1) then
+        wallDist(i) = rp(i)
       else
-        this%wallDist(i) = gridSize-this%rp(i)
+        wallDist(i) = gridSize-rp(i)
       endif
     enddo
     do i = 0, i1 
-      if (this%ru(i).le.1) then
-        this%wallDistu(i) = this%ru(i)
+      if (ru(i).le.1) then
+        wallDistu(i) = ru(i)
       else
-        this%wallDistu(i) = gridSize-this%ru(i)
+        wallDistu(i) = gridSize-ru(i)
       endif
     enddo
   end subroutine
@@ -463,19 +458,19 @@ contains
     integer, intent(IN) :: K_start_heat, rank
     
     !bc for the momentum and turbulent scalars
-    this%bot_bcnovalue(:) = 1 ! symmetry
-    this%bot_bcvalue(:)   = 1 ! symmetry
-    this%ubot_bcvalue(:)  = 1 ! zero vertical velocity
-    this%top_bcnovalue(:) =-1 ! wall
-    this%top_bcvalue(:)   = 0 ! wall
+    bot_bcnovalue(:) = 1 ! symmetry
+    bot_bcvalue(:)   = 1 ! symmetry
+    ubot_bcvalue(:)  = 1 ! zero vertical velocity
+    top_bcnovalue(:) =-1 ! wall
+    top_bcvalue(:)   = 0 ! wall
     
     ! bc for the temperature
-    this%bot_bcvalue1(:)  = 1 ! symmetry
+    bot_bcvalue1(:)  = 1 ! symmetry
     do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
-        this%top_bcvalue1(k) = 1 ! no heat flux (symmetry)
+        top_bcvalue1(k) = 1 ! no heat flux (symmetry)
       else
-        this%top_bcvalue1(k) = 0 ! heat flux or isothermal
+        top_bcvalue1(k) = 0 ! heat flux or isothermal
       endif
     enddo
     
@@ -516,26 +511,26 @@ contains
     integer, intent(IN) :: K_start_heat, rank
     
     !bc for the momentum and turbulent scalars
-    this%bot_bcvalue(:)   = 1 ! symmetry
-    this%bot_bcnovalue(:) = 1 ! symmetry
-    this%ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
+    bot_bcvalue(:)   = 1 ! symmetry
+    bot_bcnovalue(:) = 1 ! symmetry
+    ubot_bcvalue(:)  = 0 ! 0: set the wall to du/dy =0        
     do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
-        this%top_bcnovalue(k) = 1 !symmetry
-        this%top_bcvalue(k)   = 1 !symmetry
+        top_bcnovalue(k) = 1 !symmetry
+        top_bcvalue(k)   = 1 !symmetry
       else
-        this%top_bcnovalue(k) =-1 !wall
-        this%top_bcvalue(k)   = 0 !wall
+        top_bcnovalue(k) =-1 !wall
+        top_bcvalue(k)   = 0 !wall
       endif
     enddo
     
     ! bc for the temperature
-    this%bot_bcvalue1(:)      = 1 ! symmetry
+    bot_bcvalue1(:)      = 1 ! symmetry
     do k=0,k1
       if ((rank.eq.0) .and. (k.lt.K_start_heat)) then
-        this%top_bcvalue1(k)  = 1 ! no heat flux (symmetry)
+        top_bcvalue1(k)  = 1 ! no heat flux (symmetry)
       else
-        this%top_bcvalue1(k)  = 0 ! heat flux or isothermal
+        top_bcvalue1(k)  = 0 ! heat flux or isothermal
       endif
     enddo
   end subroutine

@@ -35,7 +35,7 @@ module mod_tm
       class(TurbModel) :: this
     end subroutine init_sol_tm
     subroutine set_mut_tm(this,u,w,rho,mu,mui,mut)
-      use mod_param, only : i1,k1,imax,kmax
+      use mod_param, only : i1,k1
       import :: TurbModel
       class(TurbModel) :: this
       real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
@@ -45,7 +45,7 @@ module mod_tm
                              alpha1,alpha2,alpha3,                   &
                              modification,rank,periodic,    &
                              residual1, residual2, residual3)
-      use mod_param, only : i1,k1,imax,kmax
+      use mod_param, only : i1,k1
       import :: TurbModel
       class(TurbModel) :: this
       real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -54,14 +54,14 @@ module mod_tm
       real(8),                                intent(OUT):: residual1,residual2,residual3
     end subroutine advance_turb_tm
     subroutine set_bc_tm(this,mu,rho,periodic,rank,px)
-      use mod_param, only : i1,k1,imax,kmax
+      use mod_param, only : i1,k1
       import :: TurbModel
       class(TurbModel) :: this
       real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
-      integer,                               intent(IN) :: periodic, rank, px
+      integer,                     intent(IN) :: periodic, rank, px
     end subroutine set_bc_tm
     subroutine get_profile_tm(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
-      use mod_param, only : i1,k1,imax,kmax
+      use mod_param, only : i1,imax
       import :: TurbModel
       class(TurbModel) :: this
       integer,                               intent(IN) :: k
@@ -69,7 +69,7 @@ module mod_tm
       real(8),dimension(1:imax),        intent(OUT):: p_bF2
     end subroutine get_profile_tm
     subroutine get_sol_tm(this,nuSA,k,eps,om,v2,yp)
-      use mod_param, only : i1,k1,imax,kmax
+      use mod_param, only : i1,k1
       import :: TurbModel
       class(TurbModel) :: this
       real(8),dimension(0:i1,0:k1),intent(OUT):: nuSA,k,eps,om,v2,yp
@@ -115,15 +115,15 @@ contains
    !************************!
 
 subroutine set_mut_bc(this,mut,periodic,px,rank)
-  use mod_mesh, only : mesh
   use mod_param, only : i1,k1,imax,kmax
+  use mod_mesh, only : top_bcnovalue, bot_bcnovalue
   class(TurbModel) :: this
-  integer,                                 intent(IN) :: periodic,px,rank
+  integer,                       intent(IN) :: periodic,px,rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: mut
-  real(8), dimension(0:i1) :: tmp
+  real(8), dimension(0:i1)                  :: tmp
  
-  mut(i1,:) = mesh%top_bcnovalue(:)*mut(imax,:)
-  mut(0,:)       = mesh%bot_bcnovalue(:)*mut(1,:)
+  mut(i1,:) = top_bcnovalue(:)*mut(imax,:)
+  mut(0,:)       = bot_bcnovalue(:)*mut(1,:)
 
   call shiftf(mut,tmp,rank); mut(:,0)      =tmp(:);
   call shiftb(mut,tmp,rank); mut(:,k1)=tmp(:);
@@ -161,7 +161,7 @@ subroutine init_sol_laminar(this)
 end subroutine init_sol_laminar
 
 subroutine init_w_inflow_laminar(this, Re, systemsolve)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1
   class(Laminar_TurbModel) :: this
   real(8), intent(IN) :: Re
   integer, intent(IN) :: systemsolve
@@ -180,14 +180,14 @@ subroutine init_w_inflow_laminar(this, Re, systemsolve)
 end subroutine init_w_inflow_laminar
 
 subroutine init_mem_laminar(this)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,k1
   class(Laminar_TurbModel) :: this
   allocate(this%yp(0:i1,0:k1))
   allocate(this%mutin(0:i1))
 end subroutine init_mem_laminar
 
 subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,imax
   class(Laminar_TurbModel) :: this
   integer,                               intent(IN) :: k
   real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
@@ -204,7 +204,7 @@ subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,
 end subroutine get_profile_laminar
 
 subroutine get_sol_laminar(this,nuSA,k,eps,om,v2,yp)
-  use mod_param, only : i1,k1,imax,kmax 
+  use mod_param, only : i1,k1
   class(Laminar_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
   nuSA=0
@@ -217,15 +217,13 @@ end subroutine get_sol_laminar
 
 
 subroutine set_mut_laminar(this,u,w,rho,mu,mui,mut)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,k1,imax,kmax,i,k
   use mod_mesh, only : walldist
   class(Laminar_TurbModel) :: this
   real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
   real(8), dimension(0:i1,0:k1),intent(OUT):: mut
-  real(8), dimension(0:k1) :: tauw
-  integer :: i,k,km
+  real(8), dimension(0:k1)                 :: tauw
   do k=1,kmax
-    km=k-1
     tauw(k) = mui(imax,k)*0.5*(w(imax,k)+w(imax,k))/walldist(imax)
     do i=1,imax
       this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5   ! ystar
@@ -241,9 +239,9 @@ subroutine advance_laminar(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
   use mod_param, only : i1,k1,imax,kmax
   class(Laminar_TurbModel) :: this
   real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8),                           intent(IN) :: alpha1,alpha2,alpha3
-  integer,                           intent(IN) :: modification,rank,periodic
-  real(8),                           intent(OUT):: residual1,residual2,residual3
+  real(8),                      intent(IN) :: alpha1,alpha2,alpha3
+  integer,                      intent(IN) :: modification,rank,periodic
+  real(8),                      intent(OUT):: residual1,residual2,residual3
 end subroutine advance_laminar
 
 

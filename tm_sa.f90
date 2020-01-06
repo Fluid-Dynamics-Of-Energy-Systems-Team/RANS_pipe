@@ -118,7 +118,7 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                       alpha1,alpha2,alpha3,                  &
                       modification,rank,periodic,   &
                       residual1, residual2, residual3)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,k1
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -138,13 +138,13 @@ subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
 end subroutine advance_SA
 
 subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
-  use mod_param, only : i1,k1,imax,kmax,k
-  use mod_mesh, only : mesh,top_bcnovalue,bot_bcnovalue
+  use mod_param, only : k1,i1,kmax,imax,k
+  use mod_mesh,  only : top_bcnovalue,bot_bcnovalue
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
   integer,                     intent(IN) :: periodic, rank, px
-  real(8),dimension(0:i1) :: tmp
+  real(8),dimension(0:i1)                 :: tmp
   
   do k = 0,kmax 
     this%nuSA(0,k)  = bot_bcnovalue(k)*this%nuSA(1,k)    !symmetry or 0 value
@@ -168,10 +168,10 @@ subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
 end subroutine set_bc_SA
 
 subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,imax
   implicit  none
   class(SA_TurbModel) :: this
-  integer,                               intent(IN) :: k
+  integer,                          intent(IN) :: k
   real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
   real(8),dimension(1:imax),        intent(OUT):: p_bF2
   p_nuSA(:)=this%nuSA(:,k)
@@ -186,7 +186,7 @@ subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
 end subroutine get_profile_SA
 
 subroutine get_sol_SA(this,nuSA,k,eps,om,v2,yp)
-  use mod_param, only : i1,k1,imax,kmax
+  use mod_param, only : i1,k1
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
   nuSA=this%nuSA
@@ -201,7 +201,7 @@ end subroutine get_sol_SA
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     alphak,modification,periodic,rank)
   use mod_param, only : i1,k1,imax,kmax,k,i
-  use mod_mesh,  only : top_bcnovalue,bot_bcnovalue,Ru,Rp,dru,drp,walldist
+  use mod_mesh,  only : Ru,Rp,dru,drp,walldist,top_bcnovalue,bot_bcnovalue
   use mod_math
   use mod_common, only : res_nuSA
   implicit none
@@ -210,10 +210,9 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   real(8),                      intent(IN) :: alphak
   integer,                      intent(IN) :: rank, modification, periodic
   real(8),                      intent(OUT):: resSA
-  real(8) :: dz
+  real(8) :: cb3, dz
   real(8), dimension(0:i1,0:k1) :: dnew,tempArray,dimpl,eknu,eknui,eknuk
-  real(8), dimension(imax)           :: a,b,c,rhs
-  real(8) cb3
+  real(8), dimension(imax)      :: a,b,c,rhs
   
   cb3 = 2.0/3.0
   resSA = 0.0
@@ -271,13 +270,13 @@ end subroutine solve_SA
 
 subroutine production_SA(this,nuSA,u,w,rho,mu)
   use mod_param, only : i1,k1,imax,kmax,i,k
-  use mod_mesh, only : dzw,dzp,dru,walldist
+  use mod_mesh,  only : dzw,dzp,dru,walldist
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u,w,rho,mu,nuSA
   real(8),dimension(0:i1,0:k1) :: Gk, Tt
-  integer im,ip,km,kp
-  real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,shatSA,StR
+  integer :: im,ip,km,kp
+  real*8  :: cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,chi,fv1SA,fv2SA,shatSA,StR
 
   cv1_3     = (7.1)**3.0
   cb1       = 0.1355
@@ -314,15 +313,15 @@ subroutine production_SA(this,nuSA,u,w,rho,mu)
 end subroutine production_SA
 
 subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,modification)
-  use mod_param, only : i1,k1,imax,kmax,i,k
-  use mod_mesh, only : dzw,dzp,Ru,Rp,dru
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh,  only : dzw,dzp,Ru,Rp,dru
   implicit none
   class(SA_TurbModel) :: this
   real(8), dimension(0:i1, 0:k1), intent(IN) :: rho_mod,ek,eki,ekk,ekmt
   real(8),                        intent(IN) :: sigma
   integer,                        intent(IN) :: modification
   real(8), dimension(0:i1, 0:k1), intent(OUT):: putout
-  integer km,kp,im,ip
+  integer :: km,kp,im,ip
   
   !Important note: this function takes instead of ek, eki, ekk, ekmt: eknu, eknui, eknuk, nuSANew, respectively.
   ! For, Standard, Inverse SLS and Aupoix
@@ -367,15 +366,15 @@ subroutine diffusion_SA(this,putout,ekmt,ek,eki,ekk,sigma,rho_mod,modification)
 end subroutine diffusion_SA
 
 subroutine rhs_SA(this, putout,dimpl,nuSA,rho,modification)
-  use mod_param, only : i1,k1,imax,kmax,i,k
-  use mod_mesh, only : dzw,dzp,walldist,drp
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh,  only : dzw,dzp,drp,walldist
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,nuSA
   integer,                     intent(IN) :: modification
   real(8),dimension(0:i1,0:k1),intent(OUT):: putout,dimpl
-  integer im,ip,km,kp
-  real*8  cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,r_SA,g_SA,fw_SA,shatSA
+  integer :: im,ip,km,kp
+  real(8) :: cv1_3,cb1,cb2,cb3,cw1,cw2,cw3_6,inv_cb3,kappa_2,r_SA,g_SA,fw_SA,shatSA
   
   cv1_3     = (7.1)**3.0
   cb1       = 0.1355

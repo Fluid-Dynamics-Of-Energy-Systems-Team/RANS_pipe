@@ -37,7 +37,7 @@ module ke_tm
       class(KE_TurbModel) :: this
     end subroutine set_constants
     subroutine set_mut_KE(this,u,w,rho,mu,mui,mut)
-      use mod_param, only: imax,k1,i1
+      use mod_param, only: k1,i1
       import :: KE_TurbModel
       class(KE_TurbModel) :: this
       real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
@@ -120,17 +120,17 @@ end subroutine init_mem_KE
 subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alphak,modification,rank,periodic)
   use mod_param, only : k1,i1,imax,kmax,i,k
-  use mod_math
-  use mod_mesh, only : mesh, top_bcnovalue,bot_bcnovalue,Ru,Rp,dru,drp
+  use mod_mesh, only : Ru,Rp,dru,drp,top_bcnovalue,bot_bcnovalue
+  use mod_math, only : matrixIdir
   implicit none
   class(KE_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
-  real(8),                                intent(IN) :: alphak
-  integer,                                intent(IN) :: modification,rank,periodic
-  real(8),                                intent(OUT):: resK
-  real(8), dimension(0:i1,0:k1) :: dnew,dimpl
+  real(8),                      intent(IN) :: alphak
+  integer,                      intent(IN) :: modification,rank,periodic
+  real(8),                      intent(OUT):: resK
+  real(8), dimension(0:i1,0:k1)      :: dnew,dimpl
   real(8), dimension(imax)           :: a,b,c,rhs
-  real(8) dz
+  real(8)                            :: dz
   
   
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
@@ -159,7 +159,7 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
     enddo
 
      i=1
-     b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
+     b(i) = b(i) + bot_bcnovalue(k)*a(i)                      !symmetry = -1 ; wall = 1 
      rhs(i) = dnew(i,k) + ((1-alphak)/alphak)*b(i)*this%k(i,k)
        
      i=imax
@@ -187,7 +187,7 @@ subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
 end subroutine get_sol_KE
 
 subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
-  use mod_param, only : k1,i1,imax
+  use mod_param, only : i1,imax
   class(KE_TurbModel) :: this
   integer,                               intent(IN) :: k
   real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1,yp
@@ -255,15 +255,15 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
 end subroutine solve_eps_KE
 
 subroutine rhs_k_KE(this,putout,dimpl,rho)
-  use mod_param, only : k1,i1,kmax,imax,i,k
+  use mod_param, only : k1,i1,kmax,imax,k,i
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: rho
   real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
   
+  !k equation  
   do k=1,kmax
     do i=1,imax
-      !k equation
       putout(i,k) = putout(i,k)+(this%Pk(i,k)+this%Gk(i,k))/rho(i,k)
       dimpl(i,k)  = dimpl(i,k) + this%eps(i,k)/this%k(i,k) ! note, rho*epsilon/(rho*k), set implicit and divided by density
     enddo
@@ -271,7 +271,7 @@ subroutine rhs_k_KE(this,putout,dimpl,rho)
 end subroutine rhs_k_KE
 
 subroutine rhs_eps_KE(this,putout,dimpl,rho)
-  use mod_param, only :k1,i1,imax,kmax,i,k 
+  use mod_param, only :k1,i1,imax,kmax,k,i
   implicit none
   class(KE_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: rho
@@ -287,16 +287,16 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
 end subroutine rhs_eps_KE
 
 subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,modification)
-  use mod_param, only :k1,i1,kmax,imax,i,k
-  use mod_mesh, only : mesh,dzw,dzp
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh,  only : dzw,dzp
   implicit none
   class(KE_TurbModel) :: this
-  real(8), dimension(0:i1, 0:k1), intent(IN) :: putin, muk, mut, rho
-  real(8),                                  intent(IN) :: sigma
-  integer,                                  intent(IN) :: modification
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: putout
-  integer kp,km
-  real(8) difcp,difcm
+  real(8), dimension(0:i1, 0:k1), intent(IN)  :: putin, muk, mut, rho
+  real(8),                        intent(IN)  :: sigma
+  integer,                        intent(IN)  :: modification
+  real(8), dimension(0:i1, 0:k1), intent(OUT) :: putout
+  integer :: kp,km
+  real(8) :: difcp,difcm
   
   if ((modification == 1) .or. (modification == 2)) then       ! Inverse SLS  and Aupoix
     do k=1,kmax

@@ -61,6 +61,15 @@ call initMem()
 !initialize numerical
 call init_transpose
 
+
+!initialize grid including bc
+if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
+call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
+call mesh%discretize_streamwise2( LoD,rank, px)
+
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=   IG_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
@@ -76,14 +85,6 @@ if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kma
 if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel(i1, k1, imax, kmax,'Abe'))
 call turb_model%init()
 
-
-!initialize grid including bc
-if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
-call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
-call mesh%discretize_streamwise2( LoD,rank, px)
 
 !initialize turbulent diffusivity model
 if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'cPr', Pr))
@@ -117,7 +118,7 @@ istart = 1
 
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,&
-                         i1,k1,mesh%y_fa,mesh%y_cv,mesh%dpdz,Re,systemsolve,select_init)
+                         i1,k1,y_fa,y_cv,mesh%dpdz,Re,systemsolve,select_init)
 
 
 call bound_v(Unew,Wnew,Win,rank,istep)
@@ -243,8 +244,8 @@ end subroutine  calc_residual
 !!     Calculates the thermodynamic properties
 !!********************************************************************
 subroutine calc_prop(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be)
-  use mod_param
-  use mod_eos
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_eos, only : eos_model
   implicit none
   real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
                                                 lam,lami,lamk,cp,cpk,cpi,tp,be
@@ -298,22 +299,17 @@ end subroutine calc_mu_eff
 !!  Apply the boundary conditions for the energy equation
 !!*************************************************************************************
 subroutine bound_c(c, Twall, Qwall,rank)
-  use mod_param,   only : k1,i1,kmax,imax,i,k,isothermalBC,periodic,px
-  use mod_eos,     only : eos_model
-  use mod_mesh, only : mesh
+  use mod_param,only : k1,i1,kmax,imax,i,k,isothermalBC,periodic,px
+  use mod_eos,  only : eos_model
+  use mod_mesh, only : top_bcvalue1,bot_bcvalue1,drp
   implicit none
   include 'mpif.h'
   real(8),                       intent(IN) :: Twall, Qwall
   integer,                       intent(IN) :: rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: c
   real(8)                  :: enth_wall  
-  real(8), dimension(0:i1) :: tmp,drp
-  real(8), dimension(0:k1) :: bot_bcvalue1, top_bcvalue1
-
-  top_bcvalue1 = mesh%top_bcvalue1
-  bot_bcvalue1 = mesh%bot_bcvalue1
-  drp = mesh%drp
-
+  real(8), dimension(0:i1) :: tmp
+  
   !isothermal
   if (isothermalBC.eq.1) then
     call eos_model%set_w_temp(Twall, "H", enth_wall)
@@ -354,8 +350,8 @@ end subroutine bound_c
 !!  Apply the boundary conditions for the velocity
 !!*************************************************************************************
 subroutine bound_v(u,w,win,rank,step)
-  use mod_param,   only : i1,k1,imax,kmax,periodic,px
-  use mod_mesh, only : mesh
+  use mod_param,only : i1,k1,imax,kmax,periodic,px
+  use mod_mesh, only : ubot_bcvalue,top_bcnovalue,bot_bcnovalue
   implicit none  
   include 'mpif.h'
   
@@ -366,12 +362,12 @@ subroutine bound_v(u,w,win,rank,step)
   real(8) :: x, vfs, vfsm
   real(8), dimension(0:k1) :: dis
 
-  u(0,:)    =  (1-mesh%ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
+  u(0,:)    =  (1-ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
   u(imax,:) =   0.0                            !wall and symmetry
   u(i1,:)   = - u(imax-1,:)
 
-  w(0,:)    = mesh%bot_bcnovalue(:)*w(1,:)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
-  w(i1,:)   = mesh%top_bcnovalue(:)*w(imax,:) !wall or symmetry
+  w(0,:)    = bot_bcnovalue(:)*w(1,:)    !wall (bot_bcnovalue=-1) or symmetry (bot_bcnovalue=1)
+  w(i1,:)   = top_bcnovalue(:)*w(imax,:) !wall or symmetry
   
     
   call shiftf(u,tmp,rank);     u(:,0)  = tmp(:);
@@ -395,24 +391,19 @@ end subroutine bound_v
 !!   Apply the boundary conditions for the velocity using the mass flux
 !!************************  *************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
-  use mod_param,   only : k,i,kmax,imax,k1,i1,px
-  use mod_mesh, only : mesh
-  use mod_common,  only : dt,rold,rnew
+  use mod_param, only : k,i,kmax,imax,k1,i1,px
+  use mod_mesh,  only : dzw,dru,rp
+  use mod_common,only : dt,rold,rnew
   implicit none
   include 'mpif.h'
   integer,                       intent(IN) :: rank, step
   real(8), dimension(0:i1,0:k1), intent(IN) :: rbound
   real(8), dimension(0:i1),      intent(IN) :: W_in  
   real(8), dimension(0:i1,0:k1), intent(OUT):: ubound, wbound, w_out
-  real(8), dimension(0:i1) :: tmp,rp, dru
-  real(8), dimension(0:k1) :: dzw
+  real(8), dimension(0:i1) :: tmp
   real(8), dimension(1:imax) :: wr
   integer :: ierr
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
-  
-  dzw = mesh%dzw
-  dru = mesh%dRu
-  rp  = mesh%rp
   
   call bound_v(ubound,wbound,W_in,rank, step)
   wr = 0
@@ -474,9 +465,9 @@ end subroutine bound_m
 
 subroutine initialize_solution(rank, w, u,c, mut,alphat, &
                                win, mutin,alphatin, i1,k1, y_fa, y_cv, dpdz, Re, systemsolve, select_init)
-  use mod_tm, only : turb_model
-  use mod_tdm, only : turbdiff_model
-  use mod_param, only : imax_old, kelem_old,px
+  use mod_tm, only   :  turb_model
+  use mod_tdm, only  : turbdiff_model
+  use mod_param, only: imax_old, kelem_old,px
   implicit none
   include "mpif.h"
   integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
@@ -552,29 +543,19 @@ end subroutine initialize_solution
 !!
 !!************************************************************************************
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
-  use mod_param,   only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource
-  use mod_math,    only : matrixIdir
-  use mod_mesh, only : mesh
-  use mod_common,  only : cnew,ekhk,ekh,alphat,ekhi
+  use mod_param, only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource
+  use mod_math,  only : matrixIdir
+  use mod_mesh,  only : dzw,dru,drp,rp,ru,top_bcvalue1,bot_bcvalue1,dz
+  use mod_common,only : cnew,ekhk,ekh,alphat,ekhi
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
   real(8),                       intent(OUT):: resC
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)      :: a,b,c,rhs
-  real(8)                       :: sigmat,Q,dz
+  real(8)                       :: sigmat,Q
   integer  :: ierr
-  real(8), dimension(0:i1) :: rp, dru, ru, drp
-  real(8), dimension(0:k1) :: dzw, top_bcvalue1, bot_bcvalue1
-
-  dzw = mesh%dzw
-  dru = mesh%dRu
-  drp = mesh%drp
-  rp  = mesh%rp
-  ru  = mesh%ru
-  top_bcvalue1 = mesh%top_bcvalue1
-  bot_bcvalue1 = mesh%bot_bcvalue1
-
+  
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
@@ -628,10 +609,10 @@ end
 !!     The timestep is limited (see routine chkdt)
 !!*************************************************************************************
 subroutine advance(rank)
-  use mod_param,   only : k1,i1,kmax,imax,k,i,Fr_1,periodic,qwall
-  use mod_math,    only : matrixIdir
-  use mod_mesh, only : mesh
-  use mod_common,  only : rnew,ekme,unew,wnew,dUdt,dWdt,ekm,dt,peclet
+  use mod_param, only : k1,i1,kmax,imax,k,i,Fr_1,periodic,qwall
+  use mod_math,  only : matrixIdir
+  use mod_mesh,  only : mesh,dz,dzw,dru,drp,rp,ru,top_bcnovalue,bot_bcnovalue,ubot_bcvalue
+  use mod_common,only : rnew,ekme,unew,wnew,dUdt,dWdt,ekm,dt,peclet
   implicit none
       
   integer rank
@@ -639,20 +620,10 @@ subroutine advance(rank)
   real*8, dimension(imax-1) :: au, bu, cu, rhsu
   real*8 dnew(0:i1,0:k1)
   real*8 dif,alpha,rhoa,rhob,rhoc
-  real*8 :: x, dpdz, dz
-  real(8), dimension(0:i1) :: rp, dru, ru, drp
-  real(8), dimension(0:k1) :: dzw, top_bcnovalue, bot_bcnovalue, ubot_bcvalue
-
-  dzw = mesh%dzw
-  dru = mesh%dRu
-  drp = mesh%drp
-  rp  = mesh%rp
-  ru  = mesh%ru
+  real*8 :: x, dpdz
+  
   dpdz= mesh%dpdz
-  top_bcnovalue = mesh%top_bcnovalue
-  bot_bcnovalue = mesh%bot_bcnovalue
-  ubot_bcvalue  = mesh%ubot_bcvalue
-
+  
   dif=0.0
 
   !>********************************************************************
@@ -738,21 +709,15 @@ end
 !!
 !!*************************************************************************************
 subroutine cmpinf(Bulk,Stress)
-  use mod_param
+  use mod_param, only : kmax,imax,k,i,px,Re
   use mod_common
-  use mod_mesh, only : mesh
+  use mod_mesh, only : rp,dru,walldist
   implicit none   
   include 'mpif.h'
   integer ierr
   real*8 waver(imax),waver2(imax)
-  real(8), dimension(0:i1)   :: rp, dru 
-  real(8), dimension(1:imax) :: wallDist
   real*8  Bulk,Stress
   
-  rp       = mesh%rp
-  dru      = mesh%dru
-  walldist = mesh%wallDist
-
   !     --- Initialization ---
    
   Waver = 0.0

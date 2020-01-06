@@ -31,23 +31,26 @@ module mod_tdm
     end subroutine init_tdm
 
     subroutine set_alphat_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+      use mod_param, only : k1,i1
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-      real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+      real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+      real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     end subroutine set_alphat_tdm
 
     subroutine get_profile_tdm(this,p_prt,p_kt,p_epst,p_Pkt,k)
+      use mod_param, only : k1,i1
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
       integer,                               intent(IN) :: k
-      real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+      real(8),dimension(0:i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
     end subroutine get_profile_tdm
 
     subroutine get_sol_tdm(this,Prt,epst,kt, Pkt, resKt, resEt)
+      use mod_param, only : k1,i1
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt,Pkt,resKt,resEt
+      real(8),dimension(0:i1,0:k1), intent(OUT):: Prt,epst,kt,Pkt,resKt,resEt
     end subroutine get_sol_tdm
 
     subroutine init_w_inflow_tdm(this,Re,systemsolve)
@@ -89,40 +92,43 @@ contains
 
   subroutine advance_turbdiff_tdm(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
                       alpha1,alpha2,                   &
-                      modification,rank,periodic,    &
+                      modification,rank,periodic,      &
                       residual1, residual2)
+  use mod_param, only : k1,i1
   class(TurbDiffModel) :: this
-  real(8), dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
+  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
   real(8),                                intent(IN) :: alpha1,alpha2
   integer,                                intent(IN) :: modification,rank,periodic
   real(8),                                intent(OUT):: residual1,residual2
   end subroutine advance_turbdiff_tdm
 
   subroutine set_alphat_bc(this,alphat,periodic,px,rank)
-    use mod_mesh, only : mesh
+    use mod_param, only : k1,i1,kmax,imax
+    use mod_mesh, only : top_bcnovalue, bot_bcnovalue
     class(TurbDiffModel) :: this
-    integer,                                 intent(IN) :: periodic,px,rank
-    real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: alphat
-    real(8), dimension(0:this%i1) :: tmp
+    integer,                       intent(IN) :: periodic,px,rank
+    real(8), dimension(0:i1,0:k1), intent(OUT):: alphat
+    real(8), dimension(0:i1) :: tmp
    
-    alphat(this%i1,:) = mesh%top_bcnovalue(:)*alphat(this%imax,:)
-    alphat(0,:)       = mesh%bot_bcnovalue(:)*alphat(1,:)
+    alphat(i1,:) = top_bcnovalue(:)*alphat(imax,:)
+    alphat(0,:)  = bot_bcnovalue(:)*alphat(1,:)
 
-    call shiftf(alphat,tmp,rank); alphat(:,0)      =tmp(:);
-    call shiftb(alphat,tmp,rank); alphat(:,this%k1)=tmp(:);
+    call shiftf(alphat,tmp,rank); alphat(:,0) =tmp(:);
+    call shiftb(alphat,tmp,rank); alphat(:,k1)=tmp(:);
 
     if ((periodic.ne.1).and.(rank.eq.0)) then
       alphat(:,0) = this%alphatin(:)
     endif
     if ((periodic.ne.1).and.(rank.eq.px-1)) then
-      alphat(:,this%k1) = 2.*alphat(:,this%kmax)-alphat(:,this%kmax-1)
+      alphat(:,k1) = 2.*alphat(:,kmax)-alphat(:,kmax-1)
     endif
   end subroutine
 
   subroutine set_bc_tdm(this,ekh,rho,periodic,rank,px)
+    use mod_param, only : k1,i1
     implicit none
     class(TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,ekh
+    real(8),dimension(0:i1,0:k1),intent(IN) :: rho,ekh
     integer,                               intent(IN) :: periodic, rank, px
   end subroutine set_bc_tdm
 
@@ -143,20 +149,23 @@ contains
   end function init_CPrt_TurbDiffModel
 
   subroutine init_constprt(this)
+    use mod_param, only : i1
     class(CPrt_TurbDiffModel) :: this
-    allocate(this%alphatin(0:this%i1))
+    allocate(this%alphatin(0:i1))
   end subroutine init_constprt
 
   subroutine set_alphat_constprt(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_param, only : k1,i1
     class(CPrt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     alphat = mut/this%Prt
   end subroutine set_alphat_constprt
 
   subroutine get_sol_constprt(this,Prt,epst,kt, Pkt, resKt, resEt)
+    use mod_param, only : k1,i1
     class(CPrt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt, resKt, resEt
+    real(8),dimension(0:i1,0:k1), intent(OUT):: Prt,epst,kt, Pkt, resKt, resEt
     Prt  =this%Prt
     epst =0.    
     kt   =0.
@@ -166,9 +175,10 @@ contains
   end subroutine get_sol_constprt
 
   subroutine get_profile_constprt(this,p_prt,p_kt,p_epst,p_Pkt,k)
+    use mod_param, only : i1
     class(CPrt_TurbDiffModel) :: this
     integer,                               intent(IN) :: k
-    real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+    real(8),dimension(0:i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
     p_prt = this%Prt
     p_kt = 0
     p_epst = 0
@@ -176,12 +186,13 @@ contains
   end subroutine get_profile_constprt
 
   subroutine init_w_inflow_constprt(this,Re,systemsolve)
-    use mod_tm, only : turb_model
+    use mod_param, only : i1
+    use mod_tm,    only : turb_model
     implicit none
     class(Cprt_TurbDiffModel) :: this
     real(8), intent(IN) :: Re
     integer, intent(IN) :: systemsolve
-    real(8), dimension(0:this%i1) :: dummy, Prtin
+    real(8), dimension(0:i1) :: dummy, Prtin
     character(len=5)  :: Re_str
     character(len=100) :: fname
     integer           :: Re_int

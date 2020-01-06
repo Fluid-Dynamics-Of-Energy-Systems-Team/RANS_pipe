@@ -15,10 +15,11 @@ module vp_tdm
   end type VPrt_TurbDiffModel
   interface
     subroutine set_alphat_vp_tdm(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+      use mod_param, only : k1,i1
       import :: VPrt_TurbDiffModel
       class(VPrt_TurbDiffModel) :: this
-      real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-      real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
+      real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+      real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     end subroutine set_alphat_vp_tdm
   end interface
 
@@ -80,17 +81,17 @@ contains
   !************************!
 
   subroutine init_mem_vp_tdm(this)
-      implicit none
-      integer i
-      class(VPrt_TurbDiffModel) :: this
-      allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1))
-      allocate(this%Prtin(0:this%i1), this%alphatin(0:this%i1))
-      
+    use mod_param, only : k1,i1
+    implicit none
+    class(VPrt_TurbDiffModel) :: this
+    allocate(this%Prt(0:i1,0:k1),this%Pr(0:i1,0:k1),this%mut_mu(0:i1,0:k1))
+    allocate(this%Prtin(0:i1), this%alphatin(0:i1))
   end subroutine init_mem_vp_tdm
 
   subroutine get_sol_vp_tdm(this,Prt,epst,kt, Pkt, resKt, resEt)
+    use mod_param, only : k1,i1
     class(VPrt_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1), intent(OUT):: Prt,epst,kt, Pkt, resKt, resEt
+    real(8),dimension(0:i1,0:k1), intent(OUT):: Prt,epst,kt, Pkt, resKt, resEt
     Prt  =this%Prt
     epst =0.    
     kt   =0.
@@ -100,9 +101,10 @@ contains
   end subroutine get_sol_vp_tdm
 
   subroutine get_profile_vp_tdm(this,p_prt,p_kt,p_epst,p_Pkt,k)
+    use mod_param, only : i1
     class(VPrt_TurbDiffModel) :: this
     integer,                               intent(IN) :: k
-    real(8),dimension(0:this%i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
+    real(8),dimension(0:i1),          intent(OUT):: p_prt,p_kt,p_epst,p_Pkt
     p_prt = this%Prt(:,k)
     p_kt = 0.
     p_epst = 0.
@@ -110,15 +112,16 @@ contains
   end subroutine get_profile_vp_tdm
 
   subroutine init_w_inflow_vp_tdm(this,Re,systemsolve)
+    use mod_param, only : i1,i
     use mod_tm, only : turb_model
     implicit none
     class(VPrt_TurbDiffModel) :: this
     real(8), intent(IN) :: Re
     integer, intent(IN) :: systemsolve
-    real(8), dimension(0:this%i1) :: dummy, Prtin
+    real(8), dimension(0:i1) :: dummy, Prtin
     character(len=5)  :: Re_str
     character(len=100) :: fname
-    integer           :: Re_int,i
+    integer           :: Re_int
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
     fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(this%name)//'_'//Re_str//'.dat'
@@ -136,11 +139,11 @@ contains
   !************************!
 
   subroutine set_alphat_kc(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_param, only : k1,i1,kmax,imax,k,i
     implicit none
     class(KaysCrawford_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-    integer :: i,k
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     real(8) :: c1,c2,c3,c4
 
     ! constant for kays
@@ -149,8 +152,8 @@ contains
     c3 =-0.0441
     c4 =-5.165
 
-    do k=1,this%kmax
-      do i=1,this%imax
+    do k=1,kmax
+      do i=1,imax
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
@@ -165,15 +168,15 @@ contains
   !************************!
 
   subroutine set_alphat_kays(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_param, only : k1,i1,kmax,imax,k,i
     implicit none
     class(Kays_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-    integer :: i,k
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     real(8) :: PeT
 
-    do k=1,this%kmax
-      do i=1,this%imax
+    do k=1,kmax
+      do i=1,imax
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
@@ -193,17 +196,17 @@ contains
   !************************!
 
   subroutine set_alphat_tang(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_param, only : k1,i1,kmax,imax,k,i
     implicit none
     class(Tang_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-    integer :: i,k
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     real(8) :: Atang
 
     Atang = 15.0
 
-    do k=1,this%kmax
-      do i=1,this%imax
+    do k=1,kmax
+      do i=1,imax
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (Tang et al IJHMT 2016) 
@@ -224,17 +227,17 @@ contains
   !************************!
 
   subroutine set_alphat_irrenfried(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+    use mod_param, only : k1,i1,kmax,imax,k,i
     implicit none
     class(Irrenfried_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-    integer :: i,k
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
     real(8) :: gam,Agam,Prtinf,PeT
 
     ! for Irrenfried and steiner
     Prtinf = 1.0  !turbulent prandlt in the free stream (assumption)
-    do k=1,this%kmax
-      do i=1,this%imax
+    do k=1,kmax
+      do i=1,imax
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (C. Irrenfried, H. Steiner IJHFF 2017)
@@ -266,37 +269,34 @@ contains
 
 
   subroutine init_mem_bae_tdm(this)
-      implicit none
-      class(Bae_TurbDiffModel) :: this
-      allocate(this%Prt(0:this%i1,0:this%k1),this%Pr(0:this%i1,0:this%k1),this%mut_mu(0:this%i1,0:this%k1),&
-               this%yplus(0:this%i1,0:this%k1))
-      allocate(this%Prtin(0:this%i1), this%alphatin(0:this%i1))
+    use mod_param, only : k1,i1,kmax,imax,k,i
+    implicit none
+    class(Bae_TurbDiffModel) :: this
+    allocate(this%Prt(0:i1,0:k1),this%Pr(0:i1,0:k1),this%mut_mu(0:i1,0:k1),&
+             this%yplus(0:i1,0:k1))
+    allocate(this%Prtin(0:i1), this%alphatin(0:i1))
   end subroutine init_mem_bae_tdm
 
 
   subroutine set_alphat_bae(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
-    use mod_common, only : cp
-    use mod_mesh, only : mesh
+    use mod_param, only : k1,i1,kmax,imax,k,i
+    use mod_mesh,  only : walldistu, walldist
+    use mod_common,only : cp
     implicit none
-
     class(Bae_TurbDiffModel) :: this
-    real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-    real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-    integer :: i,k, km, kp, ip, im
-    real(8),dimension(0:this%k1) ::   tauw
+    real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+    real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
+    integer :: km,kp,ip,im
+    real(8),dimension(0:k1) ::   tauw
     real(8) :: dwdy, drhody, dcpdy, dTdy, wcenter, sigma_t,f1, f2, Prt0
-    real(8), dimension(0:this%i1) :: walldistu
-    real(8), dimension(1:this%imax) :: walldist
     sigma_t = 0.9
-    walldistu = mesh%walldistu
-    walldist = mesh%walldist
         
-    do k=1,this%kmax
+    do k=1,kmax
       km = k-1
       kp = k+1
-      tauw(k) = mui(this%imax,k)*0.5*(w(this%imax,km)+w(this%imax,k))/walldist(this%imax)
+      tauw(k) = mui(imax,k)*0.5*(w(imax,km)+w(imax,k))/walldist(imax)
 
-      do i=1,this%imax
+      do i=1,imax
         ip = i+1
         im = i-1
         this%yplus(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       

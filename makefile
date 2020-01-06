@@ -1,4 +1,4 @@
-F77 =mpif90
+	F77 =mpif90
 FLAGS =-O5 -fdefault-real-8
 FC = $(F77) $(FLAGS)
 #DBG = -g

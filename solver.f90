@@ -350,8 +350,8 @@ end
 !********************************************************************
 
 subroutine solvepois_cr(rhs,ini,rank,centerBC)
-  use mod_param, only : kmax, imax, i1, k1, px, periodic
-  use mod_mesh, only : mesh
+  use mod_param, only : k1,i1,kmax,imax,k,i,px,periodic
+  use mod_mesh, only : dzp,dzw,dru,drp,ru,rp
   implicit none
   include 'mpif.h'  
   real*8      rhs(imax,kmax)
@@ -363,16 +363,8 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   real(8), dimension(imax*kmax)     :: pvec
   real(8), dimension(imax*kmax*px)  :: pvec_t
   real(8), dimension(imax,kmax*px)  :: y
-  real(8), dimension(0:k1) :: dzw, dzp
-  real(8), dimension(0:i1) :: dru,drp,ru,rp
-  integer ierr,ini,i,j,rank, ier
+  integer ierr,ini,rank, ier
   
-  dzp = mesh%dzp
-  dzw = mesh%dzw
-  dru = mesh%dRu
-  drp = mesh%dRp
-  ru = mesh%ru
-  rp = mesh%rp
 
   !wall normal-direction
   do i=1,imax
@@ -392,10 +384,10 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   cm(imax)=0.
    
   !streamwise
-  do j=1,kmax
-    an(j)=  1.0/(dzp(j-1)*dzw(j))
-    cn(j)=  1.0/(dzp(j)  *dzw(j))
-    bn(j)= -( an(j) + cn(j) )
+  do k=1,kmax
+    an(k)=  1.0/(dzp(k-1)*dzw(k))
+    cn(k)=  1.0/(dzp(k)  *dzw(k))
+    bn(k)= -( an(k) + cn(k) )
   enddo
   !gather all the coefficients to 1 coordinates
   call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
@@ -425,9 +417,9 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
      stop
   endif
 
-  do j=1+rank*kmax,(kmax + rank*kmax)
+  do k=1+rank*kmax,(kmax + rank*kmax)
      do i=1,imax
-        rhs(i,j-rank*kmax)=y(i,j)
+        rhs(i,k-rank*kmax)=y(i,k)
      enddo
   enddo  
 

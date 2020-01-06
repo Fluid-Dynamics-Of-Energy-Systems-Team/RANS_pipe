@@ -70,8 +70,8 @@ subroutine init_w_inflow_MK(this,Re,systemsolve)
 end subroutine init_w_inflow_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
-  use mod_param, only : kmax,imax,k1,i1,i,k
-  use mod_mesh, only : walldist
+  use mod_param, only : kmax,imax,k1,i1,k,i
+  use mod_mesh,  only : walldist
   implicit none
   class(MK_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
@@ -101,7 +101,7 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                       alpha1,alpha2,alpha3,                  &
                       modification,rank,periodic,   &
                       residual1, residual2, residual3)
-  use mod_param, only : kmax,imax,k1,i1,i,k
+  use mod_param, only : k1,i1
   class(MK_TurbModel) :: this
   real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
   real(8),                      intent(IN) :: alpha1,alpha2, alpha3
@@ -124,8 +124,8 @@ subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
 end
 
 subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
-  use mod_param, only : kmax,imax,k1,i1,i,k
-  use mod_mesh, only  : top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue,walldist
+  use mod_param, only : kmax,imax,k1,i1,k
+  use mod_mesh,  only : top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue,walldist
   implicit none
   class(MK_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu

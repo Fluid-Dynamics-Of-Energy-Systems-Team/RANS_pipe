@@ -49,31 +49,24 @@ subroutine set_constants_DWX(this)
 end subroutine set_constants_DWX
 
 subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
-  use mod_mesh, only : mesh
+  use mod_param, only : k1,i1,imax,kmax,k
+  use mod_mesh,  only : walldist, top_bcvalue, bot_bcvalue, top_bcnovalue, bot_bcnovalue
   use mod_param, only : isothermalBC, Re, Pr
-  use mod_common, only : cpi, ekhi
+  use mod_common,only : cpi, ekhi
   implicit none
   class(DWX_TurbDiffModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: rho,ekh
+  real(8),dimension(0:i1,0:k1),intent(IN) :: rho,ekh
   integer,                               intent(IN) :: periodic, rank, px
-  real(8),dimension(0:this%k1) ::  top_bcvalue, bot_bcvalue,top_bcnovalue, bot_bcnovalue
-  real(8), dimension(1:this%imax) :: walldist
-  real(8),dimension(0:this%i1) :: tmp
+  real(8),dimension(0:i1) :: tmp
   real(8) :: topBCvalue, botBCvalue
-  integer :: k
 
-  walldist = mesh%walldist
-  top_bcvalue = mesh%top_bcvalue
-  bot_bcvalue = mesh%bot_bcvalue
-  top_bcnovalue = mesh%top_bcnovalue
-  bot_bcnovalue = mesh%bot_bcnovalue
   !isothermal
   if (isothermalBC.eq.1) then
-    do k = 0,this%k1 
+    do k = 0,k1 
       this%kt(0,k)        = bot_bcnovalue(k)*this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%kt(this%i1,k)  = top_bcnovalue(k)*this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
+      this%kt(i1,k)  = top_bcnovalue(k)*this%kt(imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
       this%Pkt(0,k)       = bot_bcnovalue(k)*this%Pkt(1,k)
-      this%Pkt(this%i1,k) = top_bcnovalue(k)*this%Pkt(this%imax,k)
+      this%Pkt(i1,k) = top_bcnovalue(k)*this%Pkt(imax,k)
       ! botBCvalue = ekh(1,k)/rho(1,k)*this%kt(1,k)/walldist(1)**2                                                          !bcvalue
       botBCvalue = ekhi(1,k)/(0.5*(rho(0,k)+rho(1,k))) &
                     *((this%kt(1,k)**0.5)/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
@@ -84,36 +77,36 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
       ! topBCvalue = ekh(this%imax,k)/rho(this%imax,k)*this%kt(this%imax,k)/walldist(this%imax)**2                          !bcvalue
       ! topBCvalue = 0.065*Re*(2/(Re*Pr))**2
 
-      topBCvalue = ekhi(this%imax,k)/(.5*(rho(this%i1,k)+rho(this%imax,k))) &   
-                    *((this%kt(this%imax,k)**0.5)/walldist(this%imax))**2
-      this%epst(this%i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(this%imax,k)) +top_bcvalue(k)*this%epst(this%imax,k)!symmetry or bc value
+      topBCvalue = ekhi(imax,k)/(.5*(rho(i1,k)+rho(imax,k))) &   
+                    *((this%kt(imax,k)**0.5)/walldist(imax))**2
+      this%epst(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(imax,k)) +top_bcvalue(k)*this%epst(imax,k)!symmetry or bc value
     enddo
   !isoflux
   else
-    do k= 0,this%k1 
+    do k= 0,k1 
       ! this%kt(0,k)        =this%kt(1,k)         ! dkt/dy = 0 
       ! this%kt(this%i1,k)  =this%kt(this%imax,k) ! dkt/dy = 0 
       ! this%epst(0,k)      =this%epst(1,k)         ! depst/dy = 0 
       this%kt(0,k)        = this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%kt(this%i1,k)  = this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
+      this%kt(i1,k)  = this%kt(imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
       ! this%kt(0,k)        = this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
       ! this%kt(this%i1,k)  = this%kt(this%imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
       botBCvalue = ekh(1,k)/rho(1,k)*(this%kt(1,k)**0.5/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
       this%epst(0,k)       = (2.0*botBCvalue-this%epst(1,k))              !symmetry or bc value
-      topBCvalue = ekh(this%imax,k)/rho(this%imax,k)*(this%kt(this%imax,k)**0.5/walldist(this%imax))**2
-      this%epst(this%i1,k) = (2.0*topBCvalue-this%epst(this%imax,k))!symmetry or bc value
+      topBCvalue = ekh(imax,k)/rho(imax,k)*(this%kt(imax,k)**0.5/walldist(imax))**2
+      this%epst(i1,k) = (2.0*topBCvalue-this%epst(imax,k))!symmetry or bc value
 
       this%Pkt(0,k)       =this%Pkt(1,k)
-      this%Pkt(this%i1,k) =this%Pkt(this%imax,k)
+      this%Pkt(i1,k) =this%Pkt(imax,k)
     enddo
   endif
 
   call shiftf(this%kt,  tmp,rank); this%kt  (:,0)      =tmp(:);
   call shiftf(this%epst,tmp,rank); this%epst(:,0)      =tmp(:);
   call shiftf(this%Pkt, tmp,rank); this%Pkt (:,0)      =tmp(:);
-  call shiftb(this%kt,  tmp,rank); this%kt  (:,this%k1)=tmp(:);
-  call shiftb(this%epst,tmp,rank); this%epst(:,this%k1)=tmp(:);
-  call shiftb(this%Pkt, tmp,rank); this%Pkt (:,this%k1)=tmp(:);
+  call shiftb(this%kt,  tmp,rank); this%kt  (:,k1)=tmp(:);
+  call shiftb(this%epst,tmp,rank); this%epst(:,k1)=tmp(:);
+  call shiftb(this%Pkt, tmp,rank); this%Pkt (:,k1)=tmp(:);
   ! developing
   if (periodic.eq.1) return
   if (rank.eq.0) then
@@ -122,38 +115,36 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
     this%Pkt(:,0)  = this%Pktin(:)
   endif
   if (rank.eq.px-1) then
-    this%kt  (:,this%k1)=2.0*this%kt  (:,this%kmax)-this%kt  (:,this%kmax-1)
-    this%epst(:,this%k1)=2.0*this%epst(:,this%kmax)-this%epst(:,this%kmax-1)
-    this%Pkt (:,this%k1)=2.0*this%Pkt (:,this%kmax)-this%Pkt (:,this%kmax-1)
+    this%kt  (:,k1)=2.0*this%kt  (:,kmax)-this%kt  (:,kmax-1)
+    this%epst(:,k1)=2.0*this%epst(:,kmax)-this%epst(:,kmax-1)
+    this%Pkt (:,k1)=2.0*this%Pkt (:,kmax)-this%Pkt (:,kmax-1)
   endif
  
 end subroutine set_bc_DWX
 
 
 subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
-  use mod_tm, only : turb_model
-  use mod_mesh, only : mesh
-  use mod_common, only : cpi, ekhi
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_tm,    only : turb_model
+  use mod_mesh,  only : walldist
+  use mod_common,only : cpi, ekhi
   implicit none
   class(DWX_TurbDiffModel) :: this
-  real(8),dimension(0:this%i1,0:this%k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-  real(8),dimension(0:this%i1,0:this%k1),intent(OUT):: alphat
-  integer  im,ip,km,kp,i,k
-  real(8),dimension(0:this%i1,0:this%k1) :: Ret, Reeps, yp
-  real(8), dimension(0:this%i1,0:this%k1) :: kine, eps, Tt
-  real(8), dimension(1:this%imax) :: walldist
+  real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+  real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
+  integer  im,ip,km,kp
+  real(8),dimension(0:i1,0:k1) :: Ret, Reeps, yp
+  real(8), dimension(0:i1,0:k1) :: kine, eps, Tt
   real(8) :: nu
-
-  walldist = mesh%walldist
 
   eps  = turb_model%eps
   kine = turb_model%k
   Tt = turb_model%Tt
 
-  do k=1,this%kmax
+  do k=1,kmax
     km=k-1
     kp=k+1
-    do i=1,this%imax
+    do i=1,imax
       im=i-1
       ip=i+1
       nu = mu(i,k)/rho(i,k)
@@ -168,33 +159,26 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
 end subroutine set_alphat_DWX
 
 subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
+  use mod_param, only : k1,i1,kmax,imax,k,i
   use mod_tm, only : turb_model
-  use mod_mesh, only : mesh
+  use mod_mesh, only : walldist
   implicit none
   class(DWX_TurbDiffModel) :: this
                     ! *((this%kt(this%imax,k)**0.5
-  real(8), dimension(0:this%i1,0:this%k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
-  real(8), dimension(0:this%i1,0:this%k1), intent(OUT):: putout,dimpl
-  real(8),dimension(0:this%i1,0:this%k1) :: Reeps,Ret
-  integer ib,ie,kb,ke,i,k 
+  real(8), dimension(0:i1,0:k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+  real(8),dimension(0:i1,0:k1) :: Reeps,Ret
   real(8) ce2,fd1,feps,fd2
-  real(8), dimension(0:this%i1,0:this%k1) :: kine, eps,Tt
-  real(8), dimension(1:this%imax) :: walldist
+  real(8), dimension(0:i1,0:k1) :: kine, eps,Tt
   real(8) :: nu
-  walldist = mesh%walldist
-
+  
   eps  = turb_model%eps
   kine = turb_model%k
   ce2  = turb_model%ce2
   Tt   = turb_model%Tt
-  ib = 1
-  ie = this%i1-1
-
-  kb = 1
-  ke = this%k1-1
-
-  do k=kb,ke
-    do i=ib,ie
+  
+  do k=1,kmax
+    do i=1,kmax
       nu = mu(i,k)/rho(i,k)
       Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))              !k^2/(eps*nu)
       Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu       !y*(nu*eps)^(1/4)/nu

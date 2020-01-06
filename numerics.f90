@@ -4,18 +4,11 @@
 subroutine fillps(rank)
   use mod_param, only : i, k, kmax, imax,k1,i1
   use mod_common,only : dudt,dwdt,rnew,rold,p,qcrit,dt
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp,dru,rp,ru
   implicit none
   include 'mpif.h'
   integer ierr,rank
   real*8 sumps,sumps_tot
-  real*8,dimension(0:k1) ::  dzw, dzp
-  real(8), dimension(0:i1) :: dru, rp, ru
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-  dru = mesh%dru
-  rp  = mesh%rp
-  ru  = mesh%ru
   !
   !     *** Fill the right hand for the poisson solver. ***
   !
@@ -39,20 +32,20 @@ end
 subroutine calc_turbdiff_values(qwall,ttau,twall,tauw,utau,yplus,tplus,uplus)
   use mod_param, only : i1,imax,k1,kmax,k,i
   use mod_common, only : rnew, ekm, cpi, ekhi, temp, wnew, ekmi
-  use mod_mesh, only : mesh
+  use mod_mesh, only : walldist,drp
   implicit none
   real(8), dimension(0:k1), intent(OUT) :: qwall, ttau, Twall, tauw, utau
   real(8), dimension(0:i1,0:k1), intent(OUT) :: yplus, tplus, uplus
   do k=0,k1
-    tauw(k) = ekmi(imax,k)*0.5*(wnew(imax,k-1)+wnew(imax,k))/mesh%walldist(imax)
+    tauw(k) = ekmi(imax,k)*0.5*(wnew(imax,k-1)+wnew(imax,k))/walldist(imax)
     utau(k) = (tauw(k)/( (rnew(i1,k)+rnew(imax,k))/2.) )**0.5
     twall(k)= (temp(i1,k)+temp(imax,k))/2.
-    qwall(k)= ekhi(imax,k)/((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/mesh%drp(imax)
+    qwall(k)= ekhi(imax,k)/((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/drp(imax)
     ttau(k) = qwall(k)/(((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*utau(k))
     do i=0,i1
       tplus(i,k) = (twall(k)-temp(i,k))/ttau(k)
       uplus(i,k) = wnew(i,k)/utau(k)
-      yplus(i,k) = (mesh%walldist(i)*utau(k)*rnew(i,k))/ekm(i,k)
+      yplus(i,k) = (walldist(i)*utau(k)*rnew(i,k))/ekm(i,k)
     enddo
   enddo
 end subroutine calc_turbdiff_values
@@ -281,19 +274,14 @@ end subroutine
 !!     correc
 !!********************************************************************
 subroutine correc(rank,setold)
-  use mod_param
+  use mod_param,only : kmax,imax,k,i,periodic,px
   use mod_common
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp,drp
   implicit none
       
   integer rank,setold
   real*8 pplus_w(imax)
-  real(8), dimension(0:k1) :: dzw, dzp
-  real(8), dimension(0:i1) :: drp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-  drp = mesh%drp
-
+  
   do k=1,kmax
     do i=1,imax-1
       dUdt(i,k)=dUdt(i,k)-dt*(p(i+1,k)-p(i,k))/dRp(i) !(Rp(i+1)-Rp(i))
@@ -349,18 +337,12 @@ end
 subroutine chkdt(rank,istap)
   use mod_param,  only : imax,kmax,i1,k1,i,k,dtmax,CFL
   use mod_common, only : wnew, unew, dt
-  use mod_mesh,only : mesh
+  use mod_mesh,   only : dzw,dzp,drp
   implicit none
   include 'mpif.h'
   integer rank,ierr,istap
   real*8  tmp,dtmp
-  real(8), dimension(0:k1) :: dzw, dzp
-  real(8), dimension(0:i1) :: drp
-
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-  drp = mesh%drp
-
+  
   dt = dtmax
 
   do k=1,kmax
@@ -385,19 +367,12 @@ end
 subroutine chkdiv(rank)
   use mod_param, only : kmax, imax, i, k,k1, i1
   use mod_common,only : rnew, unew, wnew, dt, rold
-  use mod_mesh, only : mesh
+  use mod_mesh,  only : dzw,dzp,dru,ru,rp
   implicit none    
   include 'mpif.h'
   integer rank,ierr,ll
   real*8   div,divmax,divbar,divmax_tot,divbar_tot,rhoip,rhoim,rhokp,rhokm
-  real(8), dimension(0:k1) :: dzw, dzp
-  real(8), dimension(0:i1) :: dru,ru,rp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-  ru  = mesh%ru
-  rp  = mesh%rp
-  dru = mesh%dru
-
+  
   divbar = 0.0
   divmax = 0.0
 
@@ -456,17 +431,13 @@ end
 !!********************************************************************
 subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
   use mod_param,   only : i,k,kmax,imax,k1,i1
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
   integer   km,kp,rank1,diffVersion
   real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
              rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
              ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
-  real(8), dimension(0:k1) :: dzw, dzp
-
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-
+  
   if (diffVersion == 1) then       ! Inverse SLS
     do k=1,kmax
       kp=k+1
@@ -550,16 +521,13 @@ end
 !!     
 !!*****************************************************************
 subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
   integer  i,k,im,ip,km,kp,i1,k1,numDom
   real*8   putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
            ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
            epop,epom,divUim,divUip,divUi,dif
-  real*8,dimension(0:k1) ::  dzw, dzp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-
+  
   !pipe
   if (numDom == -1) then
     do k=1,k1-1
@@ -672,7 +640,7 @@ end
 !!     
 !!*****************************************************************
 subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
      
 
@@ -680,10 +648,7 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
   real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),  &
     ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
     epop,emop,divUkm,divUkp,dif
-  real*8,dimension(0:k1) ::  dzw, dzp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-
+  
   if (numDom == -1) then
     do k=1,k1-1
       kp=k+1
@@ -778,7 +743,7 @@ end
 !!     
 !!********************************************************************
 subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagImpl)
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
 
   integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank,periodic
@@ -790,11 +755,9 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
   real*8 dcubb(0:i1),dcwbb(0:i1)
   real*8 dcu(0:i1,0:k1),dcw(0:i1,0:k1)
   real*8 cu(0:i1,0:k1),cw(0:i1,0:k1)
-  real(8), dimension(0:k1) :: dzw, dzp
   logical flagImpl
   !
-  dzw = mesh%dzw
-  dzp = mesh%dzp
+
   cu = 0.0
   cw = 0.0
 
@@ -934,17 +897,14 @@ end
 !!     
 !!********************************************************************
 subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,drp,dz,i1,k1)
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
   integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
   real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
     dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1)
   real*8 rho(0:i1,0:k1)
   real*8 rhoip,rhoim,rhokp,rhokm
-  real*8,dimension(0:k1) ::  dzw, dzp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-
+  
   !     if (adv.eq.1) Uin=Uvel
   ib = 1
   ie = i1-1
@@ -1011,7 +971,7 @@ end
 !!********************************************************************
 subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
   use mod_param
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dzw,dzp
   implicit none
 
   integer   im,ip,km,kp,ib,ie,kb,ke
@@ -1019,10 +979,7 @@ subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
             dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
   real*8    rho(0:i1,0:k1),ekm(0:i1,0:k1),peclet_z(0:i1,0:k1)
   real*8    rhoip,rhoim,advcecw_w
-  real*8,dimension(0:k1) ::  dzw, dzp
-  dzw = mesh%dzw
-  dzp = mesh%dzp
-
+  
   ib = 1
   ie = i1-1
   kb = 1

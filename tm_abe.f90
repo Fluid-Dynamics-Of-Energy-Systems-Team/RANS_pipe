@@ -164,11 +164,11 @@ subroutine set_bc_Abe(this,mu,rho,periodic,rank,px)
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
   integer,                     intent(IN) :: periodic, rank, px
   real(8),dimension(0:i1) :: tmp
-  real(8) :: topBCvalue, botBCvalue
+  real(8)                 :: topBCvalue, botBCvalue
   
   do k = 0,k1 
     this%k(0,k)  = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
-    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k) !symmetry or 0 value
+    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)      !symmetry or 0 value
     botBCvalue   = 2.0*mu(1,k)/rho(1,k)*((this%k(1,k)**0.5)/walldist(1))**2                
     ! botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                          !bcvalue
     this%eps(0,k)= (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))         +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value

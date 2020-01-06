@@ -163,7 +163,7 @@ subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
                        alpha1,alpha2,alpha3,                 &
                        modification,rank,periodic,  &
                        residual1, residual2, residual3)
-  use mod_param, only : k1,i1,kmax,imax  
+  use mod_param, only : k1,i1  
   implicit none
   class(SST_TurbModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp
@@ -265,13 +265,13 @@ end subroutine get_sol_SST
 
 
 subroutine production_SST(this,u,w,temp,rho,mut,beta)
-  use mod_param, only : k1,i1,kmax,imax  
+  use mod_param, only : k1,i1,kmax,imax,i,k 
   use mod_mesh,  only : dzw,dzp,Rp,Ru,dRu,dRp
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mut,beta
   real(8), dimension(0:i1,0:k1) :: div
-  integer                       :: im,ip,km,kp,ib,ie,kb,ke,i,k 
+  integer                       :: im,ip,km,kp
   real(8)                       :: sigma_om1,sigma_om2, &
                                    beta_1,beta_2,betaStar, &
                                    alfa_1,alfa_2, ctheta,Fr_1
@@ -331,7 +331,7 @@ end subroutine production_SST
 subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alphak,modification,rank,periodic)
   use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_mesh,  only : mesh,drp,dru,ru,rp,drp,top_bcnovalue,bot_bcnovalue
+  use mod_mesh,  only : drp,dru,ru,rp,drp,top_bcnovalue,bot_bcnovalue
   use mod_math
   implicit none
   class(SST_TurbModel) :: this
@@ -340,7 +340,7 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   integer,                      intent(IN) :: modification,rank,periodic
   real(8),                      intent(OUT):: resK
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl,sigmakSST
-  real(8), dimension(imax) :: a,b,c,rhs
+  real(8), dimension(imax)      :: a,b,c,rhs
   real(8) :: dz
   
   resK  = 0.0; dnew=0.0; dimpl = 0.0;
@@ -410,11 +410,11 @@ end subroutine rhs_k_SST
 
 subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,modification)
   use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_mesh, only : mesh,dzw,dzp
+  use mod_mesh,  only : dzw,dzp
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho
-  integer                                , intent(IN) :: modification
+  integer                      , intent(IN) :: modification
   real(8), dimension(0:i1,0:k1), intent(OUT):: putout
   integer   km,kp
 
@@ -466,12 +466,12 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   use mod_mesh, only : top_bcvalue,bot_bcvalue,ru,rp,dru,drp
   implicit none
   class(SST_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
-  real(8),                      intent(IN) :: alphae
-  integer,                      intent(IN) :: modification,rank,periodic
-  real(8),                      intent(OUT):: resOm
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
+  real(8),                       intent(IN) :: alphae
+  integer,                       intent(IN) :: modification,rank,periodic
+  real(8),                       intent(OUT):: resOm
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl,sigmakSST
-  real(8), dimension(imax) :: a,b,c,rhs
+  real(8), dimension(imax)      :: a,b,c,rhs
   real(8) :: dz
   
   resOm = 0.0
@@ -515,7 +515,7 @@ end subroutine solve_om_sst
 
 subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta)
   use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_mesh,  only : dzw,dzp,Rp,Ru,dRu,dRp
+  use mod_mesh,  only : dzw,dzp,rp,ru,dru,drp
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,beta, putink
@@ -571,13 +571,13 @@ end subroutine rhs_om_sst
 
 subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,modification)
   use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_mesh, only :  dzw,dzp,Ru,Rp,dru
+  use mod_mesh,  only : dzw,dzp,Ru,Rp,dru
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: putin,ek,eki,ekk,ekmt,sigma,rho
   integer                      , intent(IN) :: modification
   real(8), dimension(0:i1,0:k1), intent(OUT):: putout
-  integer  km,kp
+  integer :: km,kp
 
   if ((modification == 1) .or. (modification == 2)) then       ! Inverse SLS & Aupoix
     do k=1,kmax

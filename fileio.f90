@@ -74,7 +74,7 @@ subroutine inflow_output_upd(rank,istap)
   use mod_tdm,     only : turbdiff_model
   use mod_eos,     only : eos_model
   use mod_common,  only : wnew, unew, cnew, temp, rnew, ekmt, alphat
-  use mod_mesh, only : mesh
+  use mod_mesh, only : y_cv
   implicit none
   integer, intent(IN) :: rank,istap
   real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp, &
@@ -111,7 +111,7 @@ subroutine inflow_output_upd(rank,istap)
                           'alphat','prt','kt','epst','pkt'
     do i=1,imax
       write(29, '(21E20.12)')                                            &
-                mesh%y_cv(i),unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
+                y_cv(i),unew(i,k),Wnew (i,k),cnew (i,k),temp (i,k),  &
                 rnew  (i,k) ,p_k (i)  ,p_eps(i)  ,p_v2 (i)  ,p_om (i),    &
                 p_nuSA(i)   ,ekmt(i,k),p_Pk (i)  ,p_bf1(i)  ,p_bf2(i), p_yp(i), &
                 alphat(i,k), p_prt(i), p_kt(i), p_epst(i), p_pkt(i)
@@ -365,7 +365,7 @@ subroutine output2d_upd2(rank,istap)
   use mod_tm
   use mod_eos, only : eos_model
   use mod_tdm, only : turbdiff_model
-  use mod_mesh , only : mesh
+  use mod_mesh, only : dru,rp,zp,y_cv
   implicit none
   include 'mpif.h'
   real*8 pecletx,peclety,pecletz
@@ -379,9 +379,6 @@ subroutine output2d_upd2(rank,istap)
                                    prt_plt, kt_plt, epst_plt, Pkt_plt, resEt, resKt, &
                                    yplus_plt, tplus_plt, uplus_plt
   real(8), dimension(0:k1) :: qw, ttau, twalll, tauw, utau
-  real(8), dimension(0:i1) :: dru, rp
-  dru = mesh%dru
-  rp = mesh%rp
   
   twall    = 0.0
   massflow = 0.0
@@ -404,8 +401,8 @@ subroutine output2d_upd2(rank,istap)
 
   do k=0,k1
     do i=0,i1
-      xvec(i,k) = mesh%zp(k)
-      yvec(i,k) = mesh%y_cv(i)
+      xvec(i,k) = zp(k)
+      yvec(i,k) = y_cv(i)
     enddo
   enddo
 
