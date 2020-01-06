@@ -15,7 +15,6 @@ module nk_tdm
     procedure :: set_alphat => set_alphat_NK
     procedure :: rhs_epst_KtEt => rhs_epst_KtEt_NK
     procedure :: set_bc => set_bc_NK
-    ! procedure :: init_w_inflow => init_w_inflow_NK  !MISSING
   end type NK_TurbDiffModel
 
 
