@@ -8,16 +8,10 @@ module mod_mesh
   !*************************!
 
   type, abstract, public :: AbstractMesh
-  real(8), dimension(:), allocatable :: Ru,Rp,dru,drp,y_fa,y_cv     !0:i1
-  real(8), dimension(:), allocatable :: zp,zw,dzp,dzw
-  real(8), allocatable               :: dz,dpdz,start
-  real(8), dimension(:), allocatable :: wallDist                    !1:imax
-  real(8), dimension(:), allocatable :: wallDistu !0:i1
+  character(len=10)                  :: name
+  real(8), allocatable               :: dpdz,start
   integer, allocatable               :: centerBC,numDomain           
-  real(8), dimension(:), allocatable :: top_bcvalue,  bot_bcvalue,   &
-                                        top_bcnovalue,bot_bcnovalue, &
-                                        top_bcvalue1, bot_bcvalue1,  &
-                                        ubot_bcvalue
+  
   contains
     procedure :: init_mem               => init_mem
     procedure :: discretize_streamwise  => discretize_streamwise
@@ -115,17 +109,6 @@ contains
     use mod_param, only : i1,k1,imax
     implicit none
     class(AbstractMesh) :: this
-    ! allocate(this%Ru  (0:i1),this%Rp  (0:i1), &
-    !          this%dru (0:i1),this%drp (0:i1), &
-    !          this%y_fa(0:i1),this%y_cv(0:i1))
-    ! allocate(this%zw  (0:k1),this%zp  (0:k1), &
-    !          this%dzw (0:k1),this%dzp (0:k1))
-    ! allocate(this%wallDist(1:imax), this%wallDistu(0:i1))
-    ! allocate(this%top_bcvalue  (0:k1), this%bot_bcvalue  (0:k1), &
-    !          this%top_bcvalue1 (0:k1), this%bot_bcvalue1 (0:k1), &
-    !          this%top_bcnovalue(0:k1), this%bot_bcnovalue(0:k1), &
-    !          this%ubot_bcvalue (0:k1))
-
     allocate(Ru  (0:i1),Rp  (0:i1), &
              dru (0:i1),drp (0:i1), &
              y_fa(0:i1),y_cv(0:i1))
@@ -294,6 +277,10 @@ contains
   !    Pipe Mesh routines   !
   !*************************!
 
+  type(Pipe_Mesh) function init_PipeMesh(name)
+    character(len=4), intent(IN) :: name
+    init_PipeMesh%name=name
+  end function init_PipeMesh
 
   subroutine init_pipe(this, LoD, K_start_heat, x_start_heat, rank,px)
     implicit none
@@ -346,6 +333,11 @@ contains
   !*************************!
   !  Channel Mesh routines  !
   !*************************!
+
+  type(Channel_Mesh) function init_ChannelMesh(name)
+    character(len=7), intent(IN) :: name
+    init_ChannelMesh%name=name
+  end function init_ChannelMesh
 
   subroutine init_channel(this, LoD, K_start_heat, x_start_heat,rank, px)
     implicit none
@@ -425,6 +417,10 @@ contains
   !**************************!
   !Sym. Channel Mesh routines!
   !**************************!
+  type(SymChannel_Mesh) function init_SymChannelMesh(name)
+    character(len=7), intent(IN) :: name
+    init_SymChannelMesh%name=name
+  end function init_SymChannelMesh
 
   subroutine init_symchannel(this, LoD, K_start_heat, x_start_heat,rank, px)
     implicit none
@@ -478,6 +474,11 @@ contains
   !****************************!
   !Boundary Layer Mesh routines!
   !****************************!
+
+  type(BLayer_Mesh) function init_BLayerMesh(name)
+    character(len=2), intent(IN) :: name
+    init_BLayerMesh%name=name
+  end function init_BLayerMesh
 
   subroutine init_bl(this, LoD, K_start_heat, x_start_heat,rank, px)
     implicit none

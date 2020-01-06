@@ -61,12 +61,11 @@ call initMem()
 !initialize numerical
 call init_transpose
 
-
 !initialize grid including bc
-if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh())
-if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh())
-if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh())
-if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh())
+if (systemsolve .eq. 1) allocate(mesh, source=       init_PipeMesh("pipe"))
+if (systemsolve .eq. 2) allocate(mesh, source=    init_ChannelMesh("channel"))
+if (systemsolve .eq. 3) allocate(mesh, source= init_SymChannelMesh("symchan"))
+if (systemsolve .eq. 4) allocate(mesh, source=     init_BLayerMesh("bl"))
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
@@ -77,11 +76,11 @@ if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tabl
 call eos_model%init() 
 
 !initialize turbulent viscosity model
-if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel('lam'))
-if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel('SA' ))
-if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel('MK' ))
-if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel('VF' ))
-if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel('SST'))
+if (turbmod.eq.0) allocate(turb_model,source= Laminar_TurbModel('lam'))
+if (turbmod.eq.1) allocate(turb_model,source=      SA_TurbModel('SA' ))
+if (turbmod.eq.2) allocate(turb_model,source= init_MK_TurbModel('MK' ))
+if (turbmod.eq.3) allocate(turb_model,source= init_VF_TurbModel('VF' ))
+if (turbmod.eq.4) allocate(turb_model,source=     SST_TurbModel('SST'))
 if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel('Abe'))
 call turb_model%init()
 
@@ -92,8 +91,8 @@ if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel('KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel('Kays'  ))
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel('Bae', 70.,20.))
-if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel('DWX'))
-if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel('NK'))
+if (turbdiffmod.eq.6) allocate(turbdiff_model,source=    init_DWX_TurbDiffModel('DWX'))
+if (turbdiffmod.eq.7) allocate(turbdiff_model,source=     init_NK_TurbDiffModel('NK'))
 if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.(turbmod.eq.1).or.((turbmod.eq.4))) then
   if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid", turbmod, turbdiffmod
   call mpi_finalize(ierr)
@@ -469,12 +468,9 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
   ! inialize from inflow profile=
   if (select_init.eq.1) then
     if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
-    if (systemsolve .eq. 1) case = "pipe"
-    if (systemsolve .eq. 2) case = "channel"
-    if (systemsolve .eq. 3) case = "symchan"
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
-    open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_' &
+    open(29,file =trim(mesh%name)//'/Inflow_'//trim(turb_model%name)//'_' &
                                         //trim(turbdiff_model%name)//'_' &
                                         //Re_str//'.dat',form='unformatted')
     read(29) win(:),kin,epsin,v2in,omin,nuSAin,mutin,pkin, alphatin,prtin, ktin, epstin,pktin

@@ -72,7 +72,7 @@ subroutine inflow_output_upd(rank,istap)
   use mod_tdm,     only : turbdiff_model
   use mod_eos,     only : eos_model
   use mod_common,  only : wnew, unew, cnew, temp, rnew, ekmt, alphat
-  use mod_mesh, only : y_cv
+  use mod_mesh, only : y_cv, mesh
   implicit none
   integer, intent(IN) :: rank,istap
   real(8), dimension(0:i1)   :: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_yp, &
@@ -93,16 +93,11 @@ subroutine inflow_output_upd(rank,istap)
     call turbdiff_model%get_profile(p_prt,p_kt,p_epst,p_pkt,k)
     
     !binary
-    if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.dat',form='unformatted')
-    if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.dat',form='unformatted')
-    if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.dat',form='unformatted')
-    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk, &
-              alphat(:,kmax/2), p_prt, p_kt, p_epst, p_pkt
+    open(29,file=trim(mesh%name)//'/'//trim(fname)//'.dat',form='unformatted')
+    write(29) Wnew(:,kmax/2),p_k,p_eps,p_v2,p_om,p_nuSA,ekmt(:,kmax/2),p_pk,alphat(:,kmax/2), p_prt, p_kt, p_epst, p_pkt
     close(29)
     !fixed width file
-    if (systemsolve.eq.1) open(29,file='pipe/'   //trim(fname)//'.csv')
-    if (systemsolve.eq.2) open(29,file='channel/'//trim(fname)//'.csv')
-    if (systemsolve.eq.3) open(29,file='symchan/'//trim(fname)//'.csv')
+    open(29,file=trim(mesh%name)//'/'//trim(fname)//'.csv')
     write(29, '(21a20)' ) 'y'   ,'u'  ,'w'  ,'h'  ,'T',  &
                           'rho' ,'k'  ,'eps','v2' ,'om', &
                           'nuSA','mut','Pk' ,'bF1','bF2', 'yp', &
@@ -439,7 +434,7 @@ end
 
 subroutine output2d_upd(rank,istap)
   use mod_param
-  use mod_mesh, only : mesh
+  use mod_mesh, only : zp, y_cv
   use mod_common
   ! use mod_common2
   implicit none
@@ -481,7 +476,7 @@ subroutine output2d_upd(rank,istap)
 
   do k=0,k1
     do i=0,i1
-      write(15,'(17ES24.10E3)')  mesh%zp(k), mesh%y_cv(i), &
+      write(15,'(17ES24.10E3)')  zp(k), y_cv(i), &
         unew(i,k), &
         Wnew(i,k), p(min(max(i,1),imax),min(max(k,1),kmax)), cnew(i,k), cnew(i,k), &
         cnew(i,k),cnew(i,k),cnew(i,k), &

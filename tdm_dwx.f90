@@ -86,19 +86,17 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   implicit none
   class(DWX_TurbDiffModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,ekh
-  integer,                               intent(IN) :: periodic, rank, px
+  integer,                     intent(IN) :: periodic, rank, px
   real(8),dimension(0:i1) :: tmp
   real(8) :: topBCvalue, botBCvalue
+  
   !isothermal
   if (isothermalBC.eq.1) then
-
     do k = 0,k1 
       this%kt(0,k)   = bot_bcnovalue(k)*this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%kt(i1,k)  = top_bcnovalue(k)*this%kt(imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
-      
+      this%kt(i1,k)  = top_bcnovalue(k)*this%kt(imax,k)      !dkt/dy = 0 (1) | or kt=0 (-1)
       botBCvalue   = ekh(1,k)/rho(1,k)*((this%kt(1,k)**0.5)/walldist(1))**2                
-      this%epst(0,k)  = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%epst(1,k))    +bot_bcvalue(k)*this%epst(1,k)        !symmetry or bc value
-
+      this%epst(0,k)  = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%epst(1,k))    +bot_bcvalue(k)*this%epst(1,k)   !symmetry or bc value
       topBCvalue   = ekh(imax,k)/rho(imax,k)*((this%kt(imax,k)**0.5)/walldist(imax))**2                
       this%epst(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(imax,k)) +top_bcvalue(k)*this%epst(imax,k)!symmetry or bc value
     enddo
@@ -106,12 +104,11 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   else  
     do k= 0,k1 
       this%kt(0,k)   = this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%kt(i1,k)  = this%kt(imax,k) !dkt/dy = 0 (1) | or kt=0 (-1)
+      this%kt(i1,k)  = this%kt(imax,k)      !dkt/dy = 0 (1) | or kt=0 (-1)
       botBCvalue = ekh(1,k)/rho(1,k)*(this%kt(1,k)**0.5/walldist(1))**2                                                    !NOTE: CHANGE BY STEPHAN
       this%epst(0,k)       = (2.0*botBCvalue-this%epst(1,k))              !symmetry or bc value
       topBCvalue = ekh(imax,k)/rho(imax,k)*(this%kt(imax,k)**0.5/walldist(imax))**2
-      this%epst(i1,k) = (2.0*topBCvalue-this%epst(imax,k))!symmetry or bc value
-
+      this%epst(i1,k) = (2.0*topBCvalue-this%epst(imax,k))                !symmetry or bc value
       this%Pkt(0,k)       =this%Pkt(1,k)
       this%Pkt(i1,k) =this%Pkt(imax,k)
     enddo

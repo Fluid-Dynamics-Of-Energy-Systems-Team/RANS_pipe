@@ -130,7 +130,7 @@ end subroutine
 subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
                           mom_th, dis_th, bl_th, stress,sfriction)
   use mod_param, only : k1,i1,imax
-  use mod_mesh, only : mesh
+  use mod_mesh, only : top_bcnovalue,dru,y_cv,drp
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: w, mui
   real(8), intent(IN) :: rho_fs, w_fs
@@ -138,12 +138,12 @@ subroutine postprocess_bl(w, mui, rho_fs, w_fs, &
   integer :: k
 
   do k=0,k1
-    if (mesh%top_bcnovalue(k) .eq. -1) then
-      call calc_momentum_thickness(w(:,k),w_fs,mesh%dru, i1, imax, mom_th(k))
-      call calc_displacement_thickness(w(:,k), w_fs,mesh%dru, i1, imax, dis_th(k))
-      call calc_bl_thickness(w(:,k), w_fs, mesh%y_cv, i1, imax, bl_th(k))
-      call calc_shear_stress(w(:,k), mui(:,k),mesh%drp, i1,imax, stress(k))
-      call calc_skin_friction(w(:,k), mui(:,k),mesh%drp, rho_fs, w_fs,i1,imax, sfriction(k))
+    if (top_bcnovalue(k) .eq. -1) then
+      call calc_momentum_thickness(w(:,k),w_fs,dru, i1, imax, mom_th(k))
+      call calc_displacement_thickness(w(:,k), w_fs,dru, i1, imax, dis_th(k))
+      call calc_bl_thickness(w(:,k), w_fs, y_cv, i1, imax, bl_th(k))
+      call calc_shear_stress(w(:,k), mui(:,k),drp, i1,imax, stress(k))
+      call calc_skin_friction(w(:,k), mui(:,k),drp, rho_fs, w_fs,i1,imax, sfriction(k))
     else
       mom_th(k)=0; dis_th(k)=0; bl_th(k)=0; stress(k)=0; sfriction(k)=0;
     endif

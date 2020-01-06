@@ -44,23 +44,18 @@ SUBROUTINE SOLVEpois(rhs,rank,centerBC)
   !
  
   use mod_param
-  use mod_mesh, only : mesh
+  use mod_mesh, only : dru,ru,rp,dz,drp
   implicit none
         
-  real*8      RHS(IMAX,KMAX),Ru(0:IMAX+1),Rp(0:IMAX+1)
-  real*8      dz,dzi,pi,d(IMAX,kmax),bbb,z,dru(0:IMAX+1),drp(0:IMAX+1)
+  real*8      RHS(IMAX,KMAX)
+  real*8      dzi,pi,d(IMAX,kmax),bbb,z
   real*8      a(imax),b(imax),c(imax)
   real*8      zrt(kmax*px)
   real*8      vfftk(imax/px,kmax*px)
   real*8      wk(4*px*kmax+15),bb(imax),rtmp(imax/px,kmax*px)
   integer     rank, centerBC
   
-  dru = mesh%dRu
-  dru = mesh%dRu
-  ru = mesh%dRu
-  rp = mesh%Rp
-  dz = mesh%dz
-  
+
   !     generate tridiagonal systems
 
   pi = 4.*atan(1.)
@@ -370,7 +365,26 @@ subroutine solvepois_cr(rhs,ini,rank,centerBC)
   do i=1,imax
     am(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))
     bm(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ &
-      (Rp(I)*dRu(I))
+      (Rp(I)*dRu(I))  ! twall    = 0.0
+  ! massflow = 0.0
+  ! enthflow = 0.0
+  ! w_c      = 0.0
+
+  ! do k=1,kmax
+  !   do i=1,imax
+  !     massfl = 0.5*rnew(i,k)*(Wnew(i,k)+Wnew(i,k-1))*rp(i)*dru(i)
+  !     massflow(k) = massflow(k) + massfl
+  !     enthflow(k) = enthflow(k) + massfl*Cnew(i,k)
+  !   enddo
+  ! enddo
+
+  ! enth_b=enthflow/massflow
+  ! do k=1,kmax
+  !   w_c=(Cnew(i1,k)+Cnew(imax,k))/2.
+  !   call eos_model%set_w_enth(w_c,      "T", Twall(k))
+  !   call eos_model%set_w_enth(enth_b(k),"T", Tbulk(k))
+  ! enddo
+
     cm(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))
   enddo
   !apply bc for wall normal-direction
