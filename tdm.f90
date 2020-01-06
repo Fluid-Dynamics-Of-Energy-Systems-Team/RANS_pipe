@@ -12,15 +12,14 @@ module mod_tdm
   real(8), dimension(:,:), allocatable :: Pkt,kt,epst, yp,Tmix,Ttemp
   real(8), dimension(:),   allocatable :: alphatin, Pktin,Prtin
   contains
-    procedure(init_tdm),       deferred :: init
-    procedure(set_alphat_tdm), deferred :: set_alphat
-    procedure(get_sol_tdm),    deferred :: get_sol
+    procedure(init_tdm),          deferred :: init
+    procedure(set_alphat_tdm),    deferred :: set_alphat
+    procedure(get_sol_tdm),       deferred :: get_sol
     procedure(init_w_inflow_tdm), deferred :: init_w_inflow
-    procedure(get_profile_tdm), deferred :: get_profile
+    procedure(get_profile_tdm),   deferred :: get_profile
     procedure :: advance_turbdiff => advance_turbdiff_tdm
+    procedure :: set_bc           => set_bc_tdm
     procedure :: set_alphat_bc
-    procedure :: set_bc => set_bc_tdm
-
   end type TurbDiffModel
 
   interface
@@ -52,16 +51,14 @@ module mod_tdm
       real(8),dimension(0:i1,0:k1), intent(OUT):: Prt,epst,kt,Pkt,resKt,resEt
     end subroutine get_sol_tdm
 
-    subroutine init_w_inflow_tdm(this,Re,systemsolve)
+    subroutine init_w_inflow_tdm(this,Prtin,alphatin,ktin,epstin,pktin)
+      use mod_param, only : i1
       import :: TurbDiffModel
       class(TurbDiffModel) :: this
-      real(8), intent(IN) :: Re
-      integer, intent(IN) :: systemsolve
+      real(8), dimension(0:i1), intent(IN) :: Prtin,alphatin,ktin,epstin,pktin
     end subroutine
 
   end interface
-
-  
 
 class(TurbDiffModel), allocatable :: turbdiff_model
 !****************************************************************************************
@@ -90,14 +87,12 @@ contains
   !*************************!
 
   subroutine advance_turbdiff_tdm(this,u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
-                      alpha1,alpha2,                   &
-                      modification,rank,periodic,      &
-                      residual1, residual2)
+                                  alpha1,alpha2,rank,periodic,residual1,residual2)
   use mod_param, only : k1,i1
   class(TurbDiffModel) :: this
   real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,c,temp,rho,mu,ekh,ekhi,ekhk,alphat
   real(8),                                intent(IN) :: alpha1,alpha2
-  integer,                                intent(IN) :: modification,rank,periodic
+  integer,                                intent(IN) :: rank,periodic
   real(8),                                intent(OUT):: residual1,residual2
   end subroutine advance_turbdiff_tdm
 
@@ -179,30 +174,12 @@ contains
     p_pkt = 0
   end subroutine get_profile_constprt
 
-  subroutine init_w_inflow_constprt(this,Re,systemsolve)
+  subroutine init_w_inflow_constprt(this,Prtin,alphatin,ktin,epstin,pktin)
     use mod_param, only : i1
-    use mod_tm,    only : turb_model
     implicit none
     class(Cprt_TurbDiffModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
-    real(8), dimension(0:i1) :: dummy, Prtin
-    character(len=5)  :: Re_str
-    character(len=100) :: fname
-    integer           :: Re_int
-    Re_int = int(Re)
-    write(Re_str,'(I5.5)') Re_int
-    fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(this%name)//'_'//Re_str//'.dat'
-    if (systemsolve .eq. 1) open(29,file = 'pipe/'//trim(fname),form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/'//trim(fname),form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'symchan/'//trim(fname),form='unformatted')
-    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-             dummy(:),dummy(:),dummy(:),this%alphatin(:), Prtin(:), &
-             dummy(:),dummy(:),dummy(:)
-    close(29)
+    real(8), dimension(0:i1), intent(IN) :: Prtin,alphatin,ktin,epstin,pktin
     this%Prt = Prtin(0)
-  end subroutine init_w_inflow_constprt
-
-
+  end subroutine
 
 end module mod_tdm

@@ -73,11 +73,11 @@ module mod_tm
       class(TurbModel) :: this
       real(8),dimension(0:i1,0:k1),intent(OUT):: nuSA,k,eps,om,v2,yp
     end subroutine get_sol_tm
-    subroutine init_w_inflow_tm(this,Re, systemsolve)
+    subroutine init_w_inflow_tm(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+      use mod_param, only : i1
       import :: TurbModel
       class(TurbModel) :: this
-      real(8), intent(IN) :: Re
-      integer, intent(IN) :: systemsolve
+      real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
     end subroutine
 
   end interface
@@ -101,8 +101,6 @@ class(TurbModel), allocatable :: turb_model
     procedure :: init_w_inflow => init_w_inflow_laminar
     procedure :: get_sol => get_sol_laminar
   end type Laminar_TurbModel
-
-
 
 contains
 !****************************************************************************************
@@ -159,23 +157,11 @@ subroutine init_sol_laminar(this)
   class(Laminar_TurbModel) :: this
 end subroutine init_sol_laminar
 
-subroutine init_w_inflow_laminar(this, Re, systemsolve)
+subroutine init_w_inflow_laminar(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
   use mod_param, only : i1
   class(Laminar_TurbModel) :: this
-  real(8), intent(IN) :: Re
-  integer, intent(IN) :: systemsolve
-  real(8), dimension(0:i1) :: dummy
-  character(len=5)  :: Re_str
-  integer           :: Re_int
-  Re_int = int(Re)
-  write(Re_str,'(I5.5)') Re_int
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-  
-  read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-           dummy(:),this%mutin(:),dummy(:)
-  close(29)
+  real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
+  this%mutin = mutin
 end subroutine init_w_inflow_laminar
 
 subroutine init_mem_laminar(this)

@@ -77,31 +77,17 @@ subroutine init_mem_SST(this)
            this%omin (0:i1),this%kin  (0:i1))
 end subroutine init_mem_SST
 
-subroutine init_w_inflow_SST(this,Re, systemsolve)
-    use mod_param, only : k1,i1,kmax,imax  
-    implicit none
-    class(SST_TurbModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
-    real(8), dimension(0:i1) :: dummy
-    character(len=5)  :: Re_str
-    integer           :: Re_int,k
-    Re_int = int(Re)
-    write(Re_str,'(I5.5)') Re_int
-    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//this%name//'_'//Re_str//'.dat',form='unformatted')
-
-    read(29) dummy(:),this%kin(:),dummy(:),dummy(:),this%omin(:), &
-         dummy(:),this%mutin(:),dummy(:)
-    close(29)
+subroutine init_w_inflow_SST(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+  use mod_param, only : i1,k1,k
+  class(SST_TurbModel) :: this
+  real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
+    this%omin = omin
+    this%kin = kin
     do k=0,k1
       this%om(:,k) = this%omin(:)
       this%k(:,k) = this%kin(:)
     enddo
 end subroutine init_w_inflow_SST
-
-
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,mut)
   use mod_param, only : k1,i1,kmax,imax  

@@ -111,28 +111,17 @@ contains
     p_pkt = 0.
   end subroutine get_profile_vp_tdm
 
-  subroutine init_w_inflow_vp_tdm(this,Re,systemsolve)
-    use mod_param, only : i1,i
-    use mod_tm, only : turb_model
-    implicit none
-    class(VPrt_TurbDiffModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
-    real(8), dimension(0:i1) :: dummy, Prtin
-    character(len=5)  :: Re_str
-    character(len=100) :: fname
-    integer           :: Re_int
-    Re_int = int(Re)
-    write(Re_str,'(I5.5)') Re_int
-    fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(this%name)//'_'//Re_str//'.dat'
-    if (systemsolve .eq. 1) open(29,file = 'pipe/'//trim(fname),form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/'//trim(fname),form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'symchan/'//trim(fname),form='unformatted')
-    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:), &
-             dummy(:),dummy(:),dummy(:),this%alphatin(:), this%Prtin(:)
-    close(29)
-  end subroutine init_w_inflow_vp_tdm
-
+subroutine init_w_inflow_vp_tdm(this,Prtin,alphatin,ktin,epstin,pktin)
+  use mod_param, only : i1,k1,k
+  implicit none
+  class(VPrt_TurbDiffModel) :: this
+  real(8), dimension(0:i1), intent(IN) :: Prtin,alphatin,ktin,epstin,pktin
+  this%Prtin(:)=Prtin
+  this%alphatin(:)=alphatin
+  do k=0,k1
+    this%Prt(:,k) = this%Prtin(:)
+  enddo
+end subroutine init_w_inflow_vp_tdm
 
   !************************!
   ! Kays Crawford routines !
@@ -180,7 +169,7 @@ contains
         this%Pr(i,k)= mu(i,k)/lam_cp(i,k)
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
-        PeT      = this%mut_mu(i,k)*this%Pr(i,k)
+        PeT = this%mut_mu(i,k)*this%Pr(i,k)
         if (this%mut_mu(i,k).lt.0.2) then
           this%Prt(i,k) = 1.07 
         else

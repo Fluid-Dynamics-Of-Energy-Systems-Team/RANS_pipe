@@ -14,10 +14,11 @@ module ke_tm
   real(8) :: sigmak,sigmae,cmu
   contains
     procedure(set_mut_KE), deferred :: set_mut
-    procedure(advance_KE), deferred :: advance_turb
     procedure(set_bc_KE), deferred :: set_bc
     procedure(set_constants), deferred :: set_constants
-    procedure(init_w_inflow_KE), deferred :: init_w_inflow
+    procedure :: init_w_inflow => init_w_inflow_KE
+    procedure :: advance_turb => advance_KE
+    procedure :: production_KE
     procedure :: init => init_KE
     procedure :: rhs_k_KE
     procedure :: rhs_eps_KE
@@ -43,18 +44,6 @@ module ke_tm
       real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(0:i1,0:k1),intent(OUT):: mut
     end subroutine set_mut_KE
-    subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
-                             alpha1,alpha2,alpha3,               &
-                             modification,rank,periodic,&
-                             residual1,residual2,residual3)
-      use mod_param, only: k1,i1
-      import :: KE_TurbModel
-      class(KE_TurbModel) :: this
-      real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-      real(8),                                intent(IN) :: alpha1,alpha2,alpha3
-      integer,                                intent(IN) :: modification,rank,periodic
-      real(8),                                intent(OUT):: residual1,residual2,residual3
-    end subroutine advance_KE
     subroutine set_bc_KE(this,mu,rho,periodic,rank,px)
       use mod_param, only: k1,i1
       import :: KE_TurbModel
@@ -62,12 +51,6 @@ module ke_tm
       real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
       integer,                               intent(IN) :: periodic, rank, px
     end subroutine set_bc_KE
-    subroutine init_w_inflow_KE(this,Re,systemsolve)
-      import :: KE_TurbModel
-      class(KE_TurbModel) :: this
-      real(8), intent(IN) :: Re
-      integer, intent(IN) :: systemsolve
-    end subroutine init_w_inflow_KE
   end interface
 
 contains
@@ -102,6 +85,19 @@ subroutine init_sol_KE(this)
   enddo
 end subroutine init_sol_KE
 
+subroutine init_w_inflow_KE(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+  use mod_param, only : i1,k1,k
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
+  this%epsin = epsin
+  this%kin = kin
+  this%mutin = mutin
+  do k=0,k1
+    this%eps(:,k) = this%epsin(:)
+    this%k(:,k)   = this%kin(:)
+  enddo
+end subroutine init_w_inflow_KE
+
 
 subroutine init_mem_KE(this)
   use mod_param, only : kmax,imax,k1,i1
@@ -116,6 +112,71 @@ subroutine init_mem_KE(this)
   allocate(this%mutin(0:i1),this%Pkin (0:i1), &
            this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
 end subroutine init_mem_KE
+
+subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)
+  use mod_param, only : i1,k1
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
+  real(8), dimension(0:i1,0:k1) :: div
+end subroutine production_KE
+
+subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
+  use mod_param, only : i1,k1  
+  class(KE_TurbModel) :: this
+  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+  nuSA=0
+  k   =this%k    
+  eps =this%eps
+  v2  =this%v2
+  om  =0
+  yp  = this%yp
+end subroutine get_sol_KE
+
+subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
+  use mod_param, only : i1,imax
+  class(KE_TurbModel) :: this
+  integer,                               intent(IN) :: k
+  real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1,yp
+  real(8),dimension(1:imax),        intent(OUT):: p_bF2
+
+  p_nuSA(:)=0
+  p_k(:)   =this%k(:,k)
+  p_eps(:) =this%eps(:,k)
+  p_v2(:)  =this%v2(:,k)
+  p_om(:)  =0
+  p_Pk(:)  =this%Pk(:,k)
+  p_bF1(:) =0
+  p_bF2(:) =0
+  yp(:)    =this%yp(:,k)
+end subroutine get_profile_KE
+
+
+subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,periodic,   &
+                      residual1, residual2, residual3)
+  use mod_param, only : i1,k1,imax,kmax
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+  real(8),                                intent(IN) :: alpha1,alpha2, alpha3
+  integer,                                intent(IN) :: modification,rank,periodic
+  real(8),                                intent(OUT):: residual1,residual2, residual3
+  real(8), dimension(0:i1,0:k1) :: rho_mod
+
+  !1, our modification, 2, Aupoix modification
+  if ((modification == 1) .or. (modification == 2)) then
+    rho_mod = rho
+  else
+    rho_mod = 1.0
+  endif
+
+  call this%production_KE(u,w,temp,rho,mu,mut,beta)
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                         alpha2,modification,rank,periodic)
+  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha1,modification,rank,periodic)
+end
 
 subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alphak,modification,rank,periodic)
@@ -174,35 +235,6 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
     enddo
   enddo
 end
-subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
-  use mod_param, only : i1,k1  
-  class(KE_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
-  nuSA=0
-  k   =this%k    
-  eps =this%eps
-  v2  =this%v2
-  om  =0
-  yp  = this%yp
-end subroutine get_sol_KE
-
-subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
-  use mod_param, only : i1,imax
-  class(KE_TurbModel) :: this
-  integer,                               intent(IN) :: k
-  real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk, p_bF1,yp
-  real(8),dimension(1:imax),        intent(OUT):: p_bF2
-
-  p_nuSA(:)=0
-  p_k(:)   =this%k(:,k)
-  p_eps(:) =this%eps(:,k)
-  p_v2(:)  =this%v2(:,k)
-  p_om(:)  =0
-  p_Pk(:)  =this%Pk(:,k)
-  p_bF1(:) =0
-  p_bF2(:) =0
-  yp(:)    =this%yp(:,k)
-end subroutine get_profile_KE
 
 subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
                         alphae,modification,rank,periodic)

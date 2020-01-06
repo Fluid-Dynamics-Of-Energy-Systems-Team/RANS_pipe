@@ -43,6 +43,41 @@ subroutine set_constants_DWX(this)
   this%cd2 = 0.9
 end subroutine set_constants_DWX
 
+subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_tm,    only : turb_model
+  use mod_mesh,  only : walldist
+  use mod_common,only : cpi, ekhi
+  implicit none
+  class(DWX_TurbDiffModel) :: this
+  real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
+  real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
+  integer  im,ip,km,kp
+  real(8),dimension(0:i1,0:k1) :: Ret, Reeps, yp
+  real(8), dimension(0:i1,0:k1) :: kine, eps, Tt
+  real(8) :: nu
+
+  eps  = turb_model%eps
+  kine = turb_model%k
+  Tt = turb_model%Tt
+
+  do k=1,kmax
+    km=k-1
+    kp=k+1
+    do i=1,imax
+      im=i-1
+      ip=i+1
+      nu = mu(i,k)/rho(i,k)
+      Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))                          !k^2/(eps*nu)
+      Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu                   !y*(nu*eps)^(1/4)/nu
+      this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)             !kt/epst      
+      this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16.))**2.0)*(1+(3./(Ret(i,k)**0.75)))     !f_lambda=(1-exp(Reps/16))^2 * (1+3/Rt^(3/4))
+      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*(kine(i,k)**2/eps(i,k))*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5              
+    enddo
+  enddo
+
+end subroutine set_alphat_DWX
+
 subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   use mod_param, only : k1,i1,imax,kmax,k
   use mod_mesh,  only : walldist, top_bcvalue, bot_bcvalue, top_bcnovalue, bot_bcnovalue
@@ -102,42 +137,6 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   endif
  
 end subroutine set_bc_DWX
-
-
-subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
-  use mod_param, only : k1,i1,kmax,imax,k,i
-  use mod_tm,    only : turb_model
-  use mod_mesh,  only : walldist
-  use mod_common,only : cpi, ekhi
-  implicit none
-  class(DWX_TurbDiffModel) :: this
-  real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
-  real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
-  integer  im,ip,km,kp
-  real(8),dimension(0:i1,0:k1) :: Ret, Reeps, yp
-  real(8), dimension(0:i1,0:k1) :: kine, eps, Tt
-  real(8) :: nu
-
-  eps  = turb_model%eps
-  kine = turb_model%k
-  Tt = turb_model%Tt
-
-  do k=1,kmax
-    km=k-1
-    kp=k+1
-    do i=1,imax
-      im=i-1
-      ip=i+1
-      nu = mu(i,k)/rho(i,k)
-      Ret(i,k)     = (kine(i,k)**2.)/(nu*eps(i,k))                          !k^2/(eps*nu)
-      Reeps(i,k)   = (walldist(i)*(nu*eps(i,k))**0.25)/nu                   !y*(nu*eps)^(1/4)/nu
-      this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)             !kt/epst      
-      this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16.))**2.0)*(1+(3./(Ret(i,k)**0.75)))     !f_lambda=(1-exp(Reps/16))^2 * (1+3/Rt^(3/4))
-      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*(kine(i,k)**2/eps(i,k))*(2.0*this%Ttemp(i,k)/Tt(i,k))**0.5              
-    enddo
-  enddo
-
-end subroutine set_alphat_DWX
 
 subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
   use mod_param, only : k1,i1,kmax,imax,k,i

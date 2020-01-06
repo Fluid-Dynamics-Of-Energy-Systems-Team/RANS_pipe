@@ -12,10 +12,10 @@ module vf_tm
   contains
     procedure :: set_constants => set_constants_VF
     procedure :: set_mut => set_mut_VF
-    procedure :: advance_turb => advance_VF
+    procedure :: advance_KE => advance_VF
     procedure :: set_bc => set_bc_VF
     procedure :: init_w_inflow => init_w_inflow_VF
-    procedure :: production_VF
+    procedure :: production_KE => production_VF
     procedure :: rhs_v2_VF
     procedure :: solve_v2_VF
     procedure :: fillhem
@@ -29,6 +29,11 @@ contains
   !      VF routines       !
   !************************!
 
+type(VF_TurbModel) function init_VF_TurbModel(name)
+  character(len=2), intent(IN) :: name
+  init_VF_TurbModel%name=name
+end function init_VF_TurbModel
+
 subroutine set_constants_VF(this)
   implicit none
   class(VF_TurbModel) :: this
@@ -39,30 +44,21 @@ subroutine set_constants_VF(this)
   this%ce2    = 1.9
 end subroutine
 
-subroutine init_w_inflow_VF(this,Re,systemsolve)
-  use mod_param, only : k1,i1,i,k
+subroutine init_w_inflow_VF(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+  use mod_param, only : i1,k1,k
   class(VF_TurbModel) :: this
-  real(8), intent(IN) :: Re
-  integer, intent(IN) :: systemsolve
-  real(8), dimension(0:i1) :: dummy
-  character(len=5)  :: Re_str
-  integer           :: Re_int
-  Re_int = int(Re)
-  write(Re_str,'(I5.5)') Re_int
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  read(29) dummy(:),this%kin(:),this%epsin(:),this%v2in(:),dummy(:),dummy(:),this%mutin(:),this%pkin(:)
-
-  close(29)
-  do k=0,k1
-    this%eps(:,k) = this%epsin(:)
-    this%k(:,k) = this%kin(:)
-    this%v2(:,k) = this%v2in(:)
-    this%Pk(:,k) = this%pkin(:)
-  enddo
+  real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
+    this%epsin = epsin
+    this%kin  = kin
+    this%v2in = v2in
+    this%pkin = pkin
+    do k=0,k1
+      this%eps(:,k) = this%epsin(:)
+      this%k(:,k) = this%kin(:)
+      this%v2(:,k) = this%v2in(:)
+      this%Pk(:,k) = this%pkin(:)
+    enddo
 end subroutine init_w_inflow_VF
-
 
 subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
   use mod_param, only :k1,i1,imax,kmax,i,k
@@ -75,7 +71,6 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
   real(8) :: StR
   real(8) :: dz
   integer :: im,ip,km,kp
-
 
   do k=1,kmax
     km=k-1
@@ -114,43 +109,6 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
   enddo
 end subroutine set_mut_VF
 
-subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
-                      alpha1,alpha2,alpha3,                  &
-                      modification,rank,periodic,   &
-                      residual1, residual2, residual3)
-  use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_math
-  implicit none
-  class(VF_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8),                                intent(IN) :: alpha1,alpha2,alpha3
-  integer,                                intent(IN) :: modification,rank,periodic
-  real(8),                                intent(OUT):: residual1,residual2,residual3
-  real(8), dimension(0:i1,0:k1) :: rho_mod
-
-  !1, our modification, 2, Aupoix modification
-  if ((modification == 1) .or. (modification == 2)) then
-    rho_mod = rho
-  else
-    rho_mod = 1.0
-  endif
-
-  call this%fillhem(mu,rho)
-  ! call SOLVEhelm(this%fv2,rank,this%Lh,centerBC)
-  call this%production_VF(u,w,temp,rho,mu,mut,beta)
-  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       alpha2,modification,rank,periodic)
-  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       alpha1,modification,rank,periodic)
-  call this%solve_v2_VF(residual3,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       alpha3,modification,rank,periodic)
-end
-
-type(VF_TurbModel) function init_VF_TurbModel(name)
-  character(len=2), intent(IN) :: name
-  init_VF_TurbModel%name=name
-end function init_VF_TurbModel
-
 subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
   use mod_mesh, only : mesh,top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue,walldist
   use mod_param, only : k1,i1,kmax,imax,i,k
@@ -163,13 +121,13 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
   real(8) :: topBCvalue, botBCvalue
 
   do k = 0,k1 
-    this%k(0,k)       = bot_bcnovalue(k)*this%k(1,k)          !symmetry or 0 value
-    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)  !symmetry or 0 value
-    this%v2(0,k)      = bot_bcnovalue(k)*this%v2(1,k)         !symmetry or 0 value
-    this%v2(i1,k)= top_bcnovalue(k)*this%v2(imax,k) !symmetry or 0 value
-    botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                       !bcvalue
-    this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k)) + bot_bcvalue(k)*this%eps(1,k)               !symmetry or bc value
-    topBCvalue = 2.0*mu(imax,k)/rho(imax,k)*this%k(imax,k)/walldist(imax)**2                       !bcvalue
+    this%k(0,k)  = bot_bcnovalue(k)*this%k(1,k)        !symmetry or 0 value
+    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)     !symmetry or 0 value
+    this%v2(0,k) = bot_bcnovalue(k)*this%v2(1,k)       !symmetry or 0 value
+    this%v2(i1,k)= top_bcnovalue(k)*this%v2(imax,k)    !symmetry or 0 value
+    botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                            !bcvalue
+    this%eps(0,k)       = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k)) + bot_bcvalue(k)*this%eps(1,k) !symmetry or bc value
+    topBCvalue = 2.0*mu(imax,k)/rho(imax,k)*this%k(imax,k)/walldist(imax)**2                                !bcvalue
     this%eps(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(imax,k)) + top_bcvalue(k)*this%eps(imax,k)!symmetry or bc value
   enddo
 
@@ -194,6 +152,37 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
   endif
 
 end subroutine set_bc_VF
+
+subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,periodic,   &
+                      residual1, residual2, residual3)
+  use mod_param, only : k1,i1,kmax,imax,i,k
+  implicit none
+  class(VF_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+  real(8),                                intent(IN) :: alpha1,alpha2,alpha3
+  integer,                                intent(IN) :: modification,rank,periodic
+  real(8),                                intent(OUT):: residual1,residual2,residual3
+  real(8), dimension(0:i1,0:k1) :: rho_mod
+
+  !1, our modification, 2, Aupoix modification
+  if ((modification == 1) .or. (modification == 2)) then
+    rho_mod = rho
+  else
+    rho_mod = 1.0
+  endif
+
+  call this%fillhem(mu,rho)
+  ! call SOLVEhelm(this%fv2,rank,this%Lh,centerBC)
+  call this%production_KE(u,w,temp,rho,mu,mut,beta)
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha2,modification,rank,periodic)
+  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha1,modification,rank,periodic)
+  call this%solve_v2_VF(residual3,u,w,rho,mu,mui,muk,mut,rho_mod, &
+                       alpha3,modification,rank,periodic)
+end subroutine advance_VF
 
 subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alphav2,modification,rank,periodic)

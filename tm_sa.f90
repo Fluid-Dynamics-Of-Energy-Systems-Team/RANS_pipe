@@ -57,26 +57,16 @@ subroutine init_sol_SA(this)
     enddo
 end subroutine init_sol_SA
 
-subroutine init_w_inflow_SA(this,Re,systemsolve)
-    use mod_param, only : i1,k1
-    implicit none
-    class(SA_TurbModel) :: this
-    real(8), intent(IN) :: Re
-    integer, intent(IN) :: systemsolve
-    real(8), dimension(0:i1) :: dummy
-    character(len=5)  :: Re_str
-    integer           :: Re_int,i,k
-    Re_int = int(Re)
-    write(Re_str,'(I5.5)') Re_int
-    if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-    if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-    read(29) dummy(:),dummy(:),dummy(:),dummy(:),dummy(:),this%nuSAin(:),this%mutin(:),this%pkin(:)
-    close(29)
-    do k=0,k1
-      this%nuSA(:,k) = this%nuSAin(:)
-      this%pk(:,k) = this%pkin(:)
-    enddo
+subroutine init_w_inflow_SA(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+  use mod_param, only : i1,k1,k
+  class(SA_TurbModel) :: this
+  real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
+  this%nuSAin = nuSAin
+  this%pkin = pkin
+  do k=0,k1
+    this%nuSA(:,k) = this%nuSAin(:)
+    this%pk(:,k)   = this%pkin(:)
+  enddo
 end subroutine init_w_inflow_SA
 
 subroutine init_mem_SA(this)
@@ -113,29 +103,6 @@ subroutine set_mut_SA(this,u,w,rho,mu,mui,mut)
     enddo
   enddo
 end subroutine set_mut_SA
-
-subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
-                      alpha1,alpha2,alpha3,                  &
-                      modification,rank,periodic,   &
-                      residual1, residual2, residual3)
-  use mod_param, only : i1,k1
-  implicit none
-  class(SA_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8),                      intent(IN) :: alpha1,alpha2,alpha3
-  integer,                      intent(IN) :: modification,rank,periodic
-  real(8),                      intent(OUT):: residual1, residual2,residual3
-  real(8),dimension(0:i1,0:k1)             :: rho_mod
-
-  !1, our modification, 2, Aupoix modification
-  if ((modification == 1) .or. (modification == 2)) then
-    rho_mod = rho
-  else
-    rho_mod = 1.0
-  endif
-  call this%production_SA(this%nuSA,u,w,rho,mu)
-  call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,alpha1,modification,periodic,rank)
-end subroutine advance_SA
 
 subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
   use mod_param, only : k1,i1,kmax,imax,k
@@ -197,6 +164,28 @@ subroutine get_sol_SA(this,nuSA,k,eps,om,v2,yp)
   yp  = this%yp
 end subroutine get_sol_SA
 
+subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
+                      alpha1,alpha2,alpha3,                  &
+                      modification,rank,periodic,   &
+                      residual1, residual2, residual3)
+  use mod_param, only : i1,k1
+  implicit none
+  class(SA_TurbModel) :: this
+  real(8),dimension(0:i1,0:k1), intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
+  real(8),                      intent(IN) :: alpha1,alpha2,alpha3
+  integer,                      intent(IN) :: modification,rank,periodic
+  real(8),                      intent(OUT):: residual1, residual2,residual3
+  real(8),dimension(0:i1,0:k1)             :: rho_mod
+
+  !1, our modification, 2, Aupoix modification
+  if ((modification == 1) .or. (modification == 2)) then
+    rho_mod = rho
+  else
+    rho_mod = 1.0
+  endif
+  call this%production_SA(this%nuSA,u,w,rho,mu)
+  call this%solve_SA(residual1,u,w,rho,mu,mui,muk,rho_mod,alpha1,modification,periodic,rank)
+end subroutine advance_SA
 
 subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
                     alphak,modification,periodic,rank)

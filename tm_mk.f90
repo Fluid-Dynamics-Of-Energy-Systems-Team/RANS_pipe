@@ -12,12 +12,9 @@ module mk_tm
   contains
     procedure :: set_constants => set_constants_MK
     procedure :: set_mut => set_mut_MK
-    procedure :: advance_turb => advance_MK
     procedure :: set_bc => set_bc_MK
-    procedure :: init_w_inflow => init_w_inflow_MK
-    procedure :: production_MK
+    procedure :: production_KE => production_MK
   end type MK_TurbModel
-
 
 contains
 !****************************************************************************************
@@ -41,28 +38,6 @@ subroutine set_constants_MK(this)
   this%ce1 = 1.4
   this%ce2 = 1.8
 end subroutine set_constants_MK
-
-subroutine init_w_inflow_MK(this,Re,systemsolve)
-  use mod_param, only : i1,k1,i,k
-  implicit none
-  class(MK_TurbModel) :: this
-  real(8), intent(IN) :: Re
-  integer, intent(IN) :: systemsolve
-  real(8), dimension(0:i1) :: dummy
-  character(len=5)  :: Re_str
-  integer           :: Re_int
-  Re_int = int(Re)
-  write(Re_str,'(I5.5)') Re_int
-  if (systemsolve .eq. 1) open(29,file = 'pipe/Inflow_'   //TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 2) open(29,file = 'channel/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
-  read(29) dummy(:),this%kin(:),this%epsin(:),dummy(:),dummy(:),dummy(:),this%mutin(:),dummy(:)
-  close(29)
-  do k=0,k1
-    this%eps(:,k) = this%epsin(:)
-    this%k(:,k) = this%kin(:)
-  enddo
-end subroutine init_w_inflow_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
   use mod_param, only : kmax,imax,k1,i1,k,i
@@ -91,32 +66,6 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
     enddo
   enddo
 end subroutine set_mut_MK
-
-subroutine advance_MK(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
-                      alpha1,alpha2,alpha3,                  &
-                      modification,rank,periodic,   &
-                      residual1, residual2, residual3)
-  use mod_param, only : k1,i1
-  class(MK_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
-  real(8),                      intent(IN) :: alpha1,alpha2, alpha3
-  integer,                      intent(IN) :: modification,rank,periodic
-  real(8),                      intent(OUT):: residual1,residual2, residual3
-  real(8), dimension(0:i1,0:k1) :: rho_mod
-
-  !1, our modification, 2, Aupoix modification
-  if ((modification == 1) .or. (modification == 2)) then
-    rho_mod = rho
-  else
-    rho_mod = 1.0
-  endif
-
-  call this%production_MK(u,w,temp,rho,mut,beta)
-  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       alpha2,modification,rank,periodic)
-  call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                       alpha1,modification,rank,periodic)
-end
 
 subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
   use mod_param, only : kmax,imax,k1,i1,k
@@ -155,12 +104,12 @@ subroutine set_bc_MK(this,mu,rho,periodic,rank,px)
 
 end subroutine set_bc_MK
 
-subroutine production_MK(this,u,w,temp,rho,mut,beta)
+subroutine production_MK(this,u,w,temp,rho,mu,mut,beta)
   use mod_param, only : kmax,imax,k1,i1,i,k
   use mod_mesh,  only : dzw,dzp,rp,ru,dru,drp
   implicit none
   class(MK_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mut,beta
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
   real(8), dimension(0:i1,0:k1) :: div
   integer im,ip,km,kp
   real(8) :: Fr_1, ctheta

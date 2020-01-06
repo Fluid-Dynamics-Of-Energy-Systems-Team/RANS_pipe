@@ -105,7 +105,7 @@ dt = dtmax
 istart = 1
 
 !initialize solution 
-call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,Re,systemsolve,select_init)
+call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,select_init)
 
 
 call bound_v(Unew,Wnew,Win,rank,istep)
@@ -144,7 +144,7 @@ do istep=istart,nstep
                               modifDiffTerm,rank,periodic,resTV1,resTV2,resTV3)
 
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
-                                      alphak,alphae,modifDiffTerm,rank,periodic,resTD1,resTD2)
+                                      alphak,alphae,rank,periodic,resTD1,resTD2)
   !apply bc
   call bound_c(Cnew, Tw, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
@@ -447,7 +447,7 @@ end subroutine bound_m
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u,c, mut,alphat, &
-                               win, mutin,alphatin, Re, systemsolve, select_init)
+                               win, Re, systemsolve, select_init)
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
   use mod_param, only : k1,i1,imax_old, kelem_old,px
@@ -457,8 +457,9 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
   integer,                        intent(IN) :: rank,systemsolve,select_init
   real(8),                        intent(IN) :: Re
   real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut,alphat
-  real(8), dimension(0:i1),       intent(OUT):: win,mutin,alphatin
-  real(8), dimension(0:i1) :: dummy
+  real(8), dimension(0:i1),       intent(OUT):: win
+  real(8), dimension(0:i1) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in, &
+                              Prtin,alphatin,ktin,epstin,pktin
   character(len=5)  :: Re_str
   character(len=7)  :: case
   integer           :: Re_int, i,k, imax
@@ -476,7 +477,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     open(29,file =trim(case)//'/Inflow_'//trim(turb_model%name)//'_' &
                                         //trim(turbdiff_model%name)//'_' &
                                         //Re_str//'.dat',form='unformatted')
-    read(29) win(:),dummy,dummy,dummy,dummy,dummy,mutin(:),dummy, alphatin(:)
+    read(29) win(:),kin,epsin,v2in,omin,nuSAin,mutin,pkin, alphatin,prtin, ktin, epstin,pktin
     close(29)
     do k=0,k1
       w(:,k)  = win(:)
@@ -484,8 +485,9 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
       c(:,k)= 0.5
       alphat(:,k) = alphatin(:)
     enddo
-    call turb_model%init_w_inflow(Re, systemsolve)
-    call turbdiff_model%init_w_inflow(Re, systemsolve)
+    
+    call turb_model%init_w_inflow(nuSAin,pkin,kin,epsin,omin,mutin,v2in)
+    call turbdiff_model%init_w_inflow(Prtin,alphatin,ktin,epstin,pktin)
 
   !initialize with laminar analytical solution
   else if (select_init .eq. 2) then
