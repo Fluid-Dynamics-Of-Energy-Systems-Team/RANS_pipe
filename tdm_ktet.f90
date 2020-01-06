@@ -85,7 +85,7 @@ subroutine init_sol_KtEt(this)
   implicit none
   class(KtEt_TurbDiffModel) :: this
   do i=0,i1
-    this%kt(i,:)  =.5
+    this%kt(i,:)  =.01
     this%epst(i,:)=1.0
     this%Pkt(i,:) = 0.1 
     this%ktin(i) = 0.0
@@ -168,9 +168,9 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat,rho_mod, &
 
   resKt  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%kt,u,w,Ru,Rp,dRu,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%kt,u,w,rank,periodic,.true.)
   call this%rhs_kt_KtEt(dnew,dimpl,rho) 
-  call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho,Ru,Rp,dRu,dz,rank,modification)
+  call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho,modification)
 
   do k=1,kmax
     do i=1,imax
@@ -251,7 +251,7 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
   real(8), dimension(0:i1,0:k1), intent(IN) :: c,temp,rho,cp,alphat
   real(8), dimension(0:i1,0:k1) :: div
   integer im,ip,km,kp
-  real(8) :: dTdx, dTdy,dktdx,dktdy
+  real(8) :: dTdx,dTdy
 
 
   do k=1,kmax
@@ -275,7 +275,7 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
                        alphaet,modification,rank,periodic)
   use mod_param,only : k1,i1,kmax,imax,k,i
   use mod_math, only : matrixIdir
-  use mod_mesh, only : dru,drp,ru,rp,dz,bot_bcvalue,top_bcvalue,bot_bcnovalue,top_bcnovalue
+  use mod_mesh, only : dru,drp,ru,rp,dz,bot_bcvalue,top_bcvalue
   implicit none
   class(KtEt_TurbDiffModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u, w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_mod
@@ -288,7 +288,7 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat,rho_m
 
   resEt  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%epst,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%epst,u,w,rank,periodic,.true.)
   call this%rhs_epst_KtEt(dnew,dimpl,temp,rho,mu,ekh,alphat) 
   call this%diffusion_epst_KtEt(dnew,this%epst,ekhk,alphat,this%sigmaet,rho)
 

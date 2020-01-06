@@ -11,7 +11,7 @@
   nstep             = 10000000,
   LoD               = 10,     ! pH2= 30
   periodic          = 1,       ! 1..periodic, 2..developing   
-  Re                = 180,!395,
+  Re                = 180,
   Pr                = 0.71,
   Qwall             = 0.,     ! Qwall=(qw*D/(k0*T0))
   isothermalBC      = 1,       ! isothermal wall: 1
@@ -36,5 +36,5 @@
   output_fname_bl   = "test.csv",
   imax_old          = 192,
   kelem_old         = 1600
-  Qsource           = 0.015649452 !2/Re*Pr
+  Qsource           = 2!0.007824726 !2/Re*Pr
 /

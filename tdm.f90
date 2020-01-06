@@ -8,7 +8,6 @@ module mod_tdm
   !************************!
   
   type, abstract, public :: TurbDiffModel
-  integer i1,k1,imax,kmax
   character(len=4)                      :: name
   real(8), dimension(:,:), allocatable :: Pkt,kt,epst, yp,Tmix,Ttemp
   real(8), dimension(:),   allocatable :: alphatin, Pktin,Prtin
@@ -136,15 +135,10 @@ contains
   !Constant Prandtl routines!
   !*************************!
 
-  type(CPrt_TurbDiffModel) function init_CPrt_TurbDiffModel(i1,k1,imax,kmax,name, Prt)
-    integer, intent(in) :: i1,k1,imax,kmax
+  type(CPrt_TurbDiffModel) function init_CPrt_TurbDiffModel(name, Prt)
     character(len=3), intent(IN) :: name
     real(8), intent(in) :: Prt
     init_CPrt_TurbDiffModel%name=name
-    init_CPrt_TurbDiffModel%i1 = i1
-    init_CPrt_TurbDiffModel%k1 = k1
-    init_CPrt_TurbDiffModel%imax = imax
-    init_CPrt_TurbDiffModel%kmax = kmax
     init_CPrt_TurbDiffModel%Prt = Prt
   end function init_CPrt_TurbDiffModel
 

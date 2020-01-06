@@ -1,7 +1,7 @@
 subroutine write_output_bl(rank, istap)
   use mod_common, only : wnew, ekmi, unew
   use mod_param, only : k1, kmax, K_start_heat, output_fname_bl,px,i1, LoD
-  use mod_mesh, only : mesh
+  use mod_mesh, only : mesh,zw
   use mod_tdm, only : turbdiff_model
   implicit none
   include "mpif.h"
@@ -12,9 +12,7 @@ subroutine write_output_bl(rank, istap)
   character(len=140) :: test
   character(len=141) :: line
   integer :: index, nvar, k, fh,ierr, k_max, k_min,size
-  real(8), dimension(0:k1) :: zw
   ! integer K_start_heat
-  zw = mesh%zw
 
   nvar = 7
   index=1

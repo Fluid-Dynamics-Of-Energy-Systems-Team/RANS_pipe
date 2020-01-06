@@ -8,7 +8,6 @@ module mod_tm
   !************************!
   
   type, abstract, public :: TurbModel
-  integer i1,k1,imax,kmax
   character(len=3)                     :: name
   real(8), dimension(:,:), allocatable :: nuSA,Pk,om,k,bF1,bF2,eps,v2,yp, Tt
   real(8), dimension(:),   allocatable :: mutin, Pkin

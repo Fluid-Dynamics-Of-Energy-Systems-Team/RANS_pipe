@@ -63,10 +63,10 @@ call init_transpose
 
 
 !initialize grid including bc
-if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh(i1,k1,imax,kmax))
-if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh(i1,k1,imax,kmax))
+if (systemsolve .eq. 1) allocate(mesh, source=       Pipe_Mesh())
+if (systemsolve .eq. 2) allocate(mesh, source=    Channel_Mesh())
+if (systemsolve .eq. 3) allocate(mesh, source= SymChannel_Mesh())
+if (systemsolve .eq. 4) allocate(mesh, source=     BLayer_Mesh())
 call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
@@ -77,24 +77,23 @@ if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tabl
 call eos_model%init() 
 
 !initialize turbulent viscosity model
-if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel(i1, k1, imax, kmax,'lam'))
-if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel(i1, k1, imax, kmax,'SA' ))
-if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel(i1, k1, imax, kmax,'MK' ))
-if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel(i1, k1, imax, kmax,'VF' ))
-if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel(i1, k1, imax, kmax,'SST'))
-if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel(i1, k1, imax, kmax,'Abe'))
+if (turbmod.eq.0) allocate(turb_model,source=Laminar_TurbModel('lam'))
+if (turbmod.eq.1) allocate(turb_model,source=     SA_TurbModel('SA' ))
+if (turbmod.eq.2) allocate(turb_model,source=init_MK_TurbModel('MK' ))
+if (turbmod.eq.3) allocate(turb_model,source=init_VF_TurbModel('VF' ))
+if (turbmod.eq.4) allocate(turb_model,source=    SST_TurbModel('SST'))
+if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel('Abe'))
 call turb_model%init()
 
-
 !initialize turbulent diffusivity model
-if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel(i1, k1, imax, kmax,'cPr', Pr))
-if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(i1, k1, imax, kmax,'IF'    ))
-if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel(i1, k1, imax, kmax,'Tang'  ))
-if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel(i1, k1, imax, kmax,'KC'    ))
-if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(i1, k1, imax, kmax,'Kays'  ))
-if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel(i1, k1, imax, kmax,'Bae', 70.,20.))
-if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel(i1, k1, imax, kmax,'DWX'))
-if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel(i1, k1, imax, kmax,'NK'))
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel('cPr', Pr))
+if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel('IF'    ))
+if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel('Tang'  ))
+if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel('KC'    ))
+if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel('Kays'  ))
+if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel('Bae', 70.,20.))
+if (turbdiffmod.eq.6) allocate(turbdiff_model,source=init_DWX_TurbDiffModel('DWX'))
+if (turbdiffmod.eq.7) allocate(turbdiff_model,source=init_NK_TurbDiffModel('NK'))
 if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.(turbmod.eq.1).or.((turbmod.eq.4))) then
   if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid", turbmod, turbdiffmod
   call mpi_finalize(ierr)
@@ -102,29 +101,14 @@ if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.(turbmod.eq.1).or.((turbmod.e
 endif
 call turbdiff_model%init()
 
-      
-
-
-
-
-! if (rank .eq. 0) then
-! do i=0,i1
-!   write(*,*) mesh%dru(i), dru(i)
-! enddo
-! endif
-
 dt = dtmax
 istart = 1
 
 !initialize solution 
-call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,&
-                         i1,k1,y_fa,y_cv,mesh%dpdz,Re,systemsolve,select_init)
+call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,ekmtin,alphatin,Re,systemsolve,select_init)
 
 
 call bound_v(Unew,Wnew,Win,rank,istep)
-
-  
-
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 call bound_c(cnew, Tw, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
@@ -139,15 +123,17 @@ call cpu_time(start)
 
 
   
-
 !***************************!
 !        MAIN LOOP          !
 !***************************!
 
 
 do istep=istart,nstep
+  
+  !calc the 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
 
+  !calc alphat
   call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
   call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
   
@@ -283,7 +269,6 @@ end subroutine calc_prop
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,rank)
   use mod_param, only : k1,i1,kmax,imax,periodic,px
   use mod_tm,    only : turb_model
-  
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,mu,mui   
   integer,                       intent(IN) :: rank
@@ -359,8 +344,6 @@ subroutine bound_v(u,w,win,rank,step)
   real(8), dimension(0:i1),      intent(IN) :: win
   real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
   real(8), dimension(0:i1)                  :: tmp
-  real(8) :: x, vfs, vfsm
-  real(8), dimension(0:k1) :: dis
 
   u(0,:)    =  (1-ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
   u(imax,:) =   0.0                            !wall and symmetry
@@ -464,15 +447,15 @@ end subroutine bound_m
 !!*************************************************************************************
 
 subroutine initialize_solution(rank, w, u,c, mut,alphat, &
-                               win, mutin,alphatin, i1,k1, y_fa, y_cv, dpdz, Re, systemsolve, select_init)
-  use mod_tm, only   :  turb_model
-  use mod_tdm, only  : turbdiff_model
-  use mod_param, only: imax_old, kelem_old,px
+                               win, mutin,alphatin, Re, systemsolve, select_init)
+  use mod_tm,    only : turb_model
+  use mod_tdm,   only : turbdiff_model
+  use mod_param, only : k1,i1,imax_old, kelem_old,px
+  use mod_mesh,  only : y_fa,y_cv, mesh
   implicit none
   include "mpif.h"
-  integer,                        intent(IN) :: rank,systemsolve,i1,k1,select_init
-  real(8),                        intent(IN) :: dpdz,Re
-  real(8), dimension(0:i1),       intent(IN) :: y_cv,y_fa
+  integer,                        intent(IN) :: rank,systemsolve,select_init
+  real(8),                        intent(IN) :: Re
   real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut,alphat
   real(8), dimension(0:i1),       intent(OUT):: win,mutin,alphatin
   real(8), dimension(0:i1) :: dummy
@@ -512,8 +495,8 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     gridSize = y_fa(imax)
     do i=0,i1!imax         
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
-      if (systemsolve.eq.2) w(i,:)  = Re*dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
-      if (systemsolve.eq.3) w(i,:)  = Re*dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
+      if (systemsolve.eq.2) w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
+      if (systemsolve.eq.3) w(i,:)  = Re*mesh%dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
       if (systemsolve.eq.4) then
          w(i,:)  = 1.; u=0.;  win=1.; mutin=0!bl 
       endif
@@ -545,37 +528,36 @@ end subroutine initialize_solution
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param, only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource
   use mod_math,  only : matrixIdir
-  use mod_mesh,  only : dzw,dru,drp,rp,ru,top_bcvalue1,bot_bcvalue1,dz
-  use mod_common,only : cnew,ekhk,ekh,alphat,ekhi
+  use mod_mesh,  only : dzw,dru,drp,rp,ru,top_bcvalue1,bot_bcvalue1
+  use mod_common,only : cnew,ekh,ekhi,ekhk,alphat
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
   real(8),                       intent(OUT):: resC
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)      :: a,b,c,rhs
-  real(8)                       :: sigmat,Q
   integer  :: ierr
   
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,cnew,Utmp,Wtmp,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
-  call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,Ru,Rp,dru,dz,rank,0)
+  call advecc(dnew,dimpl,cnew,Utmp,Wtmp,rank,periodic,.true.)
+  call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
 
   do k=1,kmax
     do i=1,imax
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
-      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) +Qsource
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) + Qsource
     enddo
 
     i=1
     b(i)=b(i)+bot_bcvalue1(k)*a(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) +Qsource !nothing or value
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource !nothing or value
 
     i=imax
     b(i)=b(i)+top_bcvalue1(k)*c(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) +Qsource !nothing or value
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource !nothing or value
 
     call matrixIdir(imax,a,b/alphac,c,rhs)
 
@@ -611,19 +593,15 @@ end
 subroutine advance(rank)
   use mod_param, only : k1,i1,kmax,imax,k,i,Fr_1,periodic,qwall
   use mod_math,  only : matrixIdir
-  use mod_mesh,  only : mesh,dz,dzw,dru,drp,rp,ru,top_bcnovalue,bot_bcnovalue,ubot_bcvalue
+  use mod_mesh,  only : mesh,dzw,dru,drp,rp,ru,top_bcnovalue,bot_bcnovalue,ubot_bcvalue
   use mod_common,only : rnew,ekme,unew,wnew,dUdt,dWdt,ekm,dt,peclet
   implicit none
       
   integer rank
-  real*8, dimension(imax)   :: a, b, c, rhs
-  real*8, dimension(imax-1) :: au, bu, cu, rhsu
-  real*8 dnew(0:i1,0:k1)
-  real*8 dif,alpha,rhoa,rhob,rhoc
-  real*8 :: x, dpdz
-  
-  dpdz= mesh%dpdz
-  
+  real(8), dimension(imax)   :: a, b, c, rhs
+  real(8), dimension(imax-1) :: au, bu, cu, rhsu
+  real(8) dnew(0:i1,0:k1)
+  real(8) dif,alpha,rhoa,rhob,rhoc
   dif=0.0
 
   !>********************************************************************
@@ -631,8 +609,8 @@ subroutine advance(rank)
   !!     at the old(n-1) and new(n) timelevels
   !!********************************************************************
   dnew = 0.0
-  call advecu(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,drp,dz,i1,k1) ! new
-  call diffu (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,mesh%numDomain) ! new
+  call advecu(dnew,Unew,Wnew,Rnew) ! new
+  call diffu (dnew,Unew,Wnew,ekme,dif,mesh%numDomain) ! new
 
   do k=1,kmax
     do i=1,imax-1
@@ -664,10 +642,10 @@ subroutine advance(rank)
   !********************************************************************
 
   dnew = 0.0
-  call advecw(dnew,Unew,Wnew,Rnew,Ru,Rp,dru,dz,ekm,peclet)
-  call diffw (dnew,Unew,Wnew,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,mesh%numDomain)  ! new
+  call advecw(dnew,Unew,Wnew,Rnew,ekm,peclet)
+  call diffw (dnew,Unew,Wnew,ekme,dif,mesh%numDomain)  ! new
 
-  if (periodic.eq.1) dnew = dnew + dpdz
+  if (periodic.eq.1) dnew = dnew + mesh%dpdz
 
   if (Qwall.ne.0) then
     dnew(1:imax,1:kmax) = dnew(1:imax,1:kmax) + 0.5*(Rnew(1:imax,1:kmax)+Rnew(1:imax,2:kmax+1))*Fr_1

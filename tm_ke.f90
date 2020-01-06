@@ -135,9 +135,9 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%k,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%k,u,w,rank,periodic,.true.)
   call this%rhs_k_KE(dnew,dimpl,rho) 
-  call diffc(dnew,this%k,mu,mui,muk,mut,this%sigmak,rho,Ru,Rp,dru,dz,rank,modification)
+  call diffc(dnew,this%k,mu,mui,muk,mut,this%sigmak,rho,modification)
 
   do k=1,kmax
     do i=1,imax
@@ -221,7 +221,7 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
   
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%eps,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%eps,u,w,rank,periodic,.true.)
   call this%rhs_eps_KE(dnew,dimpl,rho)  
   call this%diffusion_eps_KE(dnew,this%eps,muk,mut,this%sigmae,rho,modification)
 

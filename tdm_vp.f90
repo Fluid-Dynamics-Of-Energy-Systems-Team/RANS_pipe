@@ -253,16 +253,11 @@ contains
   !************************!
   !       Bae routines     !
   !************************!
-  type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(i1,k1,imax,kmax,name, Aplus, B)
-    integer,                  intent(IN) :: i1,k1,imax,kmax
+  type(Bae_TurbDiffModel) function init_Bae_TurbDiffModel(name, Aplus, B)
     character(len=3),         intent(IN) :: name
     real(8) ,                 intent(IN) :: Aplus, B
     
     init_Bae_TurbDiffModel%name=name
-    init_Bae_TurbDiffModel%i1 = i1
-    init_Bae_TurbDiffModel%k1 = k1
-    init_Bae_TurbDiffModel%imax = imax
-    init_Bae_TurbDiffModel%kmax = kmax
     init_Bae_TurbDiffModel%Aplus = Aplus
     init_Bae_TurbDiffModel%B = B
   end function init_Bae_TurbDiffModel

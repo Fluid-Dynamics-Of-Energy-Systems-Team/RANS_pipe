@@ -146,14 +146,9 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                        alpha3,modification,rank,periodic)
 end
 
-type(VF_TurbModel) function init_VF_TurbModel(i1,k1,imax,kmax,name)
-  integer,          intent(IN) :: i1,k1,imax,kmax
+type(VF_TurbModel) function init_VF_TurbModel(name)
   character(len=2), intent(IN) :: name
   init_VF_TurbModel%name=name
-  init_VF_TurbModel%i1 = i1
-  init_VF_TurbModel%k1 = k1
-  init_VF_TurbModel%imax = imax
-  init_VF_TurbModel%kmax = kmax
 end function init_VF_TurbModel
 
 subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
@@ -217,9 +212,9 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
 
   resV2=0.0; dnew=0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%v2,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%v2,u,w,rank,periodic,.true.)
   call this%rhs_v2_VF(dnew,dimpl)    
-  call diffc(dnew,this%v2,mu,mui,muk,mut,this%sigmak,rho,Ru,Rp,dru,dz,rank,modification)
+  call diffc(dnew,this%v2,mu,mui,muk,mut,this%sigmak,rho,modification)
 
   do k=1,kmax
     do i=1,imax

@@ -28,14 +28,9 @@ contains
   !       MK routines      !
   !************************!
 
-type(MK_TurbModel) function init_MK_TurbModel(i1,k1,imax,kmax,name)
-  integer, intent(in) :: i1,k1,imax,kmax
+type(MK_TurbModel) function init_MK_TurbModel(name)
   character(len=2), intent(IN) :: name
   init_MK_TurbModel%name=name
-  init_MK_TurbModel%i1 = i1
-  init_MK_TurbModel%k1 = k1
-  init_MK_TurbModel%imax = imax
-  init_MK_TurbModel%kmax = kmax
 end function init_MK_TurbModel
 
 subroutine set_constants_MK(this)

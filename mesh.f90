@@ -8,7 +8,6 @@ module mod_mesh
   !*************************!
 
   type, abstract, public :: AbstractMesh
-  integer                            :: i1, k1, imax, kmax
   real(8), dimension(:), allocatable :: Ru,Rp,dru,drp,y_fa,y_cv     !0:i1
   real(8), dimension(:), allocatable :: zp,zw,dzp,dzw
   real(8), allocatable               :: dz,dpdz,start
@@ -213,13 +212,11 @@ contains
     class(AbstractMesh) :: this
     real(8), intent(IN) :: LoD
     integer, intent(IN) :: rank, px 
-    real(8) :: L,a,c,H
+    real(8) :: L,a,c,H,value,tmp
     real(8), dimension(0:2000) :: y, x2tab, x, ys
-    real(8) :: value
     integer :: i,nelem, k, ierr
     integer :: tabkhi,tabklo = 0 
     character*5 cha
-    real(8) :: tmp
     
     a = 10.
     L = 0.1

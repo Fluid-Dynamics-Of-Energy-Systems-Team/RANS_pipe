@@ -30,14 +30,9 @@ contains
   !       Abe routines      !
   !************************!
 
-type(Abe_TurbModel) function init_Abe_TurbModel(i1,k1,imax,kmax,name)
-  integer, intent(in) :: i1,k1,imax,kmax
-  character(len=2), intent(IN) :: name
+type(Abe_TurbModel) function init_Abe_TurbModel(name)
+  character(len=3), intent(IN) :: name
   init_Abe_TurbModel%name=name
-  init_Abe_TurbModel%i1 = i1
-  init_Abe_TurbModel%k1 = k1
-  init_Abe_TurbModel%imax = imax
-  init_Abe_TurbModel%kmax = kmax
 end function init_Abe_TurbModel
 
 subroutine set_constants_Abe(this)
@@ -54,7 +49,7 @@ subroutine init_w_inflow_Abe(this,Re,systemsolve)
   class(Abe_TurbModel) :: this
   real(8), intent(IN) :: Re
   integer, intent(IN) :: systemsolve
-  real(8), dimension(0:this%i1) :: dummy
+  real(8), dimension(0:i1) :: dummy
   character(len=5)  :: Re_str
   integer           :: Re_int,i,k
   Re_int = int(Re)
@@ -64,7 +59,7 @@ subroutine init_w_inflow_Abe(this,Re,systemsolve)
   if (systemsolve .eq. 3) open(29,file = 'symchan/Inflow_'//TRIM(this%name)//'_'//Re_str//'.dat',form='unformatted')
   read(29) dummy(:),this%kin(:),this%epsin(:),dummy(:),dummy(:),dummy(:),this%mutin(:),dummy(:)
   close(29)
-  do k=0,this%k1
+  do k=0,k1
     this%eps(:,k) = this%epsin(:)
     this%k(:,k) = this%kin(:)
   enddo
@@ -101,6 +96,43 @@ subroutine set_mut_Abe(this,u,w,rho,mu,mui,mut)
     enddo
   enddo
 end subroutine set_mut_Abe
+
+subroutine set_bc_Abe(this,mu,rho,periodic,rank,px)
+  use mod_param, only : i1,k1,imax,kmax,k
+  use mod_mesh, only : top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,walldist
+  implicit none
+  class(Abe_TurbModel) :: this
+  real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
+  integer,                     intent(IN) :: periodic, rank, px
+  real(8),dimension(0:i1) :: tmp
+  real(8)                 :: topBCvalue, botBCvalue
+  
+  do k = 0,k1 
+    this%k(0,k)  = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
+    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)      !symmetry or 0 value
+    botBCvalue   = 2.0*mu(1,k)/rho(1,k)*((this%k(1,k)**0.5)/walldist(1))**2                
+    this%eps(0,k)= (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))      +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value
+    topBCvalue   = 2.0*mu(imax,k)/rho(imax,k)*((this%k(imax,k)**0.5)/walldist(imax))**2                          !bcvalue
+    this%eps(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(imax,k)) +top_bcvalue(k)*this%eps(imax,k)!symmetry or bc value
+  enddo
+
+  call shiftf(this%k,  tmp,rank); this%k  (:,0) =tmp(:);
+  call shiftf(this%eps,tmp,rank); this%eps(:,0) =tmp(:);
+  call shiftb(this%k,  tmp,rank); this%k  (:,k1)=tmp(:);
+  call shiftb(this%eps,tmp,rank); this%eps(:,k1)=tmp(:);
+  
+  ! developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%k  (:,0) = this%kin(:)
+    this%eps(:,0) = this%epsin(:)
+  endif
+  if (rank.eq.px-1) then
+    this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
+    this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
+  endif
+
+end subroutine set_bc_Abe
 
 subroutine rhs_eps_Abe(this,putout,dimpl,rho)
   use mod_param, only : i1,k1,imax,kmax,k,i
@@ -155,45 +187,6 @@ subroutine advance_Abe(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alpha1,modification,rank,periodic)
 end
-
-subroutine set_bc_Abe(this,mu,rho,periodic,rank,px)
-  use mod_param, only : i1,k1,imax,kmax,k
-  use mod_mesh, only : top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,walldist
-  implicit none
-  class(Abe_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
-  integer,                     intent(IN) :: periodic, rank, px
-  real(8),dimension(0:i1) :: tmp
-  real(8)                 :: topBCvalue, botBCvalue
-  
-  do k = 0,k1 
-    this%k(0,k)  = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
-    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)      !symmetry or 0 value
-    botBCvalue   = 2.0*mu(1,k)/rho(1,k)*((this%k(1,k)**0.5)/walldist(1))**2                
-    ! botBCvalue = 2.0*mu(1,k)/rho(1,k)*this%k(1,k)/walldist(1)**2                                                          !bcvalue
-    this%eps(0,k)= (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))         +bot_bcvalue(k)*this%eps(1,k)        !symmetry or bc value
-    ! topBCvalue = 2.0*mu(this%imax,k)/rho(this%imax,k)*this%k(this%imax,k)/walldist(this%imax)**2                          !bcvalue
-    topBCvalue   = 2.0*mu(imax,k)/rho(imax,k)*((this%k(imax,k)**0.5)/walldist(imax))**2                          !bcvalue
-    this%eps(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(imax,k)) +top_bcvalue(k)*this%eps(imax,k)!symmetry or bc value
-  enddo
-
-  call shiftf(this%k,  tmp,rank); this%k  (:,0) =tmp(:);
-  call shiftf(this%eps,tmp,rank); this%eps(:,0) =tmp(:);
-  call shiftb(this%k,  tmp,rank); this%k  (:,k1)=tmp(:);
-  call shiftb(this%eps,tmp,rank); this%eps(:,k1)=tmp(:);
-  
-  ! developing
-  if (periodic.eq.1) return
-  if (rank.eq.0) then
-    this%k  (:,0) = this%kin(:)
-    this%eps(:,0) = this%epsin(:)
-  endif
-  if (rank.eq.px-1) then
-    this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
-    this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
-  endif
-
-end subroutine set_bc_Abe
 
 subroutine production_Abe(this,u,w,temp,rho,mut,beta)
   use mod_param, only : i1,k1,imax,kmax,i,k

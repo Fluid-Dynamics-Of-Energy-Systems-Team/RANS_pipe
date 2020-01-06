@@ -217,7 +217,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   cb3 = 2.0/3.0
   resSA = 0.0
   dnew=0.0; dimpl = 0.0;
-  call advecc(dnew,dimpl,this%nuSA,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%nuSA,u,w,rank,periodic,.true.)
   call this%rhs_SA(dnew,dimpl,this%nuSA,rho,modification)
 
   do k=0,kmax+1

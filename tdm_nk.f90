@@ -29,14 +29,9 @@ contains
   !       NK routines      !
   !************************!
 
-type(NK_TurbDiffModel) function init_NK_TurbDiffModel(i1,k1,imax,kmax,name)
-  integer, intent(in) :: i1,k1,imax,kmax
+type(NK_TurbDiffModel) function init_NK_TurbDiffModel(name)
   character(len=2), intent(IN) :: name
   init_NK_TurbDiffModel%name=name
-  init_NK_TurbDiffModel%i1 = i1
-  init_NK_TurbDiffModel%k1 = k1
-  init_NK_TurbDiffModel%imax = imax
-  init_NK_TurbDiffModel%kmax = kmax
 end function init_NK_TurbDiffModel
 
 subroutine set_constants_NK(this)

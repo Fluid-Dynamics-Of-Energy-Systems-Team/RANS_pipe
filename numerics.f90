@@ -429,14 +429,16 @@ end
 !!********************************************************************
 !!     diffusion term in the z-direction, set as a source term...
 !!********************************************************************
-subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,Ru,Rp,dru,dz,rank1,diffVersion)
-  use mod_param,   only : i,k,kmax,imax,k1,i1
-  use mod_mesh, only : dzw,dzp
+subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,diffVersion)
+  use mod_param, only : i,k,kmax,imax,k1,i1
+  use mod_mesh,  only : dzw,dzp,Ru,Rp,dru,dz
   implicit none
-  integer   km,kp,rank1,diffVersion
-  real*8     putout(0:i1,0:k1),putin(0:i1,0:k1), &
-             rho(0:i1,0:k1),ek(0:i1,0:k1),eki(0:i1,0:k1),ekk(0:i1,0:k1), &
-             ekmt(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1),sigma
+  
+  real(8), dimension(0:i1,0:k1), intent(IN)  :: putin, ek,eki,ekk,ekmt,rho
+  real(8), dimension(0:i1,0:k1), intent(OUT) :: putout
+  real(8),                       intent(IN)  :: sigma
+  integer,                       intent(IN)  :: diffVersion
+  integer   km,kp
   
   if (diffVersion == 1) then       ! Inverse SLS
     do k=1,kmax
@@ -520,20 +522,23 @@ end
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use mod_mesh, only : dzw,dzp
+subroutine diffu (putout,Uvel,Wvel,ekme,dif,numDom)
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh,  only : Ru,Rp,dru,drp,dz,dzw,dzp
   implicit none
-  integer  i,k,im,ip,km,kp,i1,k1,numDom
-  real*8   putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
-           ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
-           epop,epom,divUim,divUip,divUi,dif
+  real(8), dimension(0:i1,0:k1), intent(IN) :: Uvel,Wvel,ekme
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout
+  real(8), intent(IN) :: dif
+  integer, intent(IN) :: numDom 
+  integer  im,ip,km,kp
+  real*8   epop,epom,divUim,divUip,divUi
   
   !pipe
   if (numDom == -1) then
-    do k=1,k1-1
+    do k=1,kmax
       kp=k+1
       km=k-1
-      do i=1,i1-1
+      do i=1,imax
         ip=i+1
         im=i-1
 
@@ -556,10 +561,10 @@ subroutine diffu (putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
   !channel
   elseif (numDom == 1) then
       
-    do k=1,k1-1
+    do k=1,kmax
       kp=k+1
       km=k-1
-      do i=1,i1-1
+      do i=1,imax
         ip=i+1
         im=i-1
 
@@ -639,21 +644,22 @@ end
 !!     other parameters  : all unchanged
 !!     
 !!*****************************************************************
-subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
-  use mod_mesh, only : dzw,dzp
+subroutine diffw(putout,Uvel,Wvel,ekme,dif,numDom)
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh,  only : Ru,Rp,dru,drp,dz,dzw,dzp
   implicit none
-     
-
-  integer  i,k,im,ip,km,kp,i1,k1,numDom
-  real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1),  &
-    ekme(0:i1,0:k1),dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1), &
-    epop,emop,divUkm,divUkp,dif
+  real(8), dimension(0:i1,0:k1), intent(IN) :: Uvel,Wvel,ekme
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout
+  real(8), intent(IN) :: dif
+  integer, intent(IN) :: numDom 
+  integer  im,ip,km,kp
+  real*8   epop,emop,divUkm,divUkp
   
   if (numDom == -1) then
-    do k=1,k1-1
+    do k=1,kmax
       kp=k+1
       km=k-1
-      do i=1,i1-1
+      do i=1,imax
         ip=i+1
         im=i-1
 
@@ -675,10 +681,10 @@ subroutine diffw(putout,Uvel,Wvel,ekme,Ru,Rp,dru,drp,dz,i1,k1,dif,numDom)
     enddo
 
   elseif (numDom == 1) then
-    do k=1,k1-1
+    do k=1,kmax
       kp=k+1
       km=k-1
-      do i=1,i1-1
+      do i=1,imax
         ip=i+1
         im=i-1
 
@@ -742,13 +748,14 @@ end
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagImpl)
-  use mod_mesh, only : dzw,dzp
+subroutine advecc(putout,dimpl,putin,U,W,rank,periodic,flagImpl)
+  use mod_param,only : k1,i1,kmax,imax,k,i 
+  use mod_mesh, only : dzw,dzp,Ru,Rp,dru,dz
   implicit none
-
-  integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke,rank,periodic
-  real*8 putout(0:i1,0:k1),putin(0:i1,0:k1),dimpl(0:i1,0:k1)
-  real*8 U(0:i1,0:k1),W(0:i1,0:k1),dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
+  integer,                       intent(IN) :: periodic, rank
+  real(8), dimension(0:i1,0:k1), intent(IN) :: U,W,putin
+  real(8), dimension(0:i1,0:k1), intent(OUT):: dimpl,putout
+  integer  im,ip,km,kp
   real*8 eps,r1,rk1,re1,phi1,phik1,phie1,r2,rk2,re2,phi2,phik2,phie2,r3,rk3,re3,phi3,phik3,phie3,fak
   real*8 rhoip,rhoim,rhokp,rhokm
   real*8 dcubf(0:i1),dcwbf(0:i1)
@@ -760,19 +767,13 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
 
   cu = 0.0
   cw = 0.0
-
   dcu = 0.0
   dcw = 0.0
 
-  ib = 1
-  ie = i1-1
-
-  kb = 1
-  ke = k1-1
   !
   !     compute delta C and distribute cpu boundaries
-  do k=0,ke
-    do i=0,ie
+  do k=0,kmax
+    do i=0,imax
       dcu(i,k) = putin(i+1,k)-putin(i,k)
       dcw(i,k) = putin(i,k+1)-putin(i,k)
     enddo
@@ -781,7 +782,7 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
   call shiftf(dcu,dcubf,rank)
   call shiftf(dcw,dcwbf,rank)
 
-  do i=ib,ie
+  do i=1,imax
     dcu(i,0) = dcubf(i)
     dcw(i,0) = dcwbf(i)
   enddo
@@ -795,10 +796,10 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
   fak=1.0/3.0
 
   !     calculate face value for C
-  do k=kb,ke
+  do k=1,kmax
     kp=k+1
     km=k-1
-    do i=ib,ie
+    do i=1,imax
       ip=i+1
       im=i-1
       if (U(i,k).ge.(0.0)) then
@@ -825,22 +826,22 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
   call shiftf(cu,dcubf,rank)
   call shiftf(cw,dcwbf,rank)
 
-  do i=ib,ie
+  do i=1,imax
     cu(i,0)  = dcubf(i)
     cw(i,0)  = dcwbf(i)
   enddo
 
   if ((periodic.ne.1).and.(rank.eq.0)) then
-    do i=0,ie
+    do i=0,imax
       cu(i,0) = putin(i,0)
       cw(i,0) = putin(i,0)
     enddo
   endif
 
   !     adv = u dc/dz = d(u c)/dz -c du/dz
-  do k=kb,ke
+  do k=1,kmax
     km=k-1
-    do i=ib,ie
+    do i=1,imax
       im=i-1
       putout(i,k) =    - (Ru(i)*U(i,k)*cu(i,k)-Ru(im)*U(im,k)*cu(im,k))/(Rp(i)*dru(i))  &
                        - (      W(i,k)*cw(i,k)-       W(i,km)*cw(i,km))/dzw(k)          &
@@ -853,9 +854,9 @@ subroutine advecc(putout,dimpl,putin,U,W,Ru,Rp,dru,dz,i1,k1,rank,periodic,flagIm
 
   !     Implicit part
   if (flagImpl .eqv. .true.) then
-    do k=kb,ke
+    do k=1,kmax
       km=k-1
-      do i=ib,ie
+      do i=1,imax
         im=i-1
         putout(i,k)= putout(i,k)  + W(i,k)*putin(i,k)/dzw(k)
         dimpl(i,k) =  dimpl(i,k)  + W(i,k)/dzw(k)
@@ -896,25 +897,19 @@ end
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-subroutine advecu(putout,Uvel,Wvel,RHO,Ru,Rp,dru,drp,dz,i1,k1)
-  use mod_mesh, only : dzw,dzp
+subroutine advecu(putout,Uvel,Wvel,rho)
+  use mod_param, only : k1,i1,kmax,imax,k,i
+  use mod_mesh, only : dzw,dzp,Ru,Rp,dru,drp,dz
   implicit none
-  integer  i,k,im,ip,km,kp,i1,k1,ib,ie,kb,ke
-  real*8     putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
-    dru(0:i1),drp(0:i1),dz,Ru(0:i1),Rp(0:i1)
-  real*8 rho(0:i1,0:k1)
+  real(8), dimension(0:i1,0:k1),intent(IN) :: Uvel,Wvel,rho
+  real(8), dimension(0:i1,0:k1),intent(OUT) :: putout  
+  integer  im,ip,km,kp
   real*8 rhoip,rhoim,rhokp,rhokm
   
-  !     if (adv.eq.1) Uin=Uvel
-  ib = 1
-  ie = i1-1
-  kb = 1
-  ke = k1-1
-
-  do k=kb,ke
+  do k=1,kmax
     kp=k+1
     km=k-1
-    do  i=ib,ie
+    do  i=1,imax
       ip=i+1
       im=i-1
 
@@ -969,26 +964,19 @@ end
 !!     other parameters  : all unchanged
 !!     
 !!********************************************************************
-subroutine advecw(putout,Uvel,Wvel,RHO,Ru,Rp,dru,dz,ekm,peclet_z)
-  use mod_param
-  use mod_mesh, only : dzw,dzp
+subroutine advecw(putout,Uvel,Wvel,rho,ekm,peclet_z)
+  use mod_param, only : i1,k1,kmax,imax,k,i
+  use mod_mesh, only : dzw,dzp,Ru,Rp,dru
   implicit none
-
-  integer   im,ip,km,kp,ib,ie,kb,ke
-  real*8    putout(0:i1,0:k1),Uvel(0:i1,0:k1),Wvel(0:i1,0:k1), &
-            dru(0:i1),dz,Ru(0:i1),Rp(0:i1)
-  real*8    rho(0:i1,0:k1),ekm(0:i1,0:k1),peclet_z(0:i1,0:k1)
+  real(8), dimension(0:i1,0:k1),intent(IN) :: Uvel,Wvel,rho,ekm
+  real(8), dimension(0:i1,0:k1),intent(OUT):: putout,peclet_z
+  integer   im,ip,km,kp
   real*8    rhoip,rhoim,advcecw_w
   
-  ib = 1
-  ie = i1-1
-  kb = 1
-  ke = k1-1
-
-  do k=kb,ke
+  do k=1,kmax
     kp=k+1
     km=k-1
-    do i=ib,ie
+    do i=1,imax
       ip=i+1
       im=i-1
 

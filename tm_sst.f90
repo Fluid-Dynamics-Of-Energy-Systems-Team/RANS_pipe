@@ -345,7 +345,7 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   
   resK  = 0.0; dnew=0.0; dimpl = 0.0;
 
-  call advecc(dnew,dimpl,this%k,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%k,u,w,rank,periodic,.true.)
   call this%rhs_k_SST(dnew,dimpl,rho)
 
   ! calculating constant with blending function factor
@@ -476,7 +476,7 @@ subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   
   resOm = 0.0
   dnew=0.0; dimpl = 0.0;
-  call advecc(dnew,dimpl,this%om,u,w,Ru,Rp,dru,dz,i1,k1,rank,periodic,.true.)
+  call advecc(dnew,dimpl,this%om,u,w,rank,periodic,.true.)
   call this%rhs_om_sst(dnew,dimpl,this%k,u,w,temp,rho,beta)
 
 
