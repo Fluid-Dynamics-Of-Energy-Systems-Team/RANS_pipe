@@ -15,7 +15,8 @@ module ke_tm
   contains
     procedure(set_mut_KE), deferred :: set_mut
     procedure(set_bc_KE), deferred :: set_bc
-    procedure(set_constants), deferred :: set_constants
+    ! procedure(set_constants), deferred :: set_constants
+    procedure :: set_constants => set_constants_KE
     procedure :: init_w_inflow => init_w_inflow_KE
     procedure :: advance_turb => advance_KE
     procedure :: production_KE
@@ -61,6 +62,10 @@ contains
   !************************!
   !       KE routines      !
   !************************!
+
+subroutine set_constants_KE(this)
+  class(KE_TurbModel) :: this
+end subroutine set_constants_KE
 
 subroutine init_KE(this)
   class(KE_TurbModel) :: this
@@ -167,7 +172,7 @@ subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   endif
 
   call this%production_KE(u,w,temp,rho,mu,mut,beta)
-  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                          alpha2,modification,rank,periodic)
   call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alpha1,modification,rank,periodic)
@@ -231,14 +236,14 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   enddo
 end
 
-subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,rho_mod, &
+subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                         alphae,modification,rank,periodic)
   use mod_param, only :k1,i1,imax,kmax,i,k
   use mod_math
   use mod_mesh, only : mesh,Ru,Rp,dru,drp,bot_bcvalue,top_bcvalue
   implicit none
   class(KE_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,rho_mod
+  real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
   real(8),                                intent(IN) :: alphae
   integer,                                intent(IN) :: modification,rank,periodic
   real(8),                                intent(OUT):: resE

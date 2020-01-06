@@ -176,7 +176,7 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   call this%fillhem(mu,rho)
   ! call SOLVEhelm(this%fv2,rank,this%Lh,centerBC)
   call this%production_KE(u,w,temp,rho,mu,mut,beta)
-  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,rho_mod, &
+  call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                        alpha2,modification,rank,periodic)
   call this%solve_k_KE(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alpha1,modification,rank,periodic)
