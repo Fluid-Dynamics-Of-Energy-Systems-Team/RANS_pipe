@@ -67,14 +67,10 @@ subroutine init_mem_SST(this)
   use mod_param, only : k1,i1,kmax,imax  
   implicit none
   class(SST_TurbModel) :: this
-  allocate(this%om (0:i1,0:k1),this%k(0:i1,0:k1),    &
-           this%bF1(0:i1,0:k1),this%bF2(imax,kmax),  &
-           this%Gk (0:i1,0:k1),this%Pk (0:i1,0:k1),  &
-           this%Tt (0:i1,0:k1),this%cdKOM(imax,kmax),&
+  allocate(this%om (0:i1,0:k1),this%k(0:i1,0:k1), this%bF1(0:i1,0:k1),this%bF2(imax,kmax),  &
+           this%Gk (0:i1,0:k1),this%Pk (0:i1,0:k1), this%Tt (0:i1,0:k1),this%cdKOM(imax,kmax),&
            this%yp (0:i1,0:k1))
-  allocate(this%mutin(0:i1),this%Pkin (0:i1), &
-           this%bF1in(0:i1),                       &
-           this%omin (0:i1),this%kin  (0:i1))
+  allocate(this%mutin(0:i1),this%Pkin (0:i1), this%bF1in(0:i1),this%omin (0:i1),this%kin(0:i1))
 end subroutine init_mem_SST
 
 subroutine init_w_inflow_SST(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
@@ -90,14 +86,14 @@ subroutine init_w_inflow_SST(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
 end subroutine init_w_inflow_SST
 
 subroutine set_mut_SST(this,u,w,rho,mu,mui,mut)
-  use mod_param, only : k1,i1,kmax,imax  
+  use mod_param, only : k1,i1,kmax,imax,k,i
   use mod_mesh, only : mesh,dzw,dzp,dru,drp,rp,ru,walldist,ru
   implicit none
   class(SST_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho, mu, mui
   real(8), dimension(0:i1,0:k1), intent(OUT):: mut
   real(8), dimension(k1) :: tauw
-  integer  im,ip,km,kp,i,k
+  integer  im,ip,km,kp
   real(8)  sigma_om2,betaStar,gradkom,gamma1,gamma2,gamma3,gammaSST,zetaSST,StR, wallD
 
   !constants

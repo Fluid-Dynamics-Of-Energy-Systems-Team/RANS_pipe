@@ -90,7 +90,7 @@ subroutine init_w_inflow_KE(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
   class(KE_TurbModel) :: this
   real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
   this%epsin = epsin
-  this%kin = kin
+  this%kin   = kin
   this%mutin = mutin
   do k=0,k1
     this%eps(:,k) = this%epsin(:)
@@ -98,19 +98,14 @@ subroutine init_w_inflow_KE(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
   enddo
 end subroutine init_w_inflow_KE
 
-
 subroutine init_mem_KE(this)
   use mod_param, only : kmax,imax,k1,i1
   class(KE_TurbModel) :: this
-  allocate(this%eps(0:i1,0:k1),this%k (0:i1,0:k1), &
-           this%Gk (0:i1,0:k1),this%Pk(0:i1,0:k1), &
-           this%f1 (0:i1,0:k1),this%f2(0:i1,0:k1), &
-           this%fmu(0:i1,0:k1),this%Tt(0:i1,0:k1), &
-           this%v2 (0:i1,0:k1),this%yp(0:i1,0:k1), &
-           this%fv2(imax,kmax),this%Lh(imax,kmax), &
+  allocate(this%eps(0:i1,0:k1),this%k (0:i1,0:k1), this%Gk (0:i1,0:k1),this%Pk(0:i1,0:k1), &
+           this%f1 (0:i1,0:k1),this%f2(0:i1,0:k1), this%fmu(0:i1,0:k1),this%Tt(0:i1,0:k1), &
+           this%v2 (0:i1,0:k1),this%yp(0:i1,0:k1), this%fv2(imax,kmax),this%Lh(imax,kmax), &
            this%feps(0:i1,0:k1))
-  allocate(this%mutin(0:i1),this%Pkin (0:i1), &
-           this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
+  allocate(this%mutin(0:i1),this%Pkin (0:i1),this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
 end subroutine init_mem_KE
 
 subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)

@@ -62,7 +62,7 @@ subroutine init_w_inflow_SA(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
   class(SA_TurbModel) :: this
   real(8), dimension(0:i1), intent(IN) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in
   this%nuSAin = nuSAin
-  this%pkin = pkin
+  this%pkin   = pkin
   do k=0,k1
     this%nuSA(:,k) = this%nuSAin(:)
     this%pk(:,k)   = this%pkin(:)

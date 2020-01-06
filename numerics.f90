@@ -184,8 +184,8 @@ end subroutine interpolate_vector
 
 subroutine interpolate_solution(i1_old, k1_old, rank, px)
   use mod_common, only : wnew, unew, rnew, ekm, ekmt, cnew, win, ekmtin, uin
-  use mod_param, only : read_fname,i1,k1, kmax, periodic
-  use mod_mesh, only : mesh
+  use mod_param, only  : read_fname,i1,k1, kmax, periodic
+  use mod_mesh, only   : zp,y_cv,zw,y_fa
 
   implicit none
   include "mpif.h"
@@ -202,10 +202,10 @@ subroutine interpolate_solution(i1_old, k1_old, rank, px)
   !interpolate on the y values of the new grid
   do k=0,k1
     do i=0,i1
-      x(i,k) =mesh%zp(k)
-      y (i,k)=mesh%y_cv(i)
-      xw(i,k)=mesh%zw(k)
-      yu(i,k)=mesh%y_fa(i)
+      x(i,k) =zp(k)
+      y (i,k)=y_cv(i)
+      xw(i,k)=zw(k)
+      yu(i,k)=y_fa(i)
     enddo
   enddo
   
@@ -433,12 +433,11 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,diffVersion)
   use mod_param, only : i,k,kmax,imax,k1,i1
   use mod_mesh,  only : dzw,dzp,Ru,Rp,dru,dz
   implicit none
-  
   real(8), dimension(0:i1,0:k1), intent(IN)  :: putin, ek,eki,ekk,ekmt,rho
   real(8), dimension(0:i1,0:k1), intent(OUT) :: putout
   real(8),                       intent(IN)  :: sigma
   integer,                       intent(IN)  :: diffVersion
-  integer   km,kp
+  integer :: km,kp
   
   if (diffVersion == 1) then       ! Inverse SLS
     do k=1,kmax
@@ -601,10 +600,6 @@ subroutine diffu (putout,Uvel,Wvel,ekme,dif,numDom)
       enddo
     enddo
   endif
-
-
-
-  return
 end
 
 
@@ -712,7 +707,6 @@ subroutine diffw(putout,Uvel,Wvel,ekme,dif,numDom)
       enddo
     enddo
   endif
-  return
 end
 
 
@@ -863,7 +857,6 @@ subroutine advecc(putout,dimpl,putin,U,W,rank,periodic,flagImpl)
       enddo
     enddo
   endif
-
 end
 
 
