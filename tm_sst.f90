@@ -1,5 +1,5 @@
 module sst_tm
-  use mod_tm
+  use ke_tm
   implicit none
   
 !****************************************************************************************
@@ -8,24 +8,24 @@ module sst_tm
   !         SST class      !
   !************************!
 
-  type, extends(TurbModel), public :: SST_TurbModel
-  real(8), dimension(:,:), allocatable :: Gk,cdKOM
-  real(8), dimension(:),   allocatable :: omin,kin,bF1in
+  type, extends(KE_TurbModel), public :: SST_TurbModel
+  real(8), dimension(:,:), allocatable :: cdKOM
+  real(8), dimension(:),   allocatable :: omin,bF1in
   contains
     procedure :: init => init_SST
     procedure :: init_sol => init_sol_SST
     procedure :: init_mem_SST
     procedure :: set_mut => set_mut_SST
-    procedure :: advance_turb => advance_SST
+    ! procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
     procedure :: get_profile => get_profile_SST
     procedure :: get_sol => get_sol_SST
     procedure :: init_w_inflow => init_w_inflow_SST
-    procedure :: solve_k_SST
-    procedure :: solve_om_sst
+    procedure :: solve_k_KE => solve_k_SST
+    procedure :: solve_eps_KE => solve_om_sst
     procedure :: diffusion_k_SST
     procedure :: diffusion_om_SST
-    procedure :: production_SST
+    procedure :: production_KE => production_SST
     procedure :: rhs_k_SST
     procedure :: rhs_om_SST
   end type SST_TurbModel
@@ -38,6 +38,12 @@ contains
    !************************!
    !      SST routines      !
    !************************!
+
+
+type(SST_TurbModel) function init_SST_TurbModel(name)
+  character(len=3), intent(IN) :: name
+  init_SST_TurbModel%name=name
+end function init_SST_TurbModel
 
 subroutine init_SST(this)
     implicit none
@@ -141,33 +147,6 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,mut)
   enddo
 end subroutine set_mut_SST
 
-subroutine advance_SST(this,u,w,rho,mu,mui,muk,mut,beta,temp,&
-                       alpha1,alpha2,alpha3,                 &
-                       modification,rank,periodic,  &
-                       residual1, residual2, residual3)
-  use mod_param, only : k1,i1  
-  implicit none
-  class(SST_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp
-  real(8),                                intent(IN) :: alpha1, alpha2, alpha3
-  integer,                                intent(IN) :: modification,rank,periodic
-  real(8),                                intent(OUT):: residual1, residual2, residual3
-  real(8),dimension(0:i1,0:k1)             :: rho_mod
-
-  !modification: 1, our modification | 2, Aupoix modification
-  if ((modification == 1) .or. (modification == 2)) then
-    rho_mod = rho
-  else
-    rho_mod = 1.0
-  endif
-
-  call this%production_SST(u,w,rho,temp,mut,beta)
-  call this%solve_k_SST(residual1,u,w,rho,mu,mui,muk,mut,rho_mod, &
-                        alpha1,modification,rank,periodic)
-  call this%solve_om_SST(residual2,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
-                        alpha2,modification,rank,periodic)
-end subroutine advance_SST
-
 subroutine set_bc_SST(this,mu,rho,periodic,rank,px)
   use mod_param,only : k1,i1,kmax,imax,k
   use mod_mesh, only : walldist,top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue
@@ -244,72 +223,6 @@ subroutine get_sol_SST(this,nuSA,k,eps,om,v2,yp)
   yp  = this%yp
 end subroutine get_sol_SST
 
-
-
-subroutine production_SST(this,u,w,temp,rho,mut,beta)
-  use mod_param, only : k1,i1,kmax,imax,i,k 
-  use mod_mesh,  only : dzw,dzp,Rp,Ru,dRu,dRp
-  implicit none
-  class(SST_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mut,beta
-  real(8), dimension(0:i1,0:k1) :: div
-  integer                       :: im,ip,km,kp
-  real(8)                       :: sigma_om1,sigma_om2, &
-                                   beta_1,beta_2,betaStar, &
-                                   alfa_1,alfa_2, ctheta,Fr_1
-  
-  Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
-  ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
-  sigma_om1 = 0.5
-  sigma_om2 = 0.856
-  beta_1    = 0.075
-  beta_2    = 0.0828
-  betaStar  = 0.09
-  alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
-  alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
-
-  do k=1,kmax
-    kp=k+1
-    km=k-1
-    do i=1,imax
-      ip=i+1
-      im=i-1
-      ! Production of turbulent kinetic energy
-      this%Pk(i,k) = mut(i,k)*(  &
-        2.*( ((w(i,k)-w(i,km))/dzw(k))**2.      &
-            +((u(i,k)-u(im,k))/dRu(i))**2.      &
-            +((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) &
-        +( &
-           ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-          +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
-         )**2.)
-
-      div(i,k) = (Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) &
-                +(      w(i,k)-       w(i,km))/dzw(k)
-
-      this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
-
-      ! turbulent time scale
-      this%Tt(i,k)   = 1.0/this%om(i,k)   ! 0.31 cmu/omega
-          
-      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-             *(mut(i,k)*( &
-                          ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
-                        + ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
-                        )* &
-              (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
-              ) &
-             +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km)))
-
-
-      this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
-                     *2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
-                     
-
-    enddo
-  enddo
-end subroutine production_SST
-
 subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
                        alphak,modification,rank,periodic)
   use mod_param, only : k1,i1,kmax,imax,i,k
@@ -371,6 +284,60 @@ subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
     enddo
   enddo
 end subroutine solve_k_SST
+
+subroutine solve_om_sst(this,rese,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
+                        alphae,modification,rank,periodic)
+  use mod_param, only : k1,i1,kmax,imax,i,k
+  use mod_math
+  use mod_mesh, only : top_bcvalue,bot_bcvalue,ru,rp,dru,drp
+  implicit none
+  class(SST_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
+  real(8),                       intent(IN) :: alphae
+  integer,                       intent(IN) :: modification,rank,periodic
+  real(8),                       intent(OUT):: rese
+  real(8), dimension(0:i1,0:k1) :: dnew,dimpl,sigmakSST
+  real(8), dimension(imax)      :: a,b,c,rhs
+  real(8) :: dz
+  
+  resE = 0.0
+  dnew=0.0; dimpl = 0.0;
+  call advecc(dnew,dimpl,this%om,u,w,rank,periodic,.true.)
+  call this%rhs_om_sst(dnew,dimpl,this%k,u,w,temp,rho,beta)
+
+
+  ! calculating constant with blending function factor
+  sigmakSST = 0.5*this%bF1 + 0.856*(1.0 - this%bF1)
+  sigmakSST = 1.0/sigmakSST
+  call this%diffusion_om_SST(dnew,this%om,mu,mui,muk,mut,sigmakSST,rho,modification)
+  do k=1,kmax
+    do i=1,imax
+      a(i) = (mui(i-1,k)+(mut(i,k)+mut(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5
+      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
+      c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5
+      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
+      b(i) = ((-a(i)-c(i))*rho_mod(i,k)**0.5 + dimpl(i,k))
+      a(i) = a(i)*rho_mod(i-1,k)**0.5
+      c(i) = c(i)*rho_mod(i+1,k)**0.5
+      rhs(i) = dnew(i,k)  + ((1-alphae)/alphae)*b(i)*this%om(i,k)
+    enddo
+  
+    i=1
+    b(i)=b(i)+bot_bcvalue(k)*a(i)
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue(k))*a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
+
+    i = imax
+    b(i)=b(i)+top_bcvalue(k)*c(i)
+    rhs(i) = dnew(i,k) - (1-top_bcvalue(k))*c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
+  
+    call matrixIdir(imax,a,b/alphae,c,rhs)
+  
+    do i=1,imax
+      resE = resE + ((this%om(i,k) - rhs(i))/(this%om(i,k)+1.0e-20))**2.0
+      this%om(i,k) = max(rhs(i), 1.0e-8)
+    enddo
+  enddo
+end subroutine solve_om_sst
 
 subroutine rhs_k_SST(this,putout,dimpl,rho)
   use mod_param, only : k1,i1,kmax,imax,i,k
@@ -439,61 +406,6 @@ subroutine diffusion_k_sst(this,putout,putin,ek,eki,ekk,ekmt,sigma,rho,modificat
     enddo
   endif
 end subroutine diffusion_k_sst
-
-
-subroutine solve_om_sst(this,resOm,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
-                        alphae,modification,rank,periodic)
-  use mod_param, only : k1,i1,kmax,imax,i,k
-  use mod_math
-  use mod_mesh, only : top_bcvalue,bot_bcvalue,ru,rp,dru,drp
-  implicit none
-  class(SST_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho,mu,mui,muk,mut,beta,temp,rho_mod
-  real(8),                       intent(IN) :: alphae
-  integer,                       intent(IN) :: modification,rank,periodic
-  real(8),                       intent(OUT):: resOm
-  real(8), dimension(0:i1,0:k1) :: dnew,dimpl,sigmakSST
-  real(8), dimension(imax)      :: a,b,c,rhs
-  real(8) :: dz
-  
-  resOm = 0.0
-  dnew=0.0; dimpl = 0.0;
-  call advecc(dnew,dimpl,this%om,u,w,rank,periodic,.true.)
-  call this%rhs_om_sst(dnew,dimpl,this%k,u,w,temp,rho,beta)
-
-
-  ! calculating constant with blending function factor
-  sigmakSST = 0.5*this%bF1 + 0.856*(1.0 - this%bF1)
-  sigmakSST = 1.0/sigmakSST
-  call this%diffusion_om_SST(dnew,this%om,mu,mui,muk,mut,sigmakSST,rho,modification)
-  do k=1,kmax
-    do i=1,imax
-      a(i) = (mui(i-1,k)+(mut(i,k)+mut(i-1,k))/(sigmakSST(i,k)+sigmakSST(i-1,k)))/(0.5*(rho_mod(i-1,k)+rho_mod(i,k)))**0.5
-      a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
-      c(i) = (mui(i  ,k)+(mut(i,k)+mut(i+1,k))/(sigmakSST(i,k)+sigmakSST(i+1,k)))/(0.5*(rho_mod(i+1,k)+rho_mod(i,k)))**0.5
-      c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)/rho_mod(i,k)**0.5
-      b(i) = ((-a(i)-c(i))*rho_mod(i,k)**0.5 + dimpl(i,k))
-      a(i) = a(i)*rho_mod(i-1,k)**0.5
-      c(i) = c(i)*rho_mod(i+1,k)**0.5
-      rhs(i) = dnew(i,k)  + ((1-alphae)/alphae)*b(i)*this%om(i,k)
-    enddo
-  
-    i=1
-    b(i)=b(i)+bot_bcvalue(k)*a(i)
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue(k))*a(i)*this%om(i-1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
-
-    i = imax
-    b(i)=b(i)+top_bcvalue(k)*c(i)
-    rhs(i) = dnew(i,k) - (1-top_bcvalue(k))*c(i)*this%om(i+1,k) + ((1-alphae)/alphae)*b(i)*this%om(i,k)  !wall
-  
-    call matrixIdir(imax,a,b/alphae,c,rhs)
-  
-    do i=1,imax
-      resOm = resOm + ((this%om(i,k) - rhs(i))/(this%om(i,k)+1.0e-20))**2.0
-      this%om(i,k) = max(rhs(i), 1.0e-8)
-    enddo
-  enddo
-end subroutine solve_om_sst
 
 subroutine rhs_om_sst(this,putout,dimpl,putink,u,w,temp,rho,beta)
   use mod_param, only : k1,i1,kmax,imax,i,k
@@ -587,6 +499,70 @@ subroutine diffusion_om_SST(this, putout,putin,ek,eki,ekk,ekmt,sigma,rho,modific
     enddo
   endif
 end subroutine diffusion_om_SST
+
+
+subroutine production_SST(this,u,w,temp,rho,mu,mut,beta)
+  use mod_param, only : k1,i1,kmax,imax,i,k 
+  use mod_mesh,  only : dzw,dzp,Rp,Ru,dRu,dRp
+  implicit none
+  class(SST_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
+  real(8), dimension(0:i1,0:k1) :: div
+  integer                       :: im,ip,km,kp
+  real(8)                       :: sigma_om1,sigma_om2, &
+                                   beta_1,beta_2,betaStar, &
+                                   alfa_1,alfa_2, ctheta,Fr_1
+  
+  Fr_1      = 0.0 !!!NOTE: this was originally in the param!!!!
+  ctheta    = 0.3 !!!NOTE: this was originally in the param!!!!
+  sigma_om1 = 0.5
+  sigma_om2 = 0.856
+  beta_1    = 0.075
+  beta_2    = 0.0828
+  betaStar  = 0.09
+  alfa_1    = beta_1/betaStar - sigma_om1*(0.41**2.0)/(betaStar**0.5)
+  alfa_2    = beta_2/betaStar - sigma_om2*(0.41**2.0)/(betaStar**0.5)
+
+  do k=1,kmax
+    kp=k+1
+    km=k-1
+    do i=1,imax
+      ip=i+1
+      im=i-1
+      ! Production of turbulent kinetic energy
+      this%Pk(i,k) = mut(i,k)*(  &
+        2.*( ((w(i,k)-w(i,km))/dzw(k))**2.      &
+            +((u(i,k)-u(im,k))/dRu(i))**2.      &
+            +((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) &
+        +( &
+           ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+          +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
+         )**2.)
+
+      div(i,k) = (Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dRu(i)) &
+                +(      w(i,k)-       w(i,km))/dzw(k)
+
+      this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
+
+      ! turbulent time scale
+      this%Tt(i,k)   = 1.0/this%om(i,k)   ! 0.31 cmu/omega
+          
+      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
+             *(mut(i,k)*( &
+                          ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+                        + ((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k) &
+                        )* &
+              (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  &
+              ) &
+             +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km)))
+
+
+      this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k) &
+                     *2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
+                    
+    enddo
+  enddo
+end subroutine production_SST
 
 
 
