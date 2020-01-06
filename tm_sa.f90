@@ -199,7 +199,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   real(8),                      intent(IN) :: alphak
   integer,                      intent(IN) :: rank, modification, periodic
   real(8),                      intent(OUT):: resSA
-  real(8) :: cb3, dz
+  real(8) :: cb3
   real(8), dimension(0:i1,0:k1) :: dnew,tempArray,dimpl,eknu,eknui,eknuk
   real(8), dimension(imax)      :: a,b,c,rhs
   

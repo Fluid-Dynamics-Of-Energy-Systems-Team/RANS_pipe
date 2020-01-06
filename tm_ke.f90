@@ -191,9 +191,7 @@ subroutine solve_k_KE(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
   real(8),                      intent(OUT):: resK
   real(8), dimension(0:i1,0:k1)      :: dnew,dimpl
   real(8), dimension(imax)           :: a,b,c,rhs
-  real(8)                            :: dz
-  
-  
+    
   resK  = 0.0;  dnew  = 0.0; dimpl = 0.0;
 
   call advecc(dnew,dimpl,this%k,u,w,rank,periodic,.true.)
@@ -249,7 +247,6 @@ subroutine solve_eps_KE(this,resE,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   real(8),                                intent(OUT):: resE
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)           :: a,b,c,rhs
-  real(8) dz
   
   resE  = 0.0; dnew  = 0.0; dimpl = 0.0;
 

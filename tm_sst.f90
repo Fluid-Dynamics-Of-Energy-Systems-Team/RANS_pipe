@@ -14,18 +14,17 @@ module sst_tm
   contains
     procedure :: init => init_SST
     procedure :: init_sol => init_sol_SST
-    procedure :: init_mem_SST
     procedure :: set_mut => set_mut_SST
-    ! procedure :: advance_turb => advance_SST
     procedure :: set_bc => set_bc_SST
     procedure :: get_profile => get_profile_SST
     procedure :: get_sol => get_sol_SST
     procedure :: init_w_inflow => init_w_inflow_SST
     procedure :: solve_k_KE => solve_k_SST
-    procedure :: solve_eps_KE => solve_om_sst
+    procedure :: solve_eps_KE => solve_om_SST
+    procedure :: production_KE => production_SST
+    procedure :: init_mem_SST
     procedure :: diffusion_k_SST
     procedure :: diffusion_om_SST
-    procedure :: production_KE => production_SST
     procedure :: rhs_k_SST
     procedure :: rhs_om_SST
   end type SST_TurbModel
@@ -73,8 +72,8 @@ subroutine init_mem_SST(this)
   use mod_param, only : k1,i1,kmax,imax  
   implicit none
   class(SST_TurbModel) :: this
-  allocate(this%om (0:i1,0:k1),this%k(0:i1,0:k1), this%bF1(0:i1,0:k1),this%bF2(imax,kmax),  &
-           this%Gk (0:i1,0:k1),this%Pk (0:i1,0:k1), this%Tt (0:i1,0:k1),this%cdKOM(imax,kmax),&
+  allocate(this%om (0:i1,0:k1),this%k(0:i1,0:k1),   this%bF1(0:i1,0:k1),this%bF2(imax,kmax),    &
+           this%Gk (0:i1,0:k1),this%Pk (0:i1,0:k1), this%Tt (0:i1,0:k1),this%cdKOM(imax,kmax),  &
            this%yp (0:i1,0:k1))
   allocate(this%mutin(0:i1),this%Pkin (0:i1), this%bF1in(0:i1),this%omin (0:i1),this%kin(0:i1))
 end subroutine init_mem_SST
@@ -199,16 +198,15 @@ subroutine get_profile_SST(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k
   integer,                               intent(IN) :: k
   real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
   real(8),dimension(1:imax),        intent(OUT):: p_bF2
-
   p_nuSA(:)=0
   p_k(:)   =this%k(:,k)
   p_eps(:) =0
   p_om(:)  =this%om(:,k)
   p_Pk(:)  =this%Pk(:,k)
-  p_bF1(:) = this%bF1(:,k)
-  p_bF2(:) = this%bF2(:,k)
-  p_v2(:)  = 0
-  yp(:)    = this%yp(:,k)
+  p_bF1(:) =this%bF1(:,k)
+  p_bF2(:) =this%bF2(:,k)
+  p_v2(:)  =0
+  yp(:)    =this%yp(:,k)
 end subroutine get_profile_SST
 
 subroutine get_sol_SST(this,nuSA,k,eps,om,v2,yp)
@@ -220,7 +218,7 @@ subroutine get_sol_SST(this,nuSA,k,eps,om,v2,yp)
   eps =0
   v2  =0
   om  =this%om
-  yp  = this%yp
+  yp  =this%yp
 end subroutine get_sol_SST
 
 subroutine solve_k_SST(this,resK,u,w,rho,mu,mui,muk,mut,rho_mod, &
@@ -298,8 +296,7 @@ subroutine solve_om_sst(this,rese,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
   real(8),                       intent(OUT):: rese
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl,sigmakSST
   real(8), dimension(imax)      :: a,b,c,rhs
-  real(8) :: dz
-  
+
   resE = 0.0
   dnew=0.0; dimpl = 0.0;
   call advecc(dnew,dimpl,this%om,u,w,rank,periodic,.true.)
