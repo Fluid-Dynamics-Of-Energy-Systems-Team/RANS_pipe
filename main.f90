@@ -449,10 +449,9 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
                                win, Re, systemsolve, select_init)
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
-  use mod_param, only : k1,i1,imax_old, kelem_old,px
+  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k
   use mod_mesh,  only : y_fa,y_cv, mesh
   implicit none
-  include "mpif.h"
   integer,                        intent(IN) :: rank,systemsolve,select_init
   real(8),                        intent(IN) :: Re
   real(8), dimension(0:i1, 0:k1), intent(OUT):: w,u,c,mut,alphat
@@ -460,19 +459,18 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
   real(8), dimension(0:i1) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in, &
                               Prtin,alphatin,ktin,epstin,pktin
   character(len=5)  :: Re_str
-  character(len=7)  :: case
-  integer           :: Re_int, i,k, imax
+  integer           :: Re_int
   real(8)           :: gridSize
     
-  imax = i1-1
-  ! inialize from inflow profile=
+  ! inialize from inflow profile
   if (select_init.eq.1) then
     if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
     Re_int = int(Re)
     write(Re_str,'(I5.5)') Re_int
-    open(29,file =trim(mesh%name)//'/Inflow_'//trim(turb_model%name)//'_' &
-                                        //trim(turbdiff_model%name)//'_' &
-                                        //Re_str//'.dat',form='unformatted')
+    open(29,file =trim(mesh%name)          //'/Inflow_'// &
+                  trim(turb_model%name)    //'_'//        &
+                  trim(turbdiff_model%name)//'_'//        &
+                  Re_str//'.dat',form='unformatted')
     read(29) win(:),kin,epsin,v2in,omin,nuSAin,mutin,pkin, alphatin,prtin, ktin, epstin,pktin
     close(29)
     do k=0,k1
@@ -499,7 +497,6 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
          w(i,:)  = 1.; u=0.;  win=1.; mutin=0!bl 
       endif
     enddo
-    ! win=w(:,0);          !pipe
   endif
 end subroutine initialize_solution
 
