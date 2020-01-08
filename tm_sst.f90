@@ -58,10 +58,10 @@ subroutine init_sol_SST(this)
   class(SST_TurbModel) :: this
 
   do i=0,i1
-    this%k(i,:)  = 0.0!0.1
+    this%k(i,:)  = 0.1!!0.1
     this%om(i,:)  = 1.0
     this%bF1(i,:)  = 1.0
-    this%kin = 0.0
+    this%kin = 0.1
     this%omin = 1.0
     this%bF1in = 1.0
     this%mutin = this%kin/this%omin
@@ -138,9 +138,12 @@ subroutine set_mut_SST(this,u,w,rho,mu,mui,mut)
       gammaSST = max(2.0*gamma3, gamma1)
       this%bF2(i,k) = tanh(gammaSST**2.0)
 
-      zetaSST  = max(0.31*this%om(i,k), this%bF2(i,k)*StR)
-      mut(i,k) = rho(i,k)*this%k(i,k)/zetaSST !!! NOTE this is the correct one !!!!
+      ! zetaSST  = max(0.31*this%om(i,k), this%bF2(i,k)*StR)
+      zetaSST  = min(1.0/this%om(i,k), 0.31/(this%bF2(i,k)*StR))
+
+      mut(i,k) = rho(i,k)*this%k(i,k)*zetaSST !!! NOTE this is the correct one !!!!
       ! mut(i,k) = rho(i,k)*this%k(i,k)/this%om(i,k)
+      mut(i,k) = min(max(mut(i,k),0.0),100.0);
 
     enddo
   enddo
@@ -162,9 +165,9 @@ subroutine set_bc_SST(this,mu,rho,periodic,rank,px)
     this%k(i1,k)  = top_bcnovalue(k)*this%k(imax,k)   !symmetry or 0 value
     this%bF1(0,k) = bot_bcnovalue(k)*this%bF1(1,k)
     this%bF1(i1,k)= top_bcnovalue(k)*this%bF1(imax,k)
-    botBCvalue    = 60.0/0.075*mu(1,k)/rho(1,k)/walldist(1)**2                                            !bcvalue bot
+    botBCvalue    = (60.0/0.075)*mu(1,k)/rho(1,k)/walldist(1)**2                                            !bcvalue bot
     this%om(0,k)  = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%om(1,k))    + bot_bcvalue(k)*this%om(1,k)    !symmetry or bc value
-    topBCvalue    = 60.0/0.075*mu(imax,k)/rho(imax,k)/walldist(imax)**2                                   !bcvalue top
+    topBCvalue    = (60.0/0.075)*mu(imax,k)/rho(imax,k)/walldist(imax)**2                                   !bcvalue top
     this%om(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%om(imax,k)) + top_bcvalue(k)*this%om(imax,k) !symmetry or bc value
   enddo
 

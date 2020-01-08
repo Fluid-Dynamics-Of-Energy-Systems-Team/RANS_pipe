@@ -163,7 +163,6 @@ subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   integer,                                intent(IN) :: modification,rank,periodic
   real(8),                                intent(OUT):: residual1,residual2, residual3
   real(8), dimension(0:i1,0:k1) :: rho_mod
-
   !1, our modification, 2, Aupoix modification
   if ((modification == 1) .or. (modification == 2)) then
     rho_mod = rho

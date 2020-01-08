@@ -24,10 +24,11 @@ implicit none
 include 'mpif.h'
 
 integer ::  rank,ierr,istart,noutput
-real(8) ::  bulk,stress,stime,time1
+real(8) ::  bulk,stress,stime,time1,hbulk,tbulk,massflow, Re_bulk,vbulk
 real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2  
 real(8) ::  start, finish
 real(8) :: resU, resW
+
 
 resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0!;resKt=0;resEpst=0
 
@@ -70,9 +71,10 @@ call mesh%init(LoD, K_start_heat, x_start_heat, rank,px)
 call mesh%discretize_streamwise2( LoD,rank, px)
 
 !initialize EOS
-if (EOSmode.eq.0) allocate(eos_model,    source=   IG_EOSModel(Re,Pr))
-if (EOSmode.eq.1) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
-if (EOSmode.eq.2) allocate(eos_model,    source=Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
+if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
+if (EOSmode.eq.1) allocate(eos_model,    source=            IG_EOSModel(Re,Pr))
+if (EOSmode.eq.2) allocate(eos_model,    source=         Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
+if (EOSmode.eq.3) allocate(eos_model,    source=         Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
 call eos_model%init() 
 
 !initialize turbulent viscosity model
@@ -80,7 +82,7 @@ if (turbmod.eq.0) allocate(turb_model,source= Laminar_TurbModel('lam'))
 if (turbmod.eq.1) allocate(turb_model,source=      SA_TurbModel('SA' ))
 if (turbmod.eq.2) allocate(turb_model,source= init_MK_TurbModel('MK' ))
 if (turbmod.eq.3) allocate(turb_model,source= init_VF_TurbModel('VF' ))
-if (turbmod.eq.4) allocate(turb_model,source=     SST_TurbModel('SST'))
+if (turbmod.eq.4) allocate(turb_model,source=init_SST_TurbModel('SST'))
 if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel('Abe'))
 call turb_model%init()
 
@@ -93,7 +95,7 @@ if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel(
 if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel('Bae', 70.,20.))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=    init_DWX_TurbDiffModel('DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=     init_NK_TurbDiffModel('NK'))
-if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.(turbmod.eq.1).or.((turbmod.eq.4))) then
+if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then
   if (rank .eq. 0)  write(*,*) "Combination of eddy viscosity model and turbulent diffusivity model not valid", turbmod, turbdiffmod
   call mpi_finalize(ierr)
   stop
@@ -142,6 +144,7 @@ do istep=istart,nstep
                               alphak,alphae,alphav2,        &
                               modifDiffTerm,rank,periodic,resTV1,resTV2,resTV3)
 
+
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
                                       alphak,alphae,rank,periodic,resTD1,resTD2)
   !apply bc
@@ -173,15 +176,16 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 100     
+  noutput = 100
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
-      write(6,'(A7,9A13)') 'istep'  ,'dt' ,'bulk'   ,'stress' ,'cResid', &
+      write(6,'(A7,11A13)') 'istep'  ,'dt' ,'bulk','tbulk','Re_b'   ,'stress' ,'cResid', &
                            'resTV1','resTV2','resTV3', &
                            'resTD1', 'resTD2'
     endif
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
-      write(6,'(i7,9e13.4)') istep,dt,bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
+      call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
+      write(6,'(i7,11e13.4)') istep,dt,bulk,tbulk,Re_bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
     endif
   end if
          
@@ -449,7 +453,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
                                win, Re, systemsolve, select_init)
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
-  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k
+  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr
   use mod_mesh,  only : y_fa,y_cv, mesh
   implicit none
   integer,                        intent(IN) :: rank,systemsolve,select_init
@@ -491,7 +495,10 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     gridSize = y_fa(imax)
     do i=0,i1!imax         
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
-      if (systemsolve.eq.2) w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
+      if (systemsolve.eq.2) then
+        w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
+        ! c(i,:)  = Pr*w(i,:)
+      endif
       if (systemsolve.eq.3) w(i,:)  = Re*mesh%dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
       if (systemsolve.eq.4) then
          w(i,:)  = 1.; u=0.;  win=1.; mutin=0!bl 
@@ -521,7 +528,7 @@ end subroutine initialize_solution
 !!
 !!************************************************************************************
 subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
-  use mod_param, only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource
+  use mod_param, only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource,Re,Pr
   use mod_math,  only : matrixIdir
   use mod_mesh,  only : dzw,dru,drp,rp,ru,top_bcvalue1,bot_bcvalue1
   use mod_common,only : cnew,ekh,ekhi,ekhk,alphat
@@ -534,6 +541,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   integer  :: ierr
   
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
+  ! call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,rank,periodic,.true.)
   call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
@@ -543,16 +551,16 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
       a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
-      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) + Qsource
+      rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) + Qsource/(Re*Pr)
     enddo
 
     i=1
     b(i)=b(i)+bot_bcvalue1(k)*a(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource !nothing or value
+    rhs(i) = dnew(i,k) - (1-bot_bcvalue1(k))*a(i)*cNew(i-1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource/(Re*Pr) !nothing or value
 
     i=imax
     b(i)=b(i)+top_bcvalue1(k)*c(i) !symmetry or nothing
-    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource !nothing or value
+    rhs(i) = dnew(i,k) - (1-top_bcvalue1(k))*c(i)*cNew(i+1,k) + ((1-alphac)/alphac)*b(i)*cNew(i,k) + Qsource/(Re*Pr) !nothing or value
 
     call matrixIdir(imax,a,b/alphac,c,rhs)
 

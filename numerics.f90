@@ -29,9 +29,45 @@ subroutine fillps(rank)
   call mpi_allreduce(sumps,sumps_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
 end
 
+subroutine calc_avg_quantities(w, rho, enth,massflow, hb, tb,vb,Re_b,k)
+  use mod_param, only : k1,i1,kmax,imax,i,Re
+  use mod_mesh,  only : dru, rp, mesh
+  use mod_eos,   only : eos_model
+  implicit none
+  real(8), dimension(0:i1,0:k1), intent(IN) :: w,rho,enth
+  integer, intent(IN)  :: k
+  real(8), intent(OUT) :: massflow,hb,tb,vb,Re_b
+  real(8) :: pi, factor,avgdens
+
+  pi = 4.*atan(1.)
+  factor = 1.
+  if (mesh%name .eq. 'pipe')   factor = 2*pi;
+  
+  massflow = 0
+  avgdens = 0.
+  
+  do i=1,imax
+    massflow = massflow + factor*rp(i)*rho(i,k)*w(i,k)*dru(i)
+    avgdens = avgdens + factor*rp(i)*rho(i,k)*dru(i)
+  enddo
+  
+  hb  = 0
+  vb  = 0
+  do i=1,imax
+    vb = vb + factor*rp(i)*rho(i,k)*w(i,k)*dru(i)
+    hb = hb + factor*rp(i)*rho(i,k)*w(i,k)*enth(i,k)*dru(i)
+  enddo
+  hb = hb/massflow
+  vb = vb/avgdens
+
+  call eos_model%set_w_enth(hb,"T", tb)
+
+  Re_b = Re*vb
+end subroutine calc_avg_quantities
+
 subroutine calc_turbdiff_values(qwall,ttau,twall,tauw,utau,yplus,tplus,uplus)
   use mod_param, only : i1,imax,k1,kmax,k,i
-  use mod_common, only : rnew, ekm, cpi, ekhi, temp, wnew, ekmi
+  use mod_common, only : rnew, ekm, cpi, ekhi, temp, wnew, ekmi,alphat
   use mod_mesh, only : walldist,drp
   implicit none
   real(8), dimension(0:k1), intent(OUT) :: qwall, ttau, Twall, tauw, utau
@@ -40,7 +76,7 @@ subroutine calc_turbdiff_values(qwall,ttau,twall,tauw,utau,yplus,tplus,uplus)
     tauw(k) = ekmi(imax,k)*0.5*(wnew(imax,k-1)+wnew(imax,k))/walldist(imax)
     utau(k) = (tauw(k)/( (rnew(i1,k)+rnew(imax,k))/2.) )**0.5
     twall(k)= (temp(i1,k)+temp(imax,k))/2.
-    qwall(k)= ekhi(imax,k)/((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/drp(imax)
+    qwall(k)= (ekhi(imax,k)*cpi(imax,k))*(temp(i1,k)-temp(imax,k))/drp(imax)
     ttau(k) = qwall(k)/(((rnew(i1,k)+rnew(imax,k))/2.0)*cpi(imax,k)*utau(k))
     do i=0,i1
       tplus(i,k) = (twall(k)-temp(i,k))/ttau(k)

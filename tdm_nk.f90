@@ -14,6 +14,7 @@ module nk_tdm
     procedure :: set_constants => set_constants_NK
     procedure :: set_alphat => set_alphat_NK
     procedure :: rhs_epst_KtEt => rhs_epst_KtEt_NK
+    procedure :: rhs_kt_KtEt => rhs_kt_KtEt_NK
     procedure :: set_bc => set_bc_NK
   end type NK_TurbDiffModel
 
@@ -42,6 +43,7 @@ subroutine set_constants_NK(this)
   this%cp2 = 0.72
   this%cd1 = 2.2
   this%cd2 = 0.8
+  this%A = 30.5
 end subroutine set_constants_NK
 
 subroutine set_BC_NK(this,ekh,rho,periodic,rank,px)
@@ -94,21 +96,20 @@ subroutine set_BC_NK(this,ekh,rho,periodic,rank,px)
 end subroutine set_BC_NK
 
 subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
-  use mod_param, only : k1,i1,kmax,imax,i,k,Qwall,Pr,Re
+  use mod_param, only : k1,i1,kmax,imax,i,k,Pr,Re
   use mod_tm,    only : turb_model
-  use mod_mesh,  only : dzp,walldist
-  use mod_common,only : cp, cnew
+  use mod_mesh,  only : dzp,walldist,drp,dzp
+  use mod_common,only : cp, cnew, ekhi,cpi
   implicit none
   class(NK_TurbDiffModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp,mut
   real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
   integer  im,ip,km,kp
-  real(8) cfi, sti, utau
+  real(8) cf, st, utau, rhowall,twall,qwall,nu,phi,Reh
   real(8),dimension(0:k1) ::   tauw, Qwall_vec
   real(8),dimension(0:i1,0:k1) :: Ret, Reeps, yp
   real(8),dimension(0:i1,0:k1) :: kine, eps, Tt
-  real(8) :: tcond_wall
-
+  
   eps  = turb_model%eps
   kine = turb_model%k
   Tt   = turb_model%Tt
@@ -122,20 +123,27 @@ subroutine set_alphat_NK(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       im=i-1
       ip=i+1
       ! yplus hsould be an input so it can be changed from yplus to ystar
-      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
+      ! this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
+      nu = mu(i,k)/rho(i,k)
+      this%yp(i,k) = walldist(i)*utau/nu
 
-      cfi =  2*tauw(k)/rho(imax,k)/utau                     ! Skin friction
-      ! tcond_wall = 0.25*(lam_cp(this%i1,k)+lam_cp(this%imax,k))*(cp(this%i1,k)+cp(this%imax,k))*Re*Pr
+      rhowall = 0.5*(rho(i1,k)+rho(imax,k))
+      twall=0.5*(temp(i1,k)+temp(imax,k))
       
-      ! write(*,*) Qwall, tcond_wall
-      sti =  Qwall/(rho(imax,k)*cp(imax,k)*utau*temp(imax,k))  ! Stanton number
-
+      !skin friction: C_f = tau_w/(0.5*rho*U_r**2)
+      !cfi =  2*tauw(k)/rho(imax,k)/utau                     ! Skin friction
+      cf = tauw(k)/(0.5*rhowall*utau**2)
+      !Stanton number: qwall/(rho*cp*U_r*(T_w-T_r))
+      qwall= (ekhi(imax,k)/rhowall)*cpi(imax,k)*(temp(i1,k)-temp(imax,k))/drp(imax)
+      st =  qwall/(rhowall*cpi(imax,k)*utau*twall)  
+      
+      phi = (2/cf)*st
       this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)
       this%Tmix(i,k)    = (Tt(i,k) * this%Ttemp(i,k) )**0.5
-      ! Pr = mu(i,k)/lam_cp(i,k)
-      this%flambda(i,k) =(1 - exp(-(2*sti/cfi)*yp(i,k)*(Pr**0.5)/30.5))**2.0      
-      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*kine(i,k)*((Tt(i,k)*this%Ttemp(i,k))**0.5)
+      Reh = kine(i,k)*this%Tmix(i,k)
 
+      this%flambda(i,k) =(1 - exp(-(Pr**0.5/this%A)*(2/cf)*st*this%yp(i,k)))**2.0      
+      alphat(i,k) = rho(i,k)*this%clambda*this%flambda(i,k)*Reh
     enddo
   enddo
 
@@ -176,6 +184,32 @@ subroutine rhs_epst_KtEt_NK(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
     enddo
   enddo
 end subroutine rhs_epst_KtEt_NK
+
+subroutine rhs_kt_KtEt_NK(this,putout,dimpl,rho)
+   use mod_param, only : k1,i1,kmax,imax,k,i
+   use mod_mesh, only : drp,dzp
+   use mod_common, only : ekh
+  implicit none
+  class(NK_TurbDiffModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: rho
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+  real(8) :: dsqrttdx,dsqrttdy
+  integer :: im,km,ip,kp
+  !kt equation
+  do k=1,kmax
+    kp = k+1
+    km = k-1
+    do i=1,imax
+      ip = i+1
+      im = i-1
+      dsqrttdx = (sqrt(this%kt(i,kp))-sqrt(this%kt(i,km)))/(dzp(k)+dzp(km))
+      dsqrttdy = (sqrt(this%kt(ip,k))-sqrt(this%kt(im,k)))/(drp(i)+drp(im))
+      
+      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k)-2*ekh(i,k)*(dsqrttdy**2+dsqrttdx**2) 
+      dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
+    enddo
+  enddo
+end subroutine rhs_kt_KtEt_NK
 
 
 end module nk_tdm

@@ -11,7 +11,7 @@ module ktet_tdm
   type,abstract,extends(TurbDiffModel), public :: KtEt_TurbDiffModel
   real(8), dimension(:,:), allocatable :: flambda, resKt, resEt
   real(8), dimension(:),   allocatable :: epstin, ktin
-  real(8) :: sigmakt,sigmaet,clambda,cp1,cp2,cd1,cd2
+  real(8) :: sigmakt,sigmaet,clambda,cp1,cp2,cd1,cd2,A
   contains
     procedure(set_alpha_KtEt), deferred :: set_alphat
     procedure(rhs_epst_KtEt), deferred :: rhs_epst_KtEt
@@ -159,7 +159,7 @@ end
 
 subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat, &
                        alphakt,rank,periodic)
-  use mod_param,only : k1,i1,kmax,imax,k,i
+  use mod_param,only : k1,i1,kmax,imax,k,i,isothermalBC
   use mod_math, only : matrixIdir
   use mod_mesh, only : ru,rp,dz,dru,drp,top_bcnovalue, bot_bcnovalue
   implicit none
@@ -175,7 +175,7 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat, &
 
   call advecc(dnew,dimpl,this%kt,u,w,rank,periodic,.true.)
   call this%rhs_kt_KtEt(dnew,dimpl,rho) 
-  call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho)
+  call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho,3)
 
   do k=1,kmax
     do i=1,imax
@@ -189,16 +189,23 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat, &
 
       rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
     enddo
+    if (isothermalBC.eq.1) then
 
-    i=1
-    b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
-    a(i)=0
-    rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
-    i=imax
-    b(i) = b(i) + top_bcnovalue(k)*c(i)
-    c(i)=0
-    rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
+      i=1
+      b(i) = b(i) + bot_bcnovalue(k)*a(i) !symmetry = -1 ; wall = 1 
+      rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
+      i=imax
+      b(i) = b(i) + top_bcnovalue(k)*c(i)
+      rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
 
+    else
+      i=1
+      b(i) = b(i) + a(i) !symmetry = -1 ; wall = 1 
+      rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
+      i=imax
+      b(i) = b(i) + c(i)
+      rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
+    endif
     call matrixIdir(imax,a,b/alphakt,c,rhs)
 
     do i=1,imax
@@ -211,9 +218,9 @@ end
 
 subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
                        alphaet,rank,periodic)
-  use mod_param,only : k1,i1,kmax,imax,k,i
+  use mod_param,only : k1,i1,kmax,imax,k,i,isothermalBC
   use mod_math, only : matrixIdir
-  use mod_mesh, only : dru,drp,ru,rp,dz,bot_bcvalue,top_bcvalue
+  use mod_mesh, only : dru,drp,ru,rp,dz,bot_bcvalue,top_bcvalue,top_bcnovalue,bot_bcnovalue
   implicit none
   class(KtEt_TurbDiffModel) :: this
   real(8),dimension(0:i1,0:k1), intent(IN) :: u, w,temp,rho,mu,ekh,ekhi,ekhk,alphat
@@ -240,13 +247,27 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
       rhs(i) = dnew(i,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)
     enddo
 
-    i=1
-    b(i) = b(i)+bot_bcvalue(k)*a(i)
-    rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%epst(i-1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
 
-    i=imax
-    b(i) = b(i)+top_bcvalue(k)*c(i)
-    rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%epst(i+1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
+    if (isothermalBC.eq.1) then
+      i=1
+      b(i) = b(i)+bot_bcvalue(k)*a(i)
+      rhs(i) = dnew(i,k) - (1.-bot_bcvalue(k))*a(i)*this%epst(i-1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
+
+      i=imax
+      b(i) = b(i)+top_bcvalue(k)*c(i)
+      rhs(i) = dnew(i,k) - (1.-top_bcvalue(k))*c(i)*this%epst(i+1,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)   !wall with value
+    else
+      i=1
+      b(i) = b(i) + a(i) !symmetry = -1 ; wall = 1 
+      rhs(i) = dnew(i,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)
+      
+      i=imax
+      b(i) = b(i) + c(i)
+      rhs(i) = dnew(i,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)
+    endif
+
+
+
     call matrixIdir(imax,a,b/alphaet,c,rhs)
   
     do i=1,imax

@@ -45,7 +45,6 @@ module mod_eos
 class(EOSModel),  allocatable :: eos_model
 !****************************************************************************************
 
-
   !************************!
   !     Ideal Gas class    !
   !************************!
@@ -58,6 +57,19 @@ class(EOSModel),  allocatable :: eos_model
     procedure :: set_enth_w_qwall => set_enth_w_qwall_ig
 
   end type IG_EOSModel
+
+!****************************************************************************************
+
+  !************************!
+  !     Const Prop class   !
+  !************************!
+  
+  type, extends(IG_EOSModel), public :: ConstProp_EOSModel
+  contains
+    procedure :: set_w_enth => set_w_enth_cp
+    
+  end type ConstProp_EOSModel
+
 
 !****************************************************************************************
 
@@ -108,7 +120,7 @@ contains
       case ("T")
         output = enth + 1.0
       case ("D")
-        output = 1.!./(enth+1.)
+        output = 1./(enth+1.)
       case ("L")
         output = 1./(this%Re*this%Pr)
       case ("C")
@@ -116,7 +128,7 @@ contains
       case ("V")
         output = 1./this%Re
       case ("B")
-        output = 1.!1./(enth+1)
+        output = 1./(enth+1)
       case default
         write(*,*) "Property doesn't exist!!!"
     end select
@@ -146,6 +158,43 @@ contains
     enth_out = enth_in + drp*qwall/(ekh_imax*this%Re*this%Pr) 
   end subroutine set_enth_w_qwall_ig
   
+  !************************!
+  !   Const Prop routines  !
+  !************************!
+
+  type(ConstProp_EOSModel) function init_ConstProp_EOSModel(Re,Pr)
+    real(8), intent(IN) :: Re,Pr
+    init_ConstProp_EOSModel%Re=Re
+    init_ConstProp_EOSModel%Pr=Pr
+  end function init_ConstProp_EOSModel
+
+  subroutine set_w_enth_cp(this, enth, prop, output)
+    implicit none
+    class(ConstProp_EOSModel) :: this
+    real(8), intent(IN) :: enth
+    character(len=1), intent(IN) :: prop
+    real(8), intent(OUT) :: output
+    select case (prop)
+      case ("T")
+        output = enth + 1.0
+      case ("D")
+        output = 1.
+      case ("L")
+        output = 1./(this%Re*this%Pr)
+      case ("C")
+        output = 1.
+      case ("V")
+        output = 1./this%Re
+      case ("B")
+        output = 1.
+      case default
+        write(*,*) "Property doesn't exist!!!"
+    end select
+  end subroutine set_w_enth_cp
+
+!****************************************************************************************
+
+
 !****************************************************************************************
 
   !************************!

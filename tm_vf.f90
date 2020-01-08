@@ -9,16 +9,17 @@ module vf_tm
   !************************!
 
   type, extends(KE_TurbModel), public :: VF_TurbModel
+  real(8), allocatable :: c1,c2,cl,ceta
   contains
     procedure :: set_constants => set_constants_VF
     procedure :: set_mut => set_mut_VF
-    procedure :: advance_KE => advance_VF
+    procedure :: advance_turb => advance_VF
     procedure :: set_bc => set_bc_VF
     procedure :: init_w_inflow => init_w_inflow_VF
     procedure :: production_KE => production_VF
     procedure :: rhs_v2_VF
     procedure :: solve_v2_VF
-    procedure :: fillhem
+    procedure :: fillhelm
   end type VF_TurbModel
 
 contains
@@ -37,11 +38,16 @@ end function init_VF_TurbModel
 subroutine set_constants_VF(this)
   implicit none
   class(VF_TurbModel) :: this
+  this%cmu    = 0.22
   this%sigmak = 1.0
   this%sigmae = 1.3
-  this%cmu    = 0.22
-  this%ce1    = 1.4
   this%ce2    = 1.9
+  this%cl     = 0.23
+  this%ceta    = 70.
+  this%ce1    = 1.4
+  this%c1     = 1.4
+  this%c2     = 0.3
+  this%fv2 = 0.
 end subroutine
 
 subroutine init_w_inflow_VF(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
@@ -153,11 +159,13 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
 
 end subroutine set_bc_VF
 
+
 subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
                       alpha1,alpha2,alpha3,                  &
                       modification,rank,periodic,   &
                       residual1, residual2, residual3)
   use mod_param, only : k1,i1,kmax,imax,i,k
+  use mod_mesh, only : mesh,ru,rp,dru,drp,dz
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui,muk,mut,beta,temp
@@ -165,7 +173,6 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   integer,                                intent(IN) :: modification,rank,periodic
   real(8),                                intent(OUT):: residual1,residual2,residual3
   real(8), dimension(0:i1,0:k1) :: rho_mod
-
   !1, our modification, 2, Aupoix modification
   if ((modification == 1) .or. (modification == 2)) then
     rho_mod = rho
@@ -173,8 +180,9 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
     rho_mod = 1.0
   endif
 
-  call this%fillhem(mu,rho)
-  ! call SOLVEhelm(this%fv2,rank,this%Lh,centerBC)
+  call this%fillhelm(mu,rho)
+  call SOLVEhelm(this%fv2,Ru,Rp,dRu,dRp,dz,rank,this%Lh,mesh%centerBC)
+  ! call solvepois_cr(this%fv2,0,rank,mesh%centerBC)
   call this%production_KE(u,w,temp,rho,mu,mut,beta)
   call this%solve_eps_KE(residual2,u,w,rho,mu,mui,muk,mut,beta,temp,rho_mod, &
                        alpha2,modification,rank,periodic)
@@ -264,27 +272,26 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta)
       im=i-1
 
       !Production of turbulent kinetic energy
-      this%Pk(i,k) = mut(i,k)*(  &
-        2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
-            ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
-            ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-        +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  &
-        )**2.)
-
       ! this%Pk(i,k) = mut(i,k)*(  &
-      !   2.*(((w(i,k)-w(i,km))/dzw(k))**2.      +  &
+      !   2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
       !       ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
       !       ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
       !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  &
+      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  &
       !   )**2.)
-
-      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
-               +(      w(i,k) -      w(i,km))/dz
+      this%Pk(i,k) = mut(i,k)*(  &
+        2.*(((w(i,k)-w(i,km))/dzw(k))**2.      +  &
+            ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
+            ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
+        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
+        +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  &
+        )**2.)
 
       ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
-      !          +(      w(i,k) -      w(i,km))/dzw(k)
+      !          +(      w(i,k) -      w(i,km))/dz
+
+      div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
+               +(      w(i,k) -      w(i,km))/dzw(k)
       
       this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
@@ -307,23 +314,24 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta)
       ! endif
 
       ! Bouyancy production
-      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
-        *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-                     +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz))*  &
-        (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
-        +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz)  &
-        )
-
       ! this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
       !   *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))*  &
+      !                +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz))*  &
       !   (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
-      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k))  &
+      !   +(2.*mut(i,k)*((w(i,k)-w(i,km))/dz-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dz)  &
       !   )
 
+      this%Gk(i,k)=-ctheta*beta(i,k)*Fr_1*this%Tt(i,k)  &
+        *  (mut(i,k)*(((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
+                     +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))*  &
+        (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))  )  &
+        +(2.*mut(i,k)*((w(i,k)-w(i,km))/dzw(k)-2./3.*(rho(i,k)*this%k(i,k)))*(temp(i,kp)-temp(i,km))/(2.*dzp(k))  &
+        )
 
-      this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
-      ! this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
+
+      ! this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
+      this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
+      this%Gk(i,k) =0.
 
     enddo
   enddo
@@ -345,19 +353,20 @@ subroutine rhs_v2_VF(this,putout,dimpl)
 
 end subroutine rhs_v2_VF
 
-subroutine fillhem(this,mu,rho)
+subroutine fillhelm(this,mu,rho)
   use mod_param, only : k1,i1,kmax,imax,i,k
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: mu, rho
   real(8), dimension(0:i1,0:k1) :: Srsq
+  real(8), dimension(imax,kmax) :: rhs_fv2
 
   do  k=1,kmax
     do i=1,imax         
       ! time scale
       this%Tt(i,k)   = max(this%k(i,k)/this%eps(i,k), 6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)           
       ! lenght scale
-      this%Lh(i,k)=0.23*max(this%k(i,k)**1.5/this%eps(i,k),70.*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
+      this%Lh(i,k)=this%cl*max(this%k(i,k)**1.5/this%eps(i,k),this%ceta*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
             
       ! if (modVF.eq.1) then
       !   ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
@@ -369,12 +378,16 @@ subroutine fillhem(this,mu,rho)
       ! endif
 
       ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
-      this%fv2(i,k)= - (1.4-1.)*(2./3.-this%v2(i,k)/this%k(i,k))/this%Tt(i,k) &
-                - 0.3*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k))-5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
-      this%fv2(i,k) = this%fv2(i,k)/this%Lh(i,k)**2.0
+      ! rhs_fv2(i,k)=  (1/this%Tt(i,k))*(this%c1-1.)*(this%v2(i,k)/this%k(i,k)-2./3.) &
+      !                - this%c2*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k)) &
+      !                - 5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
+
+      rhs_fv2(i,k) = (1./this%Tt(i,k))*((this%c1-6.)*(this%v2(i,k)/this%k(i,k))-(2./3.)*(this%c1-1)) &
+                      -this%c2*this%Pk(i,k)/(rho(i,k)*this%k(i,k))
+      this%fv2(i,k) = rhs_fv2(i,k)/this%Lh(i,k)**2.0 !+ this%fv2(i,k)/this%Lh(i,k)**2
     enddo
   enddo
-end subroutine fillhem
+end subroutine fillhelm
 
 
 end module
