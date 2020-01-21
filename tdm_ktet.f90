@@ -15,12 +15,12 @@ module ktet_tdm
   contains
     procedure(set_alpha_KtEt), deferred :: set_alphat
     procedure(rhs_epst_KtEt), deferred :: rhs_epst_KtEt
+    procedure(rhs_kt_KtEt), deferred :: rhs_kt_KtEt
     procedure(set_constants), deferred :: set_constants
     procedure :: advance_turbdiff => advance_KtEt
     procedure :: get_sol => get_sol_KtEt
     procedure :: init_w_inflow => init_w_inflow_KtEt
     procedure :: init => init_KtEt
-    procedure :: rhs_kt_KtEt
     procedure :: diffusion_epst_KtEt
     procedure :: solve_epst_KtEt
     procedure :: production_KtEt
@@ -54,7 +54,14 @@ module ktet_tdm
       real(8), dimension(0:i1,0:k1), intent(IN) :: rho,mu,temp,lam_cp,alphat
       real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
     end subroutine rhs_epst_KtEt
-  
+      subroutine rhs_kt_KtEt(this,putout,dimpl,rho)
+      use mod_param, only : k1,i1
+      import :: KtEt_TurbDiffModel
+      implicit none
+      class(KtEt_TurbDiffModel) :: this
+      real(8), dimension(0:i1,0:k1), intent(IN) :: rho
+      real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+    end subroutine rhs_kt_KtEt
   end interface
 
 contains
@@ -175,16 +182,15 @@ subroutine solve_kt_KtEt(this,resKt,u,w,rho,ekh,ekhi,ekhk,alphat, &
 
   call advecc(dnew,dimpl,this%kt,u,w,rank,periodic,.true.)
   call this%rhs_kt_KtEt(dnew,dimpl,rho) 
-  call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho,3)
+  ! call diffc(dnew,this%kt,ekh,ekhi,ekhk,alphat,this%sigmakt,rho,0)
+  call this%diffusion_epst_KtEt(dnew,this%kt,ekhk,alphat,this%sigmakt,rho)
 
   do k=1,kmax
     do i=1,imax
-      a(i) = (ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k))/this%sigmakt)
+      a(i) = (ekhi(i-1,k)+0.25*(alphat(i,k)+alphat(i-1,k))*(rho(i,k)+rho(i-1,k))/this%sigmakt)
       a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)
-
-      c(i) = (ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k))/this%sigmakt)
+      c(i) = (ekhi(i  ,k)+0.25*(alphat(i,k)+alphat(i+1,k))*(rho(i,k)+rho(i+1,k))/this%sigmakt)
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
-
       b(i) = (-a(i)-c(i)) + dimpl(i,k)
 
       rhs(i) = dnew(i,k) + ((1-alphakt)/alphakt)*b(i)*this%kt(i,k)
@@ -239,9 +245,9 @@ subroutine solve_epst_KtEt(this,resEt,u,w,temp,rho,mu,ekh,ekhi,ekhk,alphat, &
 
   do k=1,kmax
     do i=1,imax
-      a(i) = (ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k))/this%sigmaet)
+      a(i) = (ekhi(i-1,k)+0.25*(alphat(i,k)+alphat(i-1,k))*(rho(i,k)+rho(i-1,k))/this%sigmaet)
       a(i) = -Ru(i-1)*a(i)/(dRp(i-1)*Rp(i)*dru(i))/rho(i,k)
-      c(i) = (ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k))/this%sigmaet)
+      c(i) = (ekhi(i  ,k)+0.25*(alphat(i,k)+alphat(i+1,k))*(rho(i,k)+rho(i+1,k))/this%sigmaet)
       c(i) = -Ru(i  )*c(i)/(dRp(i  )*Rp(i)*dru(i))/rho(i,k)
       b(i) = ((-a(i)-c(i))+ dimpl(i,k)  )  
       rhs(i) = dnew(i,k) + ((1-alphaet)/alphaet)*b(i)*this%epst(i,k)
@@ -298,26 +304,27 @@ subroutine production_KtEt(this,c,temp,rho,cp,alphat)
       ! Production of temperature fluctuations  Pkt= <u'j T'> dTdxj= (lambda_t/cp)/cp dCdxj dTdxj = = (lambda_t/cp)dTdxj^2
      dTdx = (temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))
      dTdy = (temp(ip,k)-temp(im,k))/(drp(i)+drp(im))
-     this%Pkt(i,k) = alphat(i,k)*(dTdx*dTdx + dTdy*dTdy) !- 2*this%epst(i,k) this part is put implict !NOTE: CHANGED BY STEPHAN
+     this%Pkt(i,k) = rho(i,k)*alphat(i,k)*(dTdx*dTdx + dTdy*dTdy) !- 2*this%epst(i,k) this part is put implict !NOTE: CHANGED BY STEPHAN
     enddo
   enddo
 end subroutine production_KtEt
 
-subroutine rhs_kt_KtEt(this,putout,dimpl,rho)
-  use mod_param, only : k1,i1,kmax,imax,k,i
-  implicit none
-  class(KtEt_TurbDiffModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: rho
-  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+! subroutine rhs_kt_KtEt(this,putout,dimpl,rho)
+!   use mod_param, only : k1,i1,kmax,imax,k,i
+!   implicit none
+!   class(KtEt_TurbDiffModel) :: this
+!   real(8), dimension(0:i1,0:k1), intent(IN) :: rho
+!   real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
   
-  !kt equation
-  do k=1,kmax
-    do i=1,imax
-      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k) 
-      dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
-    enddo
-  enddo
-end subroutine rhs_kt_KtEt
+!   !kt equation
+!   do k=1,kmax
+!     do i=1,imax
+!       putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k) !-2.0*(1/rho(i,k))*this%epst(i,k)
+!       dimpl(i,k)  = dimpl(i,k) +2.0*(1/rho(i,k))*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
+!       !dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
+!     enddo
+!   enddo
+! end subroutine rhs_kt_KtEt
 
 subroutine diffusion_epst_KtEt(this,putout,putin,ekhk,alphat,sigma,rho)
   use mod_param, only : k1,i1,kmax,imax,k,i
@@ -334,13 +341,15 @@ subroutine diffusion_epst_KtEt(this,putout,putin,ekhk,alphat,sigma,rho)
     km=k-1
     do i=1,imax
       putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
-        ( (ekhk(i,k ) + 0.5*(alphat(i,k)+alphat(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
-        - (ekhk(i,km) + 0.5*(alphat(i,k)+alphat(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km)&
+        ( (ekhk(i,k ) + 0.25*(alphat(i,k)+alphat(i,kp))*(rho(i,k)+rho(i,kp))/sigma)*(putin(i,kp)-putin(i,k ))/dzp(k) &
+        - (ekhk(i,km) + 0.25*(alphat(i,k)+alphat(i,km))*(rho(i,k)+rho(i,km))/sigma)*(putin(i,k )-putin(i,km))/dzp(km) &
         )/dzw(k)   )
     enddo
   enddo
   
 end subroutine diffusion_epst_KtEt
+
+
 
 
 end module

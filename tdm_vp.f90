@@ -147,7 +147,7 @@ end subroutine init_w_inflow_vp_tdm
         this%mut_mu(i,k)= mut(i,k)/mu(i,k)
         ! Approximation of the turbulent Prandlt number (W. Keys Turb. Pr, Where are we? 1992)
         this%Prt(i,k)= 1/(c1+c2*this%mut_mu(i,k)+c3*(this%mut_mu(i,k)**2.0)*(1-exp(c4/this%mut_mu(i,k))))
-        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+        alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
       enddo
     enddo
   end subroutine set_alphat_kc
@@ -175,7 +175,7 @@ end subroutine init_w_inflow_vp_tdm
         else
           this%Prt(i,k) = (2.0/PeT)+0.85
         endif
-        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+        alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
       enddo
     enddo
   end subroutine set_alphat_kays
@@ -206,7 +206,7 @@ end subroutine init_w_inflow_vp_tdm
         else
           this%Prt(i,k) =0.85
         endif
-        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+        alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
       enddo
     enddo
   end subroutine set_alphat_tang
@@ -234,7 +234,7 @@ end subroutine init_w_inflow_vp_tdm
         gam      = 1.0/(Prtinf+0.1*(this%Pr(i,k)**0.83))
         Agam     = ((2/Prtinf)-2*gam)**0.5
         this%Prt(i,k) = (gam+3.0*PeT*Agam-((3.0*PeT)**2.0)*(1-exp(-Agam/(3.0*PeT))))**(-1.0)
-        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+        alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
       enddo
     enddo
   end subroutine set_alphat_irrenfried
@@ -311,7 +311,7 @@ end subroutine init_w_inflow_vp_tdm
               /(1+ (temp(i,k)/rho(i,k))*abs(drhody/(dTdy+1e-20)) + (temp(i,k)/cp(i,k))*abs(dcpdy/(dTdy+1e-20)))
 
         this%Prt = sigma_t-f1*f2*(sigma_t-Prt0)
-        alphat(i,k)= mut(i,k)/this%Prt(i,k)
+        alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
 
       enddo
     enddo

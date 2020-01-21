@@ -40,24 +40,36 @@ subroutine set_constants_MK(this)
 end subroutine set_constants_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
-  use mod_param, only : kmax,imax,k1,i1,k,i
+  use mod_param, only : kmax,imax,k1,i1,k,i,Re, modifDiffTerm
   use mod_mesh,  only : walldist
   implicit none
   class(MK_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
   real(8),dimension(0:i1,0:k1),intent(OUT):: mut
   integer  im,ip,km,kp
-  real(8),dimension(0:k1) ::   tauw
+  real(8),dimension(0:k1) ::   tauw, utau
   real(8),dimension(0:i1,0:k1) :: Ret, yp
+  real(8) :: rho_wall, mu_wall
 
   do k=1,kmax
     km=k-1
     kp=k+1
     tauw(k) = mui(imax,k)*0.5*(w(imax,km)+w(imax,k))/walldist(imax)
+    utau(k) = sqrt(tauw(k)/(0.5*(rho(imax,k)+rho(i1,k))))
+    rho_wall = 0.5*(rho(i1,k)+rho(imax,k))
+    mu_wall = 0.5*(mu(i1,k)+mu(imax,k))
+    
     do i=1,imax
       im=i-1
       ip=i+1
-      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5         ! ystar
+      ! this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5         ! ystar
+      ! this%yp(i,k) = walldist(i)*Re*utau(k)
+      if (modifDiffTerm .eq. 1) then
+        this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
+      else
+        this%yp(i,k) = walldist(i)*Re*utau(k)
+      endif
+
       Ret(i,k)     = rho(i,k)*(this%k(i,k)**2.)/(mu(i,k)*this%eps(i,k))        ! not sure if r2 or r
       this%fmu(i,k)= (1.-exp(-this%yp(i,k)/70.))*(1+3.45/Ret(i,k)**0.5)
       this%f1(i,k) = 1.

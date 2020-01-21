@@ -81,7 +81,8 @@ subroutine init_sol_KE(this)
     this%k(i,:)  =0.1
     this%eps(i,:)=1.0
     this%v2(i,:) =2./3.*this%k(i,:)    
-    this%Pk(i,:) = 0 
+    this%fv2(i,:) = 0.
+    this%Pk(i,:) = 0.0
     this%Gk(i,:) = 0
     this%kin(i) = 0.1
     this%epsin(i) = 1.0
@@ -147,7 +148,7 @@ subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   p_om(:)  =0
   p_Pk(:)  =this%Pk(:,k)
   p_bF1(:) =0
-  p_bF2(:) =0
+  p_bF2(:) =this%fv2(:,k)
   yp(:)    =this%yp(:,k)
 end subroutine get_profile_KE
 

@@ -148,7 +148,7 @@ contains
     class(CPrt_TurbDiffModel) :: this
     real(8),dimension(0:i1,0:k1),intent(IN) :: u,w,rho,temp,mu,mui,lam_cp, mut
     real(8),dimension(0:i1,0:k1),intent(OUT):: alphat
-    alphat = mut/this%Prt
+    alphat = mut/(this%Prt*rho)
   end subroutine set_alphat_constprt
 
   subroutine get_sol_constprt(this,Prt,epst,kt, Pkt, resKt, resEt)

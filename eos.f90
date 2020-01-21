@@ -8,6 +8,8 @@ module mod_eos
 
   type, abstract, public :: EOSModel
   real(8) Re, Pr
+  character(len=5) name
+
   contains
     procedure(init), deferred :: init
     procedure(set_w_enth), deferred :: set_w_enth
@@ -105,6 +107,13 @@ contains
   !   Ideal Gas routines   !
   !************************!
 
+  type(IG_EOSModel) function init_IG_EOSModel(Re,Pr)
+    real(8), intent(IN) :: Re,Pr
+    init_IG_EOSModel%name="IG"
+    init_IG_EOSModel%Re=Re
+    init_IG_EOSModel%Pr=Pr
+  end function init_IG_EOSModel
+
   subroutine initialize_ig(this)
     implicit none
     class(IG_EOSModel) :: this
@@ -118,9 +127,10 @@ contains
     real(8), intent(OUT) :: output
     select case (prop)
       case ("T")
-        output = enth + 1.0
+        ! write(*,*) "here"
+        output = enth !+ 1.0
       case ("D")
-        output = 1./(enth+1.)
+        output = 1.5/(enth+1.5)
       case ("L")
         output = 1./(this%Re*this%Pr)
       case ("C")
@@ -128,7 +138,7 @@ contains
       case ("V")
         output = 1./this%Re
       case ("B")
-        output = 1./(enth+1)
+        output = 1.5/(enth+1.5)
       case default
         write(*,*) "Property doesn't exist!!!"
     end select
@@ -142,7 +152,7 @@ contains
     real(8), intent(OUT) :: output
     select case (prop)
       case ("H")
-        output = temp - 1.0
+        output = temp 
       case default
         write(*,*) "Property doesn't exist!!!"
     end select
@@ -164,6 +174,7 @@ contains
 
   type(ConstProp_EOSModel) function init_ConstProp_EOSModel(Re,Pr)
     real(8), intent(IN) :: Re,Pr
+    init_ConstProp_EOSModel%name="cprop"
     init_ConstProp_EOSModel%Re=Re
     init_ConstProp_EOSModel%Pr=Pr
   end function init_ConstProp_EOSModel
@@ -176,7 +187,7 @@ contains
     real(8), intent(OUT) :: output
     select case (prop)
       case ("T")
-        output = enth + 1.0
+        output = enth !+ 1.0
       case ("D")
         output = 1.
       case ("L")
@@ -200,6 +211,18 @@ contains
   !************************!
   !     Table routines     !
   !************************!
+
+
+  type(Table_EOSModel) function init_Table_EOSModel(Re,Pr, ntab,filename)
+    real(8), intent(IN) :: Re,Pr
+    integer, intent(IN) :: ntab
+    character(len=22), intent(IN) :: filename
+    init_Table_EOSModel%name="table"
+    init_Table_EOSModel%Re=Re
+    init_Table_EOSModel%Pr=Pr
+    init_Table_EOSModel%nTab=nTab
+    init_Table_EOSModel%filename=filename
+  end function init_Table_EOSModel
 
   subroutine initialize_table(this)
     implicit none

@@ -67,36 +67,48 @@ subroutine init_w_inflow_VF(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
 end subroutine init_w_inflow_VF
 
 subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
-  use mod_param, only :k1,i1,imax,kmax,i,k
+  use mod_param, only :k1,i1,imax,kmax,i,k, modifDiffTerm,Re
   use mod_mesh, only : mesh,dzw,dzp,dru, walldist,rp
   implicit none
   class(VF_TurbModel) :: this
   real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho, mu, mui
   real(8), dimension(0:i1,0:k1), intent(OUT):: mut
-  real(8), dimension(0:k1) :: tauw
+  real(8), dimension(0:k1) :: tauw, utau
   real(8) :: StR
-  real(8) :: dz
+  real(8) :: dz, mu_wall, rho_wall
   integer :: im,ip,km,kp
 
   do k=1,kmax
     km=k-1
     kp=k+1
     tauw(k) = mui(imax,k)*0.5*(w(imax,km)+w(imax,k))/walldist(imax)
+    utau(k) = sqrt(tauw(k)/(0.5*(rho(imax,k)+rho(i1,k))))
+    rho_wall = 0.5*(rho(i1,k)+rho(imax,k))
+    mu_wall = 0.5*(mu(i1,k)+mu(imax,k))
     do i=1,imax
       im=i-1
       ip=i+1
-      this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
-      StR= (2.*(((w(i,k)-w(i,km))/dz)**2.          + &
-                ((u(i,k)-u(im,k))/dru(i))**2.      + &
-                ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
-        +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
+
+      if (modifDiffTerm .eq. 1) then
+        this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
+      else
+        this%yp(i,k) = walldist(i)*Re*utau(k)
+      endif
+
+      !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
+      !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
       
-      ! StR= (2.*(((w(i,k)-w(i,km))/dzw(k))**2.      + &
+      ! StR= (2.*(((w(i,k)-w(i,km))/dz)**2.          + &
       !           ((u(i,k)-u(im,k))/dru(i))**2.      + &
-      !           ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
+      !           ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
       !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
-      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)))**2.)
+      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
+      
+      StR= (2.*(((w(i,k)-w(i,km))/dzw(k))**2.      + &
+                ((u(i,k)-u(im,k))/dru(i))**2.      + &
+                ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
+        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
+        +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))**2.)
       
 
       this%Tt(i,k) = max(this%k(i,k)/this%eps(i,k),6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)
@@ -107,7 +119,7 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
       !   Tt(i,k)   = max(Tt(i,k), 1.0e-8)
       !   Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
       ! endif
-      this%fmu(i,k) = this%v2(i,k)*this%Tt(i,k)/(this%k(i,k)**2./this%eps(i,k))
+      ! this%fmu(i,k) = this%v2(i,k)*this%Tt(i,k)/(this%k(i,k)**2./this%eps(i,k))
       this%f1(i,k)  = 1.0 + 0.045*(this%k(i,k)/this%v2(i,k))**0.5
       this%f2(i,k)  = 1.0
       mut(i,k) = min(1.,rho(i,k)*this%cmu*this%v2(i,k)*this%Tt(i,k))
@@ -181,6 +193,7 @@ subroutine advance_VF(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
   endif
 
   call this%fillhelm(mu,rho)
+
   call SOLVEhelm(this%fv2,Ru,Rp,dRu,dRp,dz,rank,this%Lh,mesh%centerBC)
   ! call solvepois_cr(this%fv2,0,rank,mesh%centerBC)
   call this%production_KE(u,w,temp,rho,mu,mut,beta)
@@ -271,14 +284,7 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta)
       ip=i+1
       im=i-1
 
-      !Production of turbulent kinetic energy
-      ! this%Pk(i,k) = mut(i,k)*(  &
-      !   2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
-      !       ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
-      !       ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
-      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  &
-      !   )**2.)
+      ! Production of turbulent kinetic energy
       this%Pk(i,k) = mut(i,k)*(  &
         2.*(((w(i,k)-w(i,km))/dzw(k))**2.      +  &
             ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
@@ -287,15 +293,36 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta)
         +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  &
         )**2.)
 
-      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
-      !          +(      w(i,k) -      w(i,km))/dz
-
       div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
                +(      w(i,k) -      w(i,km))/dzw(k)
-      
+
       this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
 
-      ! turbulent time scale
+      !Production of turbulent kinetic energy
+      ! this%Pk(i,k) = mut(i,k)*(  &
+      !   2.*(((w(i,k)-w(i,km))/dz)**2.          +  &
+      !       ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
+      !       ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
+      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
+      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  &
+      !   )**2.)
+      ! this%Pk(i,k) = mut(i,k)*(  &
+      !   2.*(((w(i,k)-w(i,km))/dzw(k))**2.      +  &
+      !       ((u(i,k)-u(im,k))/dRu(i))**2.      +  &
+      !       ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
+      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i)  &
+      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k)  &
+      !   )**2.)
+
+      ! ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
+      ! !          +(      w(i,k) -      w(i,km))/dz
+
+      ! div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
+      !          +(      w(i,k) -      w(i,km))/dzw(k)
+      
+      ! this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(div(i,k)))*(div(i,k))
+
+      ! ! turbulent time scale
       this%Tt(i,k)   = max(this%k(i,k)/this%eps(i,k), 6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)
             
       ! if (modVF.eq.1) then
@@ -331,8 +358,7 @@ subroutine production_VF(this,u,w,temp,rho,mu,mut,beta)
 
       ! this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dz)
       this%Gk(i,k) = this%Gk(i,k) + ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*2./3.*mut(i,k)*div(i,k)*(temp(i,kp)-temp(i,km))/(2.*dzp(k))
-      this%Gk(i,k) =0.
-
+      
     enddo
   enddo
 end subroutine production_VF
@@ -366,8 +392,9 @@ subroutine fillhelm(this,mu,rho)
       ! time scale
       this%Tt(i,k)   = max(this%k(i,k)/this%eps(i,k), 6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)           
       ! lenght scale
-      this%Lh(i,k)=this%cl*max(this%k(i,k)**1.5/this%eps(i,k),this%ceta*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
-            
+      !this%Lh(i,k)=this%cl*max(this%k(i,k)**1.5/this%eps(i,k),this%ceta*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
+      this%Lh(i,k)=0.23*max(this%k(i,k)**1.5/this%eps(i,k),70.*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
+
       ! if (modVF.eq.1) then
       !   ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
       !   Tt(i,k)   = max(Tt(i,k), 1.0e-8)
@@ -382,9 +409,13 @@ subroutine fillhelm(this,mu,rho)
       !                - this%c2*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k)) &
       !                - 5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
 
-      rhs_fv2(i,k) = (1./this%Tt(i,k))*((this%c1-6.)*(this%v2(i,k)/this%k(i,k))-(2./3.)*(this%c1-1)) &
-                      -this%c2*this%Pk(i,k)/(rho(i,k)*this%k(i,k))
-      this%fv2(i,k) = rhs_fv2(i,k)/this%Lh(i,k)**2.0 !+ this%fv2(i,k)/this%Lh(i,k)**2
+      this%fv2(i,k)= - (1.4-1.)*(2./3.-this%v2(i,k)/this%k(i,k))/this%Tt(i,k) &
+                - 0.3*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k))-5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
+      this%fv2(i,k) = this%fv2(i,k)/this%Lh(i,k)**2.0
+
+      ! this%fv2(i,k) = -(1./this%Tt(i,k))*((this%c1-6.)*(this%v2(i,k)/this%k(i,k))-(2./3.)*(this%c1-1)) &
+      !                 -this%c2*this%Pk(i,k)/(rho(i,k)*this%k(i,k))
+      ! this%fv2(i,k) = this%fv2(i,k)/(this%Lh(i,k)**2.0) !+ this%fv2(i,k)/this%Lh(i,k)**2
     enddo
   enddo
 end subroutine fillhelm

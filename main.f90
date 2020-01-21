@@ -72,9 +72,9 @@ call mesh%discretize_streamwise2( LoD,rank, px)
 
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
-if (EOSmode.eq.1) allocate(eos_model,    source=            IG_EOSModel(Re,Pr))
-if (EOSmode.eq.2) allocate(eos_model,    source=         Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
-if (EOSmode.eq.3) allocate(eos_model,    source=         Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
+if (EOSmode.eq.1) allocate(eos_model,    source=       init_IG_EOSModel(Re,Pr))
+if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
+if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
 call eos_model%init() 
 
 !initialize turbulent viscosity model
@@ -87,7 +87,7 @@ if (turbmod.eq.5) allocate(turb_model,source=init_Abe_TurbModel('Abe'))
 call turb_model%init()
 
 !initialize turbulent diffusivity model
-if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel('cPr', Pr))
+if (turbdiffmod.eq.0) allocate(turbdiff_model,source=   init_CPrt_TurbDiffModel('cPr', PrT))
 if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel('IF'    ))
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel('Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel('KC'    ))
@@ -111,13 +111,15 @@ call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,sele
 
 call bound_v(Unew,Wnew,Win,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
-call bound_c(cnew, Tw, Qwall,rank)
+call bound_c(cnew, Tw_top,Tw_bot, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
 
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
-call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
+call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
+
+! call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
 call bound_v(Unew,Wnew,Win,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
@@ -134,10 +136,8 @@ do istep=istart,nstep
   !calc the 
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
 
-  !calc alphat
-  call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
-  call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
-  
+  call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
+                
   !scalar equations
   call advanceC(resC,Unew,Wnew,Rnew,rank)
   call turb_model%advance_turb(uNew,wNew,rnew,ekm,ekmi,ekmk,ekmt,beta,temp,           &
@@ -148,19 +148,23 @@ do istep=istart,nstep
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
                                       alphak,alphae,rank,periodic,resTD1,resTD2)
   !apply bc
-  call bound_c(Cnew, Tw, Qwall,rank)
+  call bound_c(Cnew, Tw_top, Tw_bot, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
   call turbdiff_model%set_bc(ekh,rnew,periodic,rank,px)
 
 
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
+
+  if (bulkmod .eq. 1) then
+    call set_dpdz_wbulk(wnew,rank)
+  endif
   call advance(rank)
   
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
   
   call fillps(rank)
-  call solvepois_cr(p,0,rank,mesh%centerBC)
-  ! call solvepois(p,Ru,Rp,dRu,dRp,dz,rank,centerBC)
+  ! call solvepois_cr(p,0,rank,mesh%centerBC)
+  call solvepois(p,rank,mesh%centerBC)
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,rank, istep)
 
@@ -168,15 +172,20 @@ do istep=istart,nstep
 
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
-  if  ((mod(istep,500).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
+  if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
 
-  if   (mod(istep,500).eq.0) then
+  if   (mod(istep,100).eq.0) then
     call output2d_upd2(rank,istep) 
     if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
   endif
   
   !write the screen output
   noutput = 100
+
+  if (mod(istep,noutput).eq.0) then
+    call debug(rank)
+  endif
+
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
       write(6,'(A7,11A13)') 'istep'  ,'dt' ,'bulk','tbulk','Re_b'   ,'stress' ,'cResid', &
@@ -185,7 +194,7 @@ do istep=istart,nstep
     endif
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
       call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
-      write(6,'(i7,11e13.4)') istep,dt,bulk,tbulk,Re_bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
+      write(6,'(i7,11e13.4)') istep,dt,bulk,vbulk,Re_bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
     endif
   end if
          
@@ -269,6 +278,36 @@ end subroutine calc_prop
 !!******************************************************************************************
 !!      routine to estimate the effective viscosity
 !!******************************************************************************************
+subroutine calc_ekh_eff(utmp,wtmp,rho,temp,mu,mui,lam_cp,lam_cpi,lam_cpk,mut,ekhe,alphat,rank)
+  use mod_param, only : k1,i1,kmax,imax,periodic,px,i,k
+  use mod_tdm,    only : turbdiff_model
+  use mod_common, only : ekhek, ekhei
+  implicit none
+  real(8), dimension(0:i1,0:k1), intent(IN) :: utmp,wtmp,rho,temp,mu,mui,lam_cp,lam_cpi,lam_cpk,mut
+  integer,                       intent(IN) :: rank
+  real(8), dimension(0:i1,0:k1), intent(OUT):: ekhe,alphat
+  real(8), dimension(0:k1) :: tauw(0:k1)
+  !calc alphat
+  
+  call turbdiff_model%set_alphat(utmp,wtmp,rho,temp,mu,mui,lam_cp,mut,alphat)
+  call turbdiff_model%set_alphat_bc(alphat,periodic,px,rank)
+
+  do k=0,k1
+    do i=0,i1
+      ekhe(i,k) = lam_cp(i,k) + alphat(i,k)*rho(i,k)
+    enddo
+  enddo
+  do k=0,kmax
+    do i=0,imax
+      ekhek(i,k) = lam_cpk(i,k) + 0.25*(alphat(i,k)+alphat(i,k+1))*(rho(i,k)+rho(i,k+1))
+      ekhei(i,k) = lam_cpi(i,k) + 0.25*(alphat(i,k)+alphat(i+1,k))*(rho(i,k)+rho(i+1,k))
+    enddo
+  enddo
+end subroutine calc_ekh_eff
+
+!!******************************************************************************************
+!!      routine to estimate the effective viscosity
+!!******************************************************************************************
 subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,rank)
   use mod_param, only : k1,i1,kmax,imax,periodic,px
   use mod_tm,    only : turb_model
@@ -280,19 +319,20 @@ subroutine calc_mu_eff(utmp,wtmp,rho,mu,mui,mue,mut,rank)
 
   call turb_model%set_mut(utmp,wtmp,rho,mu,mui,mut)
   call turb_model%set_mut_bc(mut,periodic,px,rank)
-  mue = mu + mut  
+  mue = mu + mut
 end subroutine calc_mu_eff
+
 
 !!*************************************************************************************
 !!  Apply the boundary conditions for the energy equation
 !!*************************************************************************************
-subroutine bound_c(c, Twall, Qwall,rank)
+subroutine bound_c(c, Twall_top, Twall_bot, Qwall,rank)
   use mod_param,only : k1,i1,kmax,imax,i,k,isothermalBC,periodic,px
   use mod_eos,  only : eos_model
   use mod_mesh, only : top_bcvalue1,bot_bcvalue1,drp
   implicit none
   include 'mpif.h'
-  real(8),                       intent(IN) :: Twall, Qwall
+  real(8),                       intent(IN) ::  Twall_top, Twall_bot, Qwall
   integer,                       intent(IN) :: rank
   real(8), dimension(0:i1,0:k1), intent(OUT):: c
   real(8)                  :: enth_wall  
@@ -300,8 +340,9 @@ subroutine bound_c(c, Twall, Qwall,rank)
   
   !isothermal
   if (isothermalBC.eq.1) then
-    call eos_model%set_w_temp(Twall, "H", enth_wall)
+    call eos_model%set_w_temp(Twall_bot, "H", enth_wall)
     c(0,:) = (1-bot_bcvalue1(:))*(2.0*enth_wall - c(1,:))   +bot_bcvalue1(k)*c(1,:)    !pipe/bl
+    call eos_model%set_w_temp(Twall_top, "H", enth_wall)
     c(i1,:)= (1-top_bcvalue1(:))*(2.0*enth_wall - c(imax,:))+top_bcvalue1(k)*c(imax,:) !pipe/bl
   !isoflux
   else
@@ -332,7 +373,28 @@ subroutine bound_c(c, Twall, Qwall,rank)
   endif  
 end subroutine bound_c
 
+subroutine set_dpdz_wbulk(w,rank)
 
+  use mod_param, only : i1,kmax,px,k1,i,imax
+  use mod_mesh, only : dRu, mesh
+  implicit none
+  include "mpif.h"
+  real(8), dimension(0:i1,0:k1), intent(IN) :: w
+  real(8) bulk,bulk_tot
+  integer :: ierror,rank
+
+  bulk = 0.
+  ! if (rank .eq. 0) then
+    do i=1,imax
+      bulk = bulk + dru(i)*w(i,kmax)
+    enddo
+  ! endif
+    
+  call mpi_allreduce(bulk,  bulk_tot,1, MPI_REAL8,MPI_SUM,MPI_COMM_WORLD, ierror)
+  bulk = (bulk_tot/2.)/px
+  mesh%dpdz     = (0.99*mesh%dpdz + (1.-bulk));
+
+end subroutine
 
 !!*************************************************************************************
 !!  Apply the boundary conditions for the velocity
@@ -377,7 +439,7 @@ end subroutine bound_v
 !!   Apply the boundary conditions for the velocity using the mass flux
 !!************************  *************************************************************
 subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
-  use mod_param, only : k,i,kmax,imax,k1,i1,px
+  use mod_param, only : k,i,kmax,imax,k1,i1,px, periodic
   use mod_mesh,  only : dzw,dru,rp
   use mod_common,only : dt,rold,rnew
   implicit none
@@ -392,6 +454,9 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
   call bound_v(ubound,wbound,W_in,rank, step)
+
+  if (periodic .eq. 1) return
+  
   wr = 0
   Ub = 0.
   flux = 0.0
@@ -453,7 +518,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
                                win, Re, systemsolve, select_init)
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
-  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr
+  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr,Tw_bot,Tw_top
   use mod_mesh,  only : y_fa,y_cv, mesh
   implicit none
   integer,                        intent(IN) :: rank,systemsolve,select_init
@@ -480,7 +545,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     do k=0,k1
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
-      c(:,k)= 0.5
+      c(:,k)= .5 - y_cv(:)/2.0
       alphat(:,k) = alphatin(:)
     enddo
     
@@ -497,14 +562,18 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
       if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
       if (systemsolve.eq.2) then
         w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
+        c(i,:)= Tw_bot -Tw_bot* (y_cv(i)/2.0)!(Tw_bot+Tw_top)*0.5!.05!1. !- (y_cv(i)/2.0)
+        ! if (rank .eq. 1) 
+        ! write(*,*) c(i,1), i
         ! c(i,:)  = Pr*w(i,:)
       endif
       if (systemsolve.eq.3) w(i,:)  = Re*mesh%dpdz*0.5*((gridSize*gridSize)-(y_cv(i)*y_cv(i))) !bl
       if (systemsolve.eq.4) then
-         w(i,:)  = 1.; u=0.;  win=1.; mutin=0!bl 
+         w(i,:)  = 1.; u=0.;  win=1.; mutin=1.!bl 
       endif
     enddo
   endif
+  
 end subroutine initialize_solution
 
 
@@ -531,7 +600,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   use mod_param, only : k1,i1,imax,kmax,alphac,k,i,periodic,Qsource,Re,Pr
   use mod_math,  only : matrixIdir
   use mod_mesh,  only : dzw,dru,drp,rp,ru,top_bcvalue1,bot_bcvalue1
-  use mod_common,only : cnew,ekh,ekhi,ekhk,alphat
+  use mod_common,only : cnew,ekh,ekhi,ekhk,alphat,ekhe,ekhek,ekhei
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
@@ -544,12 +613,21 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   ! call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,rank,periodic,.true.)
-  call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
+  ! call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
+  call diffc(dnew,cnew,ekhe,ekhei,ekhek,alphat,1.,Rtmp,10)
+
 
   do k=1,kmax
     do i=1,imax
-      a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-      c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+      a(i) = -Ru(i-1)*ekhei(i-1,k)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+      c(i) = -Ru(i  )*ekhei(i  ,k)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+
+      ! a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+      ! c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+
+      ! a(i) = -Ru(i-1)*(0.5*(ekhe(i,k)+ekhe(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
+      ! c(i) = -Ru(i  )*(0.5*(ekhe(i,k)+ekhe(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
+
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
       rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) + Qsource/(Re*Pr)
     enddo
@@ -682,7 +760,16 @@ subroutine advance(rank)
 
 end
 
+subroutine debug(rank)
+  use mod_param, only :k1,i1,kmax,imax
+  use mod_common, only : wnew,cnew,rnew,p
+  implicit none
+  integer rank
 
+  call write_2D_vector(wnew,i1,k1,rank,'w')
+
+
+end subroutine
 
 
 !>*************************************************************************************

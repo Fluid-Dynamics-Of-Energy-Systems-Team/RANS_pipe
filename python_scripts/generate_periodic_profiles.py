@@ -1,4 +1,4 @@
-#python script to generate the periodic inflow profiles
+    #python script to generate the periodic inflow profiles
 
 import f90nml
 from subprocess import Popen, PIPE

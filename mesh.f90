@@ -340,6 +340,7 @@ contains
   end function init_ChannelMesh
 
   subroutine init_channel(this, LoD, K_start_heat, x_start_heat,rank, px)
+    use mod_param, only : bulkmod
     implicit none
     class(Channel_Mesh) :: this
     real(8), intent(IN) :: LoD, x_start_heat
@@ -350,7 +351,12 @@ contains
     gridSize  = 2.0
     fA        = 0.5
     fB        = 4.6
-    this%dpdz = 1.0
+
+    if (bulkmod .eq. 1) then
+      this%dpdz = 0.0005
+    else
+      this%dpdz = 1.0
+    endif
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)

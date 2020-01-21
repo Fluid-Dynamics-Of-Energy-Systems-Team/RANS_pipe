@@ -1,5 +1,9 @@
 # Created by https://www.gitignore.io/api/c++,eclipse
 notebooks/.*
+equations/*.log
+equations/*.pdf
+equations/*.aux
+
 run
 ### C++ ###
 # Prerequisites

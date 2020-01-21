@@ -417,6 +417,7 @@ subroutine rhs_SA(this, putout,dimpl,nuSA,rho,modification)
         dimpl(i,k) = dimpl(i,k) + cw1*fw_SA*nuSA(i,k)/(walldist(i)**2.0)
         ! source term
         ! invSLS and Aupoix SA model=  advection + Pk + (1/rho)*cb2/cb3*(d(nuSA*sqrt(rho))/dr)^2 +(d(nuSA*sqrt(rho))/dz)^2
+        !putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3* ( & !!ORIGINAL NOTE STEPHAN!!!
         putout(i,k) = putout(i,k) + this%Pk(i,k) + cb2*inv_cb3 * ( &
             ((nuSA(ip,k) - nuSA(im,k))/(dRp(i)+dRp(im)))**2.0 + ((nuSA(i,kp) - nuSA(i,km))/(dzp(k)+dzp(km)))**2.0  )
       enddo

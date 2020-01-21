@@ -1,0 +1,63 @@
+\documentclass[paper=a4, fontsize=12pt]{scrartcl} % A4 paper and 11pt font size
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+
+\newcommand{\wh}[1]{\hat{#1}}
+\newcommand{\wt}[1]{\widetilde{#1}}
+\newcommand{\sls}[1]{\hat{#1}}
+\newcommand{\dimm}[1]{{#1}^*}
+\newcommand{\ls}[1]{{#1}}
+\newcommand{\rave}[1]{\left<{#1}\right>}
+\newcommand{\fave}[1]{\{{#1}\}}
+\newcommand{\uts}{{u_\tau^\star}}
+\newcommand{\Rets}{Re_\tau^\star}
+\newcommand{\tw}{\tau_w}
+\newcommand{\pd}{\partial }
+\newcommand{\fpd}[2]{\frac{\partial #1}{\partial {#2}}}
+\newcommand{\fpdil}[2]{{\partial #1}/{\partial {#2}}}
+\newcommand{\pdi}{\partial_{y}}
+\newcommand{\pdih}{\partial_{\wh y}}
+\newcommand{\RN}[1]{\textup{\uppercase\expandafter{\romannumeral#1}}}
+\newcommand{\nusa}{\check{\nu}} %{\tilde\nu} %{\textbf{\nu}} %
+\newcommand{\Ssa}{\check{S}} %{\tilde{S}} %{\textbf{S}} %
+\newcommand{\red}[1]{{\color{red}{#1}}}
+\newcommand{\eps}{{\varepsilon}}
+
+
+
+\begin{document}
+
+\section{V2F Model}
+The following transport equations are implemented in the code:
+\begin{equation} \label{eq:ktDeng}
+\begin{split}
+\frac{\pd \rho k}{\pd t} + \frac{\pd \rho u_j k}{\pd x_j}                     &= \frac{\pd}{\pd x_j}\left[\left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_k}\right)\frac{\pd k}{\pd x_j}\right] + P_{k}- \rho\varepsilon \\
+\frac{\pd \rho \varepsilon}{\pd t} + \frac{\pd \rho u_j \varepsilon}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\frac{\pd \varepsilon}{\pd x_j}\right] + \frac{C_{\varepsilon1}P_k  -C_{\varepsilon2} \rho \varepsilon}{T}   \\
+\frac{\pd \rho \overline{v^2}}{\pd t} + \frac{\pd \rho u_j \overline{v^2}}{\pd x_j}           &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\overline{v^2}}}\right)\frac{\pd \overline{v^2}}{\pd x_j}\right] + \rho k f - 6\rho \frac{\varepsilon}{k}\overline{v^2} \\
+L^2\nabla^2 f -f &= \frac{1}{T}\left[(C_{f1}-6)\frac{\overline{v^2}}{k}-\frac{2}{3}(C_{f1}-1)\right]-C_{f2}\frac{P_k}{\rho k}
+\end{split}
+\end{equation}
+
+With the production $P_k$ given as:
+\begin{equation}
+P_k = -\frac{2}{3}\rho k (\nabla \cdot U)+ 2\mu_t|S|^2 - \frac{2}{3}\mu_t\left(\nabla \cdot U\right)^2
+\end{equation}
+
+With the turbulent visocisty $\mu_t$ calculated as:
+\begin{equation}
+\mu_t = C_\mu \rho k T
+\end{equation}
+
+Where the turbulent time scale $T$ and length scale $L$ are given by:
+\begin{equation}
+T = max\left(\frac{k}{\varepsilon},6\sqrt{\frac{\nu}{\varepsilon}}\right), \quad L = C_L max\left[\frac{k^{2/3}}{\varepsilon},C_\eta\frac{\nu^{3/4}}{\varepsilon^{1/4}}\right]
+\end{equation}
+
+\begin{equation}
+\begin{split}
+C_\mu = 0.19,\quad  \sigma_k = 1, \quad \sigma_\varepsilon =1.3 \\
+C_{\varepsilon1} = 1.4\left[1+0.045\sqrt{\frac{k}{\overline{v}^2}}\right], \quad C_{\varepsilon2} = 1.9 \\
+C_1 = 1.4, \quad C_2 = 0.3, \quad C_L=0.3, \quad C_\eta = 70
+\end{split}
+\end{equation}
+
+\end{document}

@@ -67,7 +67,7 @@ end subroutine
 
 
 subroutine inflow_output_upd(rank,istap)
-  use mod_param,   only : kmax,i1,imax,px,k,i,systemsolve
+  use mod_param,   only : kmax,i1,imax,px,k,i,systemsolve,modifDiffTerm
   use mod_tm,      only : turb_model
   use mod_tdm,     only : turbdiff_model
   use mod_eos,     only : eos_model
@@ -80,12 +80,19 @@ subroutine inflow_output_upd(rank,istap)
   real(8), dimension(1:imax) :: p_bF2
   character(len=100) :: fname
   character(len=5)  :: Re_str
+  character(len=1)  :: mod_str
+  
   integer           :: Re_int
 
   Re_int = int(eos_model%Re)
   write(Re_str,'(I5.5)') Re_int
-
-  fname = 'Inflow_'//trim(turb_model%name)//'_'//trim(turbdiff_model%name)//'_'//Re_str
+  write(mod_str,'(I1.1)') modifDiffTerm
+  
+  fname = 'Inflow_'//trim(turb_model%name)     &
+              //'_'//trim(turbdiff_model%name) &
+              //'_'//'mod'//mod_str            &
+              //"_"//trim(eos_model%name)      &
+              //"_"//Re_str
 
   if (rank.eq.px/2) then
     k = kmax/2
@@ -410,7 +417,7 @@ subroutine output2d_upd2(rank,istap)
   call set_uvector_to_coords(unew,i1,k1,u_plt)
   call set_wvector_to_coords(wnew,i1,k1,w_plt)
   call set_scalar_to_coords (rnew,i1,k1,rho_plt)
-  call set_scalar_to_coords (cnew,i1,k1,c_plt)
+  call set_scalar_to_coords (temp,i1,k1,c_plt)
   call set_scalar_to_coords (p,i1,k1,p_plt)
   call set_scalar_to_coords (ekm,i1,k1,mu_plt)
   call set_scalar_to_coords (ekmt,i1,k1,mut_plt)
@@ -488,13 +495,17 @@ subroutine output2d_upd(rank,istap)
 
 end
 
-subroutine write_2D_vector(vector, i1, k1, rank)
+subroutine write_2D_vector(vector, i1, k1, rank, filename)
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: vector
   integer, intent(IN) :: i1, k1, rank
   integer :: i,k
-  character*4 cha
-  write(cha,'(I4.4)')rank
+  character*2 cha
+  character*1 filename
+  
+  write (cha, "(A1,I1)") filename, rank
+
+  ! write(cha,'(I4.4)')rank
   open(15,file=cha)
 
   do i=0,i1
@@ -511,6 +522,8 @@ subroutine write_1D_vector(vector, i1, rank)
   integer, intent(IN) :: i1, rank
   integer :: i
   character*4 cha
+
+
   write(cha,'(I4.4)')rank
   open(15,file=cha)
   do i=0,i1

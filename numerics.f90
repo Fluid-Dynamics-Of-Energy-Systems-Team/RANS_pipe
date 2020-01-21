@@ -43,22 +43,21 @@ subroutine calc_avg_quantities(w, rho, enth,massflow, hb, tb,vb,Re_b,k)
   factor = 1.
   if (mesh%name .eq. 'pipe')   factor = 2*pi;
   
-  massflow = 0
+  massflow = 0.
   avgdens = 0.
-  
   do i=1,imax
     massflow = massflow + factor*rp(i)*rho(i,k)*w(i,k)*dru(i)
     avgdens = avgdens + factor*rp(i)*rho(i,k)*dru(i)
   enddo
   
-  hb  = 0
-  vb  = 0
+  hb  = 0.
+  vb  = 0.
   do i=1,imax
-    vb = vb + factor*rp(i)*rho(i,k)*w(i,k)*dru(i)
+    vb = vb + w(i,k)*dru(i)
     hb = hb + factor*rp(i)*rho(i,k)*w(i,k)*enth(i,k)*dru(i)
   enddo
   hb = hb/massflow
-  vb = vb/avgdens
+  vb = vb/2.0!/avgdens
 
   call eos_model%set_w_enth(hb,"T", tb)
 
@@ -499,6 +498,17 @@ subroutine diffc(putout,putin,ek,eki,ekk,ekmt,sigma,rho,diffVersion)
             -(ekk(i,km) + 0.5*(ekmt(i,k)+ekmt(i,km))/sigma)/(0.5*(rho(i,k)+rho(i,km))) &
               *(rho(i,k )*putin(i,k )-rho(i,km)*putin(i,km))/dzp(km) &
           )/dzw(k))
+      enddo
+    enddo
+  elseif (diffVersion == 10) then   ! Without te sigma term
+    do k=1,k1-1
+      kp=k+1
+      km=k-1
+      do i=1,i1-1
+        putout(i,k) = putout(i,k) + 1.0/rho(i,k)*( &
+        (  ekk(i,k )*(putin(i,kp)-putin(i,k ))/dzp(k) &
+          -ekk(i,km)*(putin(i,k )-putin(i,km))/dzp(km) &
+        )/dzw(k))
       enddo
     enddo
   else                             ! Standard
