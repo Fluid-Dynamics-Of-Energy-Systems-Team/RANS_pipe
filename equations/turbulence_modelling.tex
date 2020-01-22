@@ -1,0 +1,54 @@
+
+\documentclass[paper=a4, fontsize=12pt]{scrartcl} % A4 paper and 11pt font size
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+
+\newcommand{\wh}[1]{\hat{#1}}
+\newcommand{\wt}[1]{\widetilde{#1}}
+\newcommand{\sls}[1]{\hat{#1}}
+\newcommand{\dimm}[1]{{#1}^*}
+\newcommand{\ls}[1]{{#1}}
+\newcommand{\rave}[1]{\left<{#1}\right>}
+\newcommand{\fave}[1]{\{{#1}\}}
+\newcommand{\uts}{{u_\tau^\star}}
+\newcommand{\Rets}{Re_\tau^\star}
+\newcommand{\tw}{\tau_w}
+\newcommand{\pd}{\partial }
+\newcommand{\fpd}[2]{\frac{\partial #1}{\partial {#2}}}
+\newcommand{\fpdil}[2]{{\partial #1}/{\partial {#2}}}
+\newcommand{\pdi}{\partial_{y}}
+\newcommand{\pdih}{\partial_{\wh y}}
+\newcommand{\RN}[1]{\textup{\uppercase\expandafter{\romannumeral#1}}}
+\newcommand{\nusa}{\check{\nu}} %{\tilde\nu} %{\textbf{\nu}} %
+\newcommand{\Ssa}{\check{S}} %{\tilde{S}} %{\textbf{S}} %
+\newcommand{\red}[1]{{\color{red}{#1}}}
+\newcommand{\eps}{{\varepsilon}}
+
+
+
+\begin{document}
+
+The Reynolds stress is modelled using:
+
+\begin{equation}
+-\langle \rho u''_i u''_j \rangle \approx \mu_t \left(\fpd{\fave{u_i}}{x_j} +\fpd{\fave{u_j}}{x_i} - \frac{2}{3}\delta_{ij} \nabla \cdot \fave{u} \right) - \frac{2}{3} \rho k \delta_{ij}
+\end{equation}
+
+And the turbulent heat flux according to:
+
+\begin{equation}
+-\rave{ \rho u''_j H''} \approx \rave{\rho} \alpha_t \fpd{\fave H}{x_j}
+\end{equation}
+
+The bouyancy is modelled using:
+
+\begin{equation}
+B_k = -\frac{1}{Fr_0^2}\beta_T  \rave{\rho u_z'T' }
+\end{equation}
+\begin{equation}
+\rave{\rho u_z'T' } = C_t T_\tau \rave{\rho u''_z u''_j}\fpd{\fave{T}}{x_j}
+\end{equation}
+
+\begin{equation}
+\beta_T = \frac{1}{\rho}\frac{\pd \rho}{\pd T}
+\end{equation}
+\end{document}

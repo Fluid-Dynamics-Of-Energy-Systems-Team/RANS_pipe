@@ -30,26 +30,26 @@
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
-\frac{\pd \rho k}{\pd t} + \frac{\pd \rho u_j k}{\pd x_j}                     &= \frac{\pd}{\pd x_j}\left[\left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_k}\right)\frac{\pd k}{\pd x_j}\right] + P_{k}- \rho\varepsilon \\
-\frac{\pd \rho \varepsilon}{\pd t} + \frac{\pd \rho u_j \varepsilon}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\frac{\pd \varepsilon}{\pd x_j}\right] + \frac{C_{\varepsilon1}P_k  -C_{\varepsilon2} \rho \varepsilon}{T}   \\
-\frac{\pd \rho \overline{v^2}}{\pd t} + \frac{\pd \rho u_j \overline{v^2}}{\pd x_j}           &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\overline{v^2}}}\right)\frac{\pd \overline{v^2}}{\pd x_j}\right] + \rho k f - 6\rho \frac{\varepsilon}{k}\overline{v^2} \\
-L^2\nabla^2 f -f &= \frac{1}{T}\left[(C_{f1}-6)\frac{\overline{v^2}}{k}-\frac{2}{3}(C_{f1}-1)\right]-C_{f2}\frac{P_k}{\rho k}
+\fpd{\rave{\rho} k }{t} + \fpd{\rave{\rho}\fave{u_j}k}{x_j} &= \frac{\pd}{\pd x_j}\left[\left(\frac{\rave{\mu}}{Re} + \frac{\mu_t}{\sigma_k}\right)\fpd{k}{x_j}\right] + P_{k}- \rave{\rho}\varepsilon \\
+\fpd{\rave{\rho} \varepsilon}{t} + \fpd{\rave{\rho} \fave{u_j} \varepsilon}{x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\rave{\mu}}{Re} + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\fpd {\varepsilon}{x_j}\right] + \frac{C_{\varepsilon1}P_k  -C_{\varepsilon2} \rave{\rho} \varepsilon}{T_\tau}   \\
+\fpd{ \rave{\rho} \overline{v^2}}{t} + \fpd{ \rave{\rho} \fave{u_j} \overline{v^2}}{x_j}           &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\rave{\mu}}{Re} + \frac{\mu_t}{\sigma_{\overline{v^2}}}\right)\fpd {\overline{v^2}}{x_j}\right] + \rave{\rho} k f - 6\rave{\rho} \frac{\varepsilon}{k}\overline{v^2} \\
+L^2\nabla^2 f -f &= \frac{1}{T}\left[(C_{f1}-6)\frac{\overline{v^2}}{k}-\frac{2}{3}(C_{f1}-1)\right]-C_{f2}\frac{P_k}{\rave{\rho} k}
 \end{split}
 \end{equation}
 
-With the production $P_k$ given as:
+With the production $P_k$ and Reynolds stress, calculated according to:
 \begin{equation}
-P_k = -\frac{2}{3}\rho k (\nabla \cdot U)+ 2\mu_t|S|^2 - \frac{2}{3}\mu_t\left(\nabla \cdot U\right)^2
+P_k = \mu_t \left(\fpd{\fave{u_i}}{x_j} +\fpd{\fave{u_j}}{x_i} - \frac{2}{3}\delta_{ij} \nabla \cdot \fave{u} \right) - \frac{2}{3} \rave{\rho} k \delta_{ij}
 \end{equation}
 
 With the turbulent visocisty $\mu_t$ calculated as:
 \begin{equation}
-\mu_t = C_\mu \rho k T
+\mu_t = C_\mu \rave{\rho} \overline{v^2} T
 \end{equation}
 
-Where the turbulent time scale $T$ and length scale $L$ are given by:
+Where the turbulent time scale $T_\tau$ and length scale $L$ are given by:
 \begin{equation}
-T = max\left(\frac{k}{\varepsilon},6\sqrt{\frac{\nu}{\varepsilon}}\right), \quad L = C_L max\left[\frac{k^{2/3}}{\varepsilon},C_\eta\frac{\nu^{3/4}}{\varepsilon^{1/4}}\right]
+T_\tau = max\left(\frac{k}{\varepsilon},6\sqrt{\frac{\rave{\nu}}{\varepsilon}}\right), \quad L = C_L max\left[\frac{k^{3/2}}{\varepsilon},C_\eta\frac{\rave{\nu}^{3/4}}{\varepsilon^{1/4}}\right]
 \end{equation}
 
 \begin{equation}

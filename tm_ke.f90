@@ -9,13 +9,12 @@ module ke_tm
   !************************!
   
   type,abstract,extends(TurbModel), public :: KE_TurbModel
-  real(8), dimension(:,:), allocatable :: Gk,f1,f2,fmu,Lh,fv2, feps
+  real(8), dimension(:,:), allocatable :: Gk,f1,f2,fmu,Lh,fv2, feps, Bk, div
   real(8), dimension(:),   allocatable :: epsin, kin, v2in
   real(8) :: sigmak,sigmae,cmu
   contains
     procedure(set_mut_KE), deferred :: set_mut
-    procedure(set_bc_KE), deferred :: set_bc
-    ! procedure(set_constants), deferred :: set_constants
+    procedure :: set_bc => set_bc_KE
     procedure :: set_constants => set_constants_KE
     procedure :: init_w_inflow => init_w_inflow_KE
     procedure :: advance_turb => advance_KE
@@ -30,6 +29,10 @@ module ke_tm
     procedure :: init_sol => init_sol_KE
     procedure :: get_profile => get_profile_KE
     procedure :: get_sol => get_sol_KE
+    procedure :: calc_tke_production
+    procedure :: calc_buoyancy_production
+    procedure :: calc_divergence
+    procedure :: calc_turbulent_timescale
 
   end type KE_TurbModel
 
@@ -45,13 +48,7 @@ module ke_tm
       real(8), dimension(0:i1,0:k1),intent(IN) :: u,w,rho,mu,mui
       real(8), dimension(0:i1,0:k1),intent(OUT):: mut
     end subroutine set_mut_KE
-    subroutine set_bc_KE(this,mu,rho,periodic,rank,px)
-      use mod_param, only: k1,i1
-      import :: KE_TurbModel
-      class(KE_TurbModel) :: this
-      real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
-      integer,                               intent(IN) :: periodic, rank, px
-    end subroutine set_bc_KE
+
   end interface
 
 contains
@@ -110,17 +107,9 @@ subroutine init_mem_KE(this)
   allocate(this%eps(0:i1,0:k1),this%k (0:i1,0:k1), this%Gk (0:i1,0:k1),this%Pk(0:i1,0:k1), &
            this%f1 (0:i1,0:k1),this%f2(0:i1,0:k1), this%fmu(0:i1,0:k1),this%Tt(0:i1,0:k1), &
            this%v2 (0:i1,0:k1),this%yp(0:i1,0:k1), this%fv2(imax,kmax),this%Lh(imax,kmax), &
-           this%feps(0:i1,0:k1))
+           this%feps(0:i1,0:k1), this%div(0:i1,0:k1), this%Bk (0:i1,0:k1),)
   allocate(this%mutin(0:i1),this%Pkin (0:i1),this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
 end subroutine init_mem_KE
-
-subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)
-  use mod_param, only : i1,k1
-  implicit none
-  class(KE_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
-  real(8), dimension(0:i1,0:k1) :: div
-end subroutine production_KE
 
 subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
   use mod_param, only : i1,k1  
@@ -151,6 +140,43 @@ subroutine get_profile_KE(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   p_bF2(:) =this%fv2(:,k)
   yp(:)    =this%yp(:,k)
 end subroutine get_profile_KE
+
+
+subroutine set_bc_KE(this,mu,rho,periodic,rank,px)
+  use mod_param, only : i1,k1,imax,kmax,k
+  use mod_mesh, only : top_bcvalue,bot_bcvalue,top_bcnovalue,bot_bcnovalue,walldist
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
+  integer,                     intent(IN) :: periodic, rank, px
+  real(8),dimension(0:i1) :: tmp
+  real(8)                 :: topBCvalue, botBCvalue
+  
+  do k = 0,k1 
+    this%k(0,k)  = bot_bcnovalue(k)*this%k(1,k)         !symmetry or 0 value
+    this%k(i1,k) = top_bcnovalue(k)*this%k(imax,k)      !symmetry or 0 value
+    botBCvalue   = 2.0*mu(1,k)/rho(1,k)*((this%k(1,k)**0.5)/walldist(1))**2                                 !bcvalue
+    this%eps(0,k)= (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%eps(1,k))      +bot_bcvalue(k)*this%eps(1,k)    !symmetry or bc value
+    topBCvalue   = 2.0*mu(imax,k)/rho(imax,k)*((this%k(imax,k)**0.5)/walldist(imax))**2                     !bcvalue
+    this%eps(i1,k) = (1.-top_bcvalue(k))*(2.0*topBCvalue-this%eps(imax,k)) +top_bcvalue(k)*this%eps(imax,k) !symmetry or bc value
+  enddo
+
+  call shiftf(this%k,  tmp,rank); this%k  (:,0) =tmp(:);
+  call shiftf(this%eps,tmp,rank); this%eps(:,0) =tmp(:);
+  call shiftb(this%k,  tmp,rank); this%k  (:,k1)=tmp(:);
+  call shiftb(this%eps,tmp,rank); this%eps(:,k1)=tmp(:);
+  
+  ! developing
+  if (periodic.eq.1) return
+  if (rank.eq.0) then
+    this%k  (:,0) = this%kin(:)
+    this%eps(:,0) = this%epsin(:)
+  endif
+  if (rank.eq.px-1) then
+    this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
+    this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
+  endif
+end subroutine set_bc_KE
 
 
 subroutine advance_KE(this,u,w,rho,mu,mui,muk,mut,beta,temp, &
@@ -308,9 +334,9 @@ subroutine rhs_eps_KE(this,putout,dimpl,rho)
   
   do k=1,kmax
     do i=1,imax
-      putout(i,k) = putout(i,k) +(this%ce1*this%f1(i,k)*this%Pk(i,k)/this%Tt(i,k) &
-                                + this%ce1*this%f1(i,k)*this%Gk(i,k)/this%Tt(i,k) )/rho(i,k)
-      dimpl(i,k)  = dimpl(i,k)  + this%ce2*this%f2(i,k)/this%Tt(i,k)   ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
+      putout(i,k) = putout(i,k) +(this%ce1*this%Pk(i,k)/this%Tt(i,k) &
+                                + this%ce1*this%Gk(i,k)/this%Tt(i,k) )/rho(i,k)
+      dimpl(i,k)  = dimpl(i,k)  + this%ce2*this%feps(i,k)/this%Tt(i,k)   ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
     enddo
   enddo
 end subroutine rhs_eps_KE
@@ -353,6 +379,103 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,modification)
     enddo
   endif
 end subroutine diffusion_eps_KE
+
+subroutine calc_turbulent_timescale(this,rho,mu)
+  use mod_param, only : k1,i1
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: rho, mu
+  this%Tt = this%k/this%eps
+end subroutine
+
+subroutine calc_divergence(this, u, w)
+  use mod_mesh, only : ru, rp, dru,dzw
+  use mod_param, only : kmax, imax, i,k,i1,k1
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w
+  integer im, km
+  do k=1,kmax
+    km = k-1
+    do i = 1,imax
+      im = i-1
+        this%div(i,k) =(Ru(i)*u(i,k)-Ru(im)*u(im,k))/(Rp(i)*dru(i))  &
+                      +(      w(i,k) -      w(i,km))/ dzw(k)
+    enddo
+  enddo
+end subroutine
+
+subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)
+  use mod_param, only :k1,i1,imax,kmax,i,k
+  use mod_mesh, only : rp,ru,dru,drp,dzw,dzp
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
+  real(8), dimension(0:i1,0:k1) :: div
+  integer im,ip,km,kp
+
+  call this%calc_turbulent_timescale(rho,mu)
+  call this%calc_divergence(u,w)
+  call this%calc_tke_production(u,w,rho,mut)
+  call this%calc_buoyancy_production(u,w,temp, rho,beta, mut)
+end subroutine production_KE
+
+subroutine calc_tke_production(this, u, w, rho,mut)
+  use mod_mesh, only : ru, rp, dru,dzw
+  use mod_param, only : kmax, imax, i,k,i1,k1
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, rho, mut
+  integer kp,km,ip,im
+
+  do k=1,kmax
+    kp=k+1
+    km=k-1
+    do i = 1,imax
+      ip=i+1
+      im=i-1
+      this%Pk(i,k) = mut(i,k)*(2.*(((w(i,k)-w(i,km))/dzw(k))**2.      + &
+                                   ((u(i,k)-u(im,k))/dRu(i))**2.      + &
+                                   ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + & !this is only valid for the pipe!!
+                    ( ((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dRu(i) &
+                     +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))**2.)
+
+      this%Pk(i,k) = this%Pk(i,k) - 2./3.*(rho(i,k)*this%k(i,k)+mut(i,k)*(this%div(i,k)))*(this%div(i,k))
+    enddo
+  enddo
+end subroutine
+
+subroutine calc_buoyancy_production(this, u, w,temp, rho,beta, mut)
+  use mod_mesh, only : ru, rp, dru,dzw,dzp,drp
+  use mod_param, only : kmax, imax, i,k, ctheta, Fr_1,i1,k1
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u, w, beta, mut,temp,rho
+  integer kp,km,ip,im
+  do k=1,kmax
+    kp=k+1
+    km=k-1
+    do i = 1,imax
+      ip=i+1
+      im=i-1
+      this%Gk(i,k)= -1*ctheta*beta(i,k)*Fr_1*this%Tt(i,k)*(           & !pay attention on the minus!!
+          mut(i,k)*(                                                  &
+                     ( (w(ip,km)+w(ip,k) +w(i,km)+w(i,k ))/4.         &
+                      -(w(im,km)+w(im,k) +w(i,km)+w(i,k ))/4.)/dRu(i) &
+                   + ( (u(i ,kp)+u(im,kp)+u(i, k)+u(im,k))/4.         &
+                      -(u(im,km)+u(i ,km)+u(im,k)+u(i ,k))/4.)/dzw(k) &
+                   )* (temp(ip,k)-temp(im,k))/(dRp(i)+dRp(im))        &
+        + (                                                           &
+          mut(i,k)*(                                                  &
+                    2.*(w(i,k)-w(i,km))/dzw(k)                        &
+                   -(2/3)*this%div(i,k)                               &
+                   )                                                  &
+          -(2/3)*rho(i,k)*this%k(i,k)                                 &
+          )*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))                  &
+        )
+    enddo
+  enddo
+end subroutine
 
 
 end module
