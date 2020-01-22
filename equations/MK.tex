@@ -30,8 +30,8 @@
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
-\frac{\pd \rho k}{\pd t} + \frac{\pd \rho u_j k}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[\left(\mu + \frac{\mu_t}{\sigma_k}\right)\frac{\pd k}{\pd x_j}\right] + P_{k}- \rho\varepsilon \\
-\frac{\pd \rho \varepsilon}{\pd t} + \frac{\pd \rho u_j \varepsilon}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\mu + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\frac{\pd \varepsilon_t}{\pd x_j}\right] + C_{\varepsilon1}\frac{\varepsilon}{k}\left(P_k+B_k\right)  -C_{\varepsilon2} f_{\varepsilon}\rho\frac{\varepsilon^2}{k}   
+\fpd{\rave{\rho} k}{ t} + \fpd{\rave{\rho} \fave{u_j} k}{x_j} &= \frac{\pd}{\pd x_j}\left[\left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_k}\right)\fpd {k}{x_j}\right] + P_{k} + B_k- \rave{\rho}\varepsilon \\
+\fpd{ \rave{\rho} \varepsilon}{t} + \fpd{ \rave{\rho} \fave{u_j} \varepsilon}{ x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\fpd{ \varepsilon_t}{x_j}\right] + C_{\varepsilon1}\frac{\varepsilon}{k}\left(P_k+B_k\right)  -C_{\varepsilon2} f_{\varepsilon}\rave{\rho}\frac{\varepsilon^2}{k}   
 \end{split}
 \end{equation}
 
@@ -44,11 +44,11 @@ With the following functions:
 \end{equation}
 
 \begin{equation}
-Re_t = \frac{k^2}{\nu \varepsilon}, \quad y^+ =  \frac{y u_\tau}{\mu}, \quad u_\tau = \sqrt{\frac{\tau_w}{\rho}}, \quad \tau_w = \mu\left(\frac{\pd u}{\pd y}\right)_w
+Re_t = \frac{k^2}{\rave{\nu} \varepsilon}, \quad y^+ =  \frac{y u_\tau}{\rave{\mu}}, \quad u_\tau = \sqrt{\frac{\tau_w}{\rave{\rho}}}, \quad \tau_w = \left(\rave{\mu}\fpd{ \fave{u}} {y}\right)_w
 \end{equation}
 
 \begin{equation}
-\mu_t = \rho C_\mu f_\mu \frac{k^2}{\varepsilon}
+\mu_t = \rave{\rho} C_\mu f_\mu \frac{k^2}{\varepsilon}
 \end{equation}
 and the following constants:
 \begin{equation}

@@ -30,21 +30,25 @@
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
-\frac{\pd \rho k}{\pd t} + \frac{\pd \rho u_j k}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[\left(\mu + \frac{\mu_t}{\sigma_k}\right)\frac{\pd k}{\pd x_j}\right] + P_{k}- \varepsilon \\
-\frac{\pd \rho \varepsilon}{\pd t} + \frac{\pd \rho u_j \varepsilon}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\mu + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\frac{\pd \varepsilon_t}{\pd x_j}\right] + C_{\varepsilon1}\frac{\varepsilon}{k}\left(P_k+B_k\right)  -C_{\varepsilon2} f_{\varepsilon}\rho\frac{\varepsilon^2}{k}   
+\fpd{\rave{\rho} k}{ t} + \fpd{\rave{\rho} \fave{u_j} k}{x_j} &= \frac{\pd}{\pd x_j}\left[\left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_k}\right)\fpd {k}{x_j}\right] + P_{k} + B_k- \rave{\rho}\varepsilon \\
+\fpd{ \rave{\rho} \varepsilon}{t} + \fpd{ \rave{\rho} \fave{u_j} \varepsilon}{ x_j} &= \frac{\pd}{\pd x_j}\left[ \left(\frac{\mu}{Re} + \frac{\mu_t}{\sigma_{\varepsilon}}\right)\fpd{ \varepsilon_t}{x_j}\right] + C_{\varepsilon1}\frac{\varepsilon}{k}\left(P_k+B_k\right)  -C_{\varepsilon2} f_{\varepsilon}\rave{\rho}\frac{\varepsilon^2}{k}   
 \end{split}
 \end{equation}
 
 With the following functions:
 \begin{equation}
 \begin{split}
-    f_\mu  &=\left[1-exp\left(-\frac{y^*}{14}\right)\right]^2\left[1+\frac{5}{R_t^{3/4}}exp\left[-\left(\frac{R_t}{200}^2\right)\right]\right] \\
-	f_\varepsilon &= \left[1-exp\left(-\frac{y^*}{3.1}\right)\right]^2\left[1-0.3exp\left(-\frac{R_t}{6.5}\right)^2\right] 
+    f_\mu  &=\left[1-exp\left(-\frac{y^*}{14}\right)\right]^2\left[1+\frac{5}{Re_t^{3/4}}exp\left[-\left(\frac{Re_t}{200}^2\right)\right]\right] \\
+	f_\varepsilon &= \left[1-exp\left(-\frac{y^*}{3.1}\right)\right]^2\left[1-0.3exp\left(-\frac{Re_t}{6.5}\right)^2\right] 
 \end{split}
 \end{equation}
+ where:
 
+ \begin{equation}
+y^* = \frac{y(\rave{\nu}\varepsilon)^{1/4}}{\rave{\nu}}, \quad Re_t = \frac{k^2}{\rave{\nu} \varepsilon}
+ \end{equation}
 \begin{equation}
-\mu_t = \rho C_\mu f_\mu \frac{k^2}{\varepsilon}
+\mu_t = \rave{\rho} C_\mu f_\mu \frac{k^2}{\varepsilon}
 \end{equation}
 and the following constants:
 \begin{equation}
