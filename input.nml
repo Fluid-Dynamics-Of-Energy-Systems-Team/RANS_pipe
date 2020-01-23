@@ -3,7 +3,7 @@
   systemSolve       = 1,      ! 1: pipe, 2: channel 3: sym. channel, 4: dev bl.
   imax              = 96,   ! radial direction
   kelem             = 384,     ! axial direction
-  K_start_heat      = 20,      ! for isoflux:    after home many cells in x will you start heating
+  K_start_heat      = 10,      ! for isoflux:    after home many cells in x will you start heating
   x_start_heat      = 0,      ! for isothermal: lenght at which you start heating
   iwork             = 1,
   isave             = 1,
@@ -11,10 +11,10 @@
   nstep             = 100000,
   LoD               = 80,     ! pH2= 30
   periodic          = 2,       ! 1..periodic, 2..developing   
-  Re                = 5300!3750.!180,
+  Re                = 360!3750.!180,
   Pr                = 3.19!1.0,
   PrT                =.9,
-  bulkmod           = 1,
+  bulkmod           = 0,
   Qwall             = 2.4,    ! Qwall=(qw*D/(k0*T0))
   isothermalBC      = 0,       ! isothermal wall: 1
   Tw_top            = 0.0,    ! scaled with the inflow temp (Tin=1)
@@ -31,8 +31,8 @@
   alphak            = 0.3,     ! for SA
   alphae            = 0.3, 
   alphav2           = 0.3, 
-  modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 0,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
+  modifDiffTerm     = 1,       ! 0..Standard, 1..invSLS, 2..Aupoix
+  turbdiffmod       = 6,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.01,

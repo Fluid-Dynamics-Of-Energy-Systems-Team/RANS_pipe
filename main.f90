@@ -73,8 +73,10 @@ call mesh%discretize_streamwise2( LoD,rank, px)
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=       init_IG_EOSModel(Re,Pr))
-if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, 'tables/co2h_table.dat'))
-if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ))
+if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, 'tables/co2_table.dat','co2'))
+if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ,'h2-'))
+if (EOSmode.eq.4) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, "tables/h2o_table.dat",'h20' ))
+
 call eos_model%init() 
 
 !initialize turbulent viscosity model
@@ -182,9 +184,9 @@ do istep=istart,nstep
   !write the screen output
   noutput = 100
 
-  if (mod(istep,noutput).eq.0) then
-    call debug(rank)
-  endif
+  ! if (mod(istep,noutput).eq.0) then
+  !   call debug(rank)
+  ! endif
 
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then

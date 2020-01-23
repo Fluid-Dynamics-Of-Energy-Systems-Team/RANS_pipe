@@ -108,10 +108,10 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
   !isoflux
   else  
     do k= 0,k1 
-      this%kt(0,k)   = bot_bcnovalue(k)*this%kt(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%kt(i1,k)  = top_bcnovalue(k)*this%kt(imax,k)      !dkt/dy = 0 (1) | or kt=0 (-1)
-      this%epst(0,k) = bot_bcnovalue(k)*this%epst(1,k)         !dkt/dy = 0 (1) | or kt=0 (-1) 
-      this%epst(i1,k)= top_bcnovalue(k)*this%epst(imax,k)      !dkt/dy = 0 (1) | or kt=0 (-1)
+      this%kt(0,k)   = this%kt(1,k)         !dkt/dy = 0 (1) (always if heat flux)
+      this%kt(i1,k)  = this%kt(imax,k)      !dkt/dy = 0 (1) | or kt=0 (-1)
+      this%epst(0,k) = this%epst(1,k)         !dkt/dy = 0 (1) (always if heat flux) 
+      this%epst(i1,k)= this%epst(imax,k)      !dkt/dy = 0 (1) 
       this%Pkt(0,k)  =this%Pkt(1,k)
       this%Pkt(i1,k) =this%Pkt(imax,k)
     enddo
