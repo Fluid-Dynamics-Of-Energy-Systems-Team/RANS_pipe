@@ -55,7 +55,7 @@ contains
     allocate(W1(Mt,Nx),W2(Mt,Nx))
 
     allocate(wstress(0:k1),sfriction(0:k1),mom_thickness(0:k1),dis_thickness(0:k1),bl_thickness(0:k1))
-  end
+  end subroutine
 
 end module mod_common
       

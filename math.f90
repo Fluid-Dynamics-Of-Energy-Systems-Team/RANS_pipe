@@ -18,7 +18,7 @@ subroutine matrixIdir(imax,A,B,C,RHS)
   do i=imax-1,1,-1
     RHS(i) = ( RHS(i) - C(i)*RHS(i+1))/ B(i)
   enddo
-end
+end subroutine
 
 
 !********************************************************************
