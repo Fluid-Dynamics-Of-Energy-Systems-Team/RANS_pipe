@@ -107,6 +107,7 @@ end subroutine set_mut_SA
 subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
   use mod_param, only : k1,i1,kmax,imax,k
   use mod_mesh,  only : top_bcnovalue,bot_bcnovalue
+  use mod_common, only : wnew
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu

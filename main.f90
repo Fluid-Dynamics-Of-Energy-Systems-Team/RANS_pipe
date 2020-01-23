@@ -111,7 +111,7 @@ istart = 1
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,select_init)
 
 
-call bound_v(Unew,Wnew,Win,rank,istep)
+call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 call bound_c(cnew, Tw_top,Tw_bot, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
@@ -122,7 +122,7 @@ call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank)
 call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
 
 ! call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
-call bound_v(Unew,Wnew,Win,rank,istep)
+call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call chkdt(rank,istep)
 call cpu_time(start)
 
@@ -168,7 +168,7 @@ do istep=istart,nstep
   ! call solvepois_cr(p,0,rank,mesh%centerBC)
   call solvepois(p,rank,mesh%centerBC)
   call correc(rank,1)
-  call bound_v(Unew,Wnew,Win,rank, istep)
+  call bound_v(Unew,Wnew,Win,Wnew,rank, istep)
 
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
@@ -184,9 +184,9 @@ do istep=istart,nstep
   !write the screen output
   noutput = 100
 
-  ! if (mod(istep,noutput).eq.0) then
-  !   call debug(rank)
-  ! endif
+   if (mod(istep,noutput).eq.0) then
+     call debug(rank)
+   endif
 
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
@@ -332,6 +332,7 @@ subroutine bound_c(c, Twall_top, Twall_bot, Qwall,rank)
   use mod_param,only : k1,i1,kmax,imax,i,k,isothermalBC,periodic,px
   use mod_eos,  only : eos_model
   use mod_mesh, only : top_bcvalue1,bot_bcvalue1,drp
+  use mod_common, only: wnew
   implicit none
   include 'mpif.h'
   real(8),                       intent(IN) ::  Twall_top, Twall_bot, Qwall
@@ -370,9 +371,11 @@ subroutine bound_c(c, Twall_top, Twall_bot, Qwall,rank)
   if (rank.eq.0) then
     c(:,0) = 0.0
   endif
+  !extrapolation outlet
   if (rank.eq.px-1) then
     c(:,k1) = 2.0*   c(:,kmax) -    c(:,kmax-1)
   endif  
+
 end subroutine bound_c
 
 subroutine set_dpdz_wbulk(w,rank)
@@ -418,7 +421,7 @@ end subroutine
 !!*************************************************************************************
 !!  Apply the boundary conditions for the velocity
 !!*************************************************************************************
-subroutine bound_v(u,w,win,rank,step)
+subroutine bound_v(u,w,win,wout,rank,step)
   use mod_param,only : i1,k1,imax,kmax,periodic,px
   use mod_mesh, only : ubot_bcvalue,top_bcnovalue,bot_bcnovalue
   implicit none  
@@ -426,8 +429,9 @@ subroutine bound_v(u,w,win,rank,step)
   
   integer,                       intent(IN) :: rank, step
   real(8), dimension(0:i1),      intent(IN) :: win
-  real(8), dimension(0:i1,0:k1), intent(OUT):: u, w
+  real(8), dimension(0:i1,0:k1), intent(OUT):: u, w, wout
   real(8), dimension(0:i1)                  :: tmp
+  real(8)                                   :: bulk
 
   u(0,:)    =  (1-ubot_bcvalue(:))*u(1,:) !wall and symmetry !pipe&chan: u=0, bl: du/dy=0
   u(imax,:) =   0.0                            !wall and symmetry
@@ -448,11 +452,35 @@ subroutine bound_v(u,w,win,rank,step)
     u(:,0) = 0.0
     w(:,0) = win(:)
   endif
-  if (rank.eq.px-1)then
-    u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
-    w(:,k1) = 2.*w(:,kmax)-w(:,kmax-1)
-  endif
+  !if (rank.eq.px-1)then
+  !  !extrapolation
+  !  u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
+  !  w(:,kmax) = 2.*w(:,kmax-1)-w(:,kmax-2)
+  !endif
+  !convective outlet
+  call bound_conv(u,wout,rank,k1)
+  call bound_conv(w,wout,rank,kmax)
 end subroutine bound_v
+
+
+subroutine bound_conv(phi,w,rank,loc)
+  use mod_param, only : i1,k1,imax,kmax,periodic,px
+  use mod_common,only : dt
+  use mod_mesh,  only : dru, dzp
+  implicit none  
+  include 'mpif.h'
+  integer                       :: rank,i,loc
+  real(8), dimension(0:i1,0:k1) :: phi,w
+  real(8)                       :: bulk
+
+  if (rank.eq.px-1)then
+    bulk=0
+    do i=1,imax
+      bulk = bulk + dru(i)*w(i,kmax)/2.0
+    enddo
+    phi(:,loc) = phi(:,loc)-bulk*dt*(phi(:,loc)-phi(:,loc))/(dzp(loc))
+  endif
+end subroutine 
 
 !!*************************************************************************************
 !!   Apply the boundary conditions for the velocity using the mass flux
@@ -472,7 +500,7 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   integer :: ierr
   real(8) :: Ub,flux,flux_tot,deltaW,wfunc
   
-  call bound_v(ubound,wbound,W_in,rank, step)
+  call bound_v(ubound,wbound,W_in,W_out,rank, step)
 
   if (periodic .eq. 1) return
   
@@ -483,12 +511,11 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
     Ub = 0.
     do i=1,imax
       wr(i) = W_out(i,kmax)
-      Ub = max(Ub,2.0*Wbound(i,kmax)/(Rbound(i,kmax)+Rbound(i,k1)))
     enddo
-    do i=0,i1
-      Wbound(i,kmax) = 2.0*Wbound(i,kmax-1) - Wbound(i,kmax-2) !NOTE: CHANGE WITH SIMONE
-      Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
-    enddo
+!    do i=0,i1
+!      Wbound(i,kmax) = 2.0*Wbound(i,kmax-1) - Wbound(i,kmax-2) !NOTE: CHANGE WITH SIMONE
+!      Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
+!    enddo
   endif
   !compute drho/dt*dvol
   do k=1,kmax
@@ -790,11 +817,11 @@ end
 
 subroutine debug(rank)
   use mod_param, only :k1,i1,kmax,imax
-  use mod_common, only : wnew,cnew,rnew,p
+  use mod_common, only : wnew,cnew,rnew,p,temp
   implicit none
   integer rank
 
-  call write_2D_vector(wnew,i1,k1,rank,'w')
+  call write_2D_vector(temp,i1,k1,rank,'T')
 
 
 end subroutine
