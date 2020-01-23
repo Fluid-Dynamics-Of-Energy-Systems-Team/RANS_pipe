@@ -213,11 +213,12 @@ contains
   !************************!
 
 
-  type(Table_EOSModel) function init_Table_EOSModel(Re,Pr, ntab,filename)
+  type(Table_EOSModel) function init_Table_EOSModel(Re,Pr, ntab,filename, name)
     real(8), intent(IN) :: Re,Pr
     integer, intent(IN) :: ntab
-    character(len=22), intent(IN) :: filename
-    init_Table_EOSModel%name="table"
+    character(len=20), intent(IN) :: filename
+    character(len=3), intent(IN) :: name
+    init_Table_EOSModel%name=name
     init_Table_EOSModel%Re=Re
     init_Table_EOSModel%Pr=Pr
     init_Table_EOSModel%nTab=nTab
