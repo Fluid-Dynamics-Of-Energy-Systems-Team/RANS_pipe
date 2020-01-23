@@ -375,23 +375,40 @@ end subroutine bound_c
 
 subroutine set_dpdz_wbulk(w,rank)
 
-  use mod_param, only : i1,kmax,px,k1,i,imax
-  use mod_mesh, only : dRu, mesh
+  use mod_param, only : i1,kmax,px,k1,i,imax, systemsolve
+  use mod_mesh, only : dRu, mesh,rp
   implicit none
   include "mpif.h"
   real(8), dimension(0:i1,0:k1), intent(IN) :: w
-  real(8) bulk,bulk_tot
+  real(8) bulk,bulk_tot, pi
   integer :: ierror,rank
 
   bulk = 0.
   ! if (rank .eq. 0) then
-    do i=1,imax
-      bulk = bulk + dru(i)*w(i,kmax)
-    enddo
-  ! endif
-    
-  call mpi_allreduce(bulk,  bulk_tot,1, MPI_REAL8,MPI_SUM,MPI_COMM_WORLD, ierror)
-  bulk = (bulk_tot/2.)/px
+  pi = 4.*atan(1.)
+
+  if (systemsolve .eq. 2) then
+      do i=1,imax
+        bulk = bulk + dru(i)*w(i,kmax)
+      enddo
+    ! endif
+      
+    call mpi_allreduce(bulk,  bulk_tot,1, MPI_REAL8,MPI_SUM,MPI_COMM_WORLD, ierror)
+    bulk = (bulk_tot/2.)/px
+
+  else
+    if (systemsolve .eq. 1) then
+      ! 2*pi;
+
+      do i=1,imax
+        bulk = bulk + 2*pi*rp(i)*dru(i)*w(i,kmax)
+      enddo
+      call mpi_allreduce(bulk,  bulk_tot,1, MPI_REAL8,MPI_SUM,MPI_COMM_WORLD, ierror)
+      bulk = (bulk_tot/(pi/4.0))/px
+    !
+    endif
+  endif
+
   mesh%dpdz     = (0.99*mesh%dpdz + (1.-bulk));
 
 end subroutine
@@ -518,7 +535,8 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
                                win, Re, systemsolve, select_init)
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
-  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr,Tw_bot,Tw_top
+  use mod_eos,   only : eos_model
+  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr,Tw_bot,Tw_top, modifDiffTerm
   use mod_mesh,  only : y_fa,y_cv, mesh
   implicit none
   integer,                        intent(IN) :: rank,systemsolve,select_init
@@ -528,24 +546,32 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
   real(8), dimension(0:i1) :: nuSAin,pkin,kin,epsin,omin,mutin,v2in, &
                               Prtin,alphatin,ktin,epstin,pktin
   character(len=5)  :: Re_str
+  character(len=1)  :: mod_str
   integer           :: Re_int
   real(8)           :: gridSize
-    
+  character(len=100) :: fname
+
   ! inialize from inflow profile
   if (select_init.eq.1) then
     if (rank.eq.0) write(*,*) 'Initializing flow with inflow'
-    Re_int = int(Re)
+    Re_int = int(eos_model%Re)
     write(Re_str,'(I5.5)') Re_int
-    open(29,file =trim(mesh%name)          //'/Inflow_'// &
-                  trim(turb_model%name)    //'_'//        &
-                  trim(turbdiff_model%name)//'_'//        &
-                  Re_str//'.dat',form='unformatted')
+    write(mod_str,'(I1.1)') modifDiffTerm
+    
+    fname = 'Inflow_'//trim(turb_model%name)     &
+          //'_'//trim(turbdiff_model%name) &
+          //'_'//'mod'//mod_str            &
+          //"_"//trim(eos_model%name)      &
+          //"_"//Re_str
+    Re_int = int(Re)
+    open(29,file=trim(mesh%name)//'/'//trim(fname)//'.dat',form='unformatted')
+
     read(29) win(:),kin,epsin,v2in,omin,nuSAin,mutin,pkin, alphatin,prtin, ktin, epstin,pktin
     close(29)
     do k=0,k1
       w(:,k)  = win(:)
       mut(:,k)= mutin(:)
-      c(:,k)= .5 - y_cv(:)/2.0
+      c(:,k)= 0.
       alphat(:,k) = alphatin(:)
     enddo
     
@@ -559,7 +585,7 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
     gridSize = y_fa(imax)
     do i=0,i1!imax         
-      if (systemsolve.eq.1) w(i,:)  = Re/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
+      if (systemsolve.eq.1) w(i,:)  = Re*mesh%dpdz/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
       if (systemsolve.eq.2) then
         w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
         c(i,:)= Tw_bot -Tw_bot* (y_cv(i)/2.0)!(Tw_bot+Tw_top)*0.5!.05!1. !- (y_cv(i)/2.0)

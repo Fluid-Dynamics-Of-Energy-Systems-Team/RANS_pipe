@@ -283,6 +283,7 @@ contains
   end function init_PipeMesh
 
   subroutine init_pipe(this, LoD, K_start_heat, x_start_heat, rank,px)
+    use mod_param, only : bulkmod
     implicit none
     class(Pipe_Mesh) :: this
     real(8), intent(IN) :: LoD, x_start_heat
@@ -293,7 +294,12 @@ contains
     gridSize  = 0.5
     fA        = 0.12
     fB        = 2.4
-    this%dpdz = 4.0
+    ! this%dpdz = 4.0
+    if (bulkmod .eq. 1) then
+      this%dpdz = 0.00005
+    else
+      this%dpdz = 4.0
+    endif
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)

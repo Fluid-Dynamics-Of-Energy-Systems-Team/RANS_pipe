@@ -380,6 +380,22 @@ subroutine diffusion_eps_KE(this,putout,putin,muk,mut,sigma,rho,modification)
   endif
 end subroutine diffusion_eps_KE
 
+subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)
+  use mod_param, only :k1,i1,imax,kmax,i,k
+  use mod_mesh, only : rp,ru,dru,drp,dzw,dzp
+  implicit none
+  class(KE_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
+  real(8), dimension(0:i1,0:k1) :: div
+  integer im,ip,km,kp
+
+  call this%calc_turbulent_timescale(rho,mu)
+  call this%calc_divergence(u,w)
+  call this%calc_tke_production(u,w,rho,mut)
+  call this%calc_buoyancy_production(u,w,temp, rho,beta, mut)
+end subroutine production_KE
+
+
 subroutine calc_turbulent_timescale(this,rho,mu)
   use mod_param, only : k1,i1
   implicit none
@@ -404,21 +420,6 @@ subroutine calc_divergence(this, u, w)
     enddo
   enddo
 end subroutine
-
-subroutine production_KE(this,u,w,temp,rho,mu,mut,beta)
-  use mod_param, only :k1,i1,imax,kmax,i,k
-  use mod_mesh, only : rp,ru,dru,drp,dzw,dzp
-  implicit none
-  class(KE_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(IN) :: u,w,temp,rho,mu,mut,beta
-  real(8), dimension(0:i1,0:k1) :: div
-  integer im,ip,km,kp
-
-  call this%calc_turbulent_timescale(rho,mu)
-  call this%calc_divergence(u,w)
-  call this%calc_tke_production(u,w,rho,mut)
-  call this%calc_buoyancy_production(u,w,temp, rho,beta, mut)
-end subroutine production_KE
 
 subroutine calc_tke_production(this, u, w, rho,mut)
   use mod_mesh, only : ru, rp, dru,dzw

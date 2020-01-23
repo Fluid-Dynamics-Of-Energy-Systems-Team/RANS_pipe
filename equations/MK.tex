@@ -1,30 +1,6 @@
-\documentclass[paper=a4, fontsize=12pt]{scrartcl} % A4 paper and 11pt font size
-\usepackage{amsmath,amsfonts,amsthm} % Math packages
-
-\newcommand{\wh}[1]{\hat{#1}}
-\newcommand{\wt}[1]{\widetilde{#1}}
-\newcommand{\sls}[1]{\hat{#1}}
-\newcommand{\dimm}[1]{{#1}^*}
-\newcommand{\ls}[1]{{#1}}
-\newcommand{\rave}[1]{\left<{#1}\right>}
-\newcommand{\fave}[1]{\{{#1}\}}
-\newcommand{\uts}{{u_\tau^\star}}
-\newcommand{\Rets}{Re_\tau^\star}
-\newcommand{\tw}{\tau_w}
-\newcommand{\pd}{\partial }
-\newcommand{\fpd}[2]{\frac{\partial #1}{\partial {#2}}}
-\newcommand{\fpdil}[2]{{\partial #1}/{\partial {#2}}}
-\newcommand{\pdi}{\partial_{y}}
-\newcommand{\pdih}{\partial_{\wh y}}
-\newcommand{\RN}[1]{\textup{\uppercase\expandafter{\romannumeral#1}}}
-\newcommand{\nusa}{\check{\nu}} %{\tilde\nu} %{\textbf{\nu}} %
-\newcommand{\Ssa}{\check{S}} %{\tilde{S}} %{\textbf{S}} %
-\newcommand{\red}[1]{{\color{red}{#1}}}
-\newcommand{\eps}{{\varepsilon}}
 
 
 
-\begin{document}
 
 \section{MK Model}
 The following transport equations are implemented in the code:
@@ -44,7 +20,7 @@ With the following functions:
 \end{equation}
 
 \begin{equation}
-Re_t = \frac{k^2}{\rave{\nu} \varepsilon}, \quad y^+ =  \frac{y u_\tau}{\rave{\mu}}, \quad u_\tau = \sqrt{\frac{\tau_w}{\rave{\rho}}}, \quad \tau_w = \left(\rave{\mu}\fpd{ \fave{u}} {y}\right)_w
+Re_t = \frac{k^2}{\rave{\nu} \varepsilon}, \quad y^+ =  \frac{\rave{\rho_w} u_\tau y }{\rave{\mu_w}}, \quad u_\tau = \sqrt{\frac{\tau_w}{\rho_w}}, \quad \tau_w = \left(\rave{\mu}\fpd{ \fave{u}} {y}\right)_w
 \end{equation}
 
 \begin{equation}
@@ -54,4 +30,3 @@ and the following constants:
 \begin{equation}
 C_\mu = 0.09, \quad \sigma_k = 1.4, \quad, \sigma_\varepsilon = 1.3, \quad C_{\varepsilon1} = 1.4, \quad C_{\varepsilon2}=1.8
 \end{equation}
-\end{document}

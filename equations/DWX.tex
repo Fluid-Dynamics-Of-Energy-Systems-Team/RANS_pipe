@@ -1,30 +1,4 @@
-\documentclass[paper=a4, fontsize=12pt]{scrartcl} % A4 paper and 11pt font size
-\usepackage{amsmath,amsfonts,amsthm} % Math packages
 
-\newcommand{\wh}[1]{\hat{#1}}
-\newcommand{\wt}[1]{\widetilde{#1}}
-\newcommand{\sls}[1]{\hat{#1}}
-\newcommand{\dimm}[1]{{#1}^*}
-\newcommand{\ls}[1]{{#1}}
-\newcommand{\rave}[1]{\left<{#1}\right>}
-\newcommand{\fave}[1]{\{{#1}\}}
-\newcommand{\uts}{{u_\tau^\star}}
-\newcommand{\Rets}{Re_\tau^\star}
-\newcommand{\tw}{\tau_w}
-\newcommand{\pd}{\partial }
-\newcommand{\fpd}[2]{\frac{\partial #1}{\partial {#2}}}
-\newcommand{\fpdil}[2]{{\partial #1}/{\partial {#2}}}
-\newcommand{\pdi}{\partial_{y}}
-\newcommand{\pdih}{\partial_{\wh y}}
-\newcommand{\RN}[1]{\textup{\uppercase\expandafter{\romannumeral#1}}}
-\newcommand{\nusa}{\check{\nu}} %{\tilde\nu} %{\textbf{\nu}} %
-\newcommand{\Ssa}{\check{S}} %{\tilde{S}} %{\textbf{S}} %
-\newcommand{\red}[1]{{\color{red}{#1}}}
-\newcommand{\eps}{{\varepsilon}}
-
-
-
-\begin{document}
 
 \section{DWX Model}
 The following transport equations are implemented in the code:
@@ -38,8 +12,8 @@ The following transport equations are implemented in the code:
 With the following functions:
 \begin{equation}
 \begin{split}
-f_{D2} = 1-exp\left(-\frac{R_\eps}{1.7}\right)^2,\quad f_{D2} &= \left(\frac{1}{C_{d2}}\right)(C_{\eps2}f_\eps-1)\left[1-exp\left(-\frac{R_\eps}{5.8}\right)^2\right], \\
-f_\eps = 1-0.3exp\left(-\frac{R_t}{6.5}\right)^2, \quad f_\lambda &= \left[1-exp\left(-\frac{R_\eps}{16}\right)\right]^2\left[1+\frac{3}{R_t^{3/4}}\right].
+f_{D2} = 1-exp\left(-\frac{y^*}{1.7}\right)^2,\quad f_{D2} &= \left(\frac{1}{C_{d2}}\right)(C_{\eps2}f_\eps-1)\left[1-exp\left(-\frac{y^*}{5.8}\right)^2\right], \\
+f_\eps = 1-0.3exp\left(-\frac{Re_t}{6.5}\right)^2, \quad f_\lambda &= \left[1-exp\left(-\frac{y^*}{16}\right)\right]^2\left[1+\frac{3}{Re_t^{3/4}}\right].
 \end{split}
 \end{equation}
 
@@ -56,7 +30,7 @@ and the turbulent diffusivity calculated using:
 
 where
 \begin{equation}
-R_t = \frac{k^2}{\nu\eps}, \quad R_\eps = \frac{y(\nu\eps)^{1/4}}{\nu}, \quad R = \frac{\tau_t}{\tau_u}, \quad \tau_u = \frac{k}{\eps}, \quad \tau_t = \frac{\overline{t^2}}{2\eps_t}.
+Re_t = \frac{k^2}{\nu\varepsilon}, \quad y^*= \frac{u_\varepsilon \rho_w y}{\mu_w}, \quad u_\varepsilon = (\nu\varepsilon)^{1/4}, \quad R = \frac{\tau_t}{\tau_u}, \quad \tau_u = \frac{k}{\eps}, \quad \tau_t = \frac{\overline{t^2}}{2\eps_t}.
 \end{equation}
 
 The following constants are used:
@@ -76,4 +50,3 @@ The following table shows the units of the important variables:
         $\left[c_p\right]= m^2 /(s^2 K) $ & $-$  \\ \hline
 \end{tabular}
 \end{center}
-\end{document}

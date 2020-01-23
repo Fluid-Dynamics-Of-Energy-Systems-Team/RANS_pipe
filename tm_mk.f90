@@ -32,9 +32,9 @@ subroutine set_constants_MK(this)
   class(MK_TurbModel) :: this
   this%sigmak = 1.4
   this%sigmae = 1.3
-  this%cmu = 0.09
-  this%ce1 = 1.4
-  this%ce2 = 1.8
+  this%cmu    = 0.09
+  this%ce1    = 1.4
+  this%ce2    = 1.8
 end subroutine set_constants_MK
 
 subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
@@ -56,7 +56,6 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
     utau(k) = sqrt(tauw(k)/(0.5*(rho(imax,k)+rho(i1,k))))
     rho_wall = 0.5*(rho(i1,k)+rho(imax,k))
     mu_wall = 0.5*(mu(i1,k)+mu(imax,k))
-    
     do i=1,imax
       im=i-1
       ip=i+1
