@@ -107,6 +107,7 @@ end subroutine set_mut_SA
 subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
   use mod_param, only : k1,i1,kmax,imax,k
   use mod_mesh,  only : top_bcnovalue,bot_bcnovalue
+  use mod_common, only : wnew
   implicit none
   class(SA_TurbModel) :: this
   real(8),dimension(0:i1,0:k1),intent(IN) :: rho,mu
@@ -127,10 +128,12 @@ subroutine set_bc_SA(this,mu,rho,periodic,rank,px)
     this%nuSA(:,0) = this%nuSAin(:)
     this%Pk(:,0)   = this%pkin(:)
   endif
-  if (rank.eq.px-1) then
-    this%nuSA(:,k1) = 2.0*this%nuSA(:,kmax) - this%nuSA(:,kmax-1)
-    this%pk(:,k1)   = 2.0*this%pk  (:,kmax) - this%pk  (:,kmax-1)
-  endif
+ if (rank.eq.px-1) then
+   this%nuSA(:,k1) = 2.0*this%nuSA(:,kmax) - this%nuSA(:,kmax-1)
+   this%pk(:,k1)   = 2.0*this%pk  (:,kmax) - this%pk  (:,kmax-1)
+ endif
+  ! call bound_conv(this%nuSA,wnew,rank,0) 
+  ! call bound_conv(this%pK,wnew,rank,0) 
 
 end subroutine set_bc_SA
 
@@ -152,16 +155,18 @@ subroutine get_profile_SA(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,yp,k)
   yp(:)  = this%yp(:,k)
 end subroutine get_profile_SA
 
-subroutine get_sol_SA(this,nuSA,k,eps,om,v2,yp)
+subroutine get_sol_SA(this,nuSA,k,eps,om,v2,pk, gk,yp)
   use mod_param, only : i1,k1
   class(SA_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp,pk,gk
   nuSA=this%nuSA
   k   =0    
   eps =0
   v2  =0
   om  =0
   yp  = this%yp
+  pk  = this%pk
+  gk = 0.
 end subroutine get_sol_SA
 
 subroutine advance_SA(this,u,w,rho,mu,mui,muk,mut,beta,temp, &

@@ -67,11 +67,11 @@ module mod_tm
       real(8),dimension(0:i1),          intent(OUT):: p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,yp
       real(8),dimension(1:imax),        intent(OUT):: p_bF2
     end subroutine get_profile_tm
-    subroutine get_sol_tm(this,nuSA,k,eps,om,v2,yp)
+    subroutine get_sol_tm(this,nuSA,k,eps,om,v2,pk, gk,yp)
       use mod_param, only : i1,k1
       import :: TurbModel
       class(TurbModel) :: this
-      real(8),dimension(0:i1,0:k1),intent(OUT):: nuSA,k,eps,om,v2,yp
+      real(8),dimension(0:i1,0:k1),intent(OUT):: nuSA,k,eps,om,v2,yp,pk,gk
     end subroutine get_sol_tm
     subroutine init_w_inflow_tm(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
       use mod_param, only : i1
@@ -188,16 +188,18 @@ subroutine get_profile_laminar(this,p_nuSA,p_k,p_eps,p_om,p_v2,p_Pk,p_bF1,p_bF2,
   yp(:) = this%yp(:,k)
 end subroutine get_profile_laminar
 
-subroutine get_sol_laminar(this,nuSA,k,eps,om,v2,yp)
+subroutine get_sol_laminar(this,nuSA,k,eps,om,v2,pk, gk,yp)
   use mod_param, only : i1,k1
   class(Laminar_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp, pk,gk
   nuSA=0
   k   =0    
   eps =0
   v2  =0
   om  =0
   yp  = this%yp
+  pk=0.
+  gk=0.
 end subroutine get_sol_laminar
 
 

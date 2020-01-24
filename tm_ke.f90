@@ -111,14 +111,16 @@ subroutine init_mem_KE(this)
   allocate(this%mutin(0:i1),this%Pkin (0:i1),this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
 end subroutine init_mem_KE
 
-subroutine get_sol_KE(this,nuSA,k,eps,om,v2,yp)
+subroutine get_sol_KE(this,nuSA,k,eps,om,v2,pk, gk,yp)
   use mod_param, only : i1,k1  
   class(KE_TurbModel) :: this
-  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp
+  real(8),dimension(0:i1,0:k1), intent(OUT):: nuSA,k,eps,om,v2,yp,pk,gk
   nuSA=0
   k   =this%k    
   eps =this%eps
   v2  =this%v2
+  pk  = this%pk
+  gk  = this%gk
   om  =0
   yp  = this%yp
 end subroutine get_sol_KE

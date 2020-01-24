@@ -16,7 +16,10 @@ module vf_tm
     procedure :: advance_turb => advance_VF
     procedure :: set_bc => set_bc_VF
     procedure :: init_w_inflow => init_w_inflow_VF
+    ! procedure :: init_sol_KE => init_sol_VF
     procedure :: rhs_v2_VF
+    procedure :: rhs_eps_KE => rhs_eps_VF
+
     procedure :: solve_v2_VF
     procedure :: fillhelm
     procedure :: calc_turbulent_timescale => calc_turbulent_timescale_VF
@@ -88,44 +91,46 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
     do i=1,imax
       im=i-1
       ip=i+1
-
       if (modifDiffTerm .eq. 1) then
         this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
       else
         this%yp(i,k) = walldist(i)*Re*utau(k)
       endif
-
-      !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
-      !this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5           ! ystar
-      
-      ! StR= (2.*(((w(i,k)-w(i,km))/dz)**2.          + &
-      !           ((u(i,k)-u(im,k))/dru(i))**2.      + &
-      !           ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) +  &
-      !   (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
-      !   +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/(dz)  )**2.)
-      
-      StR= (2.*(((w(i,k)-w(i,km))/dzw(k))**2.      + &
-                ((u(i,k)-u(im,k))/dru(i))**2.      + &
-                ((u(i,k)+u(im,k))/(2.*Rp(i)))**2.) + &
-        (((w(ip,km)+w(ip,k)+w(i,km)+w(i,k))/4.-(w(im,km)+w(im,k)+w(i,km)+w(i,k))/4.)/dru(i) &
-        +((u(i,kp)+u(im,kp)+u(i,k)+u(im,k))/4.-(u(im,km)+u(i,km)+u(im,k)+u(i,k))/4.)/dzw(k))**2.)
-      
-
-      this%Tt(i,k) = max(this%k(i,k)/this%eps(i,k),6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)
-
-      ! Srsq(i,k) = Str*rNew(i,k)*0.5
-      ! if (modVF.eq.1) then
-      !   ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
-      !   Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-      !   Tt(i,k)   = min(Tt(i,k),0.6*kNew(i,k)/(3.**0.5*v2New(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-      ! endif
-      ! this%fmu(i,k) = this%v2(i,k)*this%Tt(i,k)/(this%k(i,k)**2./this%eps(i,k))
       this%f1(i,k)  = 1.0 + 0.045*(this%k(i,k)/this%v2(i,k))**0.5
-      this%f2(i,k)  = 1.0
       mut(i,k) = min(1.,rho(i,k)*this%cmu*this%v2(i,k)*this%Tt(i,k))
     enddo
   enddo
 end subroutine set_mut_VF
+
+subroutine rhs_eps_VF(this,putout,dimpl,rho)
+  use mod_param, only :k1,i1,imax,kmax,k,i
+  implicit none
+  class(VF_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(IN) :: rho
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+  
+  do k=1,kmax
+    do i=1,imax
+      putout(i,k) = putout(i,k) +(this%ce1*this%f1(i,k)*(this%Pk(i,k)+this%Gk(i,k)))/(this%Tt(i,k)*rho(i,k)) 
+      dimpl(i,k)  = dimpl(i,k)  + this%ce2/this%Tt(i,k)   ! note, ce2*f2*rho*epsilon/T/(rho*epsilon), set implicit and divided by density
+    enddo
+  enddo
+end subroutine rhs_eps_VF
+
+subroutine rhs_v2_VF(this,putout,dimpl)
+  use mod_param, only : k1,i1,imax,kmax,i,k
+  implicit none
+  class(VF_TurbModel) :: this
+  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
+      
+  do k=1,kmax
+    do i=1,imax
+      putout(i,k) = putout(i,k) + this%k(i,k)*this%fv2(i,k)       ! note, source is rho*k*f/rho
+      dimpl(i,k)  = dimpl(i,k)  + 6.*this%eps(i,k)/this%k(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
+    enddo
+  enddo
+
+end subroutine rhs_v2_VF
 
 subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
   use mod_mesh, only : mesh,top_bcnovalue,bot_bcnovalue,top_bcvalue,bot_bcvalue,walldist
@@ -265,25 +270,6 @@ subroutine solve_v2_VF(this,resV2,u,w,rho,mu,mui,muk,mut,rho_mod, &
   enddo
 end subroutine solve_v2_VF
 
-
-
-subroutine rhs_v2_VF(this,putout,dimpl)
-  use mod_param, only : k1,i1,imax,kmax,i,k
-  implicit none
-  class(VF_TurbModel) :: this
-  real(8), dimension(0:i1,0:k1), intent(OUT):: putout,dimpl
-      
-  do k=1,kmax
-    do i=1,imax
-      !v'2 equation
-      putout(i,k) = putout(i,k) + this%k(i,k)*this%fv2(i,k)       ! note, source is rho*k*f/rho
-      dimpl(i,k)  = dimpl(i,k)  + 6.*this%eps(i,k)/this%k(i,k)    ! note, 6*rho*v'2*epsilon/k/(rho*v'2), set implicit and divided by density
-    enddo
-  enddo
-
-end subroutine rhs_v2_VF
-
-
 subroutine calc_turbulent_timescale_VF(this,rho,mu)
   use mod_param, only : kmax,imax,i,k, i1,k1
   implicit none
@@ -307,29 +293,11 @@ subroutine fillhelm(this,mu,rho)
 
   do  k=1,kmax
     do i=1,imax         
+
       this%Lh(i,k)=0.23*max(this%k(i,k)**1.5/this%eps(i,k),70.*((mu(i,k)/rho(i,k))**3./this%eps(i,k))**0.25)
-
-      ! if (modVF.eq.1) then
-      !   ! Modifications: Lien&Kalitzin 2001 "Computations of transonic flow with the v2f turbulence model"
-      !   Tt(i,k)   = max(Tt(i,k), 1.0e-8)
-      !   Tt(i,k)   = min(Tt(i,k),0.6*knew(i,k)/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-
-      !   Lh(i,k)=min(knew(i,k)**1.5/enew(i,k),knew(i,k)**1.5/(3.**0.5*v2new(i,k)*cmu*(2.*Srsq(i,k))**0.5))
-      !   Lh(i,k)=0.23*max(Lh(i,k),70.*((ekm(i,k)/rnew(i,k))**3./enew(i,k))**0.25)
-      ! endif
-
-      ! f-equation also has Gk: Kenjeres et al 2005 "Contribution to elliptic relaxation modelling of turbulent natural and mixed convection"
-      ! rhs_fv2(i,k)=  (1/this%Tt(i,k))*(this%c1-1.)*(this%v2(i,k)/this%k(i,k)-2./3.) &
-      !                - this%c2*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k)) &
-      !                - 5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
-
       this%fv2(i,k)= - (1.4-1.)*(2./3.-this%v2(i,k)/this%k(i,k))/this%Tt(i,k) &
                 - 0.3*(this%Pk(i,k)+this%Gk(i,k))/(rho(i,k)*this%k(i,k))-5.*this%v2(i,k)/(this%k(i,k)*this%Tt(i,k))
       this%fv2(i,k) = this%fv2(i,k)/this%Lh(i,k)**2.0 
-      
-      ! this%fv2(i,k) = -(1./this%Tt(i,k))*((this%c1-6.)*(this%v2(i,k)/this%k(i,k))-(2./3.)*(this%c1-1)) &
-      !                 -this%c2*this%Pk(i,k)/(rho(i,k)*this%k(i,k))
-      ! this%fv2(i,k) = this%fv2(i,k)/(this%Lh(i,k)**2.0) !+ this%fv2(i,k)/this%Lh(i,k)**2
     enddo
   enddo
 end subroutine fillhelm

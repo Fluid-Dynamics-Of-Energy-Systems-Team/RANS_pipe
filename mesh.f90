@@ -9,7 +9,7 @@ module mod_mesh
 
   type, abstract, public :: AbstractMesh
   character(len=10)                  :: name
-  real(8), allocatable               :: dpdz,start
+  real(8), allocatable               :: dpdz,start, gridSize
   integer, allocatable               :: centerBC,numDomain           
   
   contains
@@ -291,7 +291,7 @@ contains
     real(8) :: pi, gridsize, fA, fB
     this%numDomain = 1
     this%centerBC = 1
-    gridSize  = 0.5
+    this%gridSize  = 0.5
     fA        = 0.12
     fB        = 2.4
     ! this%dpdz = 4.0
@@ -303,8 +303,8 @@ contains
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
-    call this%discretize_wall_normal(fA,fB,gridSize)
-    call this%calc_walldist(gridsize)
+    call this%discretize_wall_normal(fA,fB,this%gridSize)
+    call this%calc_walldist(this%gridsize)
     call this%set_bc(K_start_heat, x_start_heat, rank)
 
   end subroutine init_pipe
@@ -354,7 +354,7 @@ contains
     real(8) :: pi, gridsize, fA, fB
     this%numDomain = -1
     this%centerBC = -1
-    gridSize  = 2.0
+    this%gridSize  = 2.0
     fA        = 0.5
     fB        = 4.6
 
@@ -366,9 +366,9 @@ contains
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
-    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%discretize_wall_normal(fA,fB,this%gridSize)
     call this%set_bc(K_start_heat, x_start_heat,rank)
-    call this%calc_walldist(gridsize)
+    call this%calc_walldist(this%gridsize)
     call this%set_carthesian()
 
   end subroutine init_channel
@@ -442,16 +442,16 @@ contains
     real(8) :: pi, gridsize, fA, fB
     this%numDomain = -1
     this%centerBC = 1
-    gridSize  = 1.0
+    this%gridSize  = 1.0
     fA        = 0.12
     fB        = 2.4
     this%dpdz = 1.0
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
-    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%discretize_wall_normal(fA,fB,this%gridSize)
     call this%set_bc(K_start_heat, x_start_heat,rank)
-    call this%calc_walldist(gridsize)
+    call this%calc_walldist(this%gridsize)
     call this%set_carthesian()
 
   end subroutine init_symchannel

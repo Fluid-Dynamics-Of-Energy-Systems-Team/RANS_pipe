@@ -193,7 +193,7 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
 end subroutine read_mpiio_formatted
 
 subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
-                                 k, eps, v2, om,nuSA,alphat,Prt,kt,epst, Pkt, &
+                                 k, eps, v2, om,nuSA,pk, gk,alphat,Prt,kt,epst, Pkt, &
                                  qwall,ttau,twall,tauw,utau,yplus,tplus,uplus, &
                                  resKt,resEt, i1, k1,rank,px)
   use mod_param, only : LoD
@@ -201,18 +201,18 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
   include "mpif.h"
   character(*),                  intent(IN) :: filename
   real(8), dimension(0:i1,0:k1), intent(IN) :: x,y,u,w,rho,T,p,mu,mut,yp, &
-                                               k,eps,v2,om,nuSA, &
+                                               k,eps,v2,om,nuSA,pk,gk, &
                                                alphat,Prt,kt,epst, Pkt,resKt,resEt, &
                                                yplus, tplus, uplus
   integer,                       intent(IN) :: i1,k1,rank,px
   real(8), dimension(0:k1), intent(IN) :: qwall, ttau, twall, tauw, utau
   integer nvar,i,j,index,k_max,k_min,size,fh,ierr
   integer(kind=MPI_OFFSET_KIND) disp 
-  character(len=601), dimension(:), allocatable :: lines, lines2
-  character(len=600) :: test
-  character(len=601) :: line
+  character(len=641), dimension(:), allocatable :: lines, lines2
+  character(len=640) :: test
+  character(len=641) :: line
   real(8) :: x_v, y_v
-  nvar = 30
+  nvar = 32
   index=1
 
   !first core write from 0 to kmax
@@ -222,8 +222,8 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
     allocate(lines(1:(i1+1)*k1+1)) !+1 for header
     disp = 0
     size = ((i1+1)*(k1)+1)*(nvar*20+1)
-    write(test,'(30(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2',&
-                            'om','nuSA','alphat',"Prt","kt","epst", "Pkt", &
+    write(test,'(32(A20))') 'x','y','u','w','rho','T','p','mu','mut','yp','k','eps','v2',&
+                            'om','nuSA','pk','gk','alphat',"Prt","kt","epst", "Pkt", &
                             'qwall', 'ttau', 'twall','tauw','utau',  &
                             'yplus','tplus','uplus',"resKt", 'resEt' !write the header
 
@@ -248,14 +248,15 @@ subroutine write_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
 
   do j = k_min,k_max      
     do i = 0,i1
-      y_v = min(2., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
-      x_v = min(LoD,max(0.,x(i,j))) !takes the LOD or zero in case the x is negative
-      write(test,'(30(E20.10e3))') x_v        ,      y_v,    u(i,j),    w(i,j),  rho(i,j),    &
-                                   T(i,j)     ,   p(i,j),   mu(i,j),  mut(i,j),   yp(i,j),    &
-                                   k(i,j)     , eps(i,j),   v2(i,j),   om(i,j), nuSA(i,j),    &
-                                   alphat(i,j), Prt(i,j),   kt(i,j), epst(i,j),  Pkt(i,j),    &
-                                   qwall(j)   ,  ttau(j),  twall(j),   tauw(j),   utau(j),    &
-                                   yplus(i,j),tplus(i,j),uplus(i,j),resKt(i,j), resEt(i,j)
+      ! y_v = min(2., max(0.,y(i,j))) !take the zero in case negative, take the one in case bigger than 1
+      ! x_v = min(LoD,max(0.,x(i,j))) !takes the LOD or zero in case the x is negative
+      write(test,'(32(E20.10e3))') x(i,j)        ,y(i,j),     u(i,j),    w(i,j),  rho(i,j),    &
+                                   T(i,j)     ,   p(i,j),    mu(i,j),  mut(i,j),   yp(i,j),    &
+                                   k(i,j)     , eps(i,j),    v2(i,j),   om(i,j), nuSA(i,j),    &
+                                   pk(i,j)    ,  gk(i,j),alphat(i,j),  Prt(i,j),    kt(i,j),    &
+                                   epst(i,j)  ,  Pkt(i,j),   qwall(j) ,   ttau(j),   twall(j),   &
+                                   tauw(j),   utau(j),   yplus(i,j),tplus(i,j), uplus(i,j),   &
+                                   resKt(i,j), resEt(i,j)
       write(line, '(A)') test // NEW_LINE("A")
       lines(index) = line
       index=index+1
@@ -365,17 +366,17 @@ subroutine output2d_upd2(rank,istap)
   use mod_tm
   use mod_eos, only : eos_model
   use mod_tdm, only : turbdiff_model
-  use mod_mesh, only : dru,rp,zp,y_cv
+  use mod_mesh, only : dru,rp,zp,y_cv,mesh
   implicit none
   include 'mpif.h'
   real*8 pecletx,peclety,pecletz
   real*8 massflow(kmax),enthflow(kmax),enth_b(kmax),Twall(kmax),Tbulk(kmax), &
-         massfl,w_c,ndt
-  real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol, &
+         massfl,w_c,ndt,x_v,y_v
+  real(8), dimension(0:i1,0:k1) ::  xvec, yvec,nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol,pk_sol,gk_sol, &
                                     kt_sol, epst_sol, Prt_sol, Pkt_sol, yplus, tplus, uplus
   integer rank,istap,jstart
   real(8), dimension(0:i1,0:k1) :: x_plt, y_plt, u_plt,w_plt, rho_plt, c_plt, p_plt, mu_plt, mut_plt, &
-                                   k_plt, eps_plt, v2_plt, om_plt, nuSA_plt,alphat_plt, &
+                                   k_plt, eps_plt, v2_plt,pk_plt,gk_plt, om_plt, nuSA_plt,alphat_plt, &
                                    prt_plt, kt_plt, epst_plt, Pkt_plt, resEt, resKt, &
                                    yplus_plt, tplus_plt, uplus_plt
   real(8), dimension(0:k1) :: qw, ttau, twalll, tauw, utau
@@ -399,14 +400,17 @@ subroutine output2d_upd2(rank,istap)
     call eos_model%set_w_enth(enth_b(k),"T", Tbulk(k))
   enddo
 
+
   do k=0,k1
     do i=0,i1
-      xvec(i,k) = zp(k)
-      yvec(i,k) = y_cv(i)
+      y_v = min(mesh%gridSize, max(0.,y_cv(i))) !take the zero in case negative, take the one in case bigger than 1
+      x_v = min(LoD,max(0.,zp(k))) !takes the LOD or zero in case the x is negative
+      xvec(i,k) = x_v
+      yvec(i,k) = y_v
     enddo
   enddo
 
-  call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,yp_sol)
+  call turb_model%get_sol(nuSA_sol,k_sol,eps_sol,om_sol,v2_sol,pk_sol,gk_sol,yp_sol)
   call turbdiff_model%get_sol(prt_sol,epst_sol,kt_sol, Pkt_sol, resKt, resEt)
 
   call calc_turbdiff_values(qw,ttau,twalll,tauw,utau,yplus,tplus,uplus)
@@ -421,6 +425,8 @@ subroutine output2d_upd2(rank,istap)
   call set_scalar_to_coords (p,i1,k1,p_plt)
   call set_scalar_to_coords (ekm,i1,k1,mu_plt)
   call set_scalar_to_coords (ekmt,i1,k1,mut_plt)
+  call set_scalar_to_coords (pk_sol,i1,k1,pk_plt)
+  call set_scalar_to_coords (gk_sol,i1,k1,gk_plt)
   call set_scalar_to_coords (k_sol,i1,k1,k_plt)
   call set_scalar_to_coords (eps_sol,i1,k1,eps_plt)
   call set_scalar_to_coords (v2_sol,i1,k1,v2_plt)
@@ -434,8 +440,8 @@ subroutine output2d_upd2(rank,istap)
 
   
   call write_mpiio_formatted(trim(output_fname), xvec, yvec, u_plt,w_plt, rho_plt,c_plt,p_plt,mu_plt, mut_plt,yp_sol,     &
-                                 k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,alphat_plt, prt_plt, kt_plt, epst_plt,  Pkt_plt,  &
-                                 qw,ttau,twalll,tauw,utau,yplus_plt,tplus_plt,uplus_plt, resKt, resEt, &
+                                 k_plt, eps_plt, v2_plt, om_plt,nuSA_plt,pk_plt, gk_plt, alphat_plt, prt_plt, kt_plt,   &
+                                 epst_plt,  Pkt_plt, qw,ttau,twalll,tauw,utau,yplus_plt,tplus_plt,uplus_plt, resKt, resEt,&
                                  i1, k1,rank,px)
 end
 

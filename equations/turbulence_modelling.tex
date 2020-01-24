@@ -33,6 +33,16 @@ The Reynolds stress is modelled using:
 -\langle \rho u''_i u''_j \rangle \approx \mu_t \left(\fpd{\fave{u_i}}{x_j} +\fpd{\fave{u_j}}{x_i} - \frac{2}{3}\delta_{ij} \nabla \cdot \fave{u} \right) - \frac{2}{3} \rho k \delta_{ij}
 \end{equation}
 
+\begin{equation}
+\rave{\rho u_z'T' } = -C_t T_\tau \rave{\rho u''_z u''_j}\fpd{\fave{T}}{x_j}
+\end{equation}
+
+\begin{equation}
+B_k = -\frac{1}{Fr_0^2}\beta_T  \rave{\rho u_z'T' }
+\end{equation}
+
+
+
 And the turbulent heat flux according to:
 
 \begin{equation}
@@ -41,12 +51,6 @@ And the turbulent heat flux according to:
 
 The bouyancy is modelled using:
 
-\begin{equation}
-B_k = -\frac{1}{Fr_0^2}\beta_T  \rave{\rho u_z'T' }
-\end{equation}
-\begin{equation}
-\rave{\rho u_z'T' } = C_t T_\tau \rave{\rho u''_z u''_j}\fpd{\fave{T}}{x_j}
-\end{equation}
 
 \begin{equation}
 \beta_T = \frac{1}{\rho}\frac{\pd \rho}{\pd T}
