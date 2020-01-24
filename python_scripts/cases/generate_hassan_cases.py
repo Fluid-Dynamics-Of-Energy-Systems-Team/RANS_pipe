@@ -88,7 +88,7 @@ def set_parameters(case,turbmod,modification,turbdiffmodel):
     adjust['input']['EOSmode'] = 2
     adjust['input']['Re']=case['Re']
     adjust['input']['Pr']=case['Pr']
-    adjust['input']['Qwall']=case['Qwall']
+
     adjust['input']['LoD']=case['LOD']
     adjust['input']['turbdiffmod']=turbdiffmodel
     adjust['input']['modifDiffTerm']=modification
@@ -102,10 +102,16 @@ if __name__== "__main__":
     periodic_template = "per_input.nml"
     developing_template = 'input.nml'
 
+    #table
+    table_loc="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat"
+    nTab=2000
+    fluid_name="test"
+
 
     #mesh
     kelem = 384
     imax = 96
+    K_start_heat=5
 
     #relax parameters
     cfl     = 0.3
@@ -113,6 +119,8 @@ if __name__== "__main__":
     alphak  = 0.1
     alphae  = 0.1
     alphav2 = 0.1
+
+
     i=0
     for cname, c in cases.items():
         for tm_name, tm in turbmodels.items():
@@ -121,41 +129,20 @@ if __name__== "__main__":
                     if not ((tm_name == "SA" or tm_name == "SST") and ( tdm_name == "DWX")):
                         name =case_name(c,tm_name, mod_name, tdm_name)
                         os.system("mkdir "+ name)
+                        os.system("mkdir "+ name+'/pipe')
                         parameters = set_parameters(c,tm,mod,tdm)
-                        write_file(name,periodic_template,"periodic.nml",parameters )
+                        parameters['input']['table_loc']=table_loc
+                        parameters['input']['fluid_name']=fluid_name
+                        parameters['input']['nTab']=nTab
+                        parameters['input']['imax']=imax
+                        parameters['input']['K_start_heat']=K_start_heat
+                        parameters['input']['cfl']= cfl
+                        parameters['input']['alphac']= alphac
+                        parameters['input']['alphak']= alphak
+                        parameters['input']['alphae']= alphae
+                        parameters['input']['alphav2']= alphav2
+                        write_file(name,periodic_template,"periodic.nml",parameters)
+                        parameters['input']['Qwall']=c['Qwall']
+                        parameters['input']['kelem']=kelem
                         write_file(name,developing_template,"developing.nml" ,parameters)
                     
-#     return 
-# template_f = 'input.nml'
-# input_f    = 'input_new.nml'
-
-
-# adjust=dict()
-# adjust['input']=dict()
-
-
-# #turbulence model (1. 
-# turbmodels = [1,2,3,4,5]
-# turbdiffmodels = [0]
-# modifdiffterms = [0,1]
-# systemsolve =1,3)
-# for tm in turbmodels:
-#     for tdm in turbdiffmodels:
-#         for mod in modifdiffterms:
-#             adjust['input']['systemSolve']=1
-#             adjust['input']['turbmod']=tm
-#             adjust['input']['periodic']=1
-#             adjust['input']['EOSmode']=2
-#             adjust['input']['Re']=5300
-#             adjust['input']['bulkmod']=1
-#             adjust['input']['select_init']=0
-#             adjust['input']['imax']=96
-#             adjust['input']['kmax']=32
-#             adjust['input']['isothermalBC']=0
-#             adjust['input']['Qwall']=0
-#             adjust['input']['modifDiffTerm'] = mod
-#             adjust['input']['turbdiffmod']=tdm
-#             f90nml.patch(template_f, adjust, input_f)
-#             with Popen(['mpirun', '-np', '4', './run',input_f ], stdout=PIPE, bufsize=1 ) as p:
-#                 for line in p.stdout:
-#                     print(line.decode().strip())

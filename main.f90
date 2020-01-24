@@ -35,6 +35,10 @@ resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0!;resKt=0;resEpst=0
 !read parameters
 call read_parameters()
 
+! write(*,*) trim(test)
+! call mpi_finalize(ierr)
+! stop
+
 !initalize mpi
 call cpu_time(time1)
 call mpi_init(ierr)
@@ -73,9 +77,9 @@ call mesh%discretize_streamwise2( LoD,rank, px)
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=       init_IG_EOSModel(Re,Pr))
-if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, 'tables/co2_table.dat','co2'))
-if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ,'h2-'))
-if (EOSmode.eq.4) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, "tables/h2o_table.dat",'h20' ))
+if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, table_loc,fluid_name))
+! if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ,'h2-'))
+! if (EOSmode.eq.4) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, "tables/h2o_table.dat",'h20' ))
 
 call eos_model%init() 
 
