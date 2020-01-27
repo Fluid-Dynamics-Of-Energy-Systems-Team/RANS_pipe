@@ -283,6 +283,7 @@ end subroutine init_w_inflow_vp_tdm
       do i=1,imax
         ip = i+1
         im = i-1
+
         this%yplus(i,k) = sqrt(rho(i,k))/mu(i,k)*(walldist(i))*tauw(k)**0.5       
 
 
@@ -310,7 +311,7 @@ end subroutine init_w_inflow_vp_tdm
         Prt0 = (1. + (wcenter/rho(i,k)) * abs(drhody/dwdy) ) &
               /(1+ (temp(i,k)/rho(i,k))*abs(drhody/(dTdy+1e-20)) + (temp(i,k)/cp(i,k))*abs(dcpdy/(dTdy+1e-20)))
 
-        this%Prt = sigma_t-f1*f2*(sigma_t-Prt0)
+        this%Prt(i,k) = sigma_t-f1*f2*(sigma_t-Prt0)
         alphat(i,k)= mut(i,k)/(this%Prt(i,k)*rho(i,k))
 
       enddo

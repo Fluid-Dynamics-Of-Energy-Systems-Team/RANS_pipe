@@ -10,14 +10,15 @@ module mod_param
   real*8    ctheta,Fr_1, dtmax,Tw_top, Tw_bot
   real*8    alphac,alphak,alphae,alphav2, Qsource
   integer   Mt,Nx,Mx,Nt , turbdiffmod, restart, imax_old, kelem_old, bulkmod
-  character(len=40) output_fname, output_fname_bl, read_fname
+  character(len=40) output_fname, output_fname_bl, read_fname,fluid_name
+  character(len=500) table_loc
 
   NAMELIST /input/ CFL, systemsolve, imax, K_start_heat, kelem, x_start_heat,      &
                  iwork, isave, nTab, nstep, LoD, periodic, Re, Pr,PrT, Qwall, &
                  isothermalBC, Tw_top, Tw_bot, dTwall, pressIsoThermal, Fr_1, EOSmode, &
                  select_init, turbmod, ctheta, modVF, alphac,alphak,alphae, &
                  alphav2, modifDiffTerm, turbdiffmod, output_fname, dtmax, output_fname_bl, read_fname, &
-                 imax_old, kelem_old, Qsource, bulkmod
+                 imax_old, kelem_old, Qsource, bulkmod,table_loc,fluid_name
 
 contains
 

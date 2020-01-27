@@ -109,7 +109,7 @@ subroutine init_mem_KtEt(this)
            this%epstin(0:i1),this%ktin(0:i1),this%alphatin(0:i1))
 end subroutine init_mem_KtEt
 
-subroutine get_sol_KtEt(this,Prt,epst,kt, Pkt, resKt, resEt)
+subroutine get_sol_KtEt(this,Prt,epst,kt, Pkt,resKt, resEt)
   use mod_param, only : k1,i1
   class(KtEt_TurbDiffModel) :: this
   real(8),dimension(0:i1,0:k1), intent(OUT):: Prt,epst,kt, Pkt,resKt,resEt

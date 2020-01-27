@@ -77,7 +77,7 @@ call mesh%discretize_streamwise2( LoD,rank, px)
 !initialize EOS
 if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=       init_IG_EOSModel(Re,Pr))
-if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, table_loc,fluid_name))
+if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,nTab, table_loc,fluid_name))
 ! if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ,'h2-'))
 ! if (EOSmode.eq.4) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, "tables/h2o_table.dat",'h20' ))
 

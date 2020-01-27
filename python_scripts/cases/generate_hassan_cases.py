@@ -98,6 +98,17 @@ def write_file(casefolder, inputfile, outputfile, parameters):
     f90nml.patch(inputfile, parameters, os.path.join(casefolder,outputfile))
     return
 
+
+def write_jobfile(name):
+    f = open("job.template","r")
+    string = f.read()
+    f.close()
+    string = string.replace("REPLACE_JOB", name)
+    string = string.replace("REPLACE_JOB_LOG"+".log", name)
+    f = open(os.path.join(name, "job"),"w")
+    f.write(string)
+    f.close()
+
 if __name__== "__main__":
     periodic_template = "per_input.nml"
     developing_template = 'input.nml'
@@ -145,4 +156,4 @@ if __name__== "__main__":
                         parameters['input']['Qwall']=c['Qwall']
                         parameters['input']['kelem']=kelem
                         write_file(name,developing_template,"developing.nml" ,parameters)
-                    
+                        write_jobfile(name)

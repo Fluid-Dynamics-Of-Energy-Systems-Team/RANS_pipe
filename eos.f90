@@ -8,7 +8,7 @@ module mod_eos
 
   type, abstract, public :: EOSModel
   real(8) Re, Pr
-  character(len=5) name
+   character (len=:), allocatable :: name
 
   contains
     procedure(init), deferred :: init
@@ -81,7 +81,9 @@ class(EOSModel),  allocatable :: eos_model
   
   type, extends(EOSModel), public :: Table_EOSModel
   integer ntab
-  character(len=40) filename
+  ! character(len=40) filename
+  character (len=:), allocatable :: filename
+
   real(8), dimension(:), private, allocatable :: tempTab,rhoTab,betaTab, muTab,lamTab, &
                                                  cpTab,enthTab,lamocpTab, temp2Tab,    &
                                                  rho2Tab,beta2Tab, mu2Tab,lam2Tab,     &
@@ -216,13 +218,13 @@ contains
   type(Table_EOSModel) function init_Table_EOSModel(Re,Pr, ntab,filename, name)
     real(8), intent(IN) :: Re,Pr
     integer, intent(IN) :: ntab
-    character(len=20), intent(IN) :: filename
-    character(len=3), intent(IN) :: name
-    init_Table_EOSModel%name=name
+    character(len=500), intent(IN) :: filename
+    character(len=40), intent(IN) :: name
+    init_Table_EOSModel%name=trim(name)
     init_Table_EOSModel%Re=Re
     init_Table_EOSModel%Pr=Pr
     init_Table_EOSModel%nTab=nTab
-    init_Table_EOSModel%filename=filename
+    init_Table_EOSModel%filename=trim(filename)
   end function init_Table_EOSModel
 
   subroutine initialize_table(this)

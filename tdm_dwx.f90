@@ -39,7 +39,7 @@ subroutine set_constants_DWX(this)
   this%sigmaet = 1.0
   this%clambda = 0.1
   this%cp1 = 2.34
-  this%cd1 = 1.5!2.0! 1.5 !note this is 0.9
+  this%cd1 = 1.5
   this%cp2 = 1.0
   this%cd2 = 0.9
 end subroutine set_constants_DWX
@@ -69,11 +69,9 @@ subroutine set_alphat_DWX(this,u,w,rho,temp,mu,mui,lam_cp,mut,alphat)
       ip=i+1
       nu = mu(i,k)/rho(i,k)
       Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))        ! not sure if r2 or r
-      ! Reeps(i,k)   = walldist(i)*(rho(i,k)*mu(i,k)*eps(i,k))**0.25/(rho(i,k)*mu(i,k))                   !y*(nu*eps)^(1/4)/nu
       Reeps(i,k)   = ((mu(i,k)/rho(i,k))*eps(i,k))**(1./4)/(mu(i,k)/rho(i,k))*walldist(i);
-      ! this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)             !kt/epst      
       this%flambda(i,k) =((1 - exp(-Reeps(i,k)/16.))**2.0)*(1+(3./(Ret(i,k)**0.75)))     !f_lambda=(1-exp(Reps/16))^2 * (1+3/Rt^(3/4))
-      R = (this%kt(i,k)/(2.*this%epst(i,k)))/(kine(i,k)/eps(i,k))
+      R = (this%kt(i,k)/(2.*this%epst(i,k)))/Tt(i,k)
       alphat(i,k) = this%clambda*this%flambda(i,k)*(kine(i,k)**2/eps(i,k))*(2.0*R)**0.5              
     enddo
   enddo
@@ -101,7 +99,6 @@ subroutine set_bc_DWX(this,ekh,rho,periodic,rank,px)
       this%epst(0,k) = (1.-bot_bcvalue(k))*(2.0*botBCvalue-this%epst(1,k))    +bot_bcvalue(k)*this%epst(1,k)   !symmetry or bc value
       topBCvalue     = ekh(imax,k)*((this%kt(imax,k)**0.5)/walldist(imax))**2                
       this%epst(i1,k)= (1.-top_bcvalue(k))*(2.0*topBCvalue-this%epst(imax,k)) +top_bcvalue(k)*this%epst(imax,k)!symmetry or bc value
-      
       this%Pkt(0,k)  =bot_bcnovalue(k)*this%Pkt(1,k)
       this%Pkt(i1,k) =top_bcnovalue(k)*this%Pkt(imax,k)
     enddo
@@ -161,15 +158,16 @@ subroutine rhs_epst_KtEt_DWX(this,putout,dimpl,temp,rho,mu,lam_cp,alphat)
     do i=1,imax
       nu = mu(i,k)/rho(i,k)
 
-      Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))           !  not sure if r2 or r
+      ! Ret(i,k)     = rho(i,k)*(kine(i,k)**2.)/(mu(i,k)*eps(i,k))           !  not sure if r2 or r
+      Ret(i,k)     = rho(i,k)*(kine(i,k))/(mu(i,k)*Tt(i,k))           !  not sure if r2 or r
       Reeps(i,k)   = walldist(i)*(rho(i,k)*mu(i,k)*eps(i,k))**0.25/(rho(i,k)*mu(i,k))                   !y*(nu*eps)^(1/4)/nu
       fd1  = 1 - exp(-Reeps(i,k)/1.7)**2.0                                 ! (1-exp(-R_eps/1.7))^2
       feps = 1 - 0.3*exp(-(Ret(i,k)/6.5)**2.0)                             !feps = 1-0.3*exp(-(Ret/6.5)^2)
       fd2  = (1/this%cd2)*(ce2*feps-1.0)*(1 - (exp(-Reeps(i,k)/5.8))**2.0)  
-      this%Ttemp(i,k)   = this%kt(i,k)/(this%epst(i,k)+1.0e-20)             !kt/epst      
+      this%Ttemp(i,k)   = this%kt(i,k)/(2*this%epst(i,k)+1.0e-20)                         ! kt/2*epst      
       this%Tmix(i,k)    = Tt(i,k) * this%Ttemp(i,k)                                       !tau_u*tau_t = (k*kt)/(epst*eps)
-      putout(i,k) = putout(i,k) +this%cp1*((this%epst(i,k)*eps(i,k)/kine(i,k)/this%kt(i,k))**0.5)*this%Pkt(i,k)/rho(i,k) !NOTE: CHANGED BY STEPHAN ! +cp1*sqrt(epst*eps/kt*k)*alphat*dTdxi*dTdxi
-      dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1*(this%epst(i,k)/this%kt(i,k)) + this%cd2*fd2*(eps(i,k)/kine(i,k))
+      putout(i,k) = putout(i,k) +this%cp1*((this%epst(i,k)/this%kt(i,k) * (1./Tt(i,k)) )**0.5)*this%Pkt(i,k)/rho(i,k) !NOTE: CHANGED BY STEPHAN ! +cp1*sqrt(epst*eps/kt*k)*alphat*dTdxi*dTdxi
+      dimpl(i,k)  = dimpl(i,k)  + this%cd1*fd1*(this%epst(i,k)/this%kt(i,k)) + this%cd2*fd2*(1./Tt(i,k))
     enddo
   enddo
 end subroutine rhs_epst_KtEt_DWX
@@ -184,12 +182,8 @@ subroutine rhs_kt_KtEt_DWX(this,putout,dimpl,rho)
   !kt equation
   do k=1,kmax
     do i=1,imax
-      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k) !-2.0*(1/rho(i,k))*this%epst(i,k)
-      dimpl(i,k)  = dimpl(i,k) +2.0*(1/rho(i,k))*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
-      ! dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) ! note, rho*epsilon/(rho*k), set implicit and divided by density
-
-      ! putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k) 
-      ! dimpl(i,k)  = dimpl(i,k) !+2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20)/rho(i,k) ! note, rho*epsilon/(rho*k), set implicit and divided by density
+      putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k)                               
+      dimpl(i,k)  = dimpl(i,k) +2.0*(1/rho(i,k))*this%epst(i,k)/(this%kt(i,k)+1.0e-20) 
     enddo
   enddo
 end subroutine rhs_kt_KtEt_DWX

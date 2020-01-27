@@ -1,0 +1,8 @@
+#!/bin/bash
+#SBATCH --job-name=REPLACE_JOB
+#SBATCH --output=REPLACE_JOB_LOG
+#SBATCH --ntasks=4
+#SBATCH --time=1:00:00
+
+mpirun -np 4 ./../../run periodic.nml > per.log
+mpirun -np 4 ./../../run developing.nml > dev.log
