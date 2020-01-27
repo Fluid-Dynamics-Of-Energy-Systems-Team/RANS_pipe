@@ -191,9 +191,9 @@ do istep=istart,nstep
   !write the screen output
   noutput = 100
 
-   if (mod(istep,noutput).eq.0) then
-     call debug(rank)
-   endif
+!   if (mod(istep,noutput).eq.0) then
+!     call debug(rank)
+!   endif
 
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
