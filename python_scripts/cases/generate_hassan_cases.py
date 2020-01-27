@@ -110,6 +110,7 @@ def write_jobfile(name):
     f.close()
 
 if __name__== "__main__":
+    submit = True
     periodic_template = "per_input.nml"
     developing_template = 'input.nml'
 
@@ -157,3 +158,6 @@ if __name__== "__main__":
                         parameters['input']['kelem']=kelem
                         write_file(name,developing_template,"developing.nml" ,parameters)
                         write_jobfile(name)
+                        if submit:
+                            p = subprocess.Popen(['sbatch', 'job'], cwd=os.path.join(os.getcwd(),name))
+

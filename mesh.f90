@@ -500,14 +500,14 @@ contains
     real(8) :: pi, gridsize, fA, fB
     this%numDomain = -1
     this%centerBC = 1
-    gridSize  = 1
+    this%gridSize  = 1
     fA        = 0.12
     fB        = 2.4
     this%dpdz = 1.0
 
     call this%init_mem()
     call this%discretize_streamwise(LoD, px)
-    call this%discretize_wall_normal(fA,fB,gridSize)
+    call this%discretize_wall_normal(fA,fB,this%gridSize)
     call this%set_bc(K_start_heat, x_start_heat,rank)
     call this%calc_walldist(gridsize)
     call this%set_carthesian()

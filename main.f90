@@ -25,12 +25,12 @@ include 'mpif.h'
 
 integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1,hbulk,tbulk,massflow, Re_bulk,vbulk
-real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2  
+real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2,totResC
 real(8) ::  start, finish
 real(8) :: resU, resW
 
 
-resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0!;resKt=0;resEpst=0
+resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;totResC=0!;resKt=0;resEpst=0
 
 !read parameters
 call read_parameters()
@@ -114,6 +114,9 @@ istart = 1
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,select_init)
 
+!#call debug(rank)
+!#call mpi_finalize(ierr)
+!#stop
 
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
@@ -161,11 +164,9 @@ do istep=istart,nstep
 
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
 
-  if (bulkmod .eq. 1) then
-    call set_dpdz_wbulk(wnew,rank)
-  endif
+  if (bulkmod .eq. 1) call set_dpdz_wbulk(wnew,rank)
   call advance(rank)
-  
+
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
   
   call fillps(rank)
@@ -182,15 +183,17 @@ do istep=istart,nstep
 
   if   (mod(istep,100).eq.0) then
     call output2d_upd2(rank,istep) 
+    !call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
+    !if ((periodic .eq.2) .and.(totResC .lt. convCrit )) exit
     if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
   endif
   
   !write the screen output
   noutput = 100
 
-!   if (mod(istep,noutput).eq.0) then
-!     call debug(rank)
-!   endif
+   if (mod(istep,noutput).eq.0) then
+     call debug(rank)
+   endif
 
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
@@ -623,10 +626,10 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     if (rank.eq.0) write(*,*) 'Initializing flow from scratch'
     gridSize = y_fa(imax)
     do i=0,i1!imax         
-      if (systemsolve.eq.1) w(i,:)  = Re*mesh%dpdz/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0;
+      if (systemsolve.eq.1) w(i,:)  = Re*mesh%dpdz/6*3/2.*(1-(y_cv(i)/0.5)**2); c(i,:) = 0.0; 
       if (systemsolve.eq.2) then
         w(i,:)  = Re*mesh%dpdz*y_cv(i)*0.5*(gridSize-y_cv(i))              !channel
-        c(i,:)= Tw_bot -Tw_bot* (y_cv(i)/2.0)!(Tw_bot+Tw_top)*0.5!.05!1. !- (y_cv(i)/2.0)
+        c(i,:)= 0.!Tw_bot -Tw_bot* (y_cv(i)/2.0)!(Tw_bot+Tw_top)*0.5!.05!1. !- (y_cv(i)/2.0)
         ! if (rank .eq. 1) 
         ! write(*,*) c(i,1), i
         ! c(i,:)  = Pr*w(i,:)
@@ -830,7 +833,7 @@ subroutine debug(rank)
   implicit none
   integer rank
 
-  call write_2D_vector(temp,i1,k1,rank,'T')
+  call write_2D_vector(wnew,i1,k1,rank,'w')
 
 
 end subroutine

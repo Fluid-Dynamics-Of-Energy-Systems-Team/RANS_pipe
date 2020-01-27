@@ -7,7 +7,7 @@
   x_start_heat      = 0,      ! for isothermal: lenght at which you start heating
   iwork             = 1,
   isave             = 1,
-  nstep             = 100000,
+  nstep             = 50000,
   LoD               = 10,     ! pH2= 30
   periodic          = 1,       ! 1..periodic, 2..developing   
   Re                = 360!5300!3750.!180,
@@ -42,4 +42,5 @@
   table_loc          ="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat",
   fluid_name         ="co2",
   nTab              = 2000,    ! 2000 for co2, 2500 for pH2
+  convCrit          = 1e-10
 /
