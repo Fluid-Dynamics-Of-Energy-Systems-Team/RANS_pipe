@@ -10,8 +10,8 @@
   nstep             = 50000,
   LoD               = 10,     ! pH2= 30
   periodic          = 1,       ! 1..periodic, 2..developing   
-  Re                = 360!5300!3750.!180,
-  Pr                = 3.19!1.0,
+  Re                = 360
+  Pr                = 3.19
   PrT                =.9,
   bulkmod           = 0,
   Qwall             = 0,    ! Qwall=(qw*D/(k0*T0))

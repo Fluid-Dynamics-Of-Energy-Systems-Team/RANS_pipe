@@ -88,7 +88,6 @@ def set_parameters(case,turbmod,modification,turbdiffmodel):
     adjust['input']['EOSmode'] = 2
     adjust['input']['Re']=case['Re']
     adjust['input']['Pr']=case['Pr']
-
     adjust['input']['LoD']=case['LOD']
     adjust['input']['turbdiffmod']=turbdiffmodel
     adjust['input']['modifDiffTerm']=modification
@@ -117,7 +116,7 @@ if __name__== "__main__":
     #table
     table_loc="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat"
     nTab=2000
-    fluid_name="test"
+    fluid_name="co2"
 
 
     #mesh
@@ -153,6 +152,7 @@ if __name__== "__main__":
                         parameters['input']['alphak']= alphak
                         parameters['input']['alphae']= alphae
                         parameters['input']['alphav2']= alphav2
+                        parameters['input']['output_fname']=name+'.csv'
                         write_file(name,periodic_template,"periodic.nml",parameters)
                         parameters['input']['Qwall']=c['Qwall']
                         parameters['input']['kelem']=kelem

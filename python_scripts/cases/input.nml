@@ -8,10 +8,10 @@
   iwork             = 1,
   isave             = 1,
   nstep             = 10000000,
-  LoD               = 40,     ! pH2= 30
+  LoD               = 40,      ! pH2= 30
   periodic          = 2,       ! 1..periodic, 2..developing   
-  Re                = 360!3750.!180,
-  Pr                = 3.19!1.0,
+  Re                = 360,
+  Pr                = 3.19,
   PrT                =.9,
   bulkmod           = 0,
   Qwall             = 2.4,    ! Qwall=(qw*D/(k0*T0))
