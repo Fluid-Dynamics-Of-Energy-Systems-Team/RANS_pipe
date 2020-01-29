@@ -177,6 +177,8 @@ subroutine set_bc_KE(this,mu,rho,periodic,rank,px)
   if (rank.eq.px-1) then
     this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
     this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
+    this%pk(:,k1)= 2.0*this%pk(:,kmax)-this%pk(:,kmax-1)
+    this%gk(:,k1)= 2.0*this%gk(:,kmax)-this%gk(:,kmax-1)
   endif
 end subroutine set_bc_KE
 

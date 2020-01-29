@@ -28,13 +28,15 @@ real(8) ::  bulk,stress,stime,time1,hbulk,tbulk,massflow, Re_bulk,vbulk
 real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2,totResC
 real(8) ::  start, finish
 real(8) :: resU, resW
+real(8) :: fr_1_goal
 
 
 resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;totResC=0!;resKt=0;resEpst=0
 
 !read parameters
 call read_parameters()
-
+!Fr_1_goal = Fr_1
+!Fr_1 = 0.
 ! write(*,*) trim(test)
 ! call mpi_finalize(ierr)
 ! stop
@@ -120,6 +122,8 @@ call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,sele
 
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
+
+!call set_qwall(Fr_1, Fr_1_goal, -1.)
 call bound_c(cnew, Tw_top,Tw_bot, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
@@ -155,7 +159,7 @@ do istep=istart,nstep
 
 
   call turbdiff_model%advance_turbdiff(unew,wnew,cnew,temp,rnew,ekm,ekh,ekhi,ekhk,alphat, &
-                                      alphak,alphae,rank,periodic,resTD1,resTD2)
+                                      alphakt,alphaet,rank,periodic,resTD1,resTD2)
   !apply bc
   call bound_c(Cnew, Tw_top, Tw_bot, Qwall,rank)
   call turb_model%set_bc(ekm,rnew,periodic,rank,px)
@@ -174,7 +178,7 @@ do istep=istart,nstep
   call solvepois(p,rank,mesh%centerBC)
   call correc(rank,1)
   call bound_v(Unew,Wnew,Win,Wnew,rank, istep)
-
+ ! if (mod(istep,10000).eq.0) call set_qwall(Fr_1,Fr_1_goal,-1.)
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
@@ -191,9 +195,9 @@ do istep=istart,nstep
   !write the screen output
   noutput = 100
 
-   if (mod(istep,noutput).eq.0) then
-     call debug(rank)
-   endif
+   ! if (mod(istep,noutput).eq.0) then
+   !   call debug(rank)
+   ! endif
 
   if (rank.eq.0) then
     if (istep.eq.istart .or. mod(istep,noutput*20).eq.0) then
@@ -220,6 +224,14 @@ end
 !***********************************************************************************************************************************
 !***********************************************************************************************************************************
 !***********************************************************************************************************************************
+
+subroutine set_qwall(qwall,qwall_goal,dq)
+  implicit none 
+  real(8),  intent(IN) :: qwall_goal
+  real(8),  intent(OUT) :: qwall
+  real(8) :: dq
+  qwall = min(qwall+dq,qwall_goal)
+end subroutine
 subroutine get_max_2D(vector, sizei, sizek, max_global)
   implicit none
    include 'mpif.h'

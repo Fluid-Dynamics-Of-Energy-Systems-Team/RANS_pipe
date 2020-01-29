@@ -122,22 +122,22 @@ subroutine inflow_output_upd(rank,istap)
 end
 
 subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
-                                 k, eps, v2, om,nuSA,alphat, i1, k1,rank,px)
+                                 k, eps, v2, om,nuSA,pk,gk,prt,kt,epst,pkt,alphat, i1, k1,rank,px)
   use mod_param, only : LoD
   implicit none 
   include "mpif.h"
   character(*),                  intent(IN) :: filename
   real(8), dimension(0:i1,0:k1), intent(OUT) :: x,y,u,w,rho,T,p,mu,mut,yp, &
                                                k,eps,v2,om,nuSA, &
-                                               alphat
+                                               pk,gk,prt,kt,epst,pkt, alphat
   integer,                       intent(IN) :: i1,k1,rank,px
   integer nvar,i,j,index,k_max,k_min,size,fh,ierr
   integer(kind=MPI_OFFSET_KIND) disp 
-  character(len=321), dimension(:), allocatable :: lines, lines2
-  character(len=320) :: test
-  character(len=321) :: line
+  character(len=641), dimension(:), allocatable :: lines, lines2
+  character(len=640) :: test
+  character(len=641) :: line
   real(8) :: x_v, y_v
-  nvar =16
+  nvar =32
   index=1
 
   !first core write from 0 to kmax
@@ -186,7 +186,13 @@ subroutine read_mpiio_formatted(filename, x, y, u,w, rho,T,p,mu, mut, yp, &
       read(lines(index)(241:260),*) v2  (i,j)
       read(lines(index)(261:280),*) om  (i,j)
       read(lines(index)(281:300),*) nuSA(i,j)      
-      read(lines(index)(301:320),*) alphat(i,j)      
+      read(lines(index)(301:320),*) pk(i,j)     
+      read(lines(index)(321:340),*) gk(i,j)     
+      read(lines(index)(341:360),*) alphat(i,j)     
+      read(lines(index)(361:380),*) prt(i,j)     
+      read(lines(index)(381:400),*) kt(i,j)     
+      read(lines(index)(401:420),*) epst(i,j)     
+      read(lines(index)(421:440),*) pkt(i,j)     
       index=index+1
     enddo
   enddo

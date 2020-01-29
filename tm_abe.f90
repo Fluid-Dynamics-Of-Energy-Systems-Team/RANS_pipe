@@ -62,9 +62,9 @@ subroutine set_mut_Abe(this,u,w,rho,mu,mui,mut)
       ip=i+1
 
       if (modifDiffTerm .eq. 1) then
-        this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
+        this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*walldist(i)*tauw(k)**0.5          ! ystar
       else
-        this%yp(i,k) = walldist(i)*Re*utau(k)
+        this%yp(i,k) = sqrt(rho(imax,k))/mu(imax,k)*walldist(i)*tauw(k)**0.5    ! yplus
       endif
       Ret(i,k)     = rho(i,k)*(this%k(i,k)**2.)/(mu(i,k)*this%eps(i,k))
       ! Reps(i,k)    = (walldist(i)*((mu(i,k)/rho(i,k))*this%eps(i,k))**.25)/(mu(i,k)/rho(i,k))

@@ -92,9 +92,9 @@ subroutine set_mut_VF(this,u,w,rho,mu,mui,mut)
       im=i-1
       ip=i+1
       if (modifDiffTerm .eq. 1) then
-        this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
+        this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*walldist(i)*tauw(k)**0.5          ! ystar
       else
-        this%yp(i,k) = walldist(i)*Re*utau(k)
+        this%yp(i,k) = sqrt(rho(imax,k))/mu(imax,k)*walldist(i)*tauw(k)**0.5    ! yplus
       endif
       this%f1(i,k)  = 1.0 + 0.045*(this%k(i,k)/this%v2(i,k))**0.5
       mut(i,k) = min(1.,rho(i,k)*this%cmu*this%v2(i,k)*this%Tt(i,k))
@@ -157,9 +157,12 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
   call shiftf(this%k,  tmp,rank); this%k  (:,0)      =tmp(:);
   call shiftf(this%eps,tmp,rank); this%eps(:,0)      =tmp(:);
   call shiftf(this%v2 ,tmp,rank); this%v2 (:,0)      =tmp(:);
+  call shiftf(this%pk ,tmp,rank); this%pk (:,0)      =tmp(:);
+  
   call shiftb(this%k,  tmp,rank); this%k  (:,k1)=tmp(:);
   call shiftb(this%eps,tmp,rank); this%eps(:,k1)=tmp(:);
   call shiftb(this%v2 ,tmp,rank); this%v2 (:,k1)=tmp(:);
+  call shiftb(this%pk ,tmp,rank); this%pk (:,k1)=tmp(:);
 
   ! developing
   if (periodic.eq.1) return
@@ -172,6 +175,8 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
     this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
     this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
     this%v2 (:,k1)= 2.0*this%v2 (:,kmax)-this%v2 (:,kmax-1)
+    this%pk (:,k1)= 2.0*this%pk (:,kmax)-this%pk (:,kmax-1)
+    this%gk (:,k1)= 2.0*this%gk (:,kmax)-this%gk (:,kmax-1)
   endif
 
 end subroutine set_bc_VF
@@ -278,6 +283,7 @@ subroutine calc_turbulent_timescale_VF(this,rho,mu)
   do  k=1,kmax
     do i=1,imax  
       this%Tt(i,k) = max(this%k(i,k)/this%eps(i,k), 6.0*(mu(i,k)/(rho(i,k)*this%eps(i,k)))**0.5)           
+      ! this%Tt(i,k) = this%k(i,k)/this%eps(i,k)
     enddo
   enddo
 end subroutine

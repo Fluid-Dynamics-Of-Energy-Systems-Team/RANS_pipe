@@ -53,16 +53,14 @@ subroutine set_mut_MK(this,u,w,rho,mu,mui,mut)
     km=k-1
     kp=k+1
     tauw(k) = mui(imax,k)*0.5*(w(imax,km)+w(imax,k))/walldist(imax)
-    utau(k) = sqrt(tauw(k)/(0.5*(rho(imax,k)+rho(i1,k))))
-    rho_wall = 0.5*(rho(i1,k)+rho(imax,k))
-    mu_wall = 0.5*(mu(i1,k)+mu(imax,k))
+    
     do i=1,imax
       im=i-1
       ip=i+1
       if (modifDiffTerm .eq. 1) then
-        this%yp(i,k) = walldist(i)*sqrt(rho(i,k)/rho_wall)*(mu_wall/mu(i,k))*Re*utau(k)         ! ystar
-      else
-        this%yp(i,k) = walldist(i)*Re*utau(k)
+        this%yp(i,k) = sqrt(rho(i,k))/mu(i,k)*walldist(i)*tauw(k)**0.5          ! ystar
+     else
+        this%yp(i,k) = sqrt(rho(imax,k))/mu(imax,k)*walldist(i)*tauw(k)**0.5    ! yplus
       endif
       Ret(i,k)     = rho(i,k)*(this%k(i,k)**2.)/(mu(i,k)*this%eps(i,k))        ! not sure if r2 or r
       this%fmu(i,k)= (1.-exp(-this%yp(i,k)/70.))*(1+3.45/Ret(i,k)**0.5)
