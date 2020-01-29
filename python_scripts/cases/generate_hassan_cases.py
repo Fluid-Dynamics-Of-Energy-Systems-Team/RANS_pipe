@@ -114,7 +114,7 @@ if __name__== "__main__":
     developing_template = 'input.nml'
 
     #table
-    table_loc="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat"
+    table_loc="/home/stephans/RANS_pipe/tables/co2_table.dat"
     nTab=2000
     fluid_name="co2"
 
@@ -158,6 +158,6 @@ if __name__== "__main__":
                         parameters['input']['kelem']=kelem
                         write_file(name,developing_template,"developing.nml" ,parameters)
                         write_jobfile(name)
-                        #if submit:
-                        #    p = Popen(['sbatch', 'job'], cwd=os.path.join(os.getcwd(),name))
+                        if submit:
+                            p = Popen(['sbatch', 'job'], cwd=os.path.join(os.getcwd(),name))
 
