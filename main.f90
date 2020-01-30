@@ -213,10 +213,14 @@ do istep=istart,nstep
          
 enddo
 call cpu_time(finish)
-print '("Time = ",f6.3," seconds.")',finish-start
+if (rank .eq. 0) then 
+  print '("Time = ",f6.3," seconds.")',finish-start
+  print*,"Succesfully executed code"
+endif
 if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
 call output2d_upd2(rank,istep)
 call mpi_finalize(ierr)
+
 stop
 end
 
