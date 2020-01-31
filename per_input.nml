@@ -31,6 +31,8 @@
   alphak            = 0.15,     ! for SA
   alphae            = 0.15, 
   alphav2           = 0.15, 
+  alphakt           = 0.15
+  alphaet           = 0.1
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
   turbdiffmod       = 6,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
   output_fname      = "laminarbl.csv",
@@ -40,7 +42,7 @@
   imax_old          = 192,
   kelem_old         = 1600
   Qsource           = 0.,
-  table_loc          ="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat",
+  table_loc          ="tables/co2_table.dat",
   fluid_name         ="co2",
   convCrit           =1e-10
 /
