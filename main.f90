@@ -29,10 +29,10 @@ real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2,totResC
 real(8) ::  start, finish
 real(8) :: resU, resW
 real(8) :: fr_1_goal
+logical :: stopcondition
 
-
-resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;totResC=0!;resKt=0;resEpst=0
-
+resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;!;resKt=0;resEpst=0
+stopcondition=.false.
 !read parameters
 call read_parameters()
 !Fr_1_goal = Fr_1
@@ -185,10 +185,10 @@ do istep=istart,nstep
   call chkdt(rank,istep)
   if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
 
-  if   (mod(istep,100).eq.0) then
+  if   ((mod(istep,100).eq.0)) then
     call output2d_upd2(rank,istep) 
-    !call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
-    !if ((periodic .eq.2) .and.(totResC .lt. convCrit )) exit
+    call check_convergence(unew, uold, wnew, wold, resC, resTV1,resTV2, resTV3,resTD1,resTD2, stopcondition)
+    if (stopcondition) exit
     if (systemSolve .eq. 4.) call write_output_bl(rank,istep) !extra output for the bl
   endif
   
@@ -236,33 +236,55 @@ subroutine set_qwall(qwall,qwall_goal,dq)
   real(8) :: dq
   qwall = min(qwall+dq,qwall_goal)
 end subroutine
-subroutine get_max_2D(vector, sizei, sizek, max_global)
+
+
+
+subroutine calc_velocity_residual(unew, uold, resVel)
+  use mod_param, only : i1,k1,i,k
   implicit none
-   include 'mpif.h'
-  integer ierr,rank
-  integer, intent(IN) :: sizei,sizek
-  real(8), dimension(0:sizei,0:sizek), intent(IN) :: vector
-  real(8), intent(OUT) ::  max_global 
-  real(8) :: max_local
-  integer :: i,k
-  max_local = 1e-100
-  do i=0,sizei
-    do k=0,sizek
-      if (vector(i,k) > max_local) then
-        max_local = vector(i,k)
-      endif
+  real(8), dimension(0:i1,0:k1), intent(IN) :: unew, uold
+  real(8), intent(OUT) ::  resVel
+  resVel = 0.
+  do i=0,i1
+    do k=0,k1
+        resVel = resVel + (unew(i,k)-uold(i,k))**2
     enddo
   enddo
-  call mpi_allreduce(max_local,max_global,1,mpi_real8,mpi_max,mpi_comm_world,ierr)
-end subroutine get_max_2D
+end subroutine calc_velocity_residual
 
-subroutine calc_residual(unew, uold, wnew, wold, resU, resW)
-  use mod_param, only: k1, i1
+subroutine check_convergence(unew, uold, wnew, wold, resC, resTV1,resTV2, resTV3,resTD1,resTD2, stopcondition)
+  use mod_param, only: k1, i1, convCrit, periodic
+  implicit none
+  include 'mpif.h'
+
   real(8), dimension(0:i1,0:k1), intent(IN) :: unew,uold,wNew,wold
-  real(8), intent(OUT) :: resW, resU
-  call get_max_2D(unew-uold, i1,k1,resU)
-  call get_max_2D(wnew-wold, i1,k1,resW)
-end subroutine  calc_residual
+  real(8) :: resC, resTV1,resTV2, resTV3, resTD1,resTD2
+  logical, intent(OUT) :: stopcondition
+  real(8) :: resW, resU, totResC, totResW, totResU, totResVel
+  integer ierr
+  
+  call calc_velocity_residual(unew,uold, resU)
+  call calc_velocity_residual(wnew,wold, resW)
+
+  call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
+  call MPI_ALLREDUCE (resW,totResW, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
+  call MPI_ALLREDUCE (resU,totResU, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+  totResVel = totResU+totResW
+    !call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+  if ((periodic .eq.1) .and.(totResVel .lt. convCrit )) then 
+    stopcondition = .TRUE.
+  else
+    if ((periodic .eq.2) .and.(totResC .lt. convCrit ) .and. (totResVel .lt. convCrit )) then 
+      stopcondition = .TRUE.
+    else
+      stopcondition = .FALSE.
+    endif
+  endif
+
+
+end subroutine  check_convergence
 !!********************************************************************
 !!     Calculates the thermodynamic properties
 !!********************************************************************
