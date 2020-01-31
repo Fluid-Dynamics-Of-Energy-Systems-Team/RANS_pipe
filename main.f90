@@ -22,6 +22,7 @@ use nk_tdm
 
 implicit none
 include 'mpif.h'
+  integer :: kmaxv, imaxv
 
 integer ::  rank,ierr,istart,noutput
 real(8) ::  bulk,stress,stime,time1,hbulk,tbulk,massflow, Re_bulk,vbulk
@@ -193,7 +194,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 100
+  noutput = 2000
 
 !   if (mod(istep,noutput).eq.0) then
 !     call debug(rank)
@@ -208,6 +209,7 @@ do istep=istart,nstep
     if (istep.eq.istart .or. mod(istep,noutput).eq.0) then
       call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
       write(6,'(i7,11e13.4)') istep,dt,bulk,vbulk,Re_bulk,stress,resC,resTV1,resTV2,resTV3,resTD1,resTD2
+!      write(*,*) imaxv, kmaxv
     endif
   end if
          
@@ -238,7 +240,6 @@ subroutine set_qwall(qwall,qwall_goal,dq)
 end subroutine
 
 
-
 subroutine calc_velocity_residual(unew, uold, resVel)
   use mod_param, only : i1,k1,i,k
   implicit none
@@ -247,7 +248,7 @@ subroutine calc_velocity_residual(unew, uold, resVel)
   resVel = 0.
   do i=0,i1
     do k=0,k1
-        resVel = resVel + (unew(i,k)-uold(i,k))**2
+        resVel = resVel + ((unew(i,k)-uold(i,k))/(unew(i,k)+1e-20))**2
     enddo
   enddo
 end subroutine calc_velocity_residual
@@ -260,23 +261,21 @@ subroutine check_convergence(unew, uold, wnew, wold, resC, resTV1,resTV2, resTV3
   real(8), dimension(0:i1,0:k1), intent(IN) :: unew,uold,wNew,wold
   real(8) :: resC, resTV1,resTV2, resTV3, resTD1,resTD2
   logical, intent(OUT) :: stopcondition
-  real(8) :: resW, resU, totResC, totResW, totResU, totResVel
+  real(8) :: resW, resU, totResC, totResW, totResU, totResVel,resR
   integer ierr
   
   call calc_velocity_residual(unew,uold, resU)
   call calc_velocity_residual(wnew,wold, resW)
 
-  call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
   call MPI_ALLREDUCE (resW,totResW, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
   call MPI_ALLREDUCE (resU,totResU, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
 
   totResVel = totResU+totResW
-    !call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
-
+  call MPI_ALLREDUCE (resC,totResC, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ierr)
   if ((periodic .eq.1) .and.(totResVel .lt. convCrit )) then 
     stopcondition = .TRUE.
   else
-    if ((periodic .eq.2) .and.(totResC .lt. convCrit ) .and. (totResVel .lt. convCrit )) then 
+    if ((periodic .eq.2) .and.(totResC .lt. convCrit ) .and. (totResW .lt. convCrit)) then 
       stopcondition = .TRUE.
     else
       stopcondition = .FALSE.
@@ -709,7 +708,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   implicit none
   real(8), dimension(0:i1,0:k1), intent(IN) :: Utmp, Wtmp, Rtmp
   integer,                       intent(IN) :: rank
-  real(8),                       intent(OUT):: resC
+  real(8),  intent(OUT):: resC
   real(8), dimension(0:i1,0:k1) :: dnew,dimpl
   real(8), dimension(imax)      :: a,b,c,rhs
   integer  :: ierr
@@ -748,7 +747,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     call matrixIdir(imax,a,b/alphac,c,rhs)
 
     do i=1,imax
-      resC = resC + ((cnew(i,k) - rhs(i))/(cnew(i,k)+1.0e-20))**2.0
+      if (i .gt. 1) resC = resC +((cnew(i,k) - rhs(i))/(rhs(i)+1e-20))**2.0
       cnew(i,k) = max(rhs(i), 0.0)
     enddo    
   enddo
