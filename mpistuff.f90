@@ -158,8 +158,9 @@ subroutine pshiftb_w(UT,UP,rank)
 end
 
 SUBROUTINE init_transpose
-  use mod_param
-  use mod_common
+  use mod_param, only  :  Mt, Nx , Nt, Mx,i,k
+  use mod_common, only :Xii, Xkk, Tkk, Tii
+  implicit none
   do k = 1,Mt
     do i = 1,Nx
       Xii(i) = MOD(i-1,Mx)+1
@@ -176,11 +177,12 @@ SUBROUTINE init_transpose
 end
 
 SUBROUTINE t2fp(Q,Qt,rank)
-  use mod_param
-  use mod_common
+  use mod_param, only  :  Mt, Nx , Nt, Mx, i,k
+  use mod_common, only : W2t, W1t, Xkk, Xii
+  implicit none
   include 'mpif.h'
-  integer N
-  integer ii,kk,l
+  integer N, rank
+  integer ii,kk,l, ierr
   real*8  Q(Nt,Mx),Qt(Mt,Nx)
   do i = 1,Mx
     do k = 1,Nt
@@ -200,9 +202,10 @@ end
 SUBROUTINE t2np(Q,Qt,rank)
   use mod_param
   use mod_common
+  implicit none
   include 'mpif.h'
-  integer N
-  integer ii,kk,l
+  integer N, rank
+  integer ii,kk,l, ierr
   real*8 Q(Mt,Nx),Qt(Nt,Mx)
   do k = 1,Mt
     do i = 1,Nx

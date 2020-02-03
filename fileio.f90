@@ -16,7 +16,7 @@ subroutine write_output_bl(rank, istap)
 
   nvar = 7
   index=1
-  call postprocess_bl(wnew, ekmi, 1., 1., mom_th, dis_th, bl_th, wstress,sfriction)
+  call postprocess_bl(wnew, ekmi, 1.d0, 1.d0, mom_th, dis_th, bl_th, wstress,sfriction)
 
   do k=0,k1
       !@x(k)=(k+rank*kmax)*dz - K_start_heat*dz !!

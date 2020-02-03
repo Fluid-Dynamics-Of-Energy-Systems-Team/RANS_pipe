@@ -219,7 +219,7 @@ contains
 
     !calculate the cell faces
     do i = 0,kmax!*px
-      call splint(ys,x, x2tab,nelem+1,(i+rank*kmax+0.)/(kmax*px),zw(i),tabkhi,tabklo) 
+      call splint(ys,x, x2tab,nelem+1,(i+rank*kmax+real(0.,8))/(kmax*px),zw(i),tabkhi,tabklo) 
       zw(i) = zw(i)*LoD
     enddo
     call shiftv_b(zw, k1, value, rank); zw(k1) = value;

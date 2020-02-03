@@ -343,82 +343,82 @@ end
 !********************************************************************
 !********************************************************************
 
-subroutine solvepois_cr(rhs,ini,rank,centerBC)
-  use mod_param, only : k1,i1,kmax,imax,k,i,px,periodic
-  use mod_mesh, only : dzp,dzw,dru,drp,ru,rp
-  implicit none
-  include 'mpif.h'  
-  real*8      rhs(imax,kmax)
-  integer     centerBC
-  real(8), dimension(kmax*px*imax*8):: work
-  real(8), dimension(1:imax)        :: am,bm,cm
-  real(8), dimension(1:kmax)        :: an,bn,cn
-  real(8), dimension(1:kmax*px)     :: an_t,bn_t,cn_t
-  real(8), dimension(imax*kmax)     :: pvec
-  real(8), dimension(imax*kmax*px)  :: pvec_t
-  real(8), dimension(imax,kmax*px)  :: y
-  integer ierr,ini,rank, ier
-  
-
-  !wall normal-direction
-  do i=1,imax
-    am(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))
-    bm(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ &
-      (Rp(I)*dRu(I))  ! twall    = 0.0
-    cm(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))
-  enddo
-  !apply bc for wall normal-direction
-  if (centerBC.eq.-1) then
-    bm(1)    = bm(1)+am(1)
-  else
-    bm(1)    =-Ru(1) /(dRp(1)*Rp(1)*dRu(1))
-  endif
-  am(1)=0.
-  bm(imax) = bm(imax)+cm(imax)
-  cm(imax)=0.
-   
-  !streamwise
-  do k=1,kmax
-    an(k)=  1.0/(dzp(k-1)*dzw(k))
-    cn(k)=  1.0/(dzp(k)  *dzw(k))
-    bn(k)= -( an(k) + cn(k) ) 
-  enddo
-  !gather all the coefficients to 1 coordinates
-  call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
-  call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr) 
-  call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
-  !apply bc streamwise
-  bn_t(1)=bn_t(1)-cn_t(1)      
-  an_t(1)=0.
-  if (periodic.eq.1) then
-    bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px) !periodic
-  else 
-    bn_t(kmax*px)=bn_t(kmax*px)+cn_t(kmax*px) !for developing 
-  endif
-  cn_t(kmax*px)=0.
-
-  call make_vector(rhs,pvec,imax,kmax)
-  call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)
-  call make_matrix(pvec_t,y,imax,kmax*px)
-
-  !Call cyclic reduction algorithm     
-  if (ini.eq.0) call blktri(0,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
-  call blktri(1,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
-
-  if (ier .ne. 0) then
-     write(6,*) 'There is something wrong with the solution of the Poisson equation!'
-     write(6,*) 'Result are not reliable!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-     stop
-  endif
-
-  do k=1+rank*kmax,(kmax + rank*kmax)
-     do i=1,imax
-        rhs(i,k-rank*kmax)=y(i,k)
-     enddo
-  enddo  
-
-end subroutine  solvepois_cr
-
+!subroutine solvepois_cr(rhs,ini,rank,centerBC)
+!  use mod_param, only : k1,i1,kmax,imax,k,i,px,periodic
+!  use mod_mesh, only : dzp,dzw,dru,drp,ru,rp
+!  implicit none
+!  include 'mpif.h'  
+!  real*8      rhs(imax,kmax)
+!  integer     centerBC
+!  real(8), dimension(kmax*px*imax*8):: work
+!  real(8), dimension(1:imax)        :: am,bm,cm
+!  real(8), dimension(1:kmax)        :: an,bn,cn
+!  real(8), dimension(1:kmax*px)     :: an_t,bn_t,cn_t
+!  real(8), dimension(imax*kmax)     :: pvec
+!  real(8), dimension(imax*kmax*px)  :: pvec_t
+!  real(8), dimension(imax,kmax*px)  :: y
+!  integer ierr,ini,rank, ier
+!  
+!
+!  !wall normal-direction
+!  do i=1,imax
+!    am(i)= Ru(I-1)/(dRp(I-1)*Rp(I)*dRu(I))
+!    bm(i)=-(Ru(I)/(dRp(I))+Ru(I-1)/dRp(I-1))/ &
+!      (Rp(I)*dRu(I))  ! twall    = 0.0
+!    cm(i)= Ru(I) /(dRp(I)*Rp(I)*dRu(I))
+!  enddo
+!  !apply bc for wall normal-direction
+!  if (centerBC.eq.-1) then
+!    bm(1)    = bm(1)+am(1)
+!  else
+!    bm(1)    =-Ru(1) /(dRp(1)*Rp(1)*dRu(1))
+!  endif
+!  am(1)=0.
+!  bm(imax) = bm(imax)+cm(imax)
+!  cm(imax)=0.
+!   
+!  !streamwise
+!  do k=1,kmax
+!    an(k)=  1.0/(dzp(k-1)*dzw(k))
+!    cn(k)=  1.0/(dzp(k)  *dzw(k))
+!    bn(k)= -( an(k) + cn(k) ) 
+!  enddo
+!  !gather all the coefficients to 1 coordinates
+!  call MPI_ALLGATHER(an,   kmax,      MPI_REAL8, an_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+!  call MPI_ALLGATHER(bn,   kmax,      MPI_REAL8, bn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr) 
+!  call MPI_ALLGATHER(cn,   kmax,      MPI_REAL8, cn_t,  kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)  
+!  !apply bc streamwise
+!  bn_t(1)=bn_t(1)-cn_t(1)      
+!  an_t(1)=0.
+!  if (periodic.eq.1) then
+!    bn_t(kmax*px)=bn_t(kmax*px)-cn_t(kmax*px) !periodic
+!  else 
+!    bn_t(kmax*px)=bn_t(kmax*px)+cn_t(kmax*px) !for developing 
+!  endif
+!  cn_t(kmax*px)=0.
+!
+!  call make_vector(rhs,pvec,imax,kmax)
+!  call MPI_ALLGATHER(pvec, imax*kmax, MPI_REAL8, pvec_t, imax*kmax, MPI_REAL8, MPI_COMM_WORLD, ierr)
+!  call make_matrix(pvec_t,y,imax,kmax*px)
+!
+!  !Call cyclic reduction algorithm     
+!  if (ini.eq.0) call blktri(0,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
+!  call blktri(1,1,kmax*px,an_t,bn_t,cn_t,1,imax,am,bm,cm,imax,y,ier,work)
+!
+!  if (ier .ne. 0) then
+!     write(6,*) 'There is something wrong with the solution of the Poisson equation!'
+!     write(6,*) 'Result are not reliable!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+!     stop
+!  endif
+!
+!  do k=1+rank*kmax,(kmax + rank*kmax)
+!     do i=1,imax
+!        rhs(i,k-rank*kmax)=y(i,k)
+!     enddo
+!  enddo  
+!
+!end subroutine  solvepois_cr
+!
 
 
 

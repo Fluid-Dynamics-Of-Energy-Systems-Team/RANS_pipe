@@ -201,7 +201,7 @@ do istep=istart,nstep
 
 
 
-  if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
+  if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank,istep);
 
   if   ((mod(istep,100).eq.0)) then
     call output2d_upd2(rank,istep) 
@@ -742,7 +742,7 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,rank,periodic,.true.)
   ! call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
-  call diffc(dnew,cnew,ekhe,ekhei,ekhek,alphat,1.,Rtmp,10)
+  call diffc(dnew,cnew,ekhe,ekhei,ekhek,alphat,1.d0,Rtmp,10)
 
 
   do k=1,kmax

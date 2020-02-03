@@ -107,7 +107,7 @@ subroutine init_mem_KE(this)
   allocate(this%eps(0:i1,0:k1),this%k (0:i1,0:k1), this%Gk (0:i1,0:k1),this%Pk(0:i1,0:k1), &
            this%f1 (0:i1,0:k1),this%f2(0:i1,0:k1), this%fmu(0:i1,0:k1),this%Tt(0:i1,0:k1), &
            this%v2 (0:i1,0:k1),this%yp(0:i1,0:k1), this%fv2(imax,kmax),this%Lh(imax,kmax), &
-           this%feps(0:i1,0:k1), this%div(0:i1,0:k1), this%Bk (0:i1,0:k1),)
+           this%feps(0:i1,0:k1), this%div(0:i1,0:k1), this%Bk (0:i1,0:k1))
   allocate(this%mutin(0:i1),this%Pkin (0:i1),this%epsin(0:i1),this%kin(0:i1),this%v2in(0:i1))
 end subroutine init_mem_KE
 

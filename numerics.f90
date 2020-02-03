@@ -12,9 +12,11 @@ subroutine fillps(rank)
   !
   !     *** Fill the right hand for the poisson solver. ***
   !
+  
   sumps = 0.0
   do  k=1,kmax
     do i=1,imax
+     
       p(i,k)  = (                                                         &
                   (Ru(i)*dUdt(i,k) - Ru(i-1)*dUdt(i-1,k))/( Rp(i)*dru(i)) &
                   +     (dWdt(i,k) -         dWdt(i,k-1))/( dzw(k)     )  &
@@ -27,6 +29,7 @@ subroutine fillps(rank)
     enddo
   enddo
   call mpi_allreduce(sumps,sumps_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
+  write(*,*) sumps_tot
 end
 
 subroutine calc_avg_quantities(w, rho, enth,massflow, hb, tb,vb,Re_b,k)
