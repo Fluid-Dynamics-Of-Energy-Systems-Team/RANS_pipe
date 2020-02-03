@@ -223,7 +223,7 @@ subroutine solve_SA(this,resSA,u,w,rho,mu,mui,muk,rho_mod, &
   enddo
 
   tempArray = 0.0
-  call this%diffusion_SA(tempArray,this%nuSA,eknu,eknui,eknuk,1.0,rho_mod,modification)
+  call this%diffusion_SA(tempArray,this%nuSA,eknu,eknui,eknuk,real(1.0,8),rho_mod,modification)
   dnew = dnew + tempArray/cb3
 
   !> diffusion term in the r-direction, set implicit!

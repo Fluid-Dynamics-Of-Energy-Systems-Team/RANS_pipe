@@ -61,6 +61,8 @@ subroutine init_w_inflow_VF(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
     this%kin  = kin
     this%v2in = v2in
     this%pkin = pkin
+    this%fv2 = 0.
+
     do k=0,k1
       this%eps(:,k) = this%epsin(:)
       this%k(:,k) = this%kin(:)
@@ -175,8 +177,8 @@ subroutine set_bc_VF(this,mu,rho,periodic,rank,px)
     this%k  (:,k1)= 2.0*this%k  (:,kmax)-this%k  (:,kmax-1)
     this%eps(:,k1)= 2.0*this%eps(:,kmax)-this%eps(:,kmax-1)
     this%v2 (:,k1)= 2.0*this%v2 (:,kmax)-this%v2 (:,kmax-1)
-    this%pk (:,k1)= 2.0*this%pk (:,kmax)-this%pk (:,kmax-1)
-    this%gk (:,k1)= 2.0*this%gk (:,kmax)-this%gk (:,kmax-1)
+  !  this%pk (:,k1)= 2.0*this%pk (:,kmax)-this%pk (:,kmax-1)
+  !  this%gk (:,k1)= 2.0*this%gk (:,kmax)-this%gk (:,kmax-1)
   endif
 
 end subroutine set_bc_VF

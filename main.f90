@@ -101,7 +101,7 @@ if (turbdiffmod.eq.1) allocate(turbdiff_model,source=  Irrenfried_TurbDiffModel(
 if (turbdiffmod.eq.2) allocate(turbdiff_model,source=        Tang_TurbDiffModel('Tang'  ))
 if (turbdiffmod.eq.3) allocate(turbdiff_model,source=KaysCrawford_TurbDiffModel('KC'    ))
 if (turbdiffmod.eq.4) allocate(turbdiff_model,source=        Kays_TurbDiffModel('Kays'  ))
-if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel('Bae', 70.,20.))
+if (turbdiffmod.eq.5) allocate(turbdiff_model,source=    init_Bae_TurbDiffModel('Bae', real(70.,8),real(20.,8)))
 if (turbdiffmod.eq.6) allocate(turbdiff_model,source=    init_DWX_TurbDiffModel('DWX'))
 if (turbdiffmod.eq.7) allocate(turbdiff_model,source=     init_NK_TurbDiffModel('NK'))
 if (((turbdiffmod.eq.6).or.(turbdiffmod.eq.7)).and.((turbmod.eq.1).or.(turbmod.eq.4))) then
@@ -114,12 +114,11 @@ call turbdiff_model%init()
 dt = dtmax
 istart = 1
 
+
 !initialize solution 
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,select_init)
 
-!#call debug(rank)
-!#call mpi_finalize(ierr)
-!#stop
+
 
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
@@ -127,18 +126,20 @@ call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 !call set_qwall(Fr_1, Fr_1_goal, -1.)
 call bound_c(cnew, Tw_top,Tw_bot, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
+call turbdiff_model%set_bc(ekm,rnew,periodic,rank,px)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta) ! necessary to call it twice
 
 rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
 call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
 
-! call turbdiff_model%set_alphat(unew,wnew,rnew,temp,ekm,ekmi,ekh,ekmt,alphat)
+
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call chkdt(rank,istep)
+
+
+
 call cpu_time(start)
-
-
   
 !***************************!
 !        MAIN LOOP          !
@@ -172,18 +173,34 @@ do istep=istart,nstep
   if (bulkmod .eq. 1) call set_dpdz_wbulk(wnew,rank)
   call advance(rank)
 
+
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
   
+   !call debug(rank)
+   !
+   !call output2d_upd2(rank,istep) 
+   !call mpi_finalize(ierr)
+   !stop
+
+   
   call fillps(rank)
+
   ! call solvepois_cr(p,0,rank,mesh%centerBC)
   call solvepois(p,rank,mesh%centerBC)
+  
   call correc(rank,1)
+
+
+
   call bound_v(Unew,Wnew,Win,Wnew,rank, istep)
  ! if (mod(istep,10000).eq.0) call set_qwall(Fr_1,Fr_1_goal,-1.)
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
+
+
+
   if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank);
 
   if   ((mod(istep,100).eq.0)) then
@@ -194,7 +211,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 2000
+  noutput = 1
 
 !   if (mod(istep,noutput).eq.0) then
 !     call debug(rank)
@@ -614,8 +631,9 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
   use mod_eos,   only : eos_model
-  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr,Tw_bot,Tw_top, modifDiffTerm
+  use mod_param, only : k1,i1,imax,imax_old, kelem_old,px, i,k,Pr,Tw_bot,Tw_top, modifDiffTerm,kmax
   use mod_mesh,  only : y_fa,y_cv, mesh
+  use mod_common, only : dwdt,dudt,p
   implicit none
   integer,                        intent(IN) :: rank,systemsolve,select_init
   real(8),                        intent(IN) :: Re
@@ -648,10 +666,16 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
     close(29)
     do k=0,k1
       w(:,k)  = win(:)
+      dwdt(:,k) = win(:)
+      dudt(:,k) = 0.
+      u(:,k) = 0.
       mut(:,k)= mutin(:)
       c(:,k)= 0.
       alphat(:,k) = alphatin(:)
     enddo
+    !do k=1,kmax
+    !  p(:,k) = 0.
+    !enddo
     
     call turb_model%init_w_inflow(nuSAin,pkin,kin,epsin,omin,mutin,v2in)
     call turbdiff_model%init_w_inflow(Prtin,alphatin,ktin,epstin,pktin)
@@ -866,11 +890,24 @@ end
 
 subroutine debug(rank)
   use mod_param, only :k1,i1,kmax,imax
-  use mod_common, only : wnew,cnew,rnew,p,temp
+  use mod_common, only : dudt,dwdt,wnew,cnew,unew,p,temp,alphat,rnew,rold
+  use mod_tm,    only : turb_model
+  use mod_tdm,   only : turbdiff_model
   implicit none
   integer rank
 
-  call write_2D_vector(wnew,i1,k1,rank,'w')
+  call write_2D_vector(unew,i1,k1,rank,'0')
+  call write_2D_vector(wnew,i1,k1,rank,'1')
+  call write_2D_vector(dudt,i1,k1,rank,'u')
+  call write_2D_vector(dwdt,i1,k1,rank,'w')
+  call write_2D_vector(p,imax,kmax,rank,'p')
+  call write_2D_vector(alphat,i1,k1,rank,'a')
+  call write_2D_vector(cnew,i1,k1,rank,'c')
+  call write_2D_vector(rnew,i1,k1,rank,'r')
+  call write_2D_vector(rold,i1,k1,rank,'2')
+  call write_2D_vector(turb_model%k,i1,k1,rank,'k')
+  call write_2D_vector(turb_model%eps,i1,k1,rank,'e')
+  call write_2D_vector(turb_model%v2,i1,k1,rank,'v')
 
 
 end subroutine
