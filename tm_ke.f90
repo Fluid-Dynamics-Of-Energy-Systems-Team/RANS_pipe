@@ -473,9 +473,9 @@ subroutine calc_buoyancy_production(this, u, w,temp, rho,beta, mut)
         + (                                                           &
           mut(i,k)*(                                                  &
                     2.*(w(i,k)-w(i,km))/dzw(k)                        &
-                   -(2/3)*this%div(i,k)                               &
+                   -(2./3.)*this%div(i,k)                               &
                    )                                                  &
-          -(2/3)*rho(i,k)*this%k(i,k)                                 &
+          -(2./3.)*rho(i,k)*this%k(i,k)                                 &
           )*(temp(i,kp)-temp(i,km))/(dzp(k)+dzp(km))                  &
         )
     enddo
