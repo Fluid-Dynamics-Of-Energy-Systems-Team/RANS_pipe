@@ -119,7 +119,6 @@ istart = 1
 call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,select_init)
 
 
-
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 
@@ -136,6 +135,7 @@ call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,ra
 
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call chkdt(rank,istep)
+
 
 
 
@@ -171,16 +171,14 @@ do istep=istart,nstep
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
 
   if (bulkmod .eq. 1) call set_dpdz_wbulk(wnew,rank)
-  call advance(rank)
+
 
 
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
   
-   !call debug(rank)
-   !
-   !call output2d_upd2(rank,istep) 
-   !call mpi_finalize(ierr)
-   !stop
+
+
+
 
    
   call fillps(rank)
@@ -188,6 +186,7 @@ do istep=istart,nstep
   ! call solvepois_cr(p,0,rank,mesh%centerBC)
   call solvepois(p,rank,mesh%centerBC)
   
+
   call correc(rank,1)
 
 
@@ -211,7 +210,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 1
+  noutput = 100
 
 !   if (mod(istep,noutput).eq.0) then
 !     call debug(rank)
@@ -819,8 +818,9 @@ subroutine advance(rank)
   !!********************************************************************
   dnew = 0.0
   call advecu(dnew,Unew,Wnew,Rnew) ! new
-  call diffu (dnew,Unew,Wnew,ekme,dif,mesh%numDomain) ! new
 
+
+  call diffu (dnew,Unew,Wnew,ekme,dif,mesh%numDomain) ! new
   do k=1,kmax
     do i=1,imax-1
       au(i) = -dt*ekme(i  ,k)*Rp(i  )/(dRp(i)*Ru(i)*dru(i  ))
@@ -837,7 +837,6 @@ subroutine advance(rank)
  
     i = imax-1; cu(i)   = 0.0           ! BC wall and symmetry
     i=1;   bu(i) = bu(i) + (1.-ubot_bcvalue(k))*au(i); au(i) = (1.-ubot_bcvalue(k))*au(i) !symmetry with 0 or with the derivative
-    !ubot_bcvalue=1: au(i)=0 and bu(i)=bu(i), ubot_bcvalue=0: au(i)=au(i), bu(i)=bu(i)+au(i)
    
     call matrixIdir(imax-1,au,bu,cu,rhsu)
     do i=1,imax-1
@@ -890,7 +889,7 @@ end
 
 subroutine debug(rank)
   use mod_param, only :k1,i1,kmax,imax
-  use mod_common, only : dudt,dwdt,wnew,cnew,unew,p,temp,alphat,rnew,rold
+  use mod_common, only :dudt,dwdt,wnew,cnew,unew,p,temp,alphat,rnew,rold,ekme,ekmt
   use mod_tm,    only : turb_model
   use mod_tdm,   only : turbdiff_model
   implicit none
@@ -902,12 +901,12 @@ subroutine debug(rank)
   call write_2D_vector(dwdt,i1,k1,rank,'w')
   call write_2D_vector(p,imax,kmax,rank,'p')
   call write_2D_vector(alphat,i1,k1,rank,'a')
-  call write_2D_vector(cnew,i1,k1,rank,'c')
+  call write_2D_vector(ekme,i1,k1,rank,'c')
   call write_2D_vector(rnew,i1,k1,rank,'r')
   call write_2D_vector(rold,i1,k1,rank,'2')
   call write_2D_vector(turb_model%k,i1,k1,rank,'k')
   call write_2D_vector(turb_model%eps,i1,k1,rank,'e')
-  call write_2D_vector(turb_model%v2,i1,k1,rank,'v')
+  call write_2D_vector(ekmt,i1,k1,rank,'m')
 
 
 end subroutine

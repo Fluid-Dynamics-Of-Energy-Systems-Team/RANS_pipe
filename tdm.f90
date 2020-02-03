@@ -99,6 +99,7 @@ contains
   subroutine set_alphat_bc(this,alphat,periodic,px,rank)
     use mod_param, only : k1,i1,kmax,imax
     use mod_mesh, only : top_bcnovalue, bot_bcnovalue
+    implicit none
     class(TurbDiffModel) :: this
     integer,                       intent(IN) :: periodic,px,rank
     real(8), dimension(0:i1,0:k1), intent(OUT):: alphat

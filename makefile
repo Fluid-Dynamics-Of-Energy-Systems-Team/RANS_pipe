@@ -1,11 +1,11 @@
 F77 =mpif90
-FLAGS =-fdefault-real-8 -Wall -Wno-unused-variable -Wno-unused-dummy-argument
+FLAGS =-O5 -fdefault-real-8 -Wall -Wno-unused-variable -Wno-unused-dummy-argument
 FC = $(F77) $(FLAGS)
 #DBG = -g
-LIBS = -lmpi
+#LIBS = -lmpi
 RM = rm -f
 
-PROGRAM = run 
+PROGRAM = run2 
 OBJS = param.o common.o
 OBJS += math.o
 OBJS += mesh.o

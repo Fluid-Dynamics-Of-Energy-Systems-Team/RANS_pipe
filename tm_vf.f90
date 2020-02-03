@@ -61,6 +61,7 @@ subroutine init_w_inflow_VF(this,nuSAin,pkin,kin,epsin,omin,mutin,v2in)
     this%kin  = kin
     this%v2in = v2in
     this%pkin = pkin
+    this%mutin = mutin
     this%fv2 = 0.
 
     do k=0,k1
