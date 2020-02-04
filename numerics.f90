@@ -127,6 +127,7 @@ subroutine calc_bl_thickness(w, w_fs, y_vec, i1, imax, bl_thickness)
   integer :: tabkhi,tabklo = 0 
   real(8), dimension(0:i1) :: w_inv, y_inv
 
+  elem=0
   !inverse beause bl is at top
   do i=0, i1
     w_inv(i) = w(i1-i)

@@ -307,7 +307,8 @@ subroutine calc_prop(enth,rho,mu,mui,muk,lam,lami,lamk,cp,cpi,cpk,tp,be)
   use mod_param, only : k1,i1,kmax,imax,k,i
   use mod_eos, only : eos_model
   implicit none
-  real(8), dimension(0:i1, 0:k1), intent(OUT):: enth,rho,mu,mui,muk, &
+  real(8), dimension(0:i1, 0:k1), intent(IN):: enth
+  real(8), dimension(0:i1, 0:k1), intent(OUT):: rho,mu,mui,muk, &
                                                 lam,lami,lamk,cp,cpk,cpi,tp,be
   real(8) :: enthface
   !centers
