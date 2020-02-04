@@ -5,7 +5,7 @@ FC = $(F77) $(FLAGS)
 #LIBS = -lmpi
 RM = rm -f
 
-PROGRAM = run2 
+PROGRAM = run 
 OBJS = param.o common.o
 OBJS += math.o
 OBJS += mesh.o

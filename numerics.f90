@@ -22,14 +22,12 @@ subroutine fillps(rank)
                   +     (dWdt(i,k) -         dWdt(i,k-1))/( dzw(k)     )  &
                 )/dt                                                      &
               + (rnew(i,k)-rold(i,k))/(dt*dt)
-      
       qcrit(i,k) = p(i,k)*dt
 
       sumps = sumps + p(i,k)*dru(i)*dzw(k)
     enddo
   enddo
   call mpi_allreduce(sumps,sumps_tot,1,mpi_real8,mpi_sum,mpi_comm_world,ierr)
-  write(*,*) sumps_tot
 end
 
 subroutine calc_avg_quantities(w, rho, enth,massflow, hb, tb,vb,Re_b,k)
