@@ -24,7 +24,7 @@ implicit none
 include 'mpif.h'
   integer :: kmaxv, imaxv
 
-integer ::  rank,ierr,istart,noutput
+integer ::  rank,ierr,istart
 real(8) ::  bulk,stress,stime,time1,hbulk,tbulk,massflow, Re_bulk,vbulk
 real(8) ::  resC,resTV1,resTV2,resTV3,resTD1,resTD2,totResC
 real(8) ::  start, finish
@@ -185,7 +185,7 @@ do istep=istart,nstep
   endif
   
   !write the screen output
-  noutput = 100
+!  noutput = 100
 
 !   if (mod(istep,noutput).eq.0) then
 !     call debug(rank)
