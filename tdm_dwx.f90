@@ -183,7 +183,7 @@ subroutine rhs_kt_KtEt_DWX(this,putout,dimpl,rho)
   do k=1,kmax
     do i=1,imax
       putout(i,k) = putout(i,k)+2.0*this%Pkt(i,k)/rho(i,k)                               
-      dimpl(i,k)  = dimpl(i,k) +2.0*(1/rho(i,k))*this%epst(i,k)/(this%kt(i,k)+1.0e-20) 
+      dimpl(i,k)  = dimpl(i,k) +2.0*this%epst(i,k)/(this%kt(i,k)+1.0e-20) 
     enddo
   enddo
 end subroutine rhs_kt_KtEt_DWX
