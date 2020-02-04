@@ -33,7 +33,7 @@
   alphakt           = 0.1, 
   alphaet           = 0.1,
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 6,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
+  turbdiffmod       = 5,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.1,
