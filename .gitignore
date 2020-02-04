@@ -3,6 +3,9 @@ notebooks/.*
 equations/*.log
 equations/*.pdf
 equations/*.aux
+equations/*.blg
+equations/*.bbl
+
 
 run
 ### C++ ###

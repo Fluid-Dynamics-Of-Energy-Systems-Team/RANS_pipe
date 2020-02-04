@@ -2,7 +2,8 @@
 
 
 
-\section{MK Model}
+\subsection{MK Model}
+This model is presented in \cite{myong1990new}.
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
@@ -14,8 +15,8 @@ The following transport equations are implemented in the code:
 With the following functions:
 \begin{equation}
 \begin{split}
-    f_\mu &= \left[1-exp\left(-\frac{y^+}{70}\right)\right]^2\left[1+\frac{3.45}{\sqrt{Re_t}}\right] \\
-    f_\varepsilon  &=\left[1-\frac{2}{9}exp\left(-\left(\frac{Re_t}{6}\right)^2\right)\right] \left[1-exp\left(\frac{y^+}{5}\right)\right]^2 
+    f_\mu &= \left[1-\exp\left(-\frac{y^+}{70}\right)\right]^2\left[1+\frac{3.45}{\sqrt{Re_t}}\right] \\
+    f_\varepsilon  &=\left[1-\frac{2}{9}\exp\left(-\left(\frac{Re_t}{6}\right)^2\right)\right] \left[1-\exp\left(\frac{y^+}{5}\right)\right]^2 
 \end{split}
 \end{equation}
 

@@ -1,6 +1,7 @@
 
 
-\section{DWX Model}
+\subsubsection{DWX Model}
+This model is presented by \cite{deng2001near}.
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
@@ -12,8 +13,8 @@ The following transport equations are implemented in the code:
 With the following functions:
 \begin{equation}
 \begin{split}
-f_{D2} = 1-exp\left(-\frac{y^*}{1.7}\right)^2,\quad f_{D2} &= \left(\frac{1}{C_{d2}}\right)(C_{\eps2}f_\eps-1)\left[1-exp\left(-\frac{y^*}{5.8}\right)^2\right], \\
-f_\eps = 1-0.3exp\left(-\frac{Re_t}{6.5}\right)^2, \quad f_\lambda &= \left[1-exp\left(-\frac{y^*}{16}\right)\right]^2\left[1+\frac{3}{Re_t^{3/4}}\right].
+f_{D2} = 1-\exp\left(-\frac{y^*}{1.7}\right)^2,\quad f_{D2} &= \left(\frac{1}{C_{d2}}\right)(C_{\eps2}f_\eps-1)\left[1-\exp\left(-\frac{y^*}{5.8}\right)^2\right], \\
+f_\eps = 1-0.3\exp\left(-\frac{Re_t}{6.5}\right)^2, \quad f_\lambda &= \left[1-\exp\left(-\frac{y^*}{16}\right)\right]^2\left[1+\frac{3}{Re_t^{3/4}}\right].
 \end{split}
 \end{equation}
 

@@ -1,5 +1,7 @@
 \documentclass[paper=a4, fontsize=12pt]{scrartcl} % A4 paper and 11pt font size
 \usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage{hyperref}
+
 
 \newcommand{\wh}[1]{\hat{#1}}
 \newcommand{\wt}[1]{\widetilde{#1}}
@@ -26,9 +28,31 @@
 
 \begin{document}
 
+\section{Main equations}
+
+The main equation to be solved are the continuity, momentum and energy equations
+
+\begin{equation}
+\begin{split}
+\fpd{\rave{\rho}\fave{u}}{t} + \fpd{\rave{\rho}\fave{u_i}\fave{u_j}}{x_j} &= -\fpd{\rave{p}}{x_j}+\fpd{}{x_j}\left[\left(\frac{\rave{\mu}}{Re}+\mu_t\right)\fpd{\fave{u_j}}{x_j}\right] \\
+\fpd{\rave{\rho}\fave{H}}{t} + \fpd{\rave{\rho}\fave{u_j}\fave{H}}{x_j} &= \fpd{}{x_j}\left[\left(\frac{1}{Re Pr}\frac{\rave{\lambda}}{\rave{c_p}}+\rave{\rho}\alpha_t\right)\fpd{\fave{H}}{x_j}\right]
+\end{split}
+\end{equation}
+
+
+\section{Turbulent Viscosity models}
 \input{Abe}
 \input{MK}
 \input{V2F}
+
+\input{turb_heatflux}
+\input{Kays}
+\input{Bae}
+\subsection{Turbulent diffusivity models}
+
 \input{DWX}
 
+
+\bibliography{mybib}{}
+\bibliographystyle{plain}
 \end{document}

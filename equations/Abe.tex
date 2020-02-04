@@ -1,5 +1,6 @@
 
-\section{Abe Model}
+\subsection{Abe Model}
+This model is presented in \cite{abe1992improved}.
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
@@ -11,8 +12,8 @@ The following transport equations are implemented in the code:
 With the following functions:
 \begin{equation}
 \begin{split}
-    f_\mu  &=\left[1-exp\left(-\frac{y^*}{14}\right)\right]^2\left[1+\frac{5}{Re_t^{3/4}}exp\left[-\left(\frac{Re_t}{200}^2\right)\right]\right] \\
-	f_\varepsilon &= \left[1-exp\left(-\frac{y^*}{3.1}\right)\right]^2\left[1-0.3exp\left(-\frac{Re_t}{6.5}\right)^2\right] 
+    f_\mu  &=\left[1-\exp\left(-\frac{y^*}{14}\right)\right]^2\left[1+\frac{5}{Re_t^{3/4}}\exp\left[-\left(\frac{Re_t}{200}^2\right)\right]\right] \\
+	f_\varepsilon &= \left[1-\exp\left(-\frac{y^*}{3.1}\right)\right]^2\left[1-0.3\exp\left(-\frac{Re_t}{6.5}\right)^2\right] 
 \end{split}
 \end{equation}
  where:
