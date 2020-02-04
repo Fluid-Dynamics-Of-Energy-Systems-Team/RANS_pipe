@@ -1,7 +1,7 @@
-pdflatex equations
-bibtex   equations
-pdflatex equations
-pdflatex equations
+pdflatex main
+bibtex   main
+pdflatex main
+pdflatex main
 
 rm *.aux
 rm *.blg
