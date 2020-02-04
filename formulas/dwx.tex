@@ -1,0 +1,51 @@
+\subsubsection{DWX Model}
+This model is presented by \cite{deng2001near}.
+The following transport equations are implemented in the code:
+\begin{equation} \label{eq:ktDeng}
+\begin{split}
+\fpd{\rave{\rho}\overline{t^2}}{t} +\fpd{\rave{\rho}\fave{u_j}\overline{t^2}}{x_j} &= \fpd{}{x_j}\left[ \left(\frac{1}{RePr}\frac{\rave{\lambda}}{\rave{c_p}} + \frac{\rave{\rho}\alpha_t}{\sigma_{\overline{t^2}}}\right)\frac{\pd \overline{t^2}}{\pd x_j}\right] + 2 P_{\eps_t}- 2 \rave{\rho} \varepsilon_t \\
+\fpd{\rave{\rho}\varepsilon_t}{x_j} + \fpd{\rave{\rho}\fave{u_j}\varepsilon_t}{x_j} &= \frac{\pd}{\pd x_j}\left[\left(\frac{1}{RePr}\frac{\rave{\lambda}}{\rave{c_p}} + \frac{\rave{\rho}\alpha_t}{\sigma_{\varepsilon_t}}\right)\frac{\pd \varepsilon_t}{\pd x_j}\right] + C_{P1}\sqrt{\frac{\eps\eps_t}{k\overline{t^2}}} P_{\eps_t} \qquad \\ &- C_{D1} f_{D1}\rave{\rho}\frac{\eps_t^2}{\overline{t^2}}  - C_{D2} f_{D2}\rave{\rho}\frac{\eps\eps_t}{k}  
+\end{split}
+\end{equation}
+
+With the following functions:
+\begin{equation}
+\begin{split}
+f_{D1} = 1-\exp\left(-\frac{y^*}{1.7}\right)^2,\quad f_{D2} &= \left(\frac{1}{C_{d2}}\right)(C_{\eps2}f_\eps-1)\left[1-\exp\left(-\frac{y^*}{5.8}\right)^2\right], \\
+f_\eps = 1-0.3\exp\left(-\frac{Re_t}{6.5}\right)^2, \quad f_\lambda &= \left[1-\exp\left(-\frac{y^*}{16}\right)\right]^2\left[1+\frac{3}{Re_t^{3/4}}\right].
+\end{split}
+\end{equation}
+
+%where $\alpha = \lambda/(\rho c_p) \implies \alpha \rho = \lambda/c_p = \mu/Pr$
+Where the production is given by:
+\begin{equation}
+P_{\eps_t}=-\rave{\rho} \rave{u'_j T'} \frac{\pd \rave{T}}{ \pd x_j}= \alpha_t \rave{\rho} \left(\frac{ \pd \rave{T}}{\pd x_j}\right)^2,
+\end{equation} 
+
+and the turbulent diffusivity calculated using:
+\begin{equation}
+\alpha_t = C_\lambda f_\lambda \frac{k^2}{\eps}(2R)^{0.5},
+\end{equation} 
+
+where
+\begin{equation}
+Re_t = \frac{k^2}{\nu\varepsilon}, \quad y^*= \frac{u_\varepsilon \rho_w y}{\mu_w}, \quad u_\varepsilon = (\nu\varepsilon)^{1/4}, \quad R = \frac{\tau_t}{\tau_u}, \quad \tau_u = \frac{k}{\eps}, \quad \tau_t = \frac{\overline{t^2}}{2\eps_t}.
+\end{equation}
+
+The following constants are used:
+\begin{equation}
+C_\lambda=0.1, \quad C_{D1}=1.5, \quad C_{D1}=0.9, \quad, C_{P1}=2.34, \quad \sigma_{\overline{t^2}}=1.0, \quad \sigma_{\eps}=1.0
+\end{equation}
+
+
+The following table shows the units of the important variables: 
+\begin{center}
+\begin{tabular}{ c | c }
+Heat transfer model & Viscous model   \\ \hline
+$\left[k_t\right]= K^2$ & $\left[k\right]= m^2 / s^2$  \\
+$\left[\varepsilon_t\right]= K^2/s$ & $\left[\varepsilon\right]= m^2 / s^3$  \\ 
+$\left[\lambda\right]= kg \ m / (s^3 K)$ & $\left[\mu\right]= kg /(m \ s)$  \\
+$\left[\alpha\right]= m^2 /s $ & $\left[\nu\right]= m^2 /s$  \\ 
+$\left[c_p\right]= m^2 /(s^2 K) $ & $-$  \\ \hline
+\end{tabular}
+\end{center}

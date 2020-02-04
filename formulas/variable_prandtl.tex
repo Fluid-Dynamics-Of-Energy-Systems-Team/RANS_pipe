@@ -1,0 +1,104 @@
+\subsection{Turbulent Prandtl models}
+
+The Turbulent Prandtl models, estimate the turbulent diffusivity coefficient $\alpha_t$ in the following way:
+
+\begin{equation}
+\alpha_t = \frac{\mu_t}{\rave{\rho}Pr_t}
+\end{equation}
+
+
+
+
+\subsubsection{Irrenfried Model}
+This model is presented in \cite{irrenfried2017dns}.
+
+\begin{equation}
+Pr_{t} = \left[\gamma_{IS} + C Pe_t \sqrt{2\left(\frac{1}{Pr_{t,b}}-\gamma_{IS}\right)} - (CPe_t)^2 \left[1-\exp\left(-\frac{1}{C Pe_t}\sqrt{2\left(\frac{1}{Pr_{t,b}}-\gamma_{IS}\right)}\right)\right]\right]^{-1}
+\end{equation}
+with 
+\begin{equation}
+\gamma_{IS}=\frac{1}{Pr_{t,b}+0.1Pr^{0.83}}, \quad Pe_t = \frac{\mu_t}{\rave{\mu}}Pr, \quad Pr_{t,b} = 1.0, \quad C=3
+\end{equation}
+
+
+
+
+
+\subsubsection{Kays}
+This model is presented in \cite{Kays}.
+
+\begin{equation}
+  Pr_{t} =
+    \begin{cases}
+      1.07, & \mu_t/\rave{\mu} < 0.2 \\
+      \frac{2}{Pe} +  0.85 & 0.2 \leq \mu_t/\rave{\mu} 
+    \end{cases}       
+\end{equation}
+with $Pe_t = (\mu_t/\rave{\mu})Pr$
+
+
+
+
+
+\subsubsection{Kays-Crawford Model}
+This model is presented in \cite{kays2012convective}.
+
+\begin{equation}
+Pr_{t} = \frac{1}{C_1+C_2\mu_\gamma-C_3\mu_\gamma^2(1+\exp(-C_4/\mu_\gamma))}
+\end{equation}
+with $\mu_\gamma = \mu_t/\rave{\mu}$.
+
+Where the following constants are used:
+\begin{equation}
+C_1=0.5882, \quad C_2=0.228, \quad C_3=0.0441, \quad C_4=5.165
+\end{equation}
+
+
+
+
+\subsubsection{Tang Model}
+
+This model is presented in \cite{TANG20161082}.
+
+\begin{equation}
+  Pr_{t} =
+    \begin{cases}
+      1.0, & \mu_t/\rave{\mu} < 0.2 \\
+      0.85 + \frac{Pr}{A}, & 0.2 \leq \mu_t/\rave{\mu} \leq 10\\
+      0.85, & 10 < \mu_t/\rave{\mu}
+    \end{cases}       
+\end{equation}
+with $A=15$.
+
+
+
+
+
+\subsubsection{Bae Model}
+This model is presented in \cite{bae2016new}.
+
+\begin{equation}
+Pr_{t,0} = \frac{1+\frac{\rave{\mu}}{\rave{\rho}}\left|\left(\fpd{\rave{\rho}}{y}\right)/\left(\fpd{\fave{u}}{y}\right)\right|}{1+\frac{\rave{T}}{\rave{\rho}}\left|\left(\fpd{\rave{\rho}}{y}\right)/\left(\fpd{\rave{T}}{y}\right)\right|+\frac{\rave{T}}{\rave{c_p}}\left|\left(\fpd{\rave{c_p}}{y}\right)/\left(\fpd{\rave{T}}{y}\right)\right|}
+\end{equation}
+
+
+\begin{equation}
+\begin{split}
+    f_1 &= 1-\exp\left(-\frac{y^+}{A^+}\right) \\
+    f_2 &= 0.5\left[1+\tanh\left(\frac{B-y^+}{10}\right)\right]
+\end{split}    
+\end{equation}
+
+Using the following equation the turbulent Prandtl is used:
+
+\begin{equation} 
+Pr_t = \sigma_t - f_1f_2(\sigma-Pr_{t,0})
+\end{equation}
+
+Where the following constants are used:
+
+\begin{equation}
+A^+ =70, \quad B=20, \quad \sigma_t=0.9
+\end{equation}
+
+
