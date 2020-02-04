@@ -32,15 +32,11 @@ real(8) :: resU, resW
 real(8) :: fr_1_goal
 logical :: stopcondition
 
-resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;!;resKt=0;resEpst=0
+resC=0;resTV1=0;resTV2=0;resTV3=0;resTD1=0;resTD2=0;
 stopcondition=.false.
+
 !read parameters
 call read_parameters()
-!Fr_1_goal = Fr_1
-!Fr_1 = 0.
-! write(*,*) trim(test)
-! call mpi_finalize(ierr)
-! stop
 
 !initalize mpi
 call cpu_time(time1)
@@ -81,8 +77,6 @@ call mesh%discretize_streamwise2( LoD,rank, px)
 if (EOSmode.eq.0) allocate(eos_model,    source=init_ConstProp_EOSModel(Re,Pr))
 if (EOSmode.eq.1) allocate(eos_model,    source=       init_IG_EOSModel(Re,Pr))
 if (EOSmode.eq.2) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,nTab, table_loc,fluid_name))
-! if (EOSmode.eq.3) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2499, 'tables/ph2_table.dat' ,'h2-'))
-! if (EOSmode.eq.4) allocate(eos_model,    source=    init_Table_EOSModel(Re,Pr,2000, "tables/h2o_table.dat",'h20' ))
 
 call eos_model%init() 
 
@@ -122,7 +116,6 @@ call initialize_solution(rank,wnew,unew,cnew,ekmt,alphat,win,Re,systemsolve,sele
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta)
 
-!call set_qwall(Fr_1, Fr_1_goal, -1.)
 call bound_c(cnew, Tw_top,Tw_bot, Qwall,rank)
 call turb_model%set_bc(ekm,rnew,periodic,rank,px)
 call turbdiff_model%set_bc(ekm,rnew,periodic,rank,px)
@@ -132,11 +125,8 @@ rold = rnew
 call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
 call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
 
-
 call bound_v(Unew,Wnew,Win,Wnew,rank,istep)
 call chkdt(rank,istep)
-
-
 
 
 call cpu_time(start)
@@ -148,9 +138,8 @@ call cpu_time(start)
 
 do istep=istart,nstep
   
-  !calc the 
+  !calc the turbulent viscosity and diffusivity
   call calc_mu_eff(Unew,Wnew,rnew,ekm,ekmi,ekme,ekmt,rank) 
-
   call calc_ekh_eff(Unew,Wnew,rnew,temp,ekm,ekmi,ekh,ekhi,ekhk,ekmt,ekhe,alphat,rank)
                 
   !scalar equations
@@ -169,40 +158,26 @@ do istep=istart,nstep
 
 
   call calc_prop(cnew,rnew,ekm,ekmi,ekmk,ekh,ekhi,ekhk,cp,cpi,cpk,temp,beta);
+  call advance(rank)
 
   if (bulkmod .eq. 1) call set_dpdz_wbulk(wnew,rank)
 
-
-
   call bound_m(dUdt,dWdt,wnew,rnew,Win,rank, istep)
-  
-
-
-
-
-   
   call fillps(rank)
-
-  ! call solvepois_cr(p,0,rank,mesh%centerBC)
+! call solvepois_cr(p,0,rank,mesh%centerBC)
   call solvepois(p,rank,mesh%centerBC)
-  
-
   call correc(rank,1)
 
-
-
   call bound_v(Unew,Wnew,Win,Wnew,rank, istep)
- ! if (mod(istep,10000).eq.0) call set_qwall(Fr_1,Fr_1_goal,-1.)
+
   if   (mod(istep,10) .eq. 0) call chkdiv(rank)
 
   call cmpinf(bulk,stress)
   call chkdt(rank,istep)
 
-
-
   if  ((mod(istep,100).eq.0).and.(periodic .eq.1)) call inflow_output_upd(rank,istep);
 
-  if   ((mod(istep,100).eq.0)) then
+  if   ((mod(istep,100).eq.0) .and. (istep .gt. 100)) then
     call output2d_upd2(rank,istep) 
     call check_convergence(unew, uold, wnew, wold, resC, resTV1,resTV2, resTV3,resTD1,resTD2, stopcondition)
     if (stopcondition) exit
@@ -514,11 +489,7 @@ subroutine bound_v(u,w,win,wout,rank,step)
     u(:,0) = 0.0
     w(:,0) = win(:)
   endif
-  !if (rank.eq.px-1)then
-  !  !extrapolation
-  !  u(:,k1) = 2.*u(:,kmax)-u(:,kmax-1)
-  !  w(:,kmax) = 2.*w(:,kmax-1)-w(:,kmax-2)
-  !endif
+
   !convective outlet
   call bound_conv(u,wout,rank,0)
   call bound_conv(w,wout,rank,1)
@@ -578,10 +549,6 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
     do i=1,imax
       wr(i) = W_out(i,kmax)
     enddo
-!    do i=0,i1
-!      Wbound(i,kmax) = 2.0*Wbound(i,kmax-1) - Wbound(i,kmax-2) !NOTE: CHANGE WITH SIMONE
-!      Wbound(i,kmax) = Wbound(i,kmax)*0.5*(Rbound(i,kmax)+Rbound(i,k1))
-!    enddo
   endif
   !compute drho/dt*dvol
   do k=1,kmax
@@ -601,7 +568,8 @@ subroutine bound_m(Ubound,Wbound,W_out,Rbound,W_in,rank, step)
   do k=1,kmax
      flux = flux + Ubound(0,k)*dzw(k)
   enddo
-
+  
+  wfunc =0
   if (rank.eq.px-1)then
     Ub = 0
     wfunc = 0
@@ -673,9 +641,6 @@ subroutine initialize_solution(rank, w, u,c, mut,alphat, &
       c(:,k)= 0.
       alphat(:,k) = alphatin(:)
     enddo
-    !do k=1,kmax
-    !  p(:,k) = 0.
-    !enddo
     
     call turb_model%init_w_inflow(nuSAin,pkin,kin,epsin,omin,mutin,v2in)
     call turbdiff_model%init_w_inflow(Prtin,alphatin,ktin,epstin,pktin)
@@ -738,10 +703,8 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   integer  :: ierr
   
   resC   = 0.0; dnew   = 0.0; dimpl = 0.0;
-  ! call calc_avg_quantities(wnew, rnew, cnew,massflow, hbulk, tbulk,vbulk, Re_bulk,kmax)
 
   call advecc(dnew,dimpl,cnew,Utmp,Wtmp,rank,periodic,.true.)
-  ! call diffc(dnew,cnew,ekh,ekhi,ekhk,alphat,1.,Rtmp,0)
   call diffc(dnew,cnew,ekhe,ekhei,ekhek,alphat,1.d0,Rtmp,10)
 
 
@@ -749,13 +712,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
     do i=1,imax
       a(i) = -Ru(i-1)*ekhei(i-1,k)/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
       c(i) = -Ru(i  )*ekhei(i  ,k)/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-
-      ! a(i) = -Ru(i-1)*(ekhi(i-1,k)+0.5*(alphat(i,k)+alphat(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-      ! c(i) = -Ru(i  )*(ekhi(i  ,k)+0.5*(alphat(i,k)+alphat(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-
-      ! a(i) = -Ru(i-1)*(0.5*(ekhe(i,k)+ekhe(i-1,k)))/(dRp(i-1)*Rp(i)*dru(i))/Rtmp(i,k)
-      ! c(i) = -Ru(i  )*(0.5*(ekhe(i,k)+ekhe(i+1,k)))/(dRp(i  )*Rp(i)*dru(i))/Rtmp(i,k)
-
       b(i) = (-a(i)-c(i) + dimpl(i,k) )        
       rhs(i) = dnew(i,k) + ((1-alphac)/alphac)*b(i)*cnew(i,k) + Qsource/(Re*Pr)
     enddo
@@ -778,7 +734,6 @@ subroutine advanceC(resC,Utmp,Wtmp,Rtmp,rank)
   ! if (periodic.eq.1) then
   !   cnew = 0.0; resC=0.0;
   ! endif
-
 end
 
 
