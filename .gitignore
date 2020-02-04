@@ -1,10 +1,10 @@
 # Created by https://www.gitignore.io/api/c++,eclipse
 notebooks/.*
-main/*.log
-main/*.pdf
-main/*.aux
-main/*.blg
-main/*.bbl
+formulas/*.log
+formulas/*.pdf
+formulas/*.aux
+formulas/*.blg
+formulas/*.bbl
 
 
 run
