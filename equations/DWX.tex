@@ -4,7 +4,7 @@
 The following transport equations are implemented in the code:
 \begin{equation} \label{eq:ktDeng}
 \begin{split}
-\frac{\pd \rho \overline{t^2}}{\pd t} + \frac{\pd \rho u_j \overline{t^2}}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[\rho \left(\alpha + \frac{\alpha_t}{\sigma_{\overline{t^2}}}\right)\frac{\pd \overline{t^2}}{\pd x_j}\right] + 2 P_{\eps_t}- 2 \varepsilon_t \\
+\frac{\pd \rho \overline{t^2}}{\pd t} + \frac{\pd \rho u_j \overline{t^2}}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[\rho \left(\alpha + \frac{\alpha_t}{\sigma_{\overline{t^2}}}\right)\frac{\pd \overline{t^2}}{\pd x_j}\right] + 2 P_{\eps_t}- 2 \rho \varepsilon_t \\
 \frac{\pd \rho \varepsilon_t}{\pd t} + \frac{\pd \rho u_j \varepsilon_t}{\pd x_j} &= \frac{\pd}{\pd x_j}\left[\rho \left(\alpha + \frac{\alpha_t}{\sigma_{\varepsilon_t}}\right)\frac{\pd \varepsilon_t}{\pd x_j}\right] + C_{P1}\sqrt{\frac{\eps\eps_t}{k\overline{t^2}}} P_{\eps_t} \qquad \\ &- C_{D1} f_{D1}\rho\frac{\eps_t^2}{\overline{t^2}}  - C_{D2} f_{D2}\rho\frac{\eps\eps_t}{k}   
 \end{split}
 \end{equation}
