@@ -24,7 +24,7 @@
   Fr_1              = 0.0,
   EOSmode           = 2,      ! 0..Const Prop, 1..IG, 2..SCCO2
   select_init       = 0,       ! 0..std initialization, 1..read inflow , 2..read restart file
-  turbmod           = 3,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST 5..Abe
+  turbmod           = 2,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST 5..Abe
   ctheta            = 0.3,
   modVF             = 0,       ! 0..Original 1..LienKalitzin Time/Length scale VF model
   alphac            = 0.15,
@@ -34,7 +34,7 @@
   alphakt           = 0.15
   alphaet           = 0.1
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 5,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
+  turbdiffmod       = 0,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.01,

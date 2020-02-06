@@ -20,7 +20,7 @@
   Tw_bot            = 0.,    ! scaled with the inflow temp (Tin=1)
   dTwall            = 0.05,
   pressIsoThermal   = 1,       ! constant pressure for BL cases (2 or 4)
-  Fr_1              = -9.96,
+  Fr_1              = 0,
   EOSmode           = 2,      ! 0..Const Prop, 1..IG, 2..Table
   select_init       = 1,       ! 0..std initialization, 1..read inflow , 2..read restart file
   turbmod           = 2,       ! 0..laminar, 1..SA, 2..MK, 3..V2F, 4..SST 5..Abe
@@ -33,7 +33,7 @@
   alphakt           = 0.1, 
   alphaet           = 0.1,
   modifDiffTerm     = 0,       ! 0..Standard, 1..invSLS, 2..Aupoix
-  turbdiffmod       = 5,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
+  turbdiffmod       = 0,       ! 0.. Prt, 1..IrrenFried, 2.. Tang, 3.. Kays-Crawford, 4.. Kays, 5.. Bae, 6.. DWX, 7.. NK
   output_fname      = "laminarbl.csv",
   read_fname        = "laminarbl_124.csv", ! name of restartfile
   dtmax             = 0.1,
@@ -44,5 +44,6 @@
   table_loc          ="/home/azureuser/Documents/clean_repos/RANS_pipe/tables/co2_table.dat",
   fluid_name         ="co2",
   nTab              = 2000,    ! 2000 for co2, 2500 for pH2
-  convCrit          =1
+  convCrit          =1e-10
+  noutput           =10
 /
